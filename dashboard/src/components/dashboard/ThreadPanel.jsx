@@ -1,0 +1,138 @@
+import { useState } from 'react'
+import { MessagesSquare, Mic } from 'lucide-react'
+import { SectionHeading, EmptyState, SourcePills } from '../ui/primitives'
+import { cn } from '../../lib/cn'
+
+const PLACEHOLDER = 'Tulis pertanyaan, tempel teks, atau kirim suara...'
+
+/**
+ * Panel "Tanya AI" — thread percakapan penuh.
+ * Komponen presentasional: nilai input & aksi dikontrol induk
+ * supaya tombol chip topik di Beranda bisa menulis ke tempat yang sama.
+ */
+export default function ThreadPanel({ input, onInputChange, onAsk, loading, thread }) {
+  const [listening, setListening] = useState(false)
+  const canSubmit = input.trim().length > 0 && !loading
+
+  const toggleMic = () => {
+    if (listening) return setListening(false)
+    setListening(true)
+    window.setTimeout(() => {
+      setListening(false)
+      onInputChange('Sederhanakan teks ini ke level SD')
+    }, 1500)
+  }
+
+  return (
+    <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
+      <SectionHeading
+        eyebrow="Asisten"
+        title="Tanya AI"
+        description="Semua jawaban disimulasikan di browser, dirujuk ke sumber resmi, dan tidak menyimpan data pribadi."
+      />
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_1px_2px_rgba(15,30,51,0.04)]">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (canSubmit) onAsk(input)
+          }}
+          className="flex flex-col gap-3 lg:flex-row lg:items-stretch"
+        >
+          <div className="flex flex-1 items-start gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 transition-colors focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100 hover:border-slate-300">
+            <label htmlFor="thread-input" className="sr-only">
+              Pertanyaan kesehatan
+            </label>
+            <textarea
+              id="thread-input"
+              rows={2}
+              value={input}
+              onChange={(e) => onInputChange(e.target.value)}
+              placeholder={PLACEHOLDER}
+              className="min-h-[3.25rem] flex-1 resize-none bg-transparent text-[0.95rem] leading-relaxed text-navy-900 outline-none placeholder:text-slate-500"
+            />
+            <button
+              type="button"
+              onClick={toggleMic}
+              aria-pressed={listening}
+              aria-label={listening ? 'Hentikan perekaman suara' : 'Rekam dengan suara'}
+              className={cn(
+                'grid size-9 shrink-0 place-items-center rounded-full transition-colors duration-200',
+                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
+                listening
+                  ? 'bg-rose-500 text-white animate-pulse'
+                  : 'bg-slate-100 text-navy-500 hover:bg-brand-50 hover:text-brand-600',
+              )}
+            >
+              <Mic className="size-4" aria-hidden="true" />
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className={cn(
+              'h-12 rounded-xl bg-brand-500 px-6 text-[0.95rem] font-semibold text-white',
+              'transition-all duration-200 hover:bg-brand-600 active:scale-[0.98]',
+              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
+              'disabled:cursor-not-allowed disabled:opacity-60',
+              'lg:shrink-0',
+              loading ? 'animate-pulse' : '',
+            )}
+          >
+            {loading ? 'Memproses…' : 'Tanya Sekarang'}
+          </button>
+        </form>
+      </div>
+
+      {thread.length === 0 ? (
+        <EmptyState
+          icon={MessagesSquare}
+          title="Belum ada percakapan"
+          description="Ajukan pertanyaan pertamamu — hasilnya akan muncul sebagai utas di sini."
+        />
+      ) : (
+        <ol className="space-y-3">
+          {thread.map((m, i) => (
+            <li
+              key={`${m.id}-${i}`}
+              className={cn(
+                'rise max-w-[min(100%,46rem)] rounded-2xl border p-4',
+                m.role === 'user'
+                  ? 'ml-auto border-brand-500 bg-brand-500 text-white'
+                  : 'border-slate-200 bg-white',
+              )}
+            >
+              <p
+                className={cn(
+                  'text-[0.7rem] font-bold tracking-[0.12em] uppercase',
+                  m.role === 'user' ? 'text-brand-100' : 'text-brand-600',
+                )}
+              >
+                {m.role === 'user' ? 'Kamu' : 'Pahami Sehat'}
+              </p>
+              <p
+                className={cn(
+                  'mt-1 text-[0.95rem] leading-relaxed',
+                  m.role === 'user' ? 'font-medium text-white' : 'text-navy-700',
+                )}
+              >
+                {m.text}
+              </p>
+              {m.role === 'ai' ? (
+                <SourcePills sources={m.sources} negative={m.verdict === 'negative'} />
+              ) : null}
+            </li>
+          ))}
+          {loading ? (
+            <li className="max-w-[min(100%,46rem)] rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="skeleton h-3 w-24 rounded" />
+              <div className="skeleton mt-2.5 h-3.5 w-full rounded" />
+              <div className="skeleton mt-2 h-3.5 w-[85%] rounded" />
+            </li>
+          ) : null}
+        </ol>
+      )}
+    </div>
+  )
+}

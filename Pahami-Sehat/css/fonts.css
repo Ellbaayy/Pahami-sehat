@@ -1,0 +1,8 @@
+/* Plus Jakarta Sans (variable, latin subset) — vendored locally, no CDN */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('../assets/fonts/pjs-var.woff2') format('woff2-variations');
+}
