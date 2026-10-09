@@ -1,6 +1,7 @@
 import { WifiOff, Volume2, Languages } from 'lucide-react'
 import { Card, SectionHeading } from '../ui/primitives'
 import { cn } from '../../lib/cn'
+import { TINGKAT } from '../../data/tingkat'
 
 function Switch({ checked, onChange, label }) {
   return (
@@ -59,21 +60,21 @@ export default function SettingsPanel({ settings, onChange }) {
               aria-label="Pilih tingkat baca"
               className="flex rounded-xl border border-slate-200 bg-white p-1"
             >
-              {['Anak-anak', 'Remaja', 'Dewasa', 'Lansia'].map((lv) => (
+              {TINGKAT.map((t) => (
                 <button
-                  key={lv}
+                  key={t.kunci}
                   type="button"
-                  onClick={() => set('level', lv)}
-                  aria-pressed={settings.level === lv}
+                  onClick={() => set('level', t.kunci)}
+                  aria-pressed={settings.level === t.kunci}
                   className={cn(
                     'h-9 min-w-[3.25rem] rounded-lg px-3 text-[0.85rem] font-bold transition-colors duration-200',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
-                    settings.level === lv
+                    settings.level === t.kunci
                       ? 'bg-brand-500 text-white'
                       : 'text-navy-500 hover:bg-slate-100 hover:text-navy-800',
                   )}
                 >
-                  {lv}
+                  {t.label}
                 </button>
               ))}
             </div>
@@ -137,7 +138,7 @@ export default function SettingsPanel({ settings, onChange }) {
       </Card>
 
       <p className="text-[0.8rem] text-slate-500">
-        Prototipe frontend. Seluruh fitur disimulasikan di peramban.
+        Tingkat baca berlaku untuk semua jawaban AI. Preferensi ini tersimpan di peramban, bukan di server.
       </p>
     </div>
   )

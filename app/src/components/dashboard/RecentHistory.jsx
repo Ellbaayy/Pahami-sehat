@@ -1,7 +1,7 @@
 import { History, ArrowRight, MessageSquareText } from 'lucide-react'
 import { Card, SectionHeading, Button, EmptyState } from '../ui/primitives'
 
-/** Riwayat Terakhir — daftar pertanyaan sebelumnya (data dummy + sesi berjalan). */
+/** Riwayat Terakhir — pertanyaan sebelumnya (contoh awal + sesi berjalan). */
 export default function RecentHistory({ items, onSeeAll, max = 4 }) {
   const shown = items.slice(0, max)
 

@@ -1,13 +1,13 @@
 import { useId, useState } from 'react'
-import { Sparkles, Mic, Send } from 'lucide-react'
-import { Button, Card, SourcePills, Skeleton } from '../ui/primitives'
+import { Sparkles, Mic, Send, Loader2, WifiOff } from 'lucide-react'
+import { Button, Card, SourcePills, Skeleton, PoinKunci, Peringatan } from '../ui/primitives'
 import { cn } from '../../lib/cn'
 
 /**
  * Card utama "Tanya AI".
  * - layar besar : textarea + tombol sejajar horizontal
  * - layar kecil : textarea full-width, tombol pindah ke bawah & full-width
- * Semua state lewat props dari induk (React state saja, tanpa backend).
+ * Jawaban datang dari server (streaming) lewat props dari App.
  */
 export default function AskAI({
   value,
@@ -16,11 +16,16 @@ export default function AskAI({
   loading = false,
   question = '',
   result = null,
+  streaming = '',
+  statusPesan = '',
+  error = null,
+  serverOnline = true,
+  serverMemuat = false,
 }) {
   const id = useId()
   const [listening, setListening] = useState(false)
 
-  const canSubmit = value.trim().length > 0 && !loading
+  const canSubmit = value.trim().length > 0 && !loading && !serverMemuat
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -34,7 +39,7 @@ export default function AskAI({
       return
     }
     setListening(true)
-    // simulasi input suara — murni frontend
+    // simulasi input suara — belum memakai Web Speech API
     window.setTimeout(() => {
       setListening(false)
       onChange('Apa arti hasil laboratorium saya ini?')
@@ -52,10 +57,20 @@ export default function AskAI({
             Tanya AI
           </h2>
           <p className="text-[0.8rem] leading-snug text-navy-500">
-            Jawaban disederhanakan dan selalu menyertakan sumber.
+            Disederhanakan sesuai tingkat baca, poin kunci tetap dipertahankan, sumber selalu disertakan.
           </p>
         </div>
       </div>
+
+      {!serverOnline && !serverMemuat ? (
+        <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-[0.82rem] font-medium text-amber-800">
+          <WifiOff className="size-4 shrink-0" aria-hidden="true" />
+          <span>
+            Server AI belum terhubung. Jalankan <code className="font-mono">npm run server</code> lalu
+            muat ulang halaman.
+          </span>
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
         <div
@@ -115,6 +130,11 @@ export default function AskAI({
       <p className="mt-2 text-[0.8rem] text-slate-500">
         {listening ? (
           'Mendengarkan… bicara sekarang.'
+        ) : loading && statusPesan ? (
+          <span className="inline-flex items-center gap-1.5 text-brand-600">
+            <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+            {statusPesan}
+          </span>
         ) : (
           <>
             <span className="hidden sm:inline">
@@ -125,23 +145,50 @@ export default function AskAI({
         )}
       </p>
 
+      {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
+
       {/* ---- hasil ---- */}
       {loading ? (
-        <div className="mt-4 space-y-2.5" aria-live="polite" aria-busy="true">
-          <Skeleton className="h-3 w-28" />
-          <Skeleton className="h-3.5 w-full" />
-          <Skeleton className="h-3.5 w-[88%]" />
+        <div className="mt-4" aria-live="polite" aria-busy="true">
+          {streaming ? (
+            <div className="rounded-xl border border-brand-200 bg-white p-4">
+              <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-600">
+                Menyusun jawaban…
+              </p>
+              <p className="text-[0.92rem] leading-relaxed whitespace-pre-wrap text-navy-700">
+                {streaming}
+                <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-brand-500 align-middle" />
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-3.5 w-full" />
+              <Skeleton className="h-3.5 w-[88%]" />
+            </div>
+          )}
         </div>
       ) : result ? (
         <div className="rise mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4" aria-live="polite">
           <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-600">
-            {result.verdict === 'negative' ? 'Verdict — tidak ditemukan' : 'Jawaban tersederhanakan'}
+            {result.verdict === 'tidak_didukung'
+              ? 'Verdict — tidak didukung sumber'
+              : 'Jawaban tersederhanakan'}
           </p>
           {question ? (
             <p className="mb-1.5 text-[0.86rem] font-semibold text-navy-800">“{question}”</p>
           ) : null}
-          <p className="text-[0.92rem] leading-relaxed text-navy-700">{result.text}</p>
-          <SourcePills sources={result.sources} negative={result.verdict === 'negative'} />
+          <p className="text-[0.92rem] leading-relaxed whitespace-pre-wrap text-navy-700">
+            {result.jawaban}
+          </p>
+          <PoinKunci items={result.poinKunci} />
+          <SourcePills
+            sources={result.sumber}
+            negative={result.verdict === 'tidak_didukung'}
+          />
+          {result.catatan ? (
+            <p className="mt-2 text-[0.78rem] text-slate-500">{result.catatan}</p>
+          ) : null}
         </div>
       ) : null}
     </Card>

@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import { cn } from '../../lib/cn'
 
 /* ---------------- Card ---------------- */
@@ -116,27 +116,79 @@ export function EmptyState({ icon: Icon, title, description, action }) {
 }
 
 /* ---------------- Source pills ---------------- */
-export function SourcePills({ sources = [], negative = false }) {
+/** Terima array string ("WHO") atau objek ({judul, penerbit}) dari API. */
+export function SourcePills({ sources = [], negative = false, label = 'Sumber' }) {
   if (!sources.length) return null
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-slate-200 pt-3">
       <span className="text-[0.68rem] font-bold tracking-[0.12em] uppercase text-navy-500">
-        Sumber
+        {label}
       </span>
-      {sources.map((s) => (
-        <span
-          key={s}
-          className={cn(
-            'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold',
-            negative
-              ? 'bg-sky-50 text-sky-600 ring-1 ring-sky-100'
-              : 'bg-brand-50 text-brand-700 ring-1 ring-brand-100',
-          )}
-        >
-          <span aria-hidden="true">{negative ? '→' : '✓'}</span>
-          {s}
+      {sources.map((s, i) => {
+        const teks = typeof s === 'string' ? s : [s.penerbit, s.judul].filter(Boolean).join(' — ')
+        return (
+          <span
+            key={`${teks}-${i}`}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold',
+              negative
+                ? 'bg-sky-50 text-sky-600 ring-1 ring-sky-100'
+                : 'bg-brand-50 text-brand-700 ring-1 ring-brand-100',
+            )}
+          >
+            <span aria-hidden="true">{negative ? '→' : '✓'}</span>
+            {teks}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ---------------- Poin kunci (bukti rubrik) ---------------- */
+export function PoinKunci({ items = [] }) {
+  if (!items.length) return null
+  return (
+    <details className="group mt-3 rounded-xl border border-slate-200 bg-white/70 px-3.5 py-2.5">
+      <summary className="flex cursor-pointer items-center gap-2 text-[0.78rem] font-bold text-navy-700 marker:content-none">
+        <span className="text-brand-600 transition-transform group-open:rotate-90" aria-hidden="true">
+          ▸
         </span>
-      ))}
+        Poin kunci yang dipertahankan ({items.length})
+      </summary>
+      <ul className="mt-2 space-y-1.5 pl-1">
+        {items.map((p, i) => (
+          <li key={i} className="flex gap-2 text-[0.84rem] leading-snug text-navy-700">
+            <span className="text-brand-500" aria-hidden="true">•</span>
+            <span>{p}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[0.7rem] text-slate-500">
+        Daftar ini ditandai lebih dulu sebelum bahasa disederhanakan — bukti kelengkapan informasi terjaga.
+      </p>
+    </details>
+  )
+}
+
+/* ---------------- Peringatan / error ---------------- */
+export function Peringatan({ pesan, code, aksi }) {
+  if (!pesan) return null
+  const saldo = code === 'insufficient_balance'
+  return (
+    <div
+      role="alert"
+      className={cn(
+        'mt-3 flex flex-wrap items-start gap-2.5 rounded-xl border px-4 py-3 text-[0.88rem]',
+        saldo ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-rose-200 bg-rose-50 text-rose-700',
+      )}
+    >
+      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">{pesan}</p>
+        {code ? <p className="mt-0.5 text-[0.76rem] opacity-80">Kode: {code}</p> : null}
+      </div>
+      {aksi}
     </div>
   )
 }

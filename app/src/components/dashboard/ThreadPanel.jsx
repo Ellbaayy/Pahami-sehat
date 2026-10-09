@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { MessagesSquare, Mic } from 'lucide-react'
-import { SectionHeading, EmptyState, SourcePills } from '../ui/primitives'
+import { MessagesSquare, Mic, Loader2 } from 'lucide-react'
+import { SectionHeading, EmptyState, SourcePills, PoinKunci, Peringatan } from '../ui/primitives'
 import { cn } from '../../lib/cn'
 
 const PLACEHOLDER = 'Tulis pertanyaan, tempel teks, atau kirim suara...'
@@ -10,9 +10,20 @@ const PLACEHOLDER = 'Tulis pertanyaan, tempel teks, atau kirim suara...'
  * Komponen presentasional: nilai input & aksi dikontrol induk
  * supaya tombol chip topik di Beranda bisa menulis ke tempat yang sama.
  */
-export default function ThreadPanel({ input, onInputChange, onAsk, loading, thread }) {
+export default function ThreadPanel({
+  input,
+  onInputChange,
+  onAsk,
+  loading,
+  thread,
+  streaming = '',
+  statusPesan = '',
+  error = null,
+  serverOnline = true,
+  serverMemuat = false,
+}) {
   const [listening, setListening] = useState(false)
-  const canSubmit = input.trim().length > 0 && !loading
+  const canSubmit = input.trim().length > 0 && !loading && !serverMemuat
 
   const toggleMic = () => {
     if (listening) return setListening(false)
@@ -28,7 +39,7 @@ export default function ThreadPanel({ input, onInputChange, onAsk, loading, thre
       <SectionHeading
         eyebrow="Asisten"
         title="Tanya AI"
-        description="Semua jawaban disimulasikan di browser, dirujuk ke sumber resmi, dan tidak menyimpan data pribadi."
+        description="Jawaban dibuat model AI, dirujuk ke sumber resmi, dan tidak menyimpan data pribadi."
       />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_1px_2px_rgba(15,30,51,0.04)]">
@@ -83,9 +94,17 @@ export default function ThreadPanel({ input, onInputChange, onAsk, loading, thre
             {loading ? 'Memproses…' : 'Tanya Sekarang'}
           </button>
         </form>
+
+        {!serverOnline && !serverMemuat ? (
+          <p className="mt-2.5 text-[0.8rem] text-amber-700">
+            Server AI belum terhubung — jalankan <code className="font-mono">npm run server</code>.
+          </p>
+        ) : null}
       </div>
 
-      {thread.length === 0 ? (
+      {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
+
+      {thread.length === 0 && !loading ? (
         <EmptyState
           icon={MessagesSquare}
           title="Belum ada percakapan"
@@ -113,22 +132,47 @@ export default function ThreadPanel({ input, onInputChange, onAsk, loading, thre
               </p>
               <p
                 className={cn(
-                  'mt-1 text-[0.95rem] leading-relaxed',
+                  'mt-1 text-[0.95rem] leading-relaxed whitespace-pre-wrap',
                   m.role === 'user' ? 'font-medium text-white' : 'text-navy-700',
                 )}
               >
                 {m.text}
               </p>
               {m.role === 'ai' ? (
-                <SourcePills sources={m.sources} negative={m.verdict === 'negative'} />
+                <>
+                  <PoinKunci items={m.poinKunci} />
+                  <SourcePills sources={m.sources} negative={m.verdict === 'negative'} />
+                  {m.catatan ? (
+                    <p className="mt-2 text-[0.78rem] text-slate-500">{m.catatan}</p>
+                  ) : null}
+                </>
               ) : null}
             </li>
           ))}
+
           {loading ? (
             <li className="max-w-[min(100%,46rem)] rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="skeleton h-3 w-24 rounded" />
-              <div className="skeleton mt-2.5 h-3.5 w-full rounded" />
-              <div className="skeleton mt-2 h-3.5 w-[85%] rounded" />
+              {streaming ? (
+                <>
+                  <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-600">
+                    Menyusun jawaban…
+                  </p>
+                  <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-navy-700">
+                    {streaming}
+                    <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-brand-500 align-middle" />
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mb-2 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-brand-600">
+                    <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                    {statusPesan || 'Memproses…'}
+                  </p>
+                  <div className="skeleton h-3 w-24 rounded" />
+                  <div className="skeleton mt-2.5 h-3.5 w-full rounded" />
+                  <div className="skeleton mt-2 h-3.5 w-[85%] rounded" />
+                </>
+              )}
             </li>
           ) : null}
         </ol>

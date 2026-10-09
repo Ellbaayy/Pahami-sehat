@@ -4,7 +4,7 @@ import { Card, SectionHeading, Button, EmptyState } from '../ui/primitives'
 import { QUIZ_ITEMS, QUIZ_SCALE } from '../../data/dummy'
 import { cn } from '../../lib/cn'
 
-/** Kuesioner HLS-SF12 versi ringkas (simulasi murni, tanpa backend). */
+/** Kuesioner HLS-SF12 versi ringkas — dihitung lokal di peramban, tanpa kirim data. */
 export default function QuizPanel() {
   const [answers, setAnswers] = useState({})
   const [error, setError] = useState('')

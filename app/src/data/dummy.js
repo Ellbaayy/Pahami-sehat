@@ -1,6 +1,9 @@
 /**
- * Data dummy / statis untuk dashboard.
- * Tidak ada backend, tidak ada API — semua diimpor langsung ke komponen.
+ * Konten statis: topik, artikel, tips, dan riwayat awal.
+ *
+ * Jawaban AI TIDAK lagi di sini — sekarang datang dari server Express
+ * (server/index.js) yang memanggil Kenari.id. Yang tersisa di file ini
+ * hanya konten yang memang tidak perlu dibuat model.
  */
 
 export const TOPICS = [

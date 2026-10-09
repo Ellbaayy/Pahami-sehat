@@ -12,4 +12,13 @@ export default defineConfig({
     // jangan inline font/logo — biar ukuran asset gampang dipantau
     assetsInlineLimit: 0,
   },
+  server: {
+    // saat `npm run dev`, /api diteruskan ke server Express (npm run server)
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8787',
+        changeOrigin: false,
+      },
+    },
+  },
 })

@@ -6,8 +6,9 @@ Proyek untuk **LOGICODIX 2026 Hackathon** — subtema **Inclusive Health & Well-
 Masalah yang disasar: informasi kesehatan di Indonesia bukan langka, tapi sering tidak
 sampai dan tidak dipahami oleh yang paling membutuhkan.
 
-> Status: **prototipe frontend.** Seluruh fitur AI, RAG, suara, verifikasi, dan
-> kuesioner masih **simulasi di sisi browser** — belum ada backend, database, atau API.
+> Status: **MVP berjalan.** Fitur AI sudah memanggil model sungguhan
+> (`deepseek-v4-1-flash` lewat Kenari.id) dari server Express sendiri.
+> Yang masih simulasi: input suara dan OCR (belum pakai Web Speech API / Tesseract).
 
 ---
 
@@ -20,12 +21,13 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 
 ```
 pahami-sehat/
-├── app/                      ← PRODUK UTAMA (React + Vite + Tailwind)
+├── app/                      ← PRODUK UTAMA (React + Express + Tailwind)
+│   ├── .env                  API key Kenari (JANGAN di-commit)
+│   ├── server/               backend Express: route, klien Kenari, prompt, rubrik
+│   ├── src/                  frontend React: App.jsx, lib/, data/, components/
 │   ├── index.html
 │   ├── package.json
-│   ├── vite.config.js
-│   ├── public/               logo
-│   └── src/                  App.jsx, data/, components/, lib/, assets/
+│   └── vite.config.js
 └── docs/
     └── prototipe/            ← halaman penjelasan (statis, tanpa build)
         ├── index.html
@@ -42,24 +44,31 @@ ke aplikasi.
 
 ## Menjalankan aplikasi (produk utama)
 
+Aplikasi punya dua bagian: frontend React dan backend Express yang memanggil model AI.
+
 ```bash
 cd app
 npm install --include=dev    # --include=dev WAJIB bila NODE_ENV=production
-npm run dev                  # dev server
-npm run build                # hasil build -> app/dist/
-npm run preview              # pratinjau hasil build
+
+# 1) siapkan API key sekali saja
+cp .env.example .env         # lalu isi KENARI_API_KEY=kn-...
+chmod 600 .env
+
+# 2) mode pengembangan (dua terminal)
+npm run server               # backend  di http://127.0.0.1:8787
+npm run dev                  # frontend Vite (otomatis meneruskan /api ke backend)
+
+# 3) mode Grand Final — satu perintah, satu port
+npm start                    # build + server di http://127.0.0.1:8787
 ```
 
-**Untuk Grand Final (offline/localhost):** jalankan `npm run build`, lalu sajikan
-`app/dist/` dari laptop sendiri — hasil build sudah memakai path relatif (`base: './'`),
-jadi tetap jalan tanpa internet.
+**Untuk Grand Final:** `npm start` adalah yang dipakai saat presentasi — Express
+menyajikan hasil build sekaligus melayani `/api`, jadi cukup satu alamat.
 
-```bash
-cd app
-npm run build
-python3 -m http.server 8080 --bind 127.0.0.1 --directory dist
-# buka http://127.0.0.1:8080/
-```
+> Hasil build memakai ES module, jadi membuka `dist/index.html` lewat `file://`
+> **tidak akan jalan**. Harus disajikan lewat HTTP — `npm start` sudah begitu.
+
+> Tanpa API key, server tidak mau start dan akan memberi pesan jelas soal `.env`.
 
 ## Melihat halaman penjelasan
 
