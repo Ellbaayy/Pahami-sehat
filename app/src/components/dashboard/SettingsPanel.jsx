@@ -88,7 +88,7 @@ export default function SettingsPanel({ settings, onChange }) {
               Mode hemat sinyal
             </span>
           }
-          description="Simpan jawaban terakhir supaya tetap bisa dibaca saat sinyal hilang."
+          description="Simpan jawaban terakhir di perangkat ini supaya tetap bisa dibaca saat sinyal hilang."
           control={
             <Switch
               checked={settings.offline}
@@ -105,7 +105,7 @@ export default function SettingsPanel({ settings, onChange }) {
               Putar suara otomatis
             </span>
           }
-          description="Bacakan jawaban memakai suara peramban (TTS)."
+          description="Setiap jawaban AI langsung dibacakan dengan suara peramban (TTS)."
           control={
             <Switch
               checked={settings.tts}
@@ -138,7 +138,7 @@ export default function SettingsPanel({ settings, onChange }) {
       </Card>
 
       <p className="text-[0.8rem] text-slate-500">
-        Tingkat baca berlaku untuk semua jawaban AI. Preferensi ini tersimpan di peramban, bukan di server.
+        Tingkat baca berlaku untuk semua jawaban AI. Semua preferensi ini tersimpan di peramban, bukan di server.
       </p>
     </div>
   )

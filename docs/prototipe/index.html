@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pahami Sehat — Informasi Kesehatan untuk Semua</title>
-<meta name="description" content="Pahami Sehat: platform informasi kesehatan yang mudah dipahami, inklusif, dan terpercaya. Prototipe frontend dengan simulasi AI, suara, mode hemat sinyal, dan verifikasi sumber.">
+<meta name="description" content="Pahami Sehat: platform informasi kesehatan yang mudah dipahami, inklusif, dan terpercaya. Halaman penjelasan: latar belakang, konsep 4 lapis aksesibilitas, alur pemakaian, dan status tiap fitur.">
 <link rel="icon" type="image/png" href="assets/logo-mark.png">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
@@ -32,7 +32,7 @@
       <a href="#produk">Produk</a>
       <a href="#kuesioner">Kuesioner</a>
       <a href="#rubrik">Rubrik</a>
-      <a href="../../app/dist/index.html" class="btn btn-primary btn-sm nav-cta">Coba Demo</a>
+      <a href="/" class="btn btn-primary btn-sm nav-cta">Coba Aplikasinya</a>
     </nav>
 
     <button class="nav-toggle" id="navToggle" aria-label="Buka menu" aria-expanded="false" aria-controls="navLinks">
@@ -48,7 +48,7 @@
   <div class="container hero-grid">
     <div class="hero-copy">
       <div class="badge-row">
-        <span class="chip-badge b-blue">🤖 Didukung AI &amp; RAG</span>
+        <span class="chip-badge b-blue">🤖 Didukung AI</span>
         <span class="chip-badge b-green">✅ Bersumber dari Kemenkes, WHO, BPOM</span>
         <span class="chip-badge b-purple">👥 Untuk semua lapisan masyarakat</span>
         <span class="chip-badge b-amber">🌿 Lebih sehat, lebih inklusif</span>
@@ -58,7 +58,7 @@
       <p class="lead">Informasi kesehatan yang rumit, jadi sederhana, dengan AI, dalam bahasa yang bisa dipahami semua orang.</p>
 
       <div class="hero-actions">
-        <a href="#fitur" class="btn btn-primary">Coba Penerjemah</a>
+        <a href="/" class="btn btn-primary">Coba Aplikasinya</a>
         <a href="#produk" class="btn btn-ghost">Lihat Gambaran Produk</a>
       </div>
 
@@ -67,6 +67,8 @@
         <li><strong>3</strong><span>Sumber resmi</span></li>
         <li><strong>0</strong><span>Data pribadi disimpan</span></li>
       </ul>
+
+      <p class="demo-tag">Halaman ini adalah <strong>penjelasan</strong> — semua yang bisa diklik ada di aplikasinya.</p>
     </div>
 
     <div class="hero-visual reveal">
@@ -74,20 +76,21 @@
         <div class="hero-card-top">
           <img src="assets/logo-mark.png" alt="" width="26" height="24">
           <span>Pahami Sehat</span>
-          <span class="dot-online" title="Simulasi aktif"></span>
+          <span class="dot-online" title="Ilustrasi"></span>
         </div>
         <div class="bubble bubble-ai">Halo! 👋 Ada yang bisa kami bantu?</div>
         <div class="bubble bubble-user">Apa arti hasil lab yang ini?</div>
         <div class="bubble bubble-ai">Kami terjemahkan ke bahasa sederhana, lengkap dengan sumbernya.</div>
         <div class="hero-card-input">
           <span>Tulis pertanyaan, tempel teks, atau kirim suara…</span>
-          <button class="btn btn-primary btn-sm" type="button" data-scroll="#fitur">Kirim</button>
+          <span class="btn btn-primary btn-sm">Kirim</span>
         </div>
         <div class="hero-card-chips">
-          <button class="chip" type="button" data-topic="Demam">Demam</button>
-          <button class="chip" type="button" data-topic="Obat">Obat</button>
-          <button class="chip" type="button" data-topic="Hipertensi">Hipertensi</button>
+          <span class="chip">Demam</span>
+          <span class="chip">Obat</span>
+          <span class="chip">Hipertensi</span>
         </div>
+        <p class="demo-tag">Ilustrasi tampilan — bukan kotak yang bisa diketik.</p>
       </div>
     </div>
   </div>
@@ -164,7 +167,7 @@
           <li>Pasien DMT2 Tomohon → korelasi 0,692</li>
         </ul>
       </div>
-      <p class="callout">💡 Jadi, subttema “Meningkatkan aksesibilitas informasi kesehatan” memang tepat sasaran — problem-solution fit kuat, dan bisa dibuktikan dengan data, bukan sekadar klaim.</p>
+      <p class="callout">💡 Jadi, subtema “Meningkatkan aksesibilitas informasi kesehatan” memang tepat sasaran — problem-solution fit kuat, dan bisa dibuktikan dengan data, bukan sekadar klaim.</p>
     </div>
   </div>
 </section>
@@ -204,6 +207,16 @@
         <span class="layer-ic" aria-hidden="true">🛡️</span>
       </article>
     </div>
+
+    <div class="note-box" style="margin-top:1.4rem">
+      <strong>Wujud tiap lapis di produk:</strong>
+      <ul class="f-list" style="margin-top:.6rem">
+        <li><strong>1 · Terpahami</strong> — penerjemah bahasa medis + 4 tingkat baca (Anak-anak, Remaja, Dewasa, Lansia).</li>
+        <li><strong>2 · Terjangkau</strong> — hasil bisa dibacakan (TTS) dan pertanyaan bisa dikirim lewat suara.</li>
+        <li><strong>3 · Tersambung</strong> — mode hemat sinyal untuk menyimpan jawaban terakhir.</li>
+        <li><strong>4 · Terpercaya</strong> — setiap jawaban menyertakan sumber, dan ada fitur Cek Klaim.</li>
+      </ul>
+    </div>
   </div>
 </section>
 
@@ -213,14 +226,14 @@
     <div class="section-head reveal">
       <span class="eyebrow">Alur Pemakaian</span>
       <h2>Dari MULAI sampai SELESAI</h2>
-      <p>Sesuai alur resmi aplikasi: pilih bahasa &amp; tingkat baca, tentukan bantuan yang dibutuhkan, biar AI memproses, lalu user verifikasi sendiri.</p>
+      <p>Enam langkah yang dilalui pengguna: pilih bahasa &amp; tingkat baca, tentukan bantuan yang dibutuhkan, biar AI memproses, lalu pengguna memverifikasi sendiri.</p>
     </div>
 
     <ol class="flow reveal">
       <li class="flow-step">
         <span class="flow-num">1</span>
         <h3>MULAI</h3>
-        <p>User buka web — tanpa login, tanpa data pribadi.</p>
+        <p>Pengguna buka web — tanpa login, tanpa data pribadi.</p>
       </li>
       <li class="flow-step">
         <span class="flow-num">2</span>
@@ -230,18 +243,18 @@
       <li class="flow-step">
         <span class="flow-num">3</span>
         <h3>Butuh bantuan apa?</h3>
-        <p>1 Terjemahkan teks medis · 2 Cek info mencurigakan · 3 Cek tingkat pemahaman.</p>
+        <p>1 Terjemahkan teks medis · 2 Cek klaim mencurigakan · 3 Cek tingkat pemahaman.</p>
       </li>
       <li class="flow-step">
         <span class="flow-num">4</span>
         <h3>Proses AI</h3>
-        <p>Rubric prompting · RAG ke dokumen resmi · hitung skor + kategori.</p>
+        <p>Rubric prompting: tandai poin kunci dulu, baru sederhanakan bahasanya. Lalu hitung skor + kategori.</p>
       </li>
       <li class="flow-step flow-decision">
         <span class="flow-num">?</span>
         <h3>Titik keputusan</h3>
         <ul>
-          <li>Keterbacaan ≤ target level?</li>
+          <li>Keterbacaan ≤ target tingkat?</li>
           <li>Ada di sumber resmi?</li>
           <li>Sinyal internet tersedia?</li>
         </ul>
@@ -249,7 +262,7 @@
       <li class="flow-step flow-end">
         <span class="flow-num">✓</span>
         <h3>SELESAI</h3>
-        <p>User paham &amp; bisa verifikasi sendiri.</p>
+        <p>Pengguna paham &amp; bisa verifikasi sendiri.</p>
       </li>
     </ol>
 
@@ -258,42 +271,38 @@
         <span class="start-badge">Langkah 1</span>
         <h3>Pilih bahasa + tingkat baca</h3>
         <div class="demo-row">
-          <label class="demo-label" for="startLang">Bahasa:</label>
-          <select id="startLang" class="select">
-            <option>Bahasa Indonesia</option>
-            <option>Bahasa Sunda</option>
-            <option>Bahasa Jawa</option>
-            <option>Bahasa Melayu Papua</option>
-          </select>
+          <span class="demo-label">Bahasa:</span>
+          <span class="pill pill-blue">Bahasa Indonesia</span>
+          <span class="pill pill-blue">Bahasa Sunda</span>
+          <span class="pill pill-blue">Bahasa Jawa</span>
+          <span class="pill pill-blue">Bahasa Melayu Papua</span>
         </div>
         <div class="demo-row">
           <span class="demo-label">Tingkat baca:</span>
-          <div class="seg" role="group" aria-label="Pilih tingkat baca">
-            <button type="button" class="seg-btn is-active" data-level="anak">Anak-anak</button>
-            <button type="button" class="seg-btn" data-level="remaja">Remaja</button>
-            <button type="button" class="seg-btn" data-level="dewasa">Dewasa</button>
-            <button type="button" class="seg-btn" data-level="lansia">Lansia</button>
-          </div>
+          <span class="pill pill-green">Anak-anak (kelas 6)</span>
+          <span class="pill pill-green">Remaja (kelas 9)</span>
+          <span class="pill pill-green">Dewasa (kelas 12)</span>
+          <span class="pill pill-green">Lansia (kelas 8)</span>
         </div>
-        <p class="demo-tag">Pilihan ini otomatis mengikuti demo penerjemah &amp; mode suara di bawah.</p>
+        <p class="demo-tag">Tingkat yang dipilih berlaku untuk semua jawaban AI.</p>
       </div>
 
       <div class="start-step">
         <span class="start-badge">Langkah 2</span>
         <h3>Butuh bantuan apa?</h3>
         <div class="start-choices">
-          <button type="button" class="start-choice" data-tool="translate" data-target="#fitur">
+          <div class="start-choice">
             <strong>1. Terjemahkan Teks Medis</strong>
             <small>Input: tempel teks / foto / rekam suara</small>
-          </button>
-          <button type="button" class="start-choice" data-tool="verify" data-target="#fitur">
-            <strong>2. Cek Info Mencurigakan</strong>
+          </div>
+          <div class="start-choice">
+            <strong>2. Cek Klaim Mencurigakan</strong>
             <small>Input: tempel broadcast / chat WA</small>
-          </button>
-          <button type="button" class="start-choice" data-tool="quiz" data-target="#kuesioner">
+          </div>
+          <div class="start-choice">
             <strong>3. Cek Tingkat Pemahaman</strong>
             <small>Kuesioner HLS-SF12 (tervalidasi)</small>
-          </button>
+          </div>
         </div>
       </div>
     </div>
@@ -306,7 +315,7 @@
     <div class="section-head reveal">
       <span class="eyebrow">Fitur Utama</span>
       <h2>Empat cara informasi jadi lebih dekat</h2>
-      <p>Semua demo di bawah berjalan di sisi browser — tanpa server, tanpa database, tanpa API.</p>
+      <p>Penjelasan tiap fitur: apa masukannya, apa yang dikerjakan AI, dan apa keluarannya.</p>
     </div>
 
     <div class="grid-2 feature-grid">
@@ -315,142 +324,91 @@
       <article class="feature-card f-blue reveal">
         <div class="f-head"><span class="f-num">1</span><h3>Penerjemah Bahasa Medis <em>(AI)</em></h3></div>
         <ul class="f-list">
-          <li>Input: tempel teks (hasil lab, label obat, artikel, WA), foto/scan, atau rekam suara</li>
-          <li>Pilihan tingkat baca: Anak-anak / Remaja / Dewasa / Lansia</li>
-          <li>Titik keputusan: keterbacaan ≤ target level? (loop balik bila belum)</li>
-          <li>Output: versi sederhana + indikator tingkat baca + SUMBER + tombol Dengar (TTS)</li>
+          <li><strong>Masukan:</strong> tempel teks (hasil lab, label obat, artikel, chat WA) atau rekam suara. <em>Foto/scan belum aktif.</em></li>
+          <li><strong>Pilihan tingkat baca:</strong> Anak-anak / Remaja / Dewasa / Lansia.</li>
+          <li><strong>Proses:</strong> AI menandai dulu semua poin kunci — angka, satuan, rentang normal, peringatan — baru menyederhanakan bahasanya.</li>
+          <li><strong>Keluaran:</strong> versi sederhana + daftar poin kunci yang dipertahankan + sumber + tombol <strong>Dengar</strong> yang benar-benar membacakan hasilnya.</li>
+          <li><strong>Titik keputusan:</strong> keterbacaan ≤ target tingkat? Kalau belum, diproses ulang sekali lagi.</li>
         </ul>
 
-        <div class="demo demo-translator">
-          <label class="sr-only" for="medText">Teks yang akan disederhanakan</label>
-          <textarea id="medText" rows="3" placeholder="Tempel teks di sini...">Hipertensi merupakan kondisi kronis yang ditandai dengan peningkatan tekanan darah arteri secara persisten di atas nilai ambang batas normal.</textarea>
+        <div class="demo">
+          <p class="demo-label">Contoh masukannya:</p>
+          <p class="note-box" style="margin-top:.4rem">“Hipertensi merupakan kondisi kronis yang ditandai dengan peningkatan tekanan darah arteri secara persisten di atas nilai ambang batas normal.”</p>
 
-          <div class="input-tools">
-            <label class="chip" for="ocrInput">📷 Foto / scan
-              <input type="file" id="ocrInput" accept="image/*" class="sr-only">
-            </label>
-            <button type="button" class="chip" id="voiceToolBtn">🎤 Rekam suara</button>
-            <span class="demo-tag" id="inputToolNote">OCR &amp; input suara disimulasikan di peramban.</span>
-          </div>
+          <p class="demo-label" style="margin-top:1rem">Contoh keluarannya (tingkat Anak-anak):</p>
+          <p class="note-box" style="margin-top:.4rem">“Tekanan darah tinggi artinya darah menekan dinding pembuluh darah terlalu kuat. Kalau dibiarkan, jantung jadi capek bekerja.”</p>
 
-          <div class="demo-row">
-            <span class="demo-label">Sederhanakan ke:</span>
-            <div class="seg" role="group" aria-label="Pilih tingkat baca">
-              <button type="button" class="seg-btn is-active" data-level="anak">Anak-anak</button>
-              <button type="button" class="seg-btn" data-level="remaja">Remaja</button>
-              <button type="button" class="seg-btn" data-level="dewasa">Dewasa</button>
-              <button type="button" class="seg-btn" data-level="lansia">Lansia</button>
-            </div>
-            <button type="button" class="btn btn-primary btn-sm" id="translateBtn">Sederhanakan</button>
-          </div>
-
-          <div class="demo-result" id="translateResult" hidden>
-            <div class="result-top">
-              <span class="pill pill-green">✅ Mulai dipahami</span>
-              <span class="pill pill-blue" id="gradePill">Tingkat baca anak-anak (= 5.2)</span>
-            </div>
-            <p id="translateOut"></p>
-
-            <div class="decision-row">
-              <span class="decision-q">Titik keputusan: keterbacaan ≤ target level?</span>
-              <span class="decision-chip" id="decChip">—</span>
-              <span class="decision-note" id="decNote"></span>
-            </div>
-
-            <div class="result-actions">
-              <button type="button" class="btn btn-ghost btn-sm" id="hearBtn">🔊 Dengar hasil</button>
-            </div>
-
-            <div class="src-block">
-              <span class="src-label">Sumber:</span>
-              <a class="src-card" href="https://www.kemkes.go.id" target="_blank" rel="noopener">
-                <span class="src-ic" aria-hidden="true">📄</span>
-                <span class="src-body">
-                  <strong>Kemenkes RI — Hipertensi</strong>
-                  <small>www.kemkes.go.id</small>
-                </span>
-                <span class="src-arrow" aria-hidden="true">›</span>
-              </a>
-              <span class="src-more">Sumber lain: WHO · BPOM (simulasi RAG)</span>
-            </div>
-          </div>
-
-          <p class="note-box">ℹ️ Menggunakan <strong>rubric prompting</strong> (bukan prompt biasa) agar kelengkapan informasi tetap 100% dan keterbacaan naik.</p>
-          <p class="demo-tag">Simulasi demo · hemat kuota</p>
+          <p class="demo-tag">Tingkat baca anak-anak menargetkan setara kelas 6; dewasan setara kelas 12.</p>
         </div>
+
+        <p class="note-box">ℹ️ Memakai <strong>rubric prompting</strong>, bukan prompt biasa: poin kunci dipertahankan lebih dulu, baru bahasa disederhanakan. Kelengkapan informasi jadi bisa dilihat, bukan cuma diklaim.</p>
       </article>
 
       <!-- 2. Mode suara -->
       <article class="feature-card f-green reveal">
         <div class="f-head"><span class="f-num">2</span><h3>Mode Suara &amp; Bahasa Sehari-hari <em>(AI)</em></h3></div>
         <ul class="f-list">
-          <li>Hasil bisa dibacakan otomatis.</li>
-          <li>Bisa tanya dengan suara.</li>
-          <li>Opsi istilah lokal / bahasa daerah.</li>
-          <li>Cocok untuk lansia dan pengguna dengan literasi rendah.</li>
+          <li><strong>Masukan:</strong> pertanyaan diucapkan, bukan diketik — hasilnya langsung jadi teks lewat pengenalan suara peramban.</li>
+          <li><strong>Keluaran:</strong> jawaban dibacakan dengan text-to-speech, dan bisa dihentikan kapan saja.</li>
+          <li><strong>Untuk siapa:</strong> lansia dan pengguna dengan literasi rendah — yang lebih nyaman mendengar daripada membaca.</li>
+          <li><strong>Catatan peramban:</strong> pembacaan suara jalan di semua peramban setelah mesin suara sistem terpasang. Pengenalan suara didukung Chrome dan Edge; Brave dan Firefox belum.</li>
         </ul>
 
-        <div class="demo demo-voice">
+        <div class="demo">
           <div class="voice-head">
             <span class="avatar" aria-hidden="true">🙂</span>
             <div class="speech-bubble">“Demam berdarah itu apa ya?”</div>
           </div>
 
           <div class="voice-controls">
-            <button type="button" class="mic-btn" id="micBtn" aria-label="Mulai mendengarkan" aria-pressed="false">
-              <span class="mic-ic" aria-hidden="true">🎤</span>
-            </button>
-            <div class="waveform" id="waveform" aria-hidden="true">
+            <span class="mic-btn" aria-hidden="true"><span class="mic-ic">🎤</span></span>
+            <span class="waveform" aria-hidden="true">
               <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-            </div>
-            <button type="button" class="play-btn" id="playBtn" aria-label="Putar jawaban">▶</button>
+            </span>
+            <span class="play-btn" aria-hidden="true">▶</span>
           </div>
 
-          <div class="voice-status" id="voiceStatus">Siap mendengarkan. Tekan mikrofon.</div>
+          <p class="voice-status">Alur: tekan mikrofon → pertanyaan dikenali → jawaban dibacakan.</p>
 
-          <div class="voice-answer" id="voiceAnswer" hidden>
-            <p><strong>Jawaban (simulasi):</strong> Demam berdarah (DBD) adalah infeksi yang dibawa nyamuk, bisa bikin angka sel darah turun. Kalau demam tinggi lebih dari 3 hari, langsung periksa ke fasilitas kesehatan.</p>
+          <div class="voice-answer">
+            <p><strong>Contoh jawaban:</strong> Demam berdarah (DBD) adalah infeksi yang dibawa nyamuk. Kalau demam tinggi lebih dari 3 hari, segera periksa ke fasilitas kesehatan.</p>
           </div>
 
           <div class="demo-row">
-            <label class="demo-label" for="voiceLang">Bahasa:</label>
-            <select id="voiceLang" class="select">
-              <option>Bahasa Indonesia</option>
-              <option>Bahasa Sunda</option>
-              <option>Bahasa Jawa</option>
-              <option>Bahasa Melayu Papua</option>
-            </select>
-            <span class="demo-tag">TTS di perangkat</span>
+            <span class="demo-label">Suara:</span>
+            <span class="pill pill-blue">Indonesian (espeak-ng)</span>
           </div>
         </div>
+
+        <p class="note-box">🎙️ <strong>Status:</strong> pembacaan suara (TTS) <strong>sudah aktif</strong> — memakai mesin suara sistem lewat peramban. Pengenalan suara (STT) aktif di Chrome dan Edge; di Brave belum, karena Brave memblokir layanan suara daring.</p>
       </article>
 
       <!-- 3. Mode hemat sinyal -->
       <article class="feature-card f-purple reveal">
         <div class="f-head"><span class="f-num">3</span><h3>Mode Hemat Sinyal</h3></div>
         <ul class="f-list">
-          <li>Konten inti bisa dibaca &amp; didengar tanpa internet.</li>
-          <li>Titik keputusan: sinyal internet tersedia? Tidak → konten dari cache · Ya → ambil versi terbaru.</li>
-          <li>Tidak perlu loading ulang.</li>
-          <li>TTS di perangkat user (Web Speech API).</li>
+          <li><strong>Tujuan:</strong> jawaban terakhir tetap bisa dibaca &amp; didengar tanpa internet.</li>
+          <li><strong>Titik keputusan:</strong> sinyal internet tersedia? Tidak → konten dari simpanan · Ya → ambil versi terbaru.</li>
+          <li><strong>Untungnya:</strong> tidak perlu loading ulang, hemat kuota, hemat daya, hemat server.</li>
+          <li><strong>TTS:</strong> dijalankan di perangkat pengguna, bukan di server.</li>
         </ul>
 
-        <div class="demo demo-offline">
+        <div class="demo">
           <div class="offline-toggle">
             <div>
               <strong>Mode hemat sinyal</strong>
               <span class="demo-tag">Konten tersimpan di perangkat</span>
             </div>
-            <button type="button" class="switch" id="offlineSwitch" role="switch" aria-checked="false" aria-label="Aktifkan mode hemat sinyal"><span></span></button>
+            <span class="switch" role="switch" aria-checked="false" aria-label="Ilustrasi sakelar mode hemat sinyal"><span></span></span>
           </div>
 
-          <ul class="check-list" id="offlineList">
-            <li data-on="Konten inti tersedia">Konten inti bisa dibaca &amp; didengar</li>
-            <li data-on="Halaman tidak dimuat ulang">Tidak perlu loading ulang</li>
-            <li data-on="TTS berjalan di perangkat">TTS di perangkat user (Web Speech API)</li>
+          <ul class="check-list">
+            <li>Konten inti bisa dibaca &amp; didengar</li>
+            <li>Halaman tidak perlu dimuat ulang</li>
+            <li>TTS berjalan di perangkat pengguna</li>
           </ul>
 
-          <div class="offline-visual" id="offlineVisual">
+          <div class="offline-visual">
             <span class="off-ic" aria-hidden="true">📵</span>
             <span>Tetap bisa diakses tanpa internet</span>
           </div>
@@ -458,76 +416,70 @@
           <div class="signal-decision">
             <span class="signal-q">Titik keputusan: sinyal internet tersedia?</span>
             <div class="signal-branches">
-              <span class="branch" id="branchOff">📵 Tidak ada sinyal → konten dari cache</span>
-              <span class="branch" id="branchOn">📶 Ada sinyal → ambil versi terbaru</span>
+              <span class="branch">📵 Tidak ada sinyal → konten dari simpanan</span>
+              <span class="branch">📶 Ada sinyal → ambil versi terbaru</span>
             </div>
-            <p class="signal-now" id="signalNow"></p>
           </div>
 
           <div class="savings">
             <span>💾 Hemat kuota</span><span>🔋 Hemat daya</span><span>🛠️ Hemat server</span>
           </div>
         </div>
+
+        <p class="note-box">📡 <strong>Status:</strong> <strong>sudah aktif.</strong> Menyalakan sakelarnya di Pengaturan menyimpan jawaban terakhir di perangkat, lalu ditampilkan kembali di Beranda saat sinyal hilang.</p>
       </article>
 
       <!-- 4. Verifikasi sumber -->
       <article class="feature-card f-amber reveal">
-        <div class="f-head"><span class="f-num">4</span><h3>Setiap Jawaban Punya Sumber <em>(AI + RAG)</em></h3></div>
+        <div class="f-head"><span class="f-num">4</span><h3>Setiap Jawaban Punya Sumber <em>(AI)</em></h3></div>
         <ul class="f-list">
-          <li>Hanya dari dokumen resmi: Kemenkes, WHO, BPOM.</li>
-          <li>Titik keputusan: ada di sumber resmi? Ya → <strong>SESUAI</strong> + kutipan · Tidak → <strong>TIDAK DITEMUKAN</strong> + arahan sumber resmi</li>
-          <li>Tampilkan kutipan &amp; tautan sumber.</li>
-          <li>Fitur “Cek Info Ini” untuk verifikasi hoaks.</li>
+          <li><strong>Rujukan:</strong> dokumen resmi — Kemenkes RI, WHO, BPOM.</li>
+          <li><strong>Titik keputusan:</strong> ada di sumber resmi? Ya → <strong>DIDUKUNG</strong> + sumbernya · Tidak → <strong>TIDAK DIDUKUNG</strong> + arahan ke sumber resmi.</li>
+          <li><strong>Kejujuran:</strong> kalau tidak ada dasarnya, AI wajib menjawab <strong>“belum bisa dipastikan”</strong> — bukan memaksa verdict.</li>
+          <li><strong>Aturan keras:</strong> AI dilarang mengarang judul, nomor, atau tautan dokumen.</li>
         </ul>
 
-        <div class="demo demo-verify">
-          <label class="sr-only" for="verifyText">Informasi yang ingin dicek</label>
-          <input type="text" id="verifyText" class="input" value="Imunisasi DBD aman untuk anak?" placeholder="Tempel informasi yang mau dicek…">
+        <div class="demo">
+          <p class="demo-label">Contoh klaim yang diperiksa:</p>
+          <p class="note-box" style="margin-top:.4rem">“Vaksin MMR menyebabkan autisme pada anak.”</p>
 
-          <div class="verify-actions">
-            <button type="button" class="btn btn-primary btn-sm" id="verifyBtn">Cek Info Ini</button>
-            <span class="src-badges"><span>Kemenkes</span><span>WHO</span><span>BPOM</span></span>
-          </div>
-
-          <div class="verify-result" id="verifyResult" hidden>
-            <div id="vrYes" hidden>
-              <div class="vr-top"><span class="pill pill-green">✔ VERDICT: SESUAI</span><strong>Ada di sumber resmi</strong></div>
-              <a class="src-card" id="vrSrcCard" href="https://www.kemkes.go.id" target="_blank" rel="noopener">
-                <span class="src-ic" aria-hidden="true">📄</span>
-                <span class="src-body">
-                  <strong id="vrSrcTitle">Kemenkes RI — Imunisasi</strong>
-                  <small id="vrSrcUrl">www.kemkes.go.id</small>
-                </span>
-                <span class="src-arrow" aria-hidden="true">›</span>
-              </a>
-              <p class="vr-note" id="vrYesNote">Confidence 0.94 · 3 dokumen acuan dikutip (simulasi RAG).</p>
+          <div class="verify-result" style="margin-top:.9rem">
+            <div class="vr-top">
+              <span class="pill pill-amber">✖ VERDICT: TIDAK DIDUKUNG</span>
+              <strong>Tidak ada dasarnya di dokumen resmi</strong>
             </div>
-            <div id="vrNo" hidden>
-              <div class="vr-top"><span class="pill pill-amber">✖ VERDICT: TIDAK DITEMUKAN</span><strong>Tidak ada di dokumen resmi</strong></div>
-              <p class="vr-warn" id="vrNoNote">Informasi ini tidak ditemukan di Kemenkes / WHO / BPOM — jangan dipercaya dulu. Arahkan ke sumber resmi:</p>
-              <div class="vr-links">
-                <a class="src-card" href="https://www.kemkes.go.id" target="_blank" rel="noopener">
-                  <span class="src-ic" aria-hidden="true">🏥</span>
-                  <span class="src-body"><strong>Kemenkes RI</strong><small>www.kemkes.go.id</small></span>
-                  <span class="src-arrow" aria-hidden="true">›</span>
-                </a>
-                <a class="src-card" href="https://www.who.int" target="_blank" rel="noopener">
-                  <span class="src-ic" aria-hidden="true">🌐</span>
-                  <span class="src-body"><strong>WHO</strong><small>www.who.int</small></span>
-                  <span class="src-arrow" aria-hidden="true">›</span>
-                </a>
-                <a class="src-card" href="https://www.pom.go.id" target="_blank" rel="noopener">
-                  <span class="src-ic" aria-hidden="true">💊</span>
-                  <span class="src-body"><strong>BPOM</strong><small>www.pom.go.id</small></span>
-                  <span class="src-arrow" aria-hidden="true">›</span>
-                </a>
-              </div>
+            <p class="vr-warn">Klaim ini tidak didukung bukti ilmiah. Penelitian yang memicunya sudah ditarik. Untuk keluhan pribadi, tetap tanyakan ke tenaga kesehatan.</p>
+            <div class="vr-links">
+              <span class="src-card">
+                <span class="src-ic" aria-hidden="true">🏥</span>
+                <span class="src-body"><strong>Kemenkes RI</strong><small>www.kemkes.go.id</small></span>
+              </span>
+              <span class="src-card">
+                <span class="src-ic" aria-hidden="true">🌐</span>
+                <span class="src-body"><strong>WHO</strong><small>www.who.int</small></span>
+              </span>
+              <span class="src-card">
+                <span class="src-ic" aria-hidden="true">💊</span>
+                <span class="src-body"><strong>BPOM</strong><small>www.pom.go.id</small></span>
+              </span>
             </div>
           </div>
-
-          <p class="note-box">🛡️ Mendukung transparansi penggunaan AI dan melawan hoaks kesehatan.</p>
         </div>
+
+        <p class="note-box">🛡️ Mendukung transparansi penggunaan AI dan melawan hoaks kesehatan.</p>
       </article>
+    </div>
+
+    <!-- Status fitur -->
+    <div class="finding reveal" style="margin-top:1.6rem">
+      <div class="finding-main">
+        <h3>📋 Status tiap fitur — apa yang sudah jalan, apa yang masih rencana</h3>
+        <p class="finding-lead">Ditulis apa adanya, supaya tidak ada klaim yang berlebihan.</p>
+        <ul class="f-list" style="margin-top:.9rem">
+          <li><strong>Sudah jalan:</strong> Tanya AI (streaming), Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, daftar sumber, kuesioner HLS-SF12, riwayat sesi, pengaturan, <strong>baca otomatis (TTS)</strong>, <strong>tanya dengan suara (STT)</strong>, dan <strong>mode hemat sinyal</strong>.</li>
+          <li><strong>Belum ada:</strong> foto/OCR (belum ada pustaka pengenalan gambar) dan terjemahan ke bahasa daerah (baru antarmuka bahasanya).</li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
@@ -548,14 +500,16 @@
           <div class="app">
             <aside class="app-side">
               <div class="app-brand"><img src="assets/logo-mark.png" alt="" width="20" height="18"> Pahami Sehat</div>
-              <nav class="app-nav" id="appNav" aria-label="Navigasi mockup dasbor">
-                <button type="button" class="is-active">🏠 Beranda</button>
-                <button type="button">✨ Tanya AI</button>
-                <button type="button">🎙️ Suara</button>
-                <button type="button">🕘 Riwayat</button>
-                <button type="button">📝 Kuesioner</button>
-                <button type="button">⚙️ Pengaturan</button>
-              </nav>
+              <div class="app-nav" aria-hidden="true">
+                <span class="app-nav-item is-active">🏠 Beranda</span>
+                <span class="app-nav-item">✨ Tanya AI</span>
+                <span class="app-nav-item">🪄 Sederhanakan</span>
+                <span class="app-nav-item">🛡️ Cek Klaim</span>
+                <span class="app-nav-item">🎙️ Suara</span>
+                <span class="app-nav-item">🕘 Riwayat</span>
+                <span class="app-nav-item">📝 Kuesioner</span>
+                <span class="app-nav-item">⚙️ Pengaturan</span>
+              </div>
             </aside>
 
             <div class="app-main">
@@ -564,22 +518,25 @@
                 <p>Ada yang bisa kami bantu?</p>
               </div>
 
-              <form class="app-search" id="askForm">
-                <input type="text" id="askInput" placeholder="Tulis pertanyaan, tempel teks, atau kirim suara..." aria-label="Pertanyaan">
-                <button class="btn btn-primary btn-sm" type="submit">Tanya Sekarang</button>
-              </form>
+              <div class="app-search" aria-hidden="true">
+                <span>Tulis pertanyaan, tempel teks, atau kirim suara…</span>
+                <span class="btn btn-primary btn-sm">Tanya Sekarang</span>
+              </div>
 
-              <div class="app-answer" id="appAnswer" hidden></div>
+              <div class="app-answer">
+                <strong>Jawaban tersederhanakan</strong>
+                <p>Demam itu saat badan jadi lebih panas dari biasanya — tanda tubuh sedang melawan kuman. Suhu normal sekitar 36,5–37,5 °C. Kalau lebih dari 38 °C, itu demam.</p>
+              </div>
 
               <h4 class="app-sub">Topik populer</h4>
-              <div class="chip-row" id="topicChips">
-                <button class="chip" type="button" data-topic="Demam">Demam</button>
-                <button class="chip" type="button" data-topic="Hipertensi">Hipertensi</button>
-                <button class="chip" type="button" data-topic="Diabetes">Diabetes</button>
-                <button class="chip" type="button" data-topic="Obat">Obat</button>
-                <button class="chip" type="button" data-topic="Imunisasi">Imunisasi</button>
-                <button class="chip" type="button" data-topic="Gizi">Gizi</button>
-                <button class="chip" type="button" data-topic="Kesehatan Mental">Kesehatan Mental</button>
+              <div class="chip-row" aria-hidden="true">
+                <span class="chip">Demam</span>
+                <span class="chip">Hipertensi</span>
+                <span class="chip">Diabetes</span>
+                <span class="chip">Obat</span>
+                <span class="chip">Imunisasi</span>
+                <span class="chip">Gizi</span>
+                <span class="chip">Kesehatan Mental</span>
               </div>
             </div>
           </div>
@@ -594,19 +551,23 @@
           <div class="ph-top"><img src="assets/logo-mark.png" alt="" width="18" height="16"> Pahami Sehat</div>
           <div class="ph-body">
             <p class="ph-text">Tekan untuk bicara atau tanya dengan suara.</p>
-            <button class="ph-mic" type="button" id="phMic" aria-label="Tahan untuk bicara">🎤</button>
-            <div class="ph-status" id="phStatus">Tahan untuk bicara</div>
+            <span class="ph-mic" aria-hidden="true">🎤</span>
+            <div class="ph-status">Tahan untuk bicara</div>
             <h4 class="ph-sub">Pertanyaan cepat</h4>
-            <div class="chip-row chip-row-sm" id="quickChips">
-              <button class="chip" type="button" data-topic="Demam">Kenapa demam bisa naik turun?</button>
-              <button class="chip" type="button" data-topic="Obat">Obat boleh diminum sesudah makan?</button>
-              <button class="chip" type="button" data-topic="Hipertensi">Berapa normalnya tekanan darah?</button>
+            <div class="chip-row chip-row-sm" aria-hidden="true">
+              <span class="chip">Kenapa demam bisa naik turun?</span>
+              <span class="chip">Obat boleh diminum sesudah makan?</span>
+              <span class="chip">Berapa normalnya tekanan darah?</span>
             </div>
-            <div class="ph-answer" id="phAnswer" hidden></div>
+            <div class="ph-answer">
+              <p>Tekanan darah normal umumnya di bawah 120/80 mmHg. Di atas 140/90 mmHg sudah masuk tekanan darah tinggi.</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <p class="demo-tag" style="color:#B9C6D8;margin-top:1.2rem">Tampilan di atas adalah ilustrasi produk. Yang bisa dicoba ada di aplikasinya.</p>
   </div>
 </section>
 
@@ -615,42 +576,41 @@
   <div class="container">
     <div class="section-head reveal">
       <span class="eyebrow">Alat Ukur</span>
-      <h2>Cek Tingkat Literasi Kesehatan Anda</h2>
-      <p>Kuesioner singkat berbasis instrumen <strong>HLS-SF12</strong>. Hasil langsung tampil, tanpa data tersimpan.</p>
+      <h2>Cek Tingkat Literasi Kesehatan</h2>
+      <p>Kuesioner singkat berbasis instrumen <strong>HLS-SF12</strong> — instrumen yang sudah tervalidasi (α 0,899). Hasilnya langsung tampil, tanpa data yang disimpan.</p>
     </div>
 
-    <div class="quiz reveal">
-      <div class="quiz-left">
-        <div class="quiz-meta">
-          <span class="pill pill-blue">HLS-SF12</span>
-          <span class="quiz-count" id="quizCount">Soal 1 dari 5</span>
-        </div>
-        <div class="progress"><span id="quizProgress" style="width:20%"></span></div>
+    <div class="grid-2">
+      <article class="card reveal">
+        <h3>Cara kerjanya</h3>
+        <ul class="f-list" style="margin-top:.8rem">
+          <li>Pengguna menjawab beberapa pernyataan tentang kemudahan mencari, memahami, dan menilai informasi kesehatan.</li>
+          <li>Setiap jawaban diberi skor, lalu dijumlahkan jadi persentase.</li>
+          <li>Persentase itu diterjemahkan menjadi tiga kategori: <strong>Baik</strong>, <strong>Sedang</strong>, atau <strong>Perlu dukungan</strong>.</li>
+          <li>Setiap kategori punya saran tindak lanjut — misalnya menyalakan tingkat baca Anak-anak dan mode suara.</li>
+          <li>Semua perhitungan terjadi di peramban. Tidak ada jawaban yang dikirim ke mana pun.</li>
+        </ul>
+        <p class="note-box">📊 Seluruh perhitungan berjalan lokal di peramban — tidak ada data pribadi yang dikirim atau disimpan.</p>
+      </article>
 
-        <div class="quiz-body" id="quizBody">
-          <p class="quiz-q" id="quizQ"></p>
-          <div class="quiz-opts" id="quizOpts"></div>
-        </div>
+      <article class="card reveal">
+        <h3>Contoh pernyataannya</h3>
+        <p class="demo-tag" style="margin-top:.6rem">Di aplikasi, tiap pernyataan dijawab dengan skala: Sangat sulit · Kadang sulit · Mudah · Sangat mudah.</p>
+        <ul class="f-list" style="margin-top:.9rem">
+          <li>“Saya kesulitan memahami informasi kesehatan yang saya baca.”</li>
+          <li>“Saya tahu di mana menemukan informasi kesehatan yang tepercaya.”</li>
+          <li>“Istilah medis membuat saya bingung.”</li>
+          <li>“Saya bisa menilai apakah suatu informasi kesehatan itu benar.”</li>
+          <li>“Saya bisa menjelaskan kembali informasi yang diberikan tenaga kesehatan.”</li>
+        </ul>
 
-        <div class="quiz-nav">
-          <button type="button" class="btn btn-ghost btn-sm" id="prevBtn" disabled>← Sebelumnya</button>
-          <button type="button" class="btn btn-primary btn-sm" id="nextBtn">Berikutnya →</button>
-        </div>
-        <p class="demo-tag">Simulasi demo — jawaban tidak dikirim ke mana pun.</p>
-      </div>
-
-      <div class="quiz-right" id="quizResult" hidden>
-        <h3>Hasil Kuesioner</h3>
-        <div class="donut" id="donut"><span id="donutVal">0%</span></div>
-        <p class="donut-label" id="donutLabel">Literasi Kesehatan Anda: <strong>Sedang</strong></p>
-        <div class="bars" id="bars">
+        <div class="bars" aria-hidden="true">
           <div class="bar"><span>Pemahaman</span><i style="--w:78%"></i><b>78%</b></div>
           <div class="bar"><span>Akses informasi</span><i style="--w:72%"></i><b>72%</b></div>
           <div class="bar"><span>Ketahanan hoaks</span><i style="--w:64%"></i><b>64%</b></div>
         </div>
-        <p class="saran-box" id="saranText" hidden></p>
-        <button type="button" class="btn btn-ghost btn-sm" id="retryBtn">Ulangi kuesioner</button>
-      </div>
+        <p class="demo-tag">Contoh tampilan hasil. Kuesionernya sendiri bisa dicoba di aplikasi, menu <strong>Kuesioner</strong>.</p>
+      </article>
     </div>
   </div>
 </section>
@@ -688,7 +648,7 @@
         <div class="r-body">
           <div class="r-top"><h3>Inovasi &amp; Teknologi</h3><span class="r-pct">25%</span></div>
           <div class="r-bar"><i style="--w:25%"></i></div>
-          <p>AI di 4 tempat dengan alasan jelas. Rubric prompting, RAG + sitasi, indikator keterbacaan terukur.</p>
+          <p>AI di 4 tempat dengan alasan jelas. Rubric prompting, penyertaan sumber, indikator keterbacaan terukur.</p>
         </div>
       </article>
 
@@ -748,18 +708,19 @@
       <h4>Informasi</h4>
       <a href="#kuesioner">Kuesioner HLS-SF12</a>
       <a href="#rubrik">Rubrik Penilaian</a>
+      <a href="/">Buka Aplikasinya</a>
       <a href="#beranda">Kembali ke atas</a>
     </nav>
 
     <div class="footer-col">
       <h4>Sumber resmi</h4>
       <p class="src-badges col"><span>Kemenkes RI</span><span>WHO</span><span>BPOM</span></p>
-      <p class="footer-note">Prototipe frontend. Seluruh fitur AI, suara, dan verifikasi berjalan sebagai simulasi — tanpa backend, tanpa database, tanpa penyimpanan data pribadi.</p>
+      <p class="footer-note">Halaman penjelasan (statis). Aplikasi yang bisa dicoba ada di halaman utama — di sana fitur AI sudah terhubung ke model sungguhan, termasuk baca otomatis dan mode hemat sinyal. Foto/OCR belum ada.</p>
     </div>
   </div>
   <div class="container footer-bottom">
     <span>© 2026 Pahami Sehat — Informasi Kesehatan untuk Semua</span>
-    <span>Dibuat untuk prototype presentasi · aksesibel &amp; responsif</span>
+    <span>Dibuat untuk LOGICODIX 2026 · aksesibel &amp; responsif</span>
   </div>
 </footer>
 

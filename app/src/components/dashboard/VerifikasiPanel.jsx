@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ShieldCheck, ShieldAlert, ShieldQuestion, Loader2 } from 'lucide-react'
 import { Button, Card, SectionHeading, SourcePills, PoinKunci, Peringatan } from '../ui/primitives'
+import TombolDengar from '../ui/TombolDengar'
 import { TINGKAT } from '../../data/tingkat'
 import { verifikasi } from '../../lib/api'
 
@@ -150,6 +151,9 @@ export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline
             {hasil.jawaban}
           </p>
 
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <TombolDengar teks={hasil.jawaban} />
+          </div>
           <PoinKunci items={hasil.poinKunci} />
           <SourcePills
             sources={hasil.sumber}

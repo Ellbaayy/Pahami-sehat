@@ -1,6 +1,8 @@
 import { useId, useState } from 'react'
 import { Sparkles, Mic, Send, Loader2, WifiOff } from 'lucide-react'
 import { Button, Card, SourcePills, Skeleton, PoinKunci, Peringatan } from '../ui/primitives'
+import TombolDengar from '../ui/TombolDengar'
+import { gunakanSuara } from '../../lib/useSuara'
 import { cn } from '../../lib/cn'
 
 /**
@@ -23,7 +25,12 @@ export default function AskAI({
   serverMemuat = false,
 }) {
   const id = useId()
-  const [listening, setListening] = useState(false)
+
+  // mikrofon sungguhan — hasilnya langsung masuk ke kotak pertanyaan
+  const suara = gunakanSuara({
+    bahasa: 'id-ID',
+    onHasil: (teks) => onChange(teks),
+  })
 
   const canSubmit = value.trim().length > 0 && !loading && !serverMemuat
 
@@ -34,16 +41,8 @@ export default function AskAI({
   }
 
   const toggleMic = () => {
-    if (listening) {
-      setListening(false)
-      return
-    }
-    setListening(true)
-    // simulasi input suara — belum memakai Web Speech API
-    window.setTimeout(() => {
-      setListening(false)
-      onChange('Apa arti hasil laboratorium saya ini?')
-    }, 1500)
+    if (suara.mendengar) suara.berhenti()
+    else suara.mulai()
   }
 
   return (
@@ -100,12 +99,25 @@ export default function AskAI({
           <button
             type="button"
             onClick={toggleMic}
-            aria-pressed={listening}
-            aria-label={listening ? 'Hentikan perekaman suara' : 'Rekam pertanyaan dengan suara'}
+            aria-pressed={suara.mendengar}
+            disabled={!suara.didukung}
+            title={
+              suara.didukung
+                ? 'Rekam pertanyaan dengan suara'
+                : 'Peramban ini belum mendukung pengenalan suara — coba Chrome atau Edge'
+            }
+            aria-label={
+              !suara.didukung
+                ? 'Pengenalan suara tidak didukung peramban ini'
+                : suara.mendengar
+                  ? 'Hentikan perekaman suara'
+                  : 'Rekam pertanyaan dengan suara'
+            }
             className={cn(
               'grid size-10 shrink-0 place-items-center rounded-full transition-all duration-200',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
-              listening
+              'disabled:cursor-not-allowed disabled:opacity-45',
+              suara.mendengar
                 ? 'bg-rose-500 text-white animate-pulse'
                 : 'bg-slate-100 text-navy-500 hover:bg-brand-50 hover:text-brand-600',
             )}
@@ -128,8 +140,12 @@ export default function AskAI({
       </form>
 
       <p className="mt-2 text-[0.8rem] text-slate-500">
-        {listening ? (
-          'Mendengarkan… bicara sekarang.'
+        {suara.mendengar ? (
+          suara.sementara ? (
+            <span className="text-brand-600">“{suara.sementara}”</span>
+          ) : (
+            'Mendengarkan… bicara sekarang.'
+          )
         ) : loading && statusPesan ? (
           <span className="inline-flex items-center gap-1.5 text-brand-600">
             <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
@@ -145,6 +161,7 @@ export default function AskAI({
         )}
       </p>
 
+      {suara.error ? <Peringatan pesan={suara.error} code="mikrofon" /> : null}
       {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
 
       {/* ---- hasil ---- */}
@@ -181,6 +198,9 @@ export default function AskAI({
           <p className="text-[0.92rem] leading-relaxed whitespace-pre-wrap text-navy-700">
             {result.jawaban}
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <TombolDengar teks={result.jawaban} />
+          </div>
           <PoinKunci items={result.poinKunci} />
           <SourcePills
             sources={result.sumber}

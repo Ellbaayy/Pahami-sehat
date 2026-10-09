@@ -20,8 +20,10 @@ export default function QuizPanel() {
     }
     setError('')
 
+    // Skala jawaban 0–3 (4 pilihan), jadi skor maksimum = jumlah item x 3.
+    // Sebelumnya dibagi (jumlah item - 1) x 4, sehingga 100% tidak pernah tercapai.
     const total = QUIZ_ITEMS.reduce((sum, _, i) => sum + Number(answers[i]), 0)
-    const max = (QUIZ_ITEMS.length - 1) * 4
+    const max = QUIZ_ITEMS.length * 3
     const pct = Math.round((total / max) * 100)
 
     let category
@@ -57,7 +59,7 @@ export default function QuizPanel() {
       <SectionHeading
         eyebrow="Alat ukur"
         title="Kuesioner HLS-SF12"
-        description="Versi ringkas untuk demo. Semua perhitungan dilakukan lokal di browser — tidak ada data yang dikirim ke mana pun."
+        description="Versi ringkas. Semua perhitungan dilakukan lokal di peramban — tidak ada jawaban yang dikirim ke mana pun."
       />
 
       <form onSubmit={submit} noValidate>
@@ -178,7 +180,7 @@ export default function QuizPanel() {
               {result.advice}
             </p>
             <p className="mt-3 text-[0.76rem] text-slate-500">
-              Simulasi demo — bukan diagnosis medis.
+              Hasil ini alat bantu belajar, bukan diagnosis medis.
             </p>
           </div>
         </Card>

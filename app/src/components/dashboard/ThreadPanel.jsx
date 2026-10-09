@@ -1,6 +1,7 @@
-import { useState } from 'react'
 import { MessagesSquare, Mic, Loader2 } from 'lucide-react'
 import { SectionHeading, EmptyState, SourcePills, PoinKunci, Peringatan } from '../ui/primitives'
+import TombolDengar from '../ui/TombolDengar'
+import { gunakanSuara } from '../../lib/useSuara'
 import { cn } from '../../lib/cn'
 
 const PLACEHOLDER = 'Tulis pertanyaan, tempel teks, atau kirim suara...'
@@ -22,16 +23,12 @@ export default function ThreadPanel({
   serverOnline = true,
   serverMemuat = false,
 }) {
-  const [listening, setListening] = useState(false)
+  const suara = gunakanSuara({ bahasa: 'id-ID', onHasil: onInputChange })
   const canSubmit = input.trim().length > 0 && !loading && !serverMemuat
 
   const toggleMic = () => {
-    if (listening) return setListening(false)
-    setListening(true)
-    window.setTimeout(() => {
-      setListening(false)
-      onInputChange('Sederhanakan teks ini ke tingkat anak-anak')
-    }, 1500)
+    if (suara.mendengar) suara.berhenti()
+    else suara.mulai()
   }
 
   return (
@@ -65,12 +62,19 @@ export default function ThreadPanel({
             <button
               type="button"
               onClick={toggleMic}
-              aria-pressed={listening}
-              aria-label={listening ? 'Hentikan perekaman suara' : 'Rekam dengan suara'}
+              aria-pressed={suara.mendengar}
+              disabled={!suara.didukung}
+              title={
+                suara.didukung
+                  ? 'Rekam dengan suara'
+                  : 'Peramban ini belum mendukung pengenalan suara — coba Chrome atau Edge'
+              }
+              aria-label={suara.mendengar ? 'Hentikan perekaman suara' : 'Rekam dengan suara'}
               className={cn(
                 'grid size-9 shrink-0 place-items-center rounded-full transition-colors duration-200',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
-                listening
+                'disabled:cursor-not-allowed disabled:opacity-45',
+                suara.mendengar
                   ? 'bg-rose-500 text-white animate-pulse'
                   : 'bg-slate-100 text-navy-500 hover:bg-brand-50 hover:text-brand-600',
               )}
@@ -95,13 +99,18 @@ export default function ThreadPanel({
           </button>
         </form>
 
-        {!serverOnline && !serverMemuat ? (
+        {suara.mendengar ? (
+          <p className="mt-2.5 text-[0.8rem] text-brand-600">
+            {suara.sementara ? `“${suara.sementara}”` : 'Mendengarkan… bicara sekarang.'}
+          </p>
+        ) : !serverOnline && !serverMemuat ? (
           <p className="mt-2.5 text-[0.8rem] text-amber-700">
             Server AI belum terhubung — jalankan <code className="font-mono">npm run server</code>.
           </p>
         ) : null}
       </div>
 
+      {suara.error ? <Peringatan pesan={suara.error} code="mikrofon" /> : null}
       {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
 
       {thread.length === 0 && !loading ? (
@@ -140,6 +149,9 @@ export default function ThreadPanel({
               </p>
               {m.role === 'ai' ? (
                 <>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <TombolDengar teks={m.text} />
+                  </div>
                   <PoinKunci items={m.poinKunci} />
                   <SourcePills sources={m.sources} negative={m.verdict === 'negative'} />
                   {m.catatan ? (

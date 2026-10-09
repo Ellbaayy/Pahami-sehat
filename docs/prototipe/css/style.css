@@ -787,3 +787,31 @@ input,select,textarea{max-width:100%}
   .flow{grid-template-columns:repeat(6,1fr)}
   .start-panel{grid-template-columns:1fr 1.25fr}
 }
+
+/* =========================================================
+   GAYA UNTUK ELEMEN STATIS
+   Halaman penjelasan tidak lagi punya demo interaktif, jadi
+   elemen yang tadinya <button>/<a> sekarang <span>/<div>.
+   Blok ini menggantikan gaya berbasis tag di atas.
+   ========================================================= */
+
+/* --- item menu di mockup dasbor (tadinya .app-nav button) --- */
+.app-nav-item{
+  display:block;text-align:left;padding:.55rem .65rem;border-radius:10px;
+  font-size:.85rem;font-weight:600;color:var(--ink-2);
+}
+.app-nav-item.is-active{
+  background:var(--blue);color:#fff;box-shadow:0 6px 14px rgba(29,78,166,.25);
+}
+
+/* --- kontrol suara sebagai ilustrasi (tadinya button) --- */
+.mic-btn,.play-btn,.ph-mic{display:inline-flex;align-items:center;justify-content:center}
+.switch{display:inline-block}
+
+/* --- kartu pilihan langkah (tadinya button) --- */
+.start-choice{color:inherit}
+.start-choice small{font-size:.8rem;color:var(--ink-2);font-weight:600}
+
+/* --- keterangan tambahan --- */
+.demo-tag.is-note{margin-top:.9rem}
+.finding .f-list{margin-bottom:0}

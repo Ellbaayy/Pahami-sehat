@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
 import MobileDrawer from './components/layout/MobileDrawer'
@@ -15,11 +15,14 @@ import ThreadPanel from './components/dashboard/ThreadPanel'
 import SederhanakanPanel from './components/dashboard/SederhanakanPanel'
 import VerifikasiPanel from './components/dashboard/VerifikasiPanel'
 import { SectionHeading, EmptyState } from './components/ui/primitives'
-import { History, ArrowLeft, PlugZap, Plug } from 'lucide-react'
+import TombolDengar from './components/ui/TombolDengar'
+import { History, ArrowLeft, PlugZap, Plug, WifiOff } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP, HISTORY } from './data/dummy'
 import { TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
 import { tanyaStream } from './lib/api'
+import { ttsBaca, ttsBerhenti } from './lib/tts'
+import { ambilCache, hapusCache, simpanCache, sedangOffline } from './lib/offline'
 
 const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, offline: false, tts: false, lang: 'id' }
 
@@ -54,6 +57,45 @@ export default function App() {
 
   const server = useServer()
   const batalRef = useRef(null)
+
+  // supaya `ask` selalu melihat nilai tts terbaru tanpa ikut jadi dependensi
+  const ttsAutoRef = useRef(settings.tts)
+  ttsAutoRef.current = settings.tts
+
+  // --- mode hemat sinyal -------------------------------------------------
+  const [cache, setCache] = useState(() => ambilCache())
+  const [offline, setOffline] = useState(() => sedangOffline())
+
+  // pantau status jaringan
+  useEffect(() => {
+    const naik = () => setOffline(false)
+    const turun = () => setOffline(true)
+    window.addEventListener('online', naik)
+    window.addEventListener('offline', turun)
+    return () => {
+      window.removeEventListener('online', naik)
+      window.removeEventListener('offline', turun)
+    }
+  }, [])
+
+  // simpan cache saat jawaban baru masuk, kalau modenya menyala
+  useEffect(() => {
+    if (!settings.offline || !result) return
+    const pertanyaan = askedQuestion
+    const oke = simpanCache({ pertanyaan, hasil: result, tingkat: settings.level })
+    if (oke) setCache(ambilCache())
+  }, [result, settings.offline, settings.level, askedQuestion])
+
+  // matikan mode hemat sinyal → bersihkan simpanan
+  const ubahSettings = useCallback((baru) => {
+    setSettings((lama) => {
+      if (lama.offline && !baru.offline) {
+        hapusCache()
+        setCache(null)
+      }
+      return baru
+    })
+  }, [])
 
   const navigate = useCallback((id) => {
     setActive(id)
@@ -90,6 +132,8 @@ export default function App() {
           onHasil: (h) => {
             setResult(h)
             setThread((prev) => [...prev, { id: `a${Date.now()}`, role: 'ai', ...kePesan(h) }])
+            // putar suara otomatis kalau diaktifkan di Pengaturan
+            if (ttsAutoRef.current) ttsBaca(h.jawaban)
             setHistory((prev) => [
               {
                 id: `n${Date.now()}`,
@@ -165,6 +209,29 @@ export default function App() {
             {active === 'beranda' ? (
               <div className="space-y-[clamp(1.4rem,1.1rem+1.1vw,2.4rem)]">
                 <Greeting />
+
+                {/* mode hemat sinyal: jawaban terakhir tetap bisa dibaca tanpa internet */}
+                {settings.offline && cache ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                      <WifiOff className="size-4 shrink-0 text-amber-700" aria-hidden="true" />
+                      <p className="text-[0.8rem] font-bold tracking-wide text-amber-800 uppercase">
+                        {offline ? 'Sedang offline — jawaban terakhir' : 'Jawaban terakhir tersimpan'}
+                      </p>
+                    </div>
+                    <p className="text-[0.86rem] font-semibold text-navy-800">“{cache.pertanyaan}”</p>
+                    <p className="mt-1 text-[0.92rem] leading-relaxed whitespace-pre-wrap text-navy-700">
+                      {cache.jawaban}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <TombolDengar teks={cache.jawaban} label="Dengar tersimpan" />
+                      <span className="text-[0.76rem] text-amber-700">
+                        Tersimpan di perangkat ini saja
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+
                 <AskAI
                   value={input}
                   onChange={setInput}
@@ -251,7 +318,7 @@ export default function App() {
 
             {active === 'kuesioner' ? <QuizPanel /> : null}
             {active === 'pengaturan' ? (
-              <SettingsPanel settings={settings} onChange={setSettings} />
+              <SettingsPanel settings={settings} onChange={ubahSettings} />
             ) : null}
           </div>
         </main>
