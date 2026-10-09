@@ -264,6 +264,49 @@ rute.post('/api/tanya/stream', bungkus(async (req, res) => {
   }
 }))
 
+
+/* ---------------------------------------------------------- probe (uji) ---- */
+/**
+ * Uji sementara: sumber mana yang bisa diakses dari server ini.
+ * Dipakai untuk memutuskan mesin pencari mana yang layak dipakai produksi.
+ */
+rute.get('/api/probe', bungkus(async (_req, res) => {
+  const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
+  const q = 'gejala demam berdarah'
+
+  const uji = async (nama, url, pola) => {
+    const t0 = Date.now()
+    try {
+      const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(12000) })
+      const teks = await r.text()
+      return {
+        nama, status: r.status, ms: Date.now() - t0, byte: teks.length,
+        cocok: pola ? (teks.match(pola) || []).length : null,
+        cuplik: teks.slice(0, 120).replace(/\s+/g, ' '),
+      }
+    } catch (e) {
+      return { nama, error: `${e.name}: ${String(e.message).slice(0, 80)}`, ms: Date.now() - t0 }
+    }
+  }
+
+  const hasil = await Promise.all([
+    uji('duckduckgo-html', 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q), /result__a/g),
+    uji('duckduckgo-lite', 'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(q), /result-link/g),
+    uji('wikipedia-api', 'https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(q) + '&format=json', /"title"/g),
+    uji('mojeek', 'https://www.mojeek.com/search?q=' + encodeURIComponent(q), /class="title"/g),
+    uji('searx-be', 'https://searx.be/search?q=' + encodeURIComponent(q), /<article/g),
+    uji('startpage', 'https://www.startpage.com/sp/search?query=' + encodeURIComponent(q), /result/gi),
+    uji('ecosia', 'https://www.ecosia.org/search?q=' + encodeURIComponent(q), /result/gi),
+    uji('brave-search', 'https://search.brave.com/search?q=' + encodeURIComponent(q), /result/gi),
+    uji('kemkes', 'https://www.kemkes.go.id/id/search?q=' + encodeURIComponent(q), /artikel/gi),
+    uji('who-search', 'https://www.who.int/home/search?indexCatalogue=genericsearchindex1&searchQuery=' + encodeURIComponent('dengue'), /href/g),
+    uji('pubmed', 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' + encodeURIComponent('dengue') + '&retmode=json', /"id"/g),
+    uji('wikidata', 'https://www.wikidata.org/w/api.php?action=wbsearchentities&search=' + encodeURIComponent(q) + '&language=id&format=json', /"id"/g),
+  ])
+
+  res.json({ dari: 'server', hasil })
+}))
+
 /* -------------------------------------------------------------- errors ---- */
 
 rute.use((err, _req, res, _next) => {
