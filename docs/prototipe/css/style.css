@@ -144,7 +144,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .hero-stats{list-style:none;display:flex;flex-wrap:wrap;gap:1.6rem;padding:0;margin:0}
 .hero-stats li{display:flex;flex-direction:column}
 .hero-stats strong{font-size:1.5rem;color:var(--navy);font-weight:800}
-.hero-stats span{font-size:.8rem;color:var(--ink-2)}
+.hero-stats span{font-size:.82rem;color:#3F4A5C;line-height:1.35}
 
 .hero-card{
   background:#fff;border:1px solid var(--line);border-radius:22px;
@@ -159,7 +159,10 @@ button,input,select,textarea{font:inherit;color:inherit}
   display:flex;align-items:center;gap:.6rem;margin-top:.9rem;padding:.5rem .5rem .5rem .9rem;
   border:1.5px solid var(--line);border-radius:999px;color:#66738A;font-size:.85rem;
 }
-.hero-card-input span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hero-card-input span{
+  flex:1;min-width:0;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;
+}
 .hero-card-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}
 
 /* ---------- chips ---------- */
@@ -296,7 +299,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .demo{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1rem;margin-top:auto}
 .demo-row{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin-top:.7rem}
 .demo-label{font-size:.84rem;font-weight:700;color:var(--navy)}
-.demo-tag{font-size:.74rem;color:#5C697D;margin:.6rem 0 0}
+.demo-tag{font-size:.8rem;color:#4A5568;margin:.6rem 0 0}
 .note-box{
   background:#fff;border:1px dashed #CBD8EA;border-radius:10px;
   padding:.6rem .8rem;font-size:.8rem;color:var(--ink-2);margin:.8rem 0 0;
@@ -815,3 +818,74 @@ input,select,textarea{max-width:100%}
 /* --- keterangan tambahan --- */
 .demo-tag.is-note{margin-top:.9rem}
 .finding .f-list{margin-bottom:0}
+
+
+/* =========================================================
+   ILUSTRASI KARAKTER (Storyset by Freepik — lihat footer)
+   Dipasang sebagai pelengkap visual, bukan penanda status apa pun.
+   ========================================================= */
+.illus{
+  display:block;max-width:100%;height:auto;
+  pointer-events:none;user-select:none;-webkit-user-drag:none;
+}
+
+/* bingkai putih untuk latar gelap (navy) supaya ilustrasinya tetap terbaca */
+.illus-frame{
+  background:var(--white);border-radius:var(--radius);
+  padding:clamp(.75rem,1.6vw,1.1rem);box-shadow:var(--shadow);
+}
+.illus-frame.illus{width:100%;max-width:100%}
+
+/* medali bundar untuk quote-band */
+.illus-medal{
+  width:clamp(112px,15vw,168px);height:clamp(112px,15vw,168px);
+  margin:0 auto 1.35rem;border-radius:50%;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);
+  display:grid;place-items:center;overflow:hidden;
+}
+.illus-medal .illus{width:76%;height:76%;object-fit:contain}
+
+/* section-head jadi dua kolom: teks + ilustrasi */
+.section-head.has-illus{
+  display:grid;
+  grid-template-columns:minmax(0,1.5fr) minmax(0,.8fr);
+  gap:clamp(1.25rem,3vw,2.75rem);align-items:center;
+  max-width:none;
+}
+.section-head.has-illus .sh-text{max-width:44rem}
+.section-head.has-illus .sh-art{width:100%;max-width:352px;justify-self:center}
+
+@media (max-width:880px){
+  .section-head.has-illus{grid-template-columns:1fr}
+  .section-head.has-illus .sh-art{order:-1;max-width:215px}
+}
+
+/* hero: teks | karakter | ilustrasi produk (mengikuti susunan referensi) */
+.hero-char{grid-column:1/-1;justify-self:center;width:100%;max-width:310px}
+
+@media (min-width:768px){
+  .hero-grid{grid-template-columns:1.05fr .95fr}
+  .hero-copy{grid-column:1;grid-row:1}
+  .hero-visual{grid-column:2;grid-row:1}
+  .hero-char{grid-column:1/-1;grid-row:2;max-width:330px}
+}
+
+@media (min-width:1120px){
+  .hero-grid{grid-template-columns:1.02fr .58fr .94fr}
+  .hero-copy{grid-column:1;grid-row:1}
+  .hero-char{grid-column:2;grid-row:1;max-width:100%;align-self:start}
+  .hero-visual{grid-column:3;grid-row:1}
+}
+
+/* hargai preferensi kurangi gerak */
+@media (prefers-reduced-motion:reduce){
+  .illus{transition:none!important;animation:none!important}
+}
+
+
+/* statistik hero: di layar sempit jadi 3 kolom sejajar, supaya tidak pecah 2+1 */
+@media (max-width:560px){
+  .hero-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}
+  .hero-stats strong{font-size:1.35rem}
+  .hero-stats span{font-size:.74rem}
+}
