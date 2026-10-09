@@ -433,8 +433,8 @@
       <article class="feature-card f-amber reveal">
         <div class="f-head"><span class="f-num">4</span><h3>Mencari Internet &amp; Mencantumkan Sumber <em>(AI)</em></h3></div>
         <ul class="f-list">
-          <li><strong>Cara kerja:</strong> setiap pertanyaan dicari dulu di internet, hasilnya dipakai sebagai bahan — bukan mengandalkan ingatan model.</li>
-          <li><strong>Prioritas:</strong> halaman lembaga resmi (Kemenkes, WHO, BPOM) didahulukan dan ditandai.</li>
+          <li><strong>Cara kerja:</strong> setiap pertanyaan dicari dulu ke sumber luar, hasilnya dipakai sebagai bahan — bukan mengandalkan ingatan model.</li>
+          <li><strong>Prioritas:</strong> dokumen lembaga resmi (Kemenkes, WHO, BPOM, NIH) didahulukan dan ditandai.</li>
           <li><strong>Rujukan:</strong> dokumen resmi — Kemenkes RI, WHO, BPOM.</li>
           <li><strong>Sumber ditampilkan:</strong> setiap jawaban menyertakan URL lengkap yang bisa dibuka pengguna untuk memastikan sendiri.</li>
           <li><strong>Titik keputusan:</strong> ada di sumber resmi? Ya → <strong>DIDUKUNG</strong> + sumbernya · Tidak → <strong>TIDAK DIDUKUNG</strong> + arahan ke sumber resmi.</li>
@@ -448,8 +448,9 @@
 
           <p class="demo-label" style="margin-top:1rem">Yang dilakukan sistem:</p>
           <ul class="check-list" style="margin-top:.4rem">
-            <li>Cari di internet → dapat halaman Kemenkes, detikHealth, Wikipedia</li>
-            <li>Ambil isi halaman teratas sebagai bahan jawaban</li>
+            <li>Cari artikel ensiklopedia yang relevan dengan pertanyaan</li>
+            <li>Ambil daftar referensi resmi di dalamnya — WHO, Kemenkes, NIH</li>
+            <li>Ambil isi halaman resmi sebagai bahan jawaban</li>
             <li>Susun jawaban + cantumkan URL tiap sumber</li>
             <li>Tampilkan daftar sumber agar pengguna bisa mengecek sendiri</li>
           </ul>
