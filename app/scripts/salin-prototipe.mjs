@@ -54,21 +54,16 @@ async function main() {
   // 2) salinan utuh di dist/prototipe/ supaya /prototipe/ tetap hidup
   await cp(SUMBER, join(DIST, 'prototipe'), { recursive: true })
 
-  // Halaman depan (dist/index.html): tautan ke aplikasi tetap "./app/".
-  // Salinan (dist/prototipe/index.html): harus naik satu tingkat dulu, jadi
-  // "./app/" diubah menjadi "../app/" — kalau tidak, tautannya menunjuk ke
-  // /prototipe/app/ yang tidak ada.
+  // Halaman depan (dist/index.html): tautan ke halaman ini sendiri harus "./"
+  // (kalau dibiarkan "./prototipe/" pengguna dilempar ke salinannya).
+  // Tautan ke aplikasi memakai /app/ absolut, jadi tidak perlu disesuaikan dan
+  // tetap benar baik dari root maupun dari /prototipe/.
   const idxDepan = join(DIST, 'index.html')
   const asliDepan = await readFile(idxDepan, 'utf8')
   const depan = asliDepan.replaceAll('href="./prototipe/"', 'href="./"')
-  if (depan !== asliDepan) await writeFile(idxDepan, depan, 'utf8')
-
-  const idxSalinan = join(DIST, 'prototipe', 'index.html')
-  const asliSalinan = await readFile(idxSalinan, 'utf8')
-  const salinan = asliSalinan.replaceAll('href="./app/"', 'href="../app/"')
-  if (salinan !== asliSalinan) {
-    await writeFile(idxSalinan, salinan, 'utf8')
-    console.log('[prototipe] salinan: tautan aplikasi -> ../app/')
+  if (depan !== asliDepan) {
+    await writeFile(idxDepan, depan, 'utf8')
+    console.log('[prototipe] halaman depan: tautan ke diri sendiri -> ./')
   }
 
   console.log('[prototipe] halaman penjelasan -> dist/index.html (halaman depan)')

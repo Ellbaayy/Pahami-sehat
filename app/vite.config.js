@@ -2,9 +2,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// base './' supaya hasil build tetap jalan walau disajikan dari sub-folder
+// base '/app/' (absolut) karena aplikasi disajikan di /app/.
+// Kalau memakai './', alamat /app tanpa garis miring membuat aset relatifnya
+// salah (menunjuk ke /assets/... alih-alih /app/assets/...) dan aplikasi gagal render.
 export default defineConfig({
-  base: './',
+  base: '/app/',
   plugins: [react(), tailwindcss()],
   build: {
     // aplikasi dibangun ke dist/app/ supaya halaman penjelasan bisa menempati
