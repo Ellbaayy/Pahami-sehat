@@ -93,7 +93,7 @@ export const HISTORY = [
   {
     id: 'h1',
     question: 'Apa arti hasil lab kolesterol saya?',
-    answer: 'Disederhanakan ke level SD, lengkap dengan rentang normal dan penjelasan istilahnya.',
+    answer: 'Disederhanakan ke tingkat anak-anak, lengkap dengan rentang normal dan penjelasan istilahnya.',
     time: '2 jam lalu',
     sources: ['Kemenkes RI'],
   },
@@ -106,7 +106,7 @@ export const HISTORY = [
   },
   {
     id: 'h3',
-    question: 'Sederhanakan teks edukasi ini ke level SD',
+    question: 'Sederhanakan teks edukasi ini ke tingkat anak-anak',
     answer: 'Paragraf disusun ulang dengan kalimat lebih pendek, poin kunci tetap dipertahankan.',
     time: 'Kemarin',
     sources: ['Kemenkes RI'],

@@ -59,7 +59,7 @@ export default function SettingsPanel({ settings, onChange }) {
               aria-label="Pilih tingkat baca"
               className="flex rounded-xl border border-slate-200 bg-white p-1"
             >
-              {['SD', 'SMP', 'SMA'].map((lv) => (
+              {['Anak-anak', 'Remaja', 'Dewasa', 'Lansia'].map((lv) => (
                 <button
                   key={lv}
                   type="button"

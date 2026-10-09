@@ -19,7 +19,7 @@ export default function ThreadPanel({ input, onInputChange, onAsk, loading, thre
     setListening(true)
     window.setTimeout(() => {
       setListening(false)
-      onInputChange('Sederhanakan teks ini ke level SD')
+      onInputChange('Sederhanakan teks ini ke tingkat anak-anak')
     }, 1500)
   }
 

@@ -89,7 +89,7 @@ export default function Sidebar({ active, onSelect }) {
         </div>
 
         <a
-          href="../../Pahami-Sehat/index.html"
+          href="../../docs/prototipe/index.html"
           className="mt-2 flex h-10 items-center justify-center gap-2 rounded-xl text-[0.8rem] font-semibold text-navy-500 transition-colors hover:bg-slate-100 hover:text-navy-800 lg:justify-start lg:px-3"
           title="Kembali ke situs utama"
         >

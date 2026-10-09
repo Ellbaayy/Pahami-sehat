@@ -37,7 +37,7 @@ export default function QuizPanel() {
     } else {
       category = 'Perlu dukungan'
       advice =
-        'Aktifkan penyederhanaan ke level SD dan mode suara agar informasi lebih mudah dijangkau. Bawa hasil ini ke tenaga kesehatan terdekat.'
+        'Aktifkan penyederhanaan ke tingkat anak-anak dan mode suara agar informasi lebih mudah dijangkau. Bawa hasil ini ke tenaga kesehatan terdekat.'
     }
 
     setResult({ pct, category, advice })

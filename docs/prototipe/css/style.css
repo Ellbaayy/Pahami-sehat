@@ -316,6 +316,9 @@ textarea{resize:vertical;min-height:76px}
 }
 .seg-btn.is-active{background:var(--blue);color:#fff}
 .seg-btn:hover:not(.is-active){color:var(--blue)}
+/* 4 tingkat (Anak-anak/Remaja/Dewasa/Lansia) — rapatkan agar tetap satu baris */
+.seg{flex-wrap:wrap;gap:2px}
+.seg-btn{padding:.42rem .68rem}
 .demo-result{background:#fff;border:1px solid var(--line);border-radius:12px;padding:.85rem;margin-top:.8rem}
 .result-top{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.55rem}
 .demo-result p{margin:0;font-size:.9rem;color:var(--ink)}
@@ -670,8 +673,8 @@ input,select,textarea{max-width:100%}
   .quiz-nav{flex-direction:column-reverse}
   .quiz-nav .btn{width:100%}
   .rubric-item{flex-direction:column;gap:.7rem}
-  .seg{width:100%;justify-content:space-between}
-  .seg-btn{flex:1}
+  .seg{width:100%;justify-content:flex-start;gap:2px}
+  .seg-btn{flex:0 1 auto;padding:.42rem .56rem;font-size:.79rem}
   .demo-row .btn{width:100%}
   .footer-bottom{justify-content:center;text-align:center}
   .phone{width:100%}

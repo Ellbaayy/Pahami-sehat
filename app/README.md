@@ -1,4 +1,7 @@
-# Dashboard — Pahami Sehat
+# Pahami Sehat — Aplikasi (Produk Utama)
+
+> **Ini produk utama** yang dijalankan saat Grand Final dan video demo.
+> Halaman penjelasan statis ada di [`../docs/prototipe`](../docs/prototipe).
 
 Frontend dashboard untuk platform edukasi kesehatan **Pahami Sehat**.
 Seluruh data adalah **dummy/static**; tidak ada backend, database, API, atau autentikasi.

@@ -1,4 +1,9 @@
-# Pahami Sehat — Prototipe Frontend
+# Prototipe Halaman Penjelasan — Pahami Sehat
+
+> **Bukan produk utama.** Produk yang dipakai/dinilai ada di folder [`../../app`](../../app).
+> Folder ini adalah halaman penjelasan statis: latar belakang, konsep 4 lapis
+> aksesibilitas, alur pemakaian, dan demo tiap fitur — berguna untuk video demo
+> dan presentasi.
 
 **"Informasi Kesehatan untuk Semua"**
 
@@ -9,7 +14,7 @@ tanpa database, tanpa API.
 
 ## Menjalankan
 
-Dari folder project:
+Dari folder repo ini:
 
 ```bash
 python3 -m http.server 8080 --bind 127.0.0.1
@@ -21,7 +26,7 @@ Bisa juga cukup membuka `index.html` langsung di peramban (semua aset lokal).
 ## Struktur
 
 ```
-Pahami-Sehat/
+docs/prototipe/
 ├── index.html          # seluruh section halaman
 ├── css/
 │   ├── fonts.css       # @font-face Plus Jakarta Sans (vendored)
@@ -43,15 +48,15 @@ Pahami-Sehat/
 5. Alur Pemakaian — alur resmi dari `alur-pahami-sehat.pdf`:
    flow 6 langkah (MULAI → pilih bahasa/level → butuh bantuan apa → proses AI →
    titik keputusan → SELESAI) + panel interaktif:
-   - **Langkah 1**: pilih bahasa + tingkat baca (SD/SMP/SMA),
+   - **Langkah 1**: pilih bahasa + tingkat baca (Anak-anak/Remaja/Dewasa/Lansia),
      tersinkron dengan demo penerjemah & mode suara
    - **Langkah 2**: pilih bantuan (1 Terjemahkan / 2 Cek Info / 3 Kuesioner),
      scroll ke demo yang sesuai
 6. Fitur Utama — 4 kartu dengan demo interaktif:
    - Penerjemah: input teks/foto(OCR simulasi)/rekam suara, titik keputusan
-     **keterbacaan ≤ target level?** (level baca input diukur nyata dengan
+     **keterbacaan ≤ target tingkat?** (tingkat baca input diukur nyata dengan
      Flesch-Kincaid dikalibrasi ×0,6 untuk bahasa Indonesia; bila belum lolos
-     → loop balik 1×), output = versi sederhana + indikator level baca
+     → loop balik 1×), output = versi sederhana + indikator tingkat baca
      + SUMBER + tombol **Dengar** (TTS Web Speech API)
    - Mode suara: mic simulasi + TTS + pilihan bahasa daerah
    - Mode hemat sinyal: toggle + titik keputusan **sinyal internet tersedia?**

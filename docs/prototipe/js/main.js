@@ -77,13 +77,20 @@
   const gradePill = $('#gradePill');
   const translateOut = $('#translateOut');
   const translateResult = $('#translateResult');
-  let level = 'sd';
-  const TARGET = { sd: 6, smp: 9, sma: 12 };
-  const TARGET_LABEL = { sd: 'kelas 6 (SD)', smp: 'kelas 9 (SMP)', sma: 'kelas 12 (SMA)' };
+  let level = 'anak';
+  const TARGET = { anak: 6, remaja: 9, dewasa: 12, lansia: 8 };
+  const TARGET_LABEL = {
+    anak: 'kelas 6 (anak-anak)',
+    remaja: 'kelas 9 (remaja)',
+    dewasa: 'kelas 12 (dewasa)',
+    lansia: 'kelas 8 (lansia)'
+  };
 
-  /* ukur level baca — Flesch-Kincaid, dikalibrasi untuk bahasa Indonesia:
+  /* ukur tingkat baca — Flesch-Kincaid, dikalibrasi untuk bahasa Indonesia:
      skala Inggris ±1,5 suku/kata vs Indonesia ±2,4 → faktor 0,6,
-     supaya teks medis (setara "kelas 12,8" pada data SKI 2023) jatuh di rentang wajar */
+     supaya teks medis (setara "kelas 12,8" pada data SKI 2023) jatuh di rentang wajar.
+     Catatan: Flesch-grade mengukur KERUMITAN teks, bukan usia pembaca — karena itu
+     tingkat "lansia" ditargetkan lebih sederhana (≈ kelas 8), bukan lebih rumit. */
   const FAKTOR_ID = 0.6;
   function hitungSukuKata(kata) {
     const m = kata.toLowerCase().match(/[aiueo]+/g);
@@ -101,27 +108,33 @@
   }
 
   const PETA = {
-    sd: {
-      grade: 'Level baca kelas 5 (= 5.2)',
+    anak: {
+      grade: 'Tingkat baca anak-anak (= 5.2)',
       hasil:
-        'Tekanan darah tinggi adalah kondisi ketika tekanan darah di dalam pembuluh darah selalu tinggi. Kalau dibiarkan, jantung dan pembuluh darah bisa bekerja terlalu berat.',
+        'Tekanan darah tinggi artinya darah menekan dinding pembuluh darah terlalu kuat. Kalau dibiarkan, jantung jadi capek bekerja.',
       flesch: 'Flesch-grade: 5.2'
     },
-    smp: {
-      grade: 'Level baca kelas 8 (= 8.1)',
+    remaja: {
+      grade: 'Tingkat baca remaja (= 8.1)',
       hasil:
         'Hipertensi adalah kondisi saat tekanan darah di arteri terus-menerus lebih tinggi dari batas normal. Tanpa penanganan, jantung dan pembuluh darah dipaksa bekerja lebih keras.',
       flesch: 'Flesch-grade: 8.1'
     },
-    sma: {
-      grade: 'Level baca kelas 11 (= 10.7)',
+    dewasa: {
+      grade: 'Tingkat baca dewasa (= 10.7)',
       hasil:
         'Hipertensi merupakan kondisi kronis yang ditandai tekanan darah arteri persisten di atas ambang batas normal, sehingga meningkatkan beban kerja jantung dan dinding pembuluh darah.',
       flesch: 'Flesch-grade: 10.7'
+    },
+    lansia: {
+      grade: 'Tingkat baca lansia (= 7.4)',
+      hasil:
+        'Darah tinggi adalah kondisi saat tekanan darah di pembuluh darah terus berada di atas batas normal. Bila dibiarkan, jantung dan pembuluh darah bekerja lebih berat dari seharusnya.',
+      flesch: 'Flesch-grade: 7.4'
     }
   };
 
-  /* pilih level baca — berlaku untuk panel "Langkah 1" & demo penerjemah */
+  /* pilih tingkat baca — berlaku untuk panel "Langkah 1" & demo penerjemah */
   function setLevel(lv, jalankanUlang) {
     level = lv;
     $$('.seg-btn[data-level]').forEach((b) => b.classList.toggle('is-active', b.dataset.level === lv));
@@ -147,7 +160,7 @@
     translateResult.hidden = false;
     decChip.className = 'decision-chip is-wait';
     decChip.textContent = '⏳ cek…';
-    decNote.textContent = 'Mengukur level baca teks input…';
+    decNote.textContent = 'Mengukur tingkat baca teks input…';
     translateOut.textContent = 'Menerapkan rubric prompting…';
     await wait(650);
 
@@ -163,8 +176,8 @@
       decNote.textContent =
         awal === null
           ? 'Teks terlalu pendek untuk diukur → proses ulang dengan rubric prompting…'
-          : 'Perkiraan level input: kelas ' + awal.toFixed(1) + ' > target ' + TARGET_LABEL[level] + ' → proses ulang…';
-      translateOut.textContent = 'Belum memenuhi target level baca — memproses ulang…';
+          : 'Perkiraan tingkat input: kelas ' + awal.toFixed(1) + ' > target ' + TARGET_LABEL[level] + ' → proses ulang…';
+      translateOut.textContent = 'Belum memenuhi target tingkat baca — memproses ulang…';
       await wait(750);
     }
 
@@ -173,7 +186,7 @@
     decChip.className = 'decision-chip is-yes';
     decChip.textContent = lolos ? 'Ya ✓' : 'Ya ✓ (1× loop)';
     decNote.textContent = lolos
-      ? 'Level input: kelas ' + awal.toFixed(1) + ' ≤ target ' + TARGET_LABEL[level] + ' — langsung lolos.'
+      ? 'Tingkat input: kelas ' + awal.toFixed(1) + ' ≤ target ' + TARGET_LABEL[level] + ' — langsung lolos.'
       : 'Hasil (simulasi): ' + p.grade + ' ≤ target ' + TARGET_LABEL[level] + ' — loop balik selesai.';
 
     btn.disabled = false;
@@ -634,7 +647,7 @@
       Sedang:
         'Sudah cukup baik. Coba fitur Terjemahkan & Cek Info untuk berita kesehatan yang rumit, dan gunakan tombol Dengar agar lebih mudah dipahami.',
       'Perlu dukungan':
-        'Mulai dari level baca SD dan mode suara agar hasil dibacakan untuk Anda. Ulangi kuesioner ini sebulan lagi untuk melihat perkembangan.'
+        'Mulai dari tingkat baca anak-anak dan mode suara agar hasil dibacakan untuk Anda. Ulangi kuesioner ini sebulan lagi untuk melihat perkembangan.'
     };
     const saranText = $('#saranText');
     saranText.hidden = false;

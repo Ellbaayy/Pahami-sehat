@@ -42,7 +42,7 @@ function answerFor(text, topicId) {
   return TOPIC_ANSWERS.generic
 }
 
-const DEFAULT_SETTINGS = { level: 'SD', offline: false, tts: false, lang: 'id' }
+const DEFAULT_SETTINGS = { level: 'Anak-anak', offline: false, tts: false, lang: 'id' }
 
 export default function App() {
   const [active, setActive] = useState('beranda')

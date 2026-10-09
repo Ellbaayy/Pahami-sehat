@@ -32,7 +32,7 @@
       <a href="#produk">Produk</a>
       <a href="#kuesioner">Kuesioner</a>
       <a href="#rubrik">Rubrik</a>
-      <a href="../dashboard/dist/index.html" class="btn btn-primary btn-sm nav-cta">Coba Demo</a>
+      <a href="../../app/dist/index.html" class="btn btn-primary btn-sm nav-cta">Coba Demo</a>
     </nav>
 
     <button class="nav-toggle" id="navToggle" aria-label="Buka menu" aria-expanded="false" aria-controls="navLinks">
@@ -225,7 +225,7 @@
       <li class="flow-step">
         <span class="flow-num">2</span>
         <h3>Pilih bahasa + tingkat baca</h3>
-        <p>Bahasa sehari-hari + level <strong>SD / SMP / SMA</strong>.</p>
+        <p>Bahasa sehari-hari + tingkat <strong>Anak-anak / Remaja / Dewasa / Lansia</strong>.</p>
       </li>
       <li class="flow-step">
         <span class="flow-num">3</span>
@@ -269,9 +269,10 @@
         <div class="demo-row">
           <span class="demo-label">Tingkat baca:</span>
           <div class="seg" role="group" aria-label="Pilih tingkat baca">
-            <button type="button" class="seg-btn is-active" data-level="sd">SD</button>
-            <button type="button" class="seg-btn" data-level="smp">SMP</button>
-            <button type="button" class="seg-btn" data-level="sma">SMA</button>
+            <button type="button" class="seg-btn is-active" data-level="anak">Anak-anak</button>
+            <button type="button" class="seg-btn" data-level="remaja">Remaja</button>
+            <button type="button" class="seg-btn" data-level="dewasa">Dewasa</button>
+            <button type="button" class="seg-btn" data-level="lansia">Lansia</button>
           </div>
         </div>
         <p class="demo-tag">Pilihan ini otomatis mengikuti demo penerjemah &amp; mode suara di bawah.</p>
@@ -315,9 +316,9 @@
         <div class="f-head"><span class="f-num">1</span><h3>Penerjemah Bahasa Medis <em>(AI)</em></h3></div>
         <ul class="f-list">
           <li>Input: tempel teks (hasil lab, label obat, artikel, WA), foto/scan, atau rekam suara</li>
-          <li>Pilihan level baca: SD / SMP / SMA</li>
+          <li>Pilihan tingkat baca: Anak-anak / Remaja / Dewasa / Lansia</li>
           <li>Titik keputusan: keterbacaan ≤ target level? (loop balik bila belum)</li>
-          <li>Output: versi sederhana + indikator level baca + SUMBER + tombol Dengar (TTS)</li>
+          <li>Output: versi sederhana + indikator tingkat baca + SUMBER + tombol Dengar (TTS)</li>
         </ul>
 
         <div class="demo demo-translator">
@@ -334,10 +335,11 @@
 
           <div class="demo-row">
             <span class="demo-label">Sederhanakan ke:</span>
-            <div class="seg" role="group" aria-label="Pilih level baca">
-              <button type="button" class="seg-btn is-active" data-level="sd">SD</button>
-              <button type="button" class="seg-btn" data-level="smp">SMP</button>
-              <button type="button" class="seg-btn" data-level="sma">SMA</button>
+            <div class="seg" role="group" aria-label="Pilih tingkat baca">
+              <button type="button" class="seg-btn is-active" data-level="anak">Anak-anak</button>
+              <button type="button" class="seg-btn" data-level="remaja">Remaja</button>
+              <button type="button" class="seg-btn" data-level="dewasa">Dewasa</button>
+              <button type="button" class="seg-btn" data-level="lansia">Lansia</button>
             </div>
             <button type="button" class="btn btn-primary btn-sm" id="translateBtn">Sederhanakan</button>
           </div>
@@ -345,7 +347,7 @@
           <div class="demo-result" id="translateResult" hidden>
             <div class="result-top">
               <span class="pill pill-green">✅ Mulai dipahami</span>
-              <span class="pill pill-blue" id="gradePill">Level baca kelas 5 (= 5.2)</span>
+              <span class="pill pill-blue" id="gradePill">Tingkat baca anak-anak (= 5.2)</span>
             </div>
             <p id="translateOut"></p>
 
