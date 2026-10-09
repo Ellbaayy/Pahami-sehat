@@ -4,7 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "prototipe": "node scripts/salin-prototipe.mjs",
+    "predev": "npm run prototipe",
     "dev": "vite",
+    "prebuild": "npm run prototipe",
     "build": "vite build",
     "preview": "vite preview",
     "server": "node --env-file=.env server/index.js",

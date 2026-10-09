@@ -29,8 +29,8 @@ app.use(rute)
 
 if (existsSync(DIST)) {
   app.use(express.static(DIST))
-  // SPA fallback — jangan menelan /api
-  app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(join(DIST, 'index.html')))
+  // SPA fallback — jangan menelan /api maupun /prototipe (halaman penjelasan statis)
+  app.get(/^\/(?!api|prototipe).*/, (_req, res) => res.sendFile(join(DIST, 'index.html')))
 } else {
   app.get('/', (_req, res) =>
     res

@@ -3,6 +3,9 @@ dist
 *.local
 .DS_Store
 
+# Halaman penjelasan hasil salinan saat build (sumbernya di ../docs/prototipe)
+public/prototipe
+
 # Secrets
 .env
 .env.local
