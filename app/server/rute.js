@@ -24,7 +24,11 @@ import {
   promptTanya,
   promptSederhanakan,
   promptVerifikasi,
+  promptTanyaDenganCari,
+  promptSederhanakanDenganCari,
+  promptVerifikasiDenganCari,
 } from './prompts.js'
+import { cariInternet } from './cari.js'
 
 /* ---------------------------------------------------------------- util ---- */
 
@@ -65,8 +69,13 @@ function bentukHasil(mentah, tingkat, { verdictKey = null } = {}) {
   }
   const sumber = Array.isArray(mentah.sumber)
     ? mentah.sumber
-        .filter((s) => s && (s.judul || s.penerbit))
-        .map((s) => ({ judul: String(s.judul ?? '').trim(), penerbit: String(s.penerbit ?? '').trim() }))
+        .filter((s) => s && (s.judul || s.penerbit || s.url))
+        .map((s) => ({
+          judul: String(s.judul ?? '').trim(),
+          penerbit: String(s.penerbit ?? '').trim(),
+          // hanya terima URL http(s) — jangan biarkan model menyelipkan skema lain
+          url: /^https?:\/\//i.test(String(s.url ?? '')) ? String(s.url).trim() : '',
+        }))
     : []
 
   const out = {
@@ -79,6 +88,22 @@ function bentukHasil(mentah, tingkat, { verdictKey = null } = {}) {
   }
   if (verdictKey) out.verdict = String(mentah[verdictKey] ?? 'tidak_bisa_dipastikan').trim()
   return out
+}
+
+/** Bahasa jawaban: 'id' (default) atau 'en'. */
+function rapikanBahasa(v) {
+  return String(v ?? '').toLowerCase().startsWith('en') ? 'en' : 'id'
+}
+
+const NAMA_BAHASA = { id: 'Bahasa Indonesia', en: 'English' }
+
+/** Ringkas daftar hasil pencarian untuk dikirim ke frontend (tanpa isi panjang). */
+function ringkasHasilCari(hasil = []) {
+  return hasil.slice(0, 8).map((h) => ({
+    judul: String(h.judul ?? '').slice(0, 160),
+    url: /^https?:\/\//i.test(String(h.url ?? '')) ? h.url : '',
+    resmi: Boolean(h.resmi),
+  }))
 }
 
 /** Bungkus handler async supaya error-nya tertangkap middleware error. */
@@ -112,13 +137,19 @@ rute.post('/api/tanya', bungkus(async (req, res) => {
   if (pertanyaan.length > 4000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Pertanyaan terlalu panjang (maks 4000 karakter).' })
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
-  const p = promptTanya({ pertanyaan, tingkat })
+  const bahasa = NAMA_BAHASA[rapikanBahasa(req.body?.bahasa)]
+
+  // cari di internet dulu supaya jawabannya berbasis sumber nyata
+  const { hasil: hasilCari } = await cariInternet(pertanyaan)
+
+  const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa })
   const hasil = await chat({ messages: [
     { role: 'system', content: p.system },
     { role: 'user', content: p.user },
   ] })
 
-  res.json({ ...bentukHasil(ambilJson(hasil.text), tingkat), usage: hasil.usage })
+  const out = bentukHasil(ambilJson(hasil.text), tingkat)
+  res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage: hasil.usage })
 }))
 
 rute.post('/api/sederhanakan', bungkus(async (req, res) => {
@@ -127,13 +158,20 @@ rute.post('/api/sederhanakan', bungkus(async (req, res) => {
   if (teks.length > 8000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Teks terlalu panjang (maks 8000 karakter).' })
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
-  const p = promptSederhanakan({ teks, tingkat })
+  const bahasa = NAMA_BAHASA[rapikanBahasa(req.body?.bahasa)]
+
+  // pakai 120 karakter pertama sebagai kata kunci pencarian — cukup untuk
+  // menemukan istilahnya tanpa membuang waktu pada teks panjang
+  const { hasil: hasilCari } = await cariInternet(teks.slice(0, 120))
+
+  const p = promptSederhanakanDenganCari({ teks, tingkat, hasilCari, bahasa })
   const hasil = await chat({ messages: [
     { role: 'system', content: p.system },
     { role: 'user', content: p.user },
   ] })
 
-  res.json({ ...bentukHasil(ambilJson(hasil.text), tingkat), usage: hasil.usage })
+  const out = bentukHasil(ambilJson(hasil.text), tingkat)
+  res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage: hasil.usage })
 }))
 
 rute.post('/api/verifikasi', bungkus(async (req, res) => {
@@ -142,13 +180,21 @@ rute.post('/api/verifikasi', bungkus(async (req, res) => {
   if (klaim.length > 4000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Klaim terlalu panjang (maks 4000 karakter).' })
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
-  const p = promptVerifikasi({ klaim, tingkat })
+  const bahasa = NAMA_BAHASA[rapikanBahasa(req.body?.bahasa)]
+
+  const { hasil: hasilCari } = await cariInternet(klaim)
+
+  const p = promptVerifikasiDenganCari({ klaim, tingkat, hasilCari, bahasa })
   const hasil = await chat({ messages: [
     { role: 'system', content: p.system },
     { role: 'user', content: p.user },
   ] })
 
-  res.json({ ...bentukHasil(ambilJson(hasil.text), tingkat, { verdictKey: 'verdict' }), usage: hasil.usage })
+  res.json({
+    ...bentukHasil(ambilJson(hasil.text), tingkat, { verdictKey: 'verdict' }),
+    hasilCari: ringkasHasilCari(hasilCari),
+    usage: hasil.usage,
+  })
 }))
 
 /**
@@ -160,7 +206,7 @@ rute.post('/api/tanya/stream', bungkus(async (req, res) => {
   if (!pertanyaan) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Pertanyaan masih kosong.' })
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
-  const p = promptTanya({ pertanyaan, tingkat })
+  const bahasa = NAMA_BAHASA[rapikanBahasa(req.body?.bahasa)]
 
   res.set({
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -182,7 +228,14 @@ rute.post('/api/tanya/stream', bungkus(async (req, res) => {
   })
 
   try {
-    kirim('status', { pesan: `Menghubungi ${config.model}…` })
+    // 1) cari di internet dulu
+    kirim('status', { pesan: 'Mencari sumber terpercaya…' })
+    const { hasil: hasilCari } = await cariInternet(pertanyaan)
+    kirim('sumber', { hasil: ringkasHasilCari(hasilCari) })
+
+    // 2) baru minta model menyusun jawaban dari hasil itu
+    kirim('status', { pesan: 'Menyiapkan jawaban…' })
+    const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa })
 
     // hanya alirkan isi field "jawaban", bukan JSON mentahnya
     const ekstrak = buatEkstrak('jawaban')
@@ -200,7 +253,7 @@ rute.post('/api/tanya/stream', bungkus(async (req, res) => {
     })
 
     const final = bentukHasil(ambilJson(hasil.text), tingkat)
-    kirim('hasil', { ...final, usage: hasil.usage })
+    kirim('hasil', { ...final, hasilCari: ringkasHasilCari(hasilCari), usage: hasil.usage })
     res.write('event: selesai\ndata: {}\n\n')
   } catch (e) {
     if (!ac.signal.aborted) {

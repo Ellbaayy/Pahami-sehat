@@ -48,7 +48,7 @@
   <div class="container hero-grid">
     <div class="hero-copy">
       <div class="badge-row">
-        <span class="chip-badge b-blue">🤖 Didukung AI</span>
+        <span class="chip-badge b-blue">🤖 Didukung AI + pencarian internet</span>
         <span class="chip-badge b-green">✅ Bersumber dari Kemenkes, WHO, BPOM</span>
         <span class="chip-badge b-purple">👥 Untuk semua lapisan masyarakat</span>
         <span class="chip-badge b-amber">🌿 Lebih sehat, lebih inklusif</span>
@@ -214,7 +214,7 @@
         <li><strong>1 · Terpahami</strong> — penerjemah bahasa medis + 4 tingkat baca (Anak-anak, Remaja, Dewasa, Lansia).</li>
         <li><strong>2 · Terjangkau</strong> — hasil bisa dibacakan (TTS) dan pertanyaan bisa dikirim lewat suara.</li>
         <li><strong>3 · Tersambung</strong> — mode hemat sinyal untuk menyimpan jawaban terakhir.</li>
-        <li><strong>4 · Terpercaya</strong> — setiap jawaban menyertakan sumber, dan ada fitur Cek Klaim.</li>
+        <li><strong>4 · Terpercaya</strong> — setiap jawaban dicari dulu di internet, sumber resmi didahulukan, dan URL-nya ditampilkan agar pengguna bisa memastikan sendiri.</li>
       </ul>
     </div>
   </div>
@@ -248,7 +248,7 @@
       <li class="flow-step">
         <span class="flow-num">4</span>
         <h3>Proses AI</h3>
-        <p>Rubric prompting: tandai poin kunci dulu, baru sederhanakan bahasanya. Lalu hitung skor + kategori.</p>
+        <p>Cari di internet → ambil isi halaman teratas → rubric prompting: tandai poin kunci dulu, baru sederhanakan bahasanya.</p>
       </li>
       <li class="flow-step flow-decision">
         <span class="flow-num">?</span>
@@ -431,16 +431,30 @@
 
       <!-- 4. Verifikasi sumber -->
       <article class="feature-card f-amber reveal">
-        <div class="f-head"><span class="f-num">4</span><h3>Setiap Jawaban Punya Sumber <em>(AI)</em></h3></div>
+        <div class="f-head"><span class="f-num">4</span><h3>Mencari Internet &amp; Mencantumkan Sumber <em>(AI)</em></h3></div>
         <ul class="f-list">
+          <li><strong>Cara kerja:</strong> setiap pertanyaan dicari dulu di internet, hasilnya dipakai sebagai bahan — bukan mengandalkan ingatan model.</li>
+          <li><strong>Prioritas:</strong> halaman lembaga resmi (Kemenkes, WHO, BPOM) didahulukan dan ditandai.</li>
           <li><strong>Rujukan:</strong> dokumen resmi — Kemenkes RI, WHO, BPOM.</li>
+          <li><strong>Sumber ditampilkan:</strong> setiap jawaban menyertakan URL lengkap yang bisa dibuka pengguna untuk memastikan sendiri.</li>
           <li><strong>Titik keputusan:</strong> ada di sumber resmi? Ya → <strong>DIDUKUNG</strong> + sumbernya · Tidak → <strong>TIDAK DIDUKUNG</strong> + arahan ke sumber resmi.</li>
           <li><strong>Kejujuran:</strong> kalau tidak ada dasarnya, AI wajib menjawab <strong>“belum bisa dipastikan”</strong> — bukan memaksa verdict.</li>
           <li><strong>Aturan keras:</strong> AI dilarang mengarang judul, nomor, atau tautan dokumen.</li>
         </ul>
 
         <div class="demo">
-          <p class="demo-label">Contoh klaim yang diperiksa:</p>
+          <p class="demo-label">Contoh pertanyaan:</p>
+          <p class="note-box" style="margin-top:.4rem">“Berapa kasus demam berdarah di Indonesia tahun 2025?”</p>
+
+          <p class="demo-label" style="margin-top:1rem">Yang dilakukan sistem:</p>
+          <ul class="check-list" style="margin-top:.4rem">
+            <li>Cari di internet → dapat halaman Kemenkes, detikHealth, Wikipedia</li>
+            <li>Ambil isi halaman teratas sebagai bahan jawaban</li>
+            <li>Susun jawaban + cantumkan URL tiap sumber</li>
+            <li>Tampilkan daftar sumber agar pengguna bisa mengecek sendiri</li>
+          </ul>
+
+          <p class="demo-label" style="margin-top:1rem">Contoh klaim yang diperiksa:</p>
           <p class="note-box" style="margin-top:.4rem">“Vaksin MMR menyebabkan autisme pada anak.”</p>
 
           <div class="verify-result" style="margin-top:.9rem">
@@ -476,8 +490,9 @@
         <h3>📋 Status tiap fitur — apa yang sudah jalan, apa yang masih rencana</h3>
         <p class="finding-lead">Ditulis apa adanya, supaya tidak ada klaim yang berlebihan.</p>
         <ul class="f-list" style="margin-top:.9rem">
-          <li><strong>Sudah jalan:</strong> Tanya AI (streaming), Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, daftar sumber, kuesioner HLS-SF12, riwayat sesi, pengaturan, <strong>baca otomatis (TTS)</strong>, <strong>tanya dengan suara (STT)</strong>, dan <strong>mode hemat sinyal</strong>.</li>
-          <li><strong>Belum ada:</strong> foto/OCR (belum ada pustaka pengenalan gambar) dan terjemahan ke bahasa daerah (baru antarmuka bahasanya).</li>
+          <li><strong>Sudah jalan:</strong> Tanya AI (streaming), <strong>pencarian internet + sumber yang bisa dibuka</strong>, Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, kuesioner HLS-SF12, riwayat sesi, <strong>baca otomatis (TTS)</strong>, <strong>tanya dengan suara (STT)</strong>, <strong>mode hemat sinyal (10 jawaban terakhir)</strong>, dan <strong>antarmuka dua bahasa</strong> (Indonesia / Inggris).</li>
+          <li><strong>Semua pengaturan berfungsi:</strong> tingkat baca, mode hemat sinyal, putar suara otomatis, dan bahasa antarmuka — tidak ada yang hanya jadi hiasan.</li>
+          <li><strong>Belum ada:</strong> foto/OCR (belum ada pustaka pengenalan gambar) dan terjemahan ke bahasa daerah (baru pilihan bahasanya).</li>
         </ul>
       </div>
     </div>

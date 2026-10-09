@@ -147,3 +147,86 @@ FORMAT KELUARAN — balas HANYA JSON valid, tanpa teks pembuka, tanpa pagar kode
     user: `KLAIM YANG DIPERIKSA:\n${klaim}`,
   }
 }
+
+/* ==========================================================================
+   PENCARIAN INTERNET
+   ==========================================================================
+   Setiap pertanyaan dicari dulu di internet, lalu hasilnya disuntikkan ke
+   prompt. Model tetap dilarang mengarang: kalau hasil pencarian tidak memuat
+   jawabannya, model wajib mengatakannya.
+   ========================================================================== */
+
+/** Aturan yang berlaku setiap kali model menerima hasil pencarian. */
+const ATURAN_PENCARIAN = `
+HASIL PENCARIAN INTERNET (sumber nyata, bukan karangan):
+{konteks}
+
+CARA MEMAKAI HASIL PENCARIAN:
+1. Jawab HANYA berdasarkan hasil pencarian di atas. Jangan menambah fakta dari ingatanmu.
+2. Cantumkan URL sumber untuk setiap klaim penting. Ambil URL persis dari daftar di atas.
+3. Utamakan sumber bertanda [SUMBER RESMI] (Kemenkes, WHO, BPOM) bila ada.
+4. Kalau hasil pencarian TIDAK memuat jawabannya, katakan terus terang bahwa
+   informasi itu belum ditemukan — jangan menebak, jangan mengarang.
+5. Kalau angka berbeda antar sumber, sebutkan perbedaannya dan sebutkan sumbernya.
+6. Jangan mengarang URL. Hanya pakai URL yang benar-benar ada di daftar.
+`.trim()
+
+function blokPencarian(konteks) {
+  return ATURAN_PENCARIAN.replace('{konteks}', konteks || '(tidak ada hasil)')
+}
+
+/** Format hasil pencarian menjadi daftar bernomor + URL. */
+function rapikanHasil(hasil = []) {
+  return hasil
+    .filter((h) => h && (h.judul || h.isi || h.ringkas))
+    .map((h, i) => {
+      const tanda = h.resmi ? ' [SUMBER RESMI]' : ''
+      const isi = h.ringkas ? `Ringkasan: ${h.ringkas}` : h.isi ? `Isi: ${h.isi}` : ''
+      return `${i + 1}. ${h.judul || '(tanpa judul)'}${tanda}\n   URL: ${h.url}\n   ${isi}`.trim()
+    })
+    .join('\n\n')
+}
+
+/** Pertanyaan bebas + hasil pencarian. */
+export function promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia' }) {
+  const dasar = promptTanya({ pertanyaan, tingkat, bahasa })
+  return {
+    system: `${dasar.system}
+
+${blokPencarian(rapikanHasil(hasilCari))}
+
+KELUARAN TAMBAHAN — selain field yang sudah diminta, sertakan field "sumber"
+berisi objek {judul, penerbit, url} dari hasil pencarian di atas. Field "url"
+harus URL persis dari daftar.`,
+    user: dasar.user,
+  }
+}
+
+/** Verifikasi klaim + hasil pencarian. */
+export function promptVerifikasiDenganCari({ klaim, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia' }) {
+  const dasar = promptVerifikasi({ klaim, tingkat, bahasa })
+  return {
+    system: `${dasar.system}
+
+${blokPencarian(rapikanHasil(hasilCari))}
+
+KELUARAN TAMBAHAN — sertakan field "sumber" berisi objek {judul, penerbit, url}
+dari hasil pencarian di atas. Verdict harus didasarkan pada hasil pencarian itu.`,
+    user: dasar.user,
+  }
+}
+
+/** Sederhanakan teks + (opsional) hasil pencarian untuk melengkapi istilah. */
+export function promptSederhanakanDenganCari({ teks, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia' }) {
+  const dasar = promptSederhanakan({ teks, tingkat, bahasa })
+  return {
+    system: `${dasar.system}
+
+${blokPencarian(rapikanHasil(hasilCari))}
+
+CATATAN: teks yang disederhanakan tetap yang dari pengguna. Hasil pencarian hanya
+untuk memastikan istilah dan angkanya benar. Sertakan field "sumber" berisi objek
+{judul, penerbit, url} dari hasil pencarian bila dipakai.`,
+    user: dasar.user,
+  }
+}

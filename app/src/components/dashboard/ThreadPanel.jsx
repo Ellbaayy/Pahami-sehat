@@ -1,5 +1,5 @@
 import { MessagesSquare, Mic, Loader2 } from 'lucide-react'
-import { SectionHeading, EmptyState, SourcePills, PoinKunci, Peringatan } from '../ui/primitives'
+import { SectionHeading, EmptyState, SourcePills, PoinKunci, Peringatan, SumberJawaban } from '../ui/primitives'
 import TombolDengar from '../ui/TombolDengar'
 import { gunakanSuara } from '../../lib/useSuara'
 import { cn } from '../../lib/cn'
@@ -20,6 +20,8 @@ export default function ThreadPanel({
   streaming = '',
   statusPesan = '',
   error = null,
+  sumberCari = [],
+  t = (k) => k,
   serverOnline = true,
   serverMemuat = false,
 }) {
@@ -35,8 +37,8 @@ export default function ThreadPanel({
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
         eyebrow="Asisten"
-        title="Tanya AI"
-        description="Jawaban dibuat model AI, dirujuk ke sumber resmi, dan tidak menyimpan data pribadi."
+        title={t('tanya.judul')}
+        description={t('tanya.sub')}
       />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_1px_2px_rgba(15,30,51,0.04)]">
@@ -95,29 +97,30 @@ export default function ThreadPanel({
               loading ? 'animate-pulse' : '',
             )}
           >
-            {loading ? 'Memproses…' : 'Tanya Sekarang'}
+            {loading ? t('umum.proses') : t('tanya.kirim')}
           </button>
         </form>
 
         {suara.mendengar ? (
           <p className="mt-2.5 text-[0.8rem] text-brand-600">
-            {suara.sementara ? `“${suara.sementara}”` : 'Mendengarkan… bicara sekarang.'}
+            {suara.sementara ? `“${suara.sementara}”` : t('tanya.mendengar')}
           </p>
         ) : !serverOnline && !serverMemuat ? (
           <p className="mt-2.5 text-[0.8rem] text-amber-700">
-            Server AI belum terhubung — jalankan <code className="font-mono">npm run server</code>.
+            {t('umum.serverMati')} — {t('umum.jalankan')} <code className="font-mono">npm run server</code>.
           </p>
         ) : null}
       </div>
 
       {suara.error ? <Peringatan pesan={suara.error} code="mikrofon" /> : null}
+      <SumberJawaban cari={sumberCari} sumber={[]} />
       {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
 
       {thread.length === 0 && !loading ? (
         <EmptyState
           icon={MessagesSquare}
-          title="Belum ada percakapan"
-          description="Ajukan pertanyaan pertamamu — hasilnya akan muncul sebagai utas di sini."
+          title={t('tanya.belumAda')}
+          description={t('tanya.belumAdaSub')}
         />
       ) : (
         <ol className="space-y-3">
@@ -137,7 +140,7 @@ export default function ThreadPanel({
                   m.role === 'user' ? 'text-brand-100' : 'text-brand-600',
                 )}
               >
-                {m.role === 'user' ? 'Kamu' : 'Pahami Sehat'}
+                {m.role === 'user' ? t('tanya.kamu') : 'Pahami Sehat'}
               </p>
               <p
                 className={cn(
@@ -167,7 +170,7 @@ export default function ThreadPanel({
               {streaming ? (
                 <>
                   <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-600">
-                    Menyusun jawaban…
+                    {t('tanya.sedangMenyusun')}
                   </p>
                   <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-navy-700">
                     {streaming}
@@ -178,7 +181,7 @@ export default function ThreadPanel({
                 <>
                   <p className="mb-2 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-brand-600">
                     <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-                    {statusPesan || 'Memproses…'}
+                    {statusPesan || t('umum.proses')}
                   </p>
                   <div className="skeleton h-3 w-24 rounded" />
                   <div className="skeleton mt-2.5 h-3.5 w-full rounded" />

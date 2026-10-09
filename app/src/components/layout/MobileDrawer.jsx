@@ -11,7 +11,7 @@ import { cn } from '../../lib/cn'
  * - backdrop menutup saat diklik
  * - fokus dikunci ke dalam drawer selama terbuka
  */
-export default function MobileDrawer({ open, onClose, active, onSelect }) {
+export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) => k }) {
   const panelRef = useRef(null)
   const previouslyFocused = useRef(null)
 
@@ -91,7 +91,8 @@ export default function MobileDrawer({ open, onClose, active, onSelect }) {
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4" aria-label="Menu dashboard">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+          {NAV_ITEMS.map(({ id, kunci, label, icon: Icon }) => {
+            const teks = t(kunci) || label
             const isActive = active === id
             return (
               <button
@@ -112,7 +113,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect }) {
                   className={cn('size-5 shrink-0', isActive ? 'text-brand-600' : 'text-navy-500')}
                   aria-hidden="true"
                 />
-                {label}
+                {teks}
               </button>
             )
           })}
@@ -132,7 +133,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect }) {
             className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl text-[0.85rem] font-semibold text-navy-500 transition-colors hover:bg-slate-100"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
-            Kembali ke situs
+            {t('nav.kembali')}
           </a>
         </div>
       </div>

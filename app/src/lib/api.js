@@ -50,14 +50,14 @@ async function minta(path, { method = 'GET', body, signal } = {}) {
 export const ambilMeta = () => minta('/meta')
 export const ambilHealth = () => minta('/health')
 
-export const tanya = ({ pertanyaan, tingkat }, signal) =>
-  minta('/tanya', { method: 'POST', body: { pertanyaan, tingkat }, signal })
+export const tanya = ({ pertanyaan, tingkat, bahasa }, signal) =>
+  minta('/tanya', { method: 'POST', body: { pertanyaan, tingkat, bahasa }, signal })
 
-export const sederhanakan = ({ teks, tingkat }, signal) =>
-  minta('/sederhanakan', { method: 'POST', body: { teks, tingkat }, signal })
+export const sederhanakan = ({ teks, tingkat, bahasa }, signal) =>
+  minta('/sederhanakan', { method: 'POST', body: { teks, tingkat, bahasa }, signal })
 
-export const verifikasi = ({ klaim, tingkat }, signal) =>
-  minta('/verifikasi', { method: 'POST', body: { klaim, tingkat }, signal })
+export const verifikasi = ({ klaim, tingkat, bahasa }, signal) =>
+  minta('/verifikasi', { method: 'POST', body: { klaim, tingkat, bahasa }, signal })
 
 /**
  * Streaming jawaban lewat SSE.
@@ -65,13 +65,13 @@ export const verifikasi = ({ klaim, tingkat }, signal) =>
  * @param {{onStatus?: Function, onDelta?: Function, onHasil?: Function, signal?: AbortSignal}} cb
  * @returns {Promise<object>} hasil final
  */
-export async function tanyaStream({ pertanyaan, tingkat }, { onStatus, onDelta, onHasil, signal } = {}) {
+export async function tanyaStream({ pertanyaan, tingkat, bahasa }, { onStatus, onDelta, onHasil, onSumber, signal } = {}) {
   let res
   try {
     res = await fetch(`${BASE}/tanya/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-      body: JSON.stringify({ pertanyaan, tingkat }),
+      body: JSON.stringify({ pertanyaan, tingkat, bahasa }),
       signal,
     })
   } catch (e) {
@@ -121,6 +121,7 @@ export async function tanyaStream({ pertanyaan, tingkat }, { onStatus, onDelta, 
       }
 
       if (event === 'status') onStatus?.(isi?.pesan ?? '')
+      else if (event === 'sumber') onSumber?.(isi?.hasil ?? [])
       else if (event === 'delta') onDelta?.(isi?.teks ?? '')
       else if (event === 'hasil') {
         hasil = isi

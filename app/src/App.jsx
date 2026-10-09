@@ -20,9 +20,10 @@ import { History, ArrowLeft, PlugZap, Plug, WifiOff } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP, HISTORY } from './data/dummy'
 import { TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
+import { gunakanBahasa } from './lib/useBahasa'
 import { tanyaStream } from './lib/api'
 import { ttsBaca, ttsBerhenti } from './lib/tts'
-import { ambilCache, hapusCache, simpanCache, sedangOffline } from './lib/offline'
+import { ambilCache, hapusCache, hapusSatu, simpanCache, sedangOffline, MAKS_TERSIMPAN } from './lib/offline'
 
 const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, offline: false, tts: false, lang: 'id' }
 
@@ -48,6 +49,7 @@ export default function App() {
   const [streamTeks, setStreamTeks] = useState('')
   const [statusPesan, setStatusPesan] = useState('')
   const [error, setError] = useState(null)
+  const [sumberCari, setSumberCari] = useState([])
   const [result, setResult] = useState(null)
   const [askedQuestion, setAskedQuestion] = useState('')
   const [selectedTopic, setSelectedTopic] = useState(null)
@@ -56,6 +58,8 @@ export default function App() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
 
   const server = useServer()
+  const { kode: kodeBahasa, t } = gunakanBahasa(settings.lang)
+  const labelTingkat = useCallback((kunci) => t(`tingkat.${kunci}`), [t])
   const batalRef = useRef(null)
 
   // supaya `ask` selalu melihat nilai tts terbaru tanpa ikut jadi dependensi
@@ -63,7 +67,7 @@ export default function App() {
   ttsAutoRef.current = settings.tts
 
   // --- mode hemat sinyal -------------------------------------------------
-  const [cache, setCache] = useState(() => ambilCache())
+  const [daftarCache, setDaftarCache] = useState(() => ambilCache())
   const [offline, setOffline] = useState(() => sedangOffline())
 
   // pantau status jaringan
@@ -81,9 +85,8 @@ export default function App() {
   // simpan cache saat jawaban baru masuk, kalau modenya menyala
   useEffect(() => {
     if (!settings.offline || !result) return
-    const pertanyaan = askedQuestion
-    const oke = simpanCache({ pertanyaan, hasil: result, tingkat: settings.level })
-    if (oke) setCache(ambilCache())
+    const oke = simpanCache({ pertanyaan: askedQuestion, hasil: result, tingkat: settings.level })
+    if (oke) setDaftarCache(ambilCache())
   }, [result, settings.offline, settings.level, askedQuestion])
 
   // matikan mode hemat sinyal → bersihkan simpanan
@@ -91,7 +94,7 @@ export default function App() {
     setSettings((lama) => {
       if (lama.offline && !baru.offline) {
         hapusCache()
-        setCache(null)
+        setDaftarCache([])
       }
       return baru
     })
@@ -116,7 +119,8 @@ export default function App() {
       setResult(null)
       setError(null)
       setStreamTeks('')
-      setStatusPesan('Menghubungi server…')
+      setSumberCari([])
+      setStatusPesan('Menyiapkan jawaban…')
       setAskedQuestion(text)
       setInput('')
 
@@ -124,10 +128,11 @@ export default function App() {
       setThread((prev) => [...prev, { id: `u${Date.now()}`, role: 'user', text }])
 
       tanyaStream(
-        { pertanyaan: text, tingkat: settings.level },
+        { pertanyaan: text, tingkat: settings.level, bahasa: kodeBahasa },
         {
           signal: ac.signal,
           onStatus: (p) => setStatusPesan(p),
+          onSumber: (h) => setSumberCari(h),
           onDelta: (t) => setStreamTeks((prev) => prev + t),
           onHasil: (h) => {
             setResult(h)
@@ -185,7 +190,7 @@ export default function App() {
         Lompat ke konten utama
       </a>
 
-      <Sidebar active={active} onSelect={navigate} />
+      <Sidebar active={active} onSelect={navigate} t={t} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
@@ -199,6 +204,7 @@ export default function App() {
           onClose={() => setDrawerOpen(false)}
           active={active}
           onSelect={navigate}
+          t={t}
         />
 
         <main
@@ -211,28 +217,55 @@ export default function App() {
                 <Greeting />
 
                 {/* mode hemat sinyal: jawaban terakhir tetap bisa dibaca tanpa internet */}
-                {settings.offline && cache ? (
+                {settings.offline && daftarCache.length ? (
                   <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                    <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
                       <WifiOff className="size-4 shrink-0 text-amber-700" aria-hidden="true" />
                       <p className="text-[0.8rem] font-bold tracking-wide text-amber-800 uppercase">
-                        {offline ? 'Sedang offline — jawaban terakhir' : 'Jawaban terakhir tersimpan'}
+                        {offline ? t('off.sedangOffline') : t('off.tersimpan')} ({daftarCache.length}/{MAKS_TERSIMPAN})
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          hapusCache()
+                          setDaftarCache([])
+                        }}
+                        className="ml-auto text-[0.76rem] font-semibold text-amber-800 underline decoration-dotted underline-offset-2 hover:text-amber-900"
+                      >
+                        {t('umum.kosongkan')}
+                      </button>
                     </div>
-                    <p className="text-[0.86rem] font-semibold text-navy-800">“{cache.pertanyaan}”</p>
-                    <p className="mt-1 text-[0.92rem] leading-relaxed whitespace-pre-wrap text-navy-700">
-                      {cache.jawaban}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-3">
-                      <TombolDengar teks={cache.jawaban} label="Dengar tersimpan" />
-                      <span className="text-[0.76rem] text-amber-700">
-                        Tersimpan di perangkat ini saja
-                      </span>
-                    </div>
+
+                    <ul className="max-h-[22rem] space-y-2 overflow-y-auto pr-1">
+                      {daftarCache.map((c) => (
+                        <li key={c.id} className="rounded-xl border border-amber-200/70 bg-white/80 p-3">
+                          <p className="text-[0.84rem] font-semibold text-navy-800">“{c.pertanyaan}”</p>
+                          <p className="mt-1 text-[0.88rem] leading-relaxed whitespace-pre-wrap text-navy-700">
+                            {c.jawaban}
+                          </p>
+                          <div className="mt-2 flex flex-wrap items-center gap-3">
+                            <TombolDengar teks={c.jawaban} label={t('off.dengar')} />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                hapusSatu(c.id)
+                                setDaftarCache(ambilCache())
+                              }}
+                              className="text-[0.76rem] font-semibold text-slate-500 hover:text-rose-600"
+                            >
+                              {t('umum.kosongkan')}
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <p className="mt-2 text-[0.72rem] text-amber-700">{t('off.diPerangkat')}</p>
                   </div>
                 ) : null}
 
                 <AskAI
+                  t={t}
                   value={input}
                   onChange={setInput}
                   onAsk={ask}
@@ -242,6 +275,7 @@ export default function App() {
                   streaming={streamTeks}
                   statusPesan={statusPesan}
                   error={error}
+                  sumberCari={sumberCari}
                   serverOnline={server.online}
                   serverMemuat={server.memuat}
                 />
@@ -254,6 +288,7 @@ export default function App() {
 
             {active === 'tanya' ? (
               <ThreadPanel
+                t={t}
                 input={input}
                 onInputChange={setInput}
                 onAsk={ask}
@@ -262,6 +297,7 @@ export default function App() {
                 streaming={streamTeks}
                 statusPesan={statusPesan}
                 error={error}
+                sumberCari={sumberCari}
                 serverOnline={server.online}
                 serverMemuat={server.memuat}
               />
@@ -269,6 +305,8 @@ export default function App() {
 
             {active === 'sederhanakan' ? (
               <SederhanakanPanel
+                t={t}
+                labelTingkat={labelTingkat}
                 tingkat={settings.level}
                 onTingkatChange={(lv) => setSettings((s) => ({ ...s, level: lv }))}
                 serverOnline={server.online}
@@ -278,6 +316,8 @@ export default function App() {
 
             {active === 'verifikasi' ? (
               <VerifikasiPanel
+                t={t}
+                labelTingkat={labelTingkat}
                 tingkat={settings.level}
                 onTingkatChange={(lv) => setSettings((s) => ({ ...s, level: lv }))}
                 serverOnline={server.online}
@@ -316,9 +356,9 @@ export default function App() {
               </div>
             ) : null}
 
-            {active === 'kuesioner' ? <QuizPanel /> : null}
+            {active === 'kuesioner' ? <QuizPanel t={t} /> : null}
             {active === 'pengaturan' ? (
-              <SettingsPanel settings={settings} onChange={ubahSettings} />
+              <SettingsPanel settings={settings} onChange={ubahSettings} t={t} labelTingkat={labelTingkat} />
             ) : null}
           </div>
         </main>
@@ -331,17 +371,17 @@ export default function App() {
             <p className="flex items-center gap-1.5 text-[0.78rem] text-slate-500">
               {server.memuat ? (
                 <>
-                  <Plug className="size-3.5" aria-hidden="true" /> Memeriksa server…
+                  <Plug className="size-3.5" aria-hidden="true" /> {t('umum.memeriksa')}
                 </>
               ) : server.online ? (
                 <>
                   <PlugZap className="size-3.5 text-brand-600" aria-hidden="true" />
-                  Terhubung · {server.model}
+                  {t('umum.terhubung')}
                 </>
               ) : (
                 <>
                   <Plug className="size-3.5 text-amber-600" aria-hidden="true" />
-                  Server AI belum jalan — jalankan{' '}
+                  {t('umum.serverMati')} — {t('umum.jalankan')}{' '}
                   <code className="font-mono">npm run server</code>
                 </>
               )}

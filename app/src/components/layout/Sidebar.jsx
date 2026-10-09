@@ -9,7 +9,7 @@ import { cn } from '../../lib/cn'
  * - md    : rail icon-only  (tablet / laptop sempit)
  * - >=lg  : sidebar penuh 240px dengan label
  */
-export default function Sidebar({ active, onSelect }) {
+export default function Sidebar({ active, onSelect, t = (k) => k }) {
   return (
     <aside
       className="sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-slate-200 bg-white md:flex md:w-[76px] lg:w-[240px]"
@@ -38,7 +38,8 @@ export default function Sidebar({ active, onSelect }) {
 
       {/* menu */}
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2.5 py-2 lg:px-3.5">
-        {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+        {NAV_ITEMS.map(({ id, kunci, label, icon: Icon }) => {
+            const teks = t(kunci) || label
           const isActive = active === id
           return (
             <button
@@ -46,8 +47,8 @@ export default function Sidebar({ active, onSelect }) {
               type="button"
               onClick={() => onSelect(id)}
               aria-current={isActive ? 'page' : undefined}
-              aria-label={label}
-              title={label}
+              aria-label={teks}
+              title={teks}
               className={cn(
                 'group relative flex h-11 items-center gap-3 rounded-xl px-3',
                 'text-[0.92rem] font-semibold transition-colors duration-200 ease-out',
@@ -65,7 +66,7 @@ export default function Sidebar({ active, onSelect }) {
                 )}
                 aria-hidden="true"
               />
-              <span className="hidden truncate lg:inline">{label}</span>
+              <span className="hidden truncate lg:inline">{teks}</span>
               {isActive ? (
                 <span
                   className="absolute left-0 hidden h-5 w-[3px] rounded-r-full bg-brand-500 lg:block"
@@ -91,10 +92,10 @@ export default function Sidebar({ active, onSelect }) {
         <a
           href="/prototipe/"
           className="mt-2 flex h-10 items-center justify-center gap-2 rounded-xl text-[0.8rem] font-semibold text-navy-500 transition-colors hover:bg-slate-100 hover:text-navy-800 lg:justify-start lg:px-3"
-          title="Kembali ke situs utama"
+          title={t('nav.kembali')}
         >
           <ArrowLeft className="size-4 shrink-0" aria-hidden="true" />
-          <span className="hidden lg:inline">Kembali ke situs</span>
+          <span className="hidden lg:inline">{t('nav.kembali')}</span>
         </a>
       </div>
     </aside>

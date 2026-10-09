@@ -2,6 +2,7 @@ import { WifiOff, Volume2, Languages } from 'lucide-react'
 import { Card, SectionHeading } from '../ui/primitives'
 import { cn } from '../../lib/cn'
 import { TINGKAT } from '../../data/tingkat'
+import { BAHASA } from '../../data/bahasa'
 
 function Switch({ checked, onChange, label }) {
   return (
@@ -39,25 +40,25 @@ function Row({ title, description, control }) {
   )
 }
 
-export default function SettingsPanel({ settings, onChange }) {
+export default function SettingsPanel({ settings, onChange, t = (k) => k, labelTingkat = (x) => x }) {
   const set = (key, value) => onChange({ ...settings, [key]: value })
 
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
         eyebrow="Preferensi"
-        title="Pengaturan"
-        description="Disimpan di browser ini saja. Tidak ada akun, tidak ada server."
+        title={t('set.judul')}
+        description={t('set.sub')}
       />
 
       <Card className="divide-y divide-slate-100 overflow-hidden">
         <Row
-          title="Tingkat baca"
-          description="Target penyederhanaan jawaban dan artikel."
+          title={t('set.tingkat')}
+          description={t('set.tingkatSub')}
           control={
             <div
               role="group"
-              aria-label="Pilih tingkat baca"
+              aria-label={t('umum.tingkatBaca')}
               className="flex rounded-xl border border-slate-200 bg-white p-1"
             >
               {TINGKAT.map((t) => (
@@ -74,7 +75,7 @@ export default function SettingsPanel({ settings, onChange }) {
                       : 'text-navy-500 hover:bg-slate-100 hover:text-navy-800',
                   )}
                 >
-                  {t.label}
+                  {labelTingkat(t.kunci)}
                 </button>
               ))}
             </div>
@@ -85,15 +86,15 @@ export default function SettingsPanel({ settings, onChange }) {
           title={
             <span className="inline-flex items-center gap-2">
               <WifiOff className="size-4 text-brand-600" aria-hidden="true" />
-              Mode hemat sinyal
+              {t('set.offline')}
             </span>
           }
-          description="Simpan jawaban terakhir di perangkat ini supaya tetap bisa dibaca saat sinyal hilang."
+          description={t('set.offlineSub')}
           control={
             <Switch
               checked={settings.offline}
               onChange={(v) => set('offline', v)}
-              label="Mode hemat sinyal"
+              label={t('set.offline')}
             />
           }
         />
@@ -102,15 +103,15 @@ export default function SettingsPanel({ settings, onChange }) {
           title={
             <span className="inline-flex items-center gap-2">
               <Volume2 className="size-4 text-sky-600" aria-hidden="true" />
-              Putar suara otomatis
+              {t('set.tts')}
             </span>
           }
-          description="Setiap jawaban AI langsung dibacakan dengan suara peramban (TTS)."
+          description={t('set.ttsSub')}
           control={
             <Switch
               checked={settings.tts}
               onChange={(v) => set('tts', v)}
-              label="Putar suara otomatis"
+              label={t('set.tts')}
             />
           }
         />
@@ -119,26 +120,29 @@ export default function SettingsPanel({ settings, onChange }) {
           title={
             <span className="inline-flex items-center gap-2">
               <Languages className="size-4 text-brand-600" aria-hidden="true" />
-              Bahasa antarmuka
+              {t('set.bahasa')}
             </span>
           }
-          description="Isi jawaban mengikuti bahasa yang kamu pilih."
+          description={t('set.bahasaSub')}
           control={
             <select
-              aria-label="Bahasa antarmuka"
+              aria-label={t('set.bahasa')}
               value={settings.lang}
               onChange={(e) => set('lang', e.target.value)}
               className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
             >
-              <option value="id">Bahasa Indonesia</option>
-              <option value="en">English</option>
+              {BAHASA.map((b) => (
+                <option key={b.kunci} value={b.kunci}>
+                  {b.label}
+                </option>
+              ))}
             </select>
           }
         />
       </Card>
 
       <p className="text-[0.8rem] text-slate-500">
-        Tingkat baca berlaku untuk semua jawaban AI. Semua preferensi ini tersimpan di peramban, bukan di server.
+        {t('set.catatan')}
       </p>
     </div>
   )

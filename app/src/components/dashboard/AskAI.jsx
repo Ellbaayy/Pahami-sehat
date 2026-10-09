@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import { Sparkles, Mic, Send, Loader2, WifiOff } from 'lucide-react'
-import { Button, Card, SourcePills, Skeleton, PoinKunci, Peringatan } from '../ui/primitives'
+import { Button, Card, SourcePills, Skeleton, PoinKunci, Peringatan, SumberJawaban } from '../ui/primitives'
 import TombolDengar from '../ui/TombolDengar'
 import { gunakanSuara } from '../../lib/useSuara'
 import { cn } from '../../lib/cn'
@@ -21,6 +21,8 @@ export default function AskAI({
   streaming = '',
   statusPesan = '',
   error = null,
+  sumberCari = [],
+  t = (k) => k,
   serverOnline = true,
   serverMemuat = false,
 }) {
@@ -53,10 +55,10 @@ export default function AskAI({
         </span>
         <div className="min-w-0">
           <h2 className="text-[clamp(0.98rem,0.94rem+0.2vw,1.1rem)] font-bold text-navy-900">
-            Tanya AI
+            {t('tanya.judul')}
           </h2>
           <p className="text-[0.8rem] leading-snug text-navy-500">
-            Disederhanakan sesuai tingkat baca, poin kunci tetap dipertahankan, sumber selalu disertakan.
+            {t('tanya.sub')}
           </p>
         </div>
       </div>
@@ -65,8 +67,7 @@ export default function AskAI({
         <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-[0.82rem] font-medium text-amber-800">
           <WifiOff className="size-4 shrink-0" aria-hidden="true" />
           <span>
-            Server AI belum terhubung. Jalankan <code className="font-mono">npm run server</code> lalu
-            muat ulang halaman.
+            {t('umum.serverMati')}. {t('umum.jalankan')} <code className="font-mono">npm run server</code>.
           </span>
         </div>
       ) : null}
@@ -80,7 +81,7 @@ export default function AskAI({
           )}
         >
           <label htmlFor={id} className="sr-only">
-            Tulis pertanyaan kesehatan
+            {t('tanya.judul')}
           </label>
           <textarea
             id={id}
@@ -93,7 +94,7 @@ export default function AskAI({
                 if (canSubmit) onAsk(value)
               }
             }}
-            placeholder="Tulis pertanyaan, tempel teks, atau kirim suara..."
+            placeholder={t('tanya.placeholder')}
             className="min-h-[3.25rem] flex-1 resize-none bg-transparent text-[0.95rem] leading-relaxed text-navy-900 outline-none placeholder:text-slate-500"
           />
           <button
@@ -134,7 +135,7 @@ export default function AskAI({
           full
           className="lg:w-auto lg:shrink-0"
         >
-          {loading ? 'Memproses…' : 'Tanya Sekarang'}
+          {loading ? t('umum.proses') : t('tanya.kirim')}
           {!loading ? <Send className="size-4" aria-hidden="true" /> : null}
         </Button>
       </form>
@@ -144,7 +145,7 @@ export default function AskAI({
           suara.sementara ? (
             <span className="text-brand-600">“{suara.sementara}”</span>
           ) : (
-            'Mendengarkan… bicara sekarang.'
+            t('tanya.mendengar')
           )
         ) : loading && statusPesan ? (
           <span className="inline-flex items-center gap-1.5 text-brand-600">
@@ -154,14 +155,15 @@ export default function AskAI({
         ) : (
           <>
             <span className="hidden sm:inline">
-              Tekan Enter untuk kirim, Shift+Enter untuk baris baru.
+              {t('tanya.kirim')}
             </span>
-            <span className="sm:hidden">Ketuk tombol kirim untuk bertanya.</span>
+            <span className="sm:hidden">{t('tanya.kirim')}</span>
           </>
         )}
       </p>
 
       {suara.error ? <Peringatan pesan={suara.error} code="mikrofon" /> : null}
+      <SumberJawaban cari={sumberCari} sumber={result?.sumber || []} />
       {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
 
       {/* ---- hasil ---- */}
@@ -170,7 +172,7 @@ export default function AskAI({
           {streaming ? (
             <div className="rounded-xl border border-brand-200 bg-white p-4">
               <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-600">
-                Menyusun jawaban…
+                {t('tanya.sedangMenyusun')}
               </p>
               <p className="text-[0.92rem] leading-relaxed whitespace-pre-wrap text-navy-700">
                 {streaming}
@@ -189,8 +191,8 @@ export default function AskAI({
         <div className="rise mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4" aria-live="polite">
           <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-600">
             {result.verdict === 'tidak_didukung'
-              ? 'Verdict — tidak didukung sumber'
-              : 'Jawaban tersederhanakan'}
+              ? t('tanya.verdictNegatif')
+              : t('tanya.jawaban')}
           </p>
           {question ? (
             <p className="mb-1.5 text-[0.86rem] font-semibold text-navy-800">“{question}”</p>

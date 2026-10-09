@@ -29,7 +29,7 @@ const VERDICT = {
  * Cek klaim kesehatan — untuk broadcast WhatsApp yang mencurigakan.
  * Model diminta jujur: "tidak bisa dipastikan" adalah jawaban yang sah.
  */
-export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline, serverMemuat }) {
+export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline, serverMemuat, t = (k) => k, labelTingkat = (x) => x }) {
   const [klaim, setKlaim] = useState('')
   const [loading, setLoading] = useState(false)
   const [hasil, setHasil] = useState(null)
@@ -52,21 +52,22 @@ export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline
   }
 
   const v = hasil ? VERDICT[hasil.verdict] ?? VERDICT.tidak_bisa_dipastikan : null
+  const labelVerdict = { didukung: t('ver.didukung'), tidak_didukung: t('ver.tidakDidukung'), tidak_bisa_dipastikan: t('ver.tidakPasti') }
 
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
         eyebrow="Fitur inti"
-        title="Cek klaim kesehatan"
-        description="Tempel klaim dari broadcast atau media sosial. Model menilai apakah klaim itu didukung dokumen resmi — dan berani menjawab 'belum bisa dipastikan' kalau memang tidak ada dasarnya."
+        title={t('ver.judul')}
+        description={t('ver.sub')}
       />
 
       <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
         <div className="mb-3 flex flex-wrap items-center gap-3">
-          <span className="text-[0.84rem] font-semibold text-navy-700">Tingkat baca:</span>
+          <span className="text-[0.84rem] font-semibold text-navy-700">{t('umum.tingkatBaca')}:</span>
           <div
             role="group"
-            aria-label="Pilih tingkat baca"
+            aria-label={t('umum.tingkatBaca')}
             className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1"
           >
             {TINGKAT.map((t) => (
@@ -83,7 +84,7 @@ export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline
                     : 'text-navy-500 hover:bg-slate-100 hover:text-navy-800')
                 }
               >
-                {t.label}
+                {labelTingkat(t.kunci)}
               </button>
             ))}
           </div>
@@ -96,19 +97,19 @@ export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline
             }}
             className="ml-auto text-[0.8rem] font-semibold text-brand-600 hover:text-brand-700"
           >
-            Pakai contoh
+            {t('umum.pakaiContoh')}
           </button>
         </div>
 
         <label htmlFor="teks-klaim" className="sr-only">
-          Klaim yang akan diperiksa
+          {t('ver.label')}
         </label>
         <textarea
           id="teks-klaim"
           rows={3}
           value={klaim}
           onChange={(e) => setKlaim(e.target.value)}
-          placeholder="Tempel klaim atau broadcast di sini…"
+          placeholder={t('ver.placeholder')}
           className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-[0.92rem] leading-relaxed text-navy-900 outline-none transition-colors placeholder:text-slate-500 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
         />
 
@@ -120,13 +121,13 @@ export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline
             disabled={!klaim.trim() || !serverOnline}
             onClick={kirim}
           >
-            {loading ? 'Memeriksa…' : 'Periksa klaim'}
+            {loading ? t('umum.proses') : t('ver.tombol')}
           </Button>
         </div>
 
         {!serverOnline && !serverMemuat ? (
           <p className="mt-2.5 text-[0.8rem] text-amber-700">
-            Server AI belum terhubung — jalankan <code className="font-mono">npm run server</code>.
+            {t('umum.serverMati')} — {t('umum.jalankan')} <code className="font-mono">npm run server</code>.
           </p>
         ) : null}
       </Card>
@@ -137,14 +138,14 @@ export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline
         <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
           <p className="inline-flex items-center gap-2 text-[0.88rem] font-semibold text-brand-600">
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            Mencocokkan klaim dengan dokumen resmi…
+            {t('ver.proses')}
           </p>
         </Card>
       ) : hasil && v ? (
         <Card className="rise p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
           <div className={`mb-3 inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 ${v.kelas}`}>
             <v.Ikon className="size-4 shrink-0" aria-hidden="true" />
-            <span className="text-[0.86rem] font-bold">{v.label}</span>
+            <span className="text-[0.86rem] font-bold">{labelVerdict[hasil.verdict] ?? v.label}</span>
           </div>
 
           <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-navy-800">

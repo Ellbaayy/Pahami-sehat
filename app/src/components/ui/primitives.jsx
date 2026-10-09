@@ -126,18 +126,35 @@ export function SourcePills({ sources = [], negative = false, label = 'Sumber' }
       </span>
       {sources.map((s, i) => {
         const teks = typeof s === 'string' ? s : [s.penerbit, s.judul].filter(Boolean).join(' — ')
-        return (
-          <span
-            key={`${teks}-${i}`}
-            className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold',
-              negative
-                ? 'bg-sky-50 text-sky-600 ring-1 ring-sky-100'
-                : 'bg-brand-50 text-brand-700 ring-1 ring-brand-100',
-            )}
-          >
+        const url = typeof s === 'object' && /^https?:\/\//i.test(s?.url ?? '') ? s.url : ''
+        const gaya = cn(
+          'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold',
+          negative
+            ? 'bg-sky-50 text-sky-600 ring-1 ring-sky-100'
+            : 'bg-brand-50 text-brand-700 ring-1 ring-brand-100',
+          url && 'underline decoration-dotted underline-offset-2 transition-colors hover:bg-brand-100',
+        )
+        const isi = (
+          <>
             <span aria-hidden="true">{negative ? '→' : '✓'}</span>
-            {teks}
+            {teks || url.replace(/^https?:\/\//, '').slice(0, 40)}
+          </>
+        )
+        // kalau ada URL, jadikan tautan yang bisa dibuka — sumber harus bisa dicek sendiri
+        return url ? (
+          <a
+            key={`${teks}-${i}`}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={url}
+            className={gaya}
+          >
+            {isi}
+          </a>
+        ) : (
+          <span key={`${teks}-${i}`} className={gaya}>
+            {isi}
           </span>
         )
       })}
@@ -190,5 +207,94 @@ export function Peringatan({ pesan, code, aksi }) {
       </div>
       {aksi}
     </div>
+  )
+}
+
+
+/* ---------------- Sumber jawaban (bisa dicek sendiri) ---------------- */
+/**
+ * Daftar sumber jawaban AI, dengan URL lengkap yang bisa dibuka.
+ * Tujuan: pengguna skeptis bisa memverifikasi sendiri, bukan sekadar percaya.
+ */
+export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban' }) {
+  // gabungkan: sumber yang dipakai model + hasil pencarian yang belum terpakai
+  // cari dulu sumber mana yang lembaga resmi (Kemenkes/WHO/BPOM) dari hasil
+  // pencarian — supaya sumber yang DIKUTIP model pun tetap dapat tanda resmi
+  const resmiSet = new Set((cari || []).filter((h) => h?.resmi).map((h) => h.url))
+  const dipakai = (sumber || []).map((s) => ({
+    judul: [s.penerbit, s.judul].filter(Boolean).join(' — ') || s.url,
+    url: s.url || '',
+    resmi: resmiSet.has(s.url),
+    dipakai: true,
+  }))
+  const sudah = new Set(dipakai.map((d) => d.url).filter(Boolean))
+  const cadangan = (cari || [])
+    .filter((h) => h?.url && !sudah.has(h.url))
+    .map((h) => ({ judul: h.judul || h.url, url: h.url, resmi: Boolean(h.resmi), dipakai: false }))
+
+  const semua = [...dipakai, ...cadangan]
+  if (!semua.length) return null
+
+  const adaResmi = semua.some((s) => s.resmi)
+
+  return (
+    <details
+      open
+      className="mt-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3"
+    >
+      <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-[0.8rem] font-bold text-navy-800 marker:content-none">
+        <span aria-hidden="true">🔎</span>
+        {label} ({semua.length})
+        {adaResmi ? (
+          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[0.68rem] font-bold text-brand-700 ring-1 ring-brand-100">
+            termasuk sumber resmi
+          </span>
+        ) : null}
+      </summary>
+
+      <p className="mt-2 text-[0.78rem] text-slate-600">
+        Silakan cek sendiri lewat tautan di bawah — jangan percaya begitu saja.
+        {!dipakai.length ? ' Model belum mengutip satu pun; daftar ini hasil pencarian mentah.' : ''}
+      </p>
+
+      <ul className="mt-2.5 space-y-2">
+        {semua.map((s, i) => (
+          <li key={`${s.url}-${i}`} className="rounded-lg border border-slate-100 bg-slate-50/60 p-2.5">
+            <div className="flex items-start gap-2">
+              <span className="shrink-0" aria-hidden="true">{s.resmi ? '🏛️' : s.dipakai ? '✅' : '🔗'}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[0.84rem] leading-snug font-semibold text-navy-800">
+                  {s.judul}
+                  {s.resmi ? (
+                    <span className="ml-1.5 text-[0.68rem] font-bold text-brand-600">SUMBER RESMI</span>
+                  ) : null}
+                  {!s.dipakai ? (
+                    <span className="ml-1.5 text-[0.68rem] font-normal text-slate-500">ditemukan, belum dikutip</span>
+                  ) : null}
+                </p>
+                {s.url ? (
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-0.5 block truncate font-mono text-[0.72rem] text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-800"
+                    title={s.url}
+                  >
+                    {s.url}
+                  </a>
+                ) : (
+                  <p className="mt-0.5 text-[0.72rem] text-slate-500">(tanpa tautan)</p>
+                )}
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-2.5 text-[0.7rem] text-slate-500">
+        Jawaban disusun dari hasil pencarian internet yang diambil saat pertanyaan diproses.
+        Tanda ✅ berarti sumber itu dipakai di jawaban; 🏛️ menandai lembaga resmi.
+      </p>
+    </details>
   )
 }

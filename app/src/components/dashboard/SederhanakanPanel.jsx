@@ -12,7 +12,7 @@ const CONTOH = `Hipertensi merupakan kondisi kronis yang ditandai dengan peningk
  * Tempel teks medis mentah (hasil lab, label obat, artikel, broadcast WA),
  * lalu model menyederhanakannya pada tingkat baca yang dipilih.
  */
-export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnline, serverMemuat }) {
+export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnline, serverMemuat, t = (k) => k, labelTingkat = (x) => x }) {
   const [teks, setTeks] = useState('')
   const [loading, setLoading] = useState(false)
   const [hasil, setHasil] = useState(null)
@@ -38,16 +38,16 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
         eyebrow="Fitur inti"
-        title="Sederhanakan teks medis"
-        description="Tempel teks dari hasil lab, label obat, artikel, atau broadcast WhatsApp. Model menandai poin kunci lebih dulu, baru menyederhanakan bahasanya."
+        title={t('sed.judul')}
+        description={t('sed.sub')}
       />
 
       <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
         <div className="mb-3 flex flex-wrap items-center gap-3">
-          <span className="text-[0.84rem] font-semibold text-navy-700">Tingkat baca:</span>
+          <span className="text-[0.84rem] font-semibold text-navy-700">{t('umum.tingkatBaca')}:</span>
           <div
             role="group"
-            aria-label="Pilih tingkat baca"
+            aria-label={t('umum.tingkatBaca')}
             className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1"
           >
             {TINGKAT.map((t) => (
@@ -65,7 +65,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
                     : 'text-navy-500 hover:bg-slate-100 hover:text-navy-800')
                 }
               >
-                {t.label}
+                {labelTingkat(t.kunci)}
               </button>
             ))}
           </div>
@@ -78,19 +78,19 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
             }}
             className="ml-auto text-[0.8rem] font-semibold text-brand-600 hover:text-brand-700"
           >
-            Pakai contoh
+            {t('umum.pakaiContoh')}
           </button>
         </div>
 
         <label htmlFor="teks-medis" className="sr-only">
-          Teks medis yang akan disederhanakan
+          {t('sed.label')}
         </label>
         <textarea
           id="teks-medis"
           rows={5}
           value={teks}
           onChange={(e) => setTeks(e.target.value)}
-          placeholder="Tempel teks medis di sini…"
+          placeholder={t('sed.placeholder')}
           className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-[0.92rem] leading-relaxed text-navy-900 outline-none transition-colors placeholder:text-slate-500 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
         />
 
@@ -102,7 +102,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
             disabled={!teks.trim() || !serverOnline}
             onClick={kirim}
           >
-            {loading ? 'Memproses…' : 'Sederhanakan'}
+            {loading ? t('umum.proses') : t('sed.tombol')}
             {!loading ? <Wand2 className="size-4" aria-hidden="true" /> : null}
           </Button>
           {teks ? (
@@ -116,7 +116,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
               className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-800"
             >
               <Trash2 className="size-3.5" aria-hidden="true" />
-              Kosongkan
+              {t('umum.kosongkan')}
             </button>
           ) : null}
           <span className="ml-auto text-[0.78rem] text-slate-500">{teks.length} karakter</span>
@@ -124,7 +124,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
 
         {!serverOnline && !serverMemuat ? (
           <p className="mt-2.5 text-[0.8rem] text-amber-700">
-            Server AI belum terhubung — jalankan <code className="font-mono">npm run server</code>.
+            {t('umum.serverMati')} — {t('umum.jalankan')} <code className="font-mono">npm run server</code>.
           </p>
         ) : null}
       </Card>
@@ -135,7 +135,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
         <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
           <p className="inline-flex items-center gap-2 text-[0.88rem] font-semibold text-brand-600">
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            Menandai poin kunci lalu menyederhanakan bahasa…
+            {t('sed.proses')}
           </p>
         </Card>
       ) : hasil ? (
