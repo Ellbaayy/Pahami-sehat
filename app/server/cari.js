@@ -89,54 +89,90 @@ function bersihkan(teks) {
   return baris.join('\n').slice(0, BATAS_ISI)
 }
 
-/** Hasil dari DuckDuckGo HTML. */
+/**
+ * Hasil dari DuckDuckGo. Dua endpoint dicoba karena sebagian penyedia hosting
+ * (mis. Vercel) kadang diblokir di salah satunya.
+ */
 async function cariDuckDuckGo(q, jumlah = BATAS_HASIL) {
-  const url = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q)
-  const html = await ambilHtml(url)
-  const hasil = []
-  const pola = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi
-  let m
-  while ((m = pola.exec(html)) && hasil.length < jumlah) {
-    let href = m[1]
-    const judul = m[2].replace(/<[^>]+>/g, '').trim()
-    // DDG membungkus tautan dengan pengalih
+  const endpoint = [
+    'https://html.duckduckgo.com/html/?q=',
+    'https://lite.duckduckgo.com/lite/?q=',
+  ]
+  let terakhirError = null
+
+  for (const dasar of endpoint) {
     try {
-      const u = new URL(href, 'https://duckduckgo.com')
-      const uddg = u.searchParams.get('uddg')
-      if (uddg) href = decodeURIComponent(uddg)
-    } catch {
-      /* pakai apa adanya */
+      const html = await ambilHtml(dasar + encodeURIComponent(q))
+      const hasil = []
+      // html.duckduckgo.com memakai .result__a; lite memakai tabel tautan biasa
+      const polaA = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi
+      const polaL = /<a[^>]*class="result-link"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi
+      for (const pola of [polaA, polaL]) {
+        let m
+        while ((m = pola.exec(html)) && hasil.length < jumlah) {
+          let href = m[1]
+          const judul = m[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim()
+          try {
+            const u = new URL(href, 'https://duckduckgo.com')
+            const uddg = u.searchParams.get('uddg')
+            if (uddg) href = decodeURIComponent(uddg)
+          } catch {
+            /* pakai apa adanya */
+          }
+          if (!/^https?:/.test(href)) continue
+          if (hasil.some((h) => h.url === href)) continue
+          hasil.push({ judul: judul.slice(0, 140), url: href, resmi: resmikah(href), asal: 'ddg' })
+        }
+        if (hasil.length >= 2) break
+      }
+      if (hasil.length) return { hasil, error: null }
+      terakhirError = 'tidak ada hasil terbaca'
+    } catch (e) {
+      terakhirError = `${new URL(dasar).hostname}: ${e.message}`
     }
-    if (!/^https?:/.test(href)) continue
-    if (hasil.some((h) => h.url === href)) continue
-    hasil.push({ judul: judul.slice(0, 140), url: href, resmi: resmikah(href), asal: 'ddg' })
   }
-  return hasil
+  return { hasil: [], error: terakhirError }
 }
 
-/** Ringkasan Wikipedia Indonesia untuk kata kunci. */
-async function cariWikipedia(q) {
+/**
+ * Ringkasan dari Wikipedia Indonesia. Diambil beberapa artikel sekaligus
+ * karena API resmi ini selalu bisa diakses — jadi sumber tetap ada walaupun
+ * mesin pencari umum memblokir.
+ */
+async function cariWikipedia(q, maks = 3) {
   const url =
     'https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=' +
     encodeURIComponent(q) +
-    '&srlimit=1&format=json&origin=*'
-  const d = await (await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(10000) })).json()
-  const judul = d?.query?.search?.[0]?.title
-  if (!judul) return null
-  const s = await (
-    await fetch(`https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(judul)}`, {
-      headers: { 'User-Agent': UA },
-      signal: AbortSignal.timeout(10000),
-    })
+    `&srlimit=${maks}&format=json&origin=*`
+  const d = await (
+    await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(10000) })
   ).json()
-  if (!s?.extract) return null
-  return {
-    judul: s.title,
-    url: s.content_urls?.desktop?.page ?? `https://id.wikipedia.org/wiki/${encodeURIComponent(judul)}`,
-    ringkas: String(s.extract).slice(0, 700),
-    resmi: false,
-    asal: 'wikipedia',
-  }
+  const judul = (d?.query?.search ?? []).map((x) => x.title).slice(0, maks)
+  if (!judul.length) return []
+
+  const hasil = await Promise.all(
+    judul.map(async (j) => {
+      try {
+        const s = await (
+          await fetch(`https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(j)}`, {
+            headers: { 'User-Agent': UA },
+            signal: AbortSignal.timeout(10000),
+          })
+        ).json()
+        if (!s?.extract) return null
+        return {
+          judul: s.title,
+          url: s.content_urls?.desktop?.page ?? `https://id.wikipedia.org/wiki/${encodeURIComponent(j)}`,
+          ringkas: String(s.extract).slice(0, 700),
+          resmi: false,
+          asal: 'wikipedia',
+        }
+      } catch {
+        return null
+      }
+    }),
+  )
+  return hasil.filter(Boolean)
 }
 
 /**
@@ -145,22 +181,65 @@ async function cariWikipedia(q) {
  * @param {{jumlah?: number, ambilIsi?: number, timeoutMs?: number}} opsi
  * @returns {Promise<{hasil: Array, ringkas: string}>}
  */
+/** Kata penting dari pertanyaan (buang kata tanya dan kata umum). */
+const KATA_UMUM = new Set([
+  'apa','itu','yang','dan','atau','untuk','dari','ke','di','pada','dengan','adalah','berapa',
+  'bagaimana','kapan','mengapa','kenapa','siapa','dimana','mana','ini','the','what','how',
+  'when','why','who','which','is','are','of','to','in','on','for','and','or','a','an',
+  'bisa','dapat','harus','tidak','ya','kasus','tahun','terbaru','data',
+])
+
+function kataPenting(teks) {
+  return String(teks)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((k) => k.length > 3 && !KATA_UMUM.has(k))
+}
+
+/**
+ * Saring hasil Wikipedia supaya artikel yang tidak nyambung tidak ikut.
+ *
+ * Kenapa perlu: pencarian "demam berdarah" pernah memunculkan artikel FILM dan
+ * artikel tentang Ebola. Keduanya menyebut "demam berdarah" di isinya (Ebola
+ * memang demam berdarah; filmnya memakai penyakit sebagai jalan cerita),
+ * sehingga mencocokkan isi saja tidak cukup.
+ *
+ * Aturan: kata penting harus muncul di JUDUL artikel. Judul film atau nama
+ * penyakit lain tidak akan memuat kata kunci pengguna.
+ */
+function relevankah(item, kata) {
+  if (!kata.length) return true
+  const judul = String(item.judul ?? '').toLowerCase()
+  const isi = String(item.ringkas ?? '').toLowerCase()
+
+  const cocokJudul = kata.filter((k) => judul.includes(k)).length
+  const cocokIsi = kata.filter((k) => isi.includes(k)).length
+
+  // wajib ada kata penting di judul, DAN dukungan dari isi
+  return cocokJudul >= 1 && cocokIsi >= 1
+}
+
 export async function cariInternet(q, { jumlah = BATAS_HASIL, ambilIsi = 3, timeoutMs = 15000 } = {}) {
-  const kata = String(q ?? '').trim().slice(0, 300)
-  if (!kata) return { hasil: [], ringkas: '' }
+  const kata0 = String(q ?? '').trim().slice(0, 300)
+  if (!kata0) return { hasil: [], ringkas: '', catatan: '' }
 
   // jalankan pencarian dasar secara paralel
   const [ddg, wiki] = await Promise.all([
-    cariDuckDuckGo(kata, jumlah).catch(() => []),
-    cariWikipedia(kata).catch(() => null),
+    cariDuckDuckGo(kata0, jumlah).catch((e) => ({ hasil: [], error: e.message })),
+    cariWikipedia(kata0).catch(() => []),
   ])
 
   // sumber resmi lebih dulu, lalu sisanya
-  const urut = [...ddg].sort((a, b) => Number(b.resmi) - Number(a.resmi))
-  const hasil = wiki ? [wiki, ...urut] : urut
+  const urut = [...ddg.hasil].sort((a, b) => Number(b.resmi) - Number(a.resmi))
+
+  // saring artikel Wikipedia yang tidak nyambung dengan pertanyaan
+  const kata = kataPenting(kata0)
+  const wikiBersih = wiki.filter((h) => relevankah(h, kata))
+  const hasil = [...wikiBersih, ...urut]
 
   // ambil isi beberapa halaman teratas supaya model punya bahan nyata
-  const target = hasil.filter((h) => h.url && h.asal === 'ddg').slice(0, ambilIsi)
+  const target = urut.filter((h) => h.url).slice(0, ambilIsi)
   await Promise.all(
     target.map(async (h) => {
       try {
@@ -182,5 +261,11 @@ export async function cariInternet(q, { jumlah = BATAS_HASIL, ambilIsi = 3, time
       return `${i + 1}. ${h.judul}${tanda}\n   URL: ${h.url}${isi}`
     })
 
-  return { hasil, ringkas: bagian.join('\n\n') }
+  // kalau mesin pencari umum gagal (mis. diblokir dari server produksi),
+  // catat supaya bisa ditampilkan apa adanya — jangan pura-pura lengkap
+  const catatan = ddg.error
+    ? `Mesin pencari umum tidak bisa diakses dari server ini (${ddg.error}). Sumber diambil dari Wikipedia Indonesia.`
+    : ''
+
+  return { hasil, ringkas: bagian.join('\n\n'), catatan }
 }
