@@ -27,10 +27,21 @@ app.use(rute)
 
 /* ------------------------------------------- sajikan aplikasi hasil build --- */
 
+const APP_DIST = join(DIST, 'app')
+
 if (existsSync(DIST)) {
+  // halaman penjelasan ada di root (dist/index.html), salinannya di /prototipe/
   app.use(express.static(DIST))
-  // SPA fallback — jangan menelan /api maupun /prototipe (halaman penjelasan statis)
-  app.get(/^\/(?!api|prototipe).*/, (_req, res) => res.sendFile(join(DIST, 'index.html')))
+  // aplikasi React disajikan di /app/
+  if (existsSync(APP_DIST)) app.use('/app', express.static(APP_DIST))
+
+  // SPA fallback aplikasi: rute dalam aplikasi (mis. /app/apa-pun) -> index aplikasi.
+  // Dibatasi ke /app supaya tidak menelan halaman penjelasan di root.
+  app.get(/^\/app(\/.*)?$/, (_req, res) => {
+    const idx = join(APP_DIST, 'index.html')
+    if (existsSync(idx)) return res.sendFile(idx)
+    res.status(404).type('text/plain').send('Aplikasi belum dibuild. Jalankan: npm run build\n')
+  })
 } else {
   app.get('/', (_req, res) =>
     res

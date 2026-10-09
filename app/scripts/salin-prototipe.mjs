@@ -1,17 +1,21 @@
 /**
- * Salin halaman penjelasan (docs/prototipe) ke app/public/prototipe/
- * supaya ikut ter-deploy ke Vercel dan bisa diakses di /prototipe/.
+ * Siapkan halaman penjelasan sebagai HALAMAN DEPAN situs.
  *
- * Dijalankan otomatis sebelum `vite build` dan sebelum `vite dev`
- * (lihat scripts.predev / scripts.prebuild di package.json).
+ * Struktur akhir di dist/:
+ *   dist/index.html        <- halaman penjelasan (yang muncul pertama kali)
+ *   dist/prototipe/        <- salinan yang sama, supaya /prototipe/ tetap hidup
+ *   dist/app/              <- aplikasi React hasil `vite build`
  *
- * Kenapa disalin, bukan disimpan langsung di app/public/:
- *   - Sumbernya tetap satu tempat (docs/prototipe), tidak ada dua salinan di git.
- *   - Hasil salinan masuk .gitignore, jadi tidak ikut ter-commit.
+ * Dijalankan otomatis sebelum `vite build` (scripts.prebuild).
  *
- * Penyesuaian saat menyalin:
- *   - Tautan "Coba Demo" yang semula ../../app/dist/index.html
- *     diarahkan ke / (aplikasi ada di root situs).
+ * Kenapa sumbernya disalin, bukan disimpan di app/public/:
+ *   - Sumber tetap satu tempat di git (docs/prototipe), tidak ada dua salinan.
+ *   - Hasil salinan masuk .gitignore.
+ *   - Kalau ditaruh di app/public/, Vite akan menyalinnya ke dist/app/prototipe/
+ *     (karena public/ selalu disalin ke akar outDir) — jadi isinya nyasar.
+ *
+ * Penyesuaian tautan: di root, tautan halaman penjelasan ke dirinya sendiri
+ * (./prototipe/) diubah jadi ./ supaya tidak menunjuk ke salinannya.
  */
 
 import { cp, rm, mkdir, readFile, writeFile, access } from 'node:fs/promises'
@@ -21,7 +25,8 @@ import { dirname, join } from 'node:path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const APP = join(__dirname, '..')
 const SUMBER = join(APP, '..', 'docs', 'prototipe')
-const TUJUAN = join(APP, 'public', 'prototipe')
+const DIST = join(APP, 'dist')
+const PUBLIK_LAMA = join(APP, 'public', 'prototipe')
 
 async function ada(p) {
   try {
@@ -38,24 +43,39 @@ async function main() {
     return
   }
 
-  // bersihkan lalu salin ulang, supaya file yang dihapus tidak tertinggal
-  await rm(TUJUAN, { recursive: true, force: true })
-  await mkdir(dirname(TUJUAN), { recursive: true })
-  await cp(SUMBER, TUJUAN, { recursive: true })
+  // bersihkan sisa cara lama (dulu disalin ke public/prototipe/)
+  await rm(PUBLIK_LAMA, { recursive: true, force: true })
 
-  // arahkan tombol "Coba Demo" ke root situs (tempat aplikasi berada)
-  const idx = join(TUJUAN, 'index.html')
-  const semula = await readFile(idx, 'utf8')
-  const sesudah = semula.replaceAll('../../app/dist/index.html', '/')
-  if (sesudah !== semula) {
-    await writeFile(idx, sesudah, 'utf8')
-    console.log('[prototipe] tautan "Coba Demo" diarahkan ke /')
+  // Dua salinan diperlukan karena keduanya memakai tautan relatif (css/, js/,
+  // assets/) — jadi asetnya harus ada di kedua tempat.
+  await mkdir(DIST, { recursive: true })
+  // 1) isinya ke dist/ supaya jadi halaman depan (dist/index.html)
+  await cp(SUMBER, DIST, { recursive: true })
+  // 2) salinan utuh di dist/prototipe/ supaya /prototipe/ tetap hidup
+  await cp(SUMBER, join(DIST, 'prototipe'), { recursive: true })
+
+  // Halaman depan (dist/index.html): tautan ke aplikasi tetap "./app/".
+  // Salinan (dist/prototipe/index.html): harus naik satu tingkat dulu, jadi
+  // "./app/" diubah menjadi "../app/" — kalau tidak, tautannya menunjuk ke
+  // /prototipe/app/ yang tidak ada.
+  const idxDepan = join(DIST, 'index.html')
+  const asliDepan = await readFile(idxDepan, 'utf8')
+  const depan = asliDepan.replaceAll('href="./prototipe/"', 'href="./"')
+  if (depan !== asliDepan) await writeFile(idxDepan, depan, 'utf8')
+
+  const idxSalinan = join(DIST, 'prototipe', 'index.html')
+  const asliSalinan = await readFile(idxSalinan, 'utf8')
+  const salinan = asliSalinan.replaceAll('href="./app/"', 'href="../app/"')
+  if (salinan !== asliSalinan) {
+    await writeFile(idxSalinan, salinan, 'utf8')
+    console.log('[prototipe] salinan: tautan aplikasi -> ../app/')
   }
 
-  console.log(`[prototipe] disalin ke public/prototipe -> akan tersedia di /prototipe/`)
+  console.log('[prototipe] halaman penjelasan -> dist/index.html (halaman depan)')
+  console.log('[prototipe] salinan -> dist/prototipe/ (agar /prototipe/ tetap hidup)')
 }
 
 main().catch((e) => {
-  console.error('[prototipe] gagal menyalin:', e)
+  console.error('[prototipe] gagal menyiapkan:', e)
   process.exit(1)
 })

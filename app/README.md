@@ -1,7 +1,7 @@
 # Pahami Sehat — Aplikasi (Produk Utama)
 
 > **Ini produk utama** yang dijalankan saat Grand Final dan video demo.
-> Halaman penjelasan statis ada di [`../docs/prototipe`](../docs/prototipe).
+> Sumber halaman penjelasan ada di [`../docs/prototipe`](../docs/prototipe).
 
 Dashboard edukasi kesehatan **Pahami Sehat** — React di depan, Express di belakang,
 model AI **`deepseek-v4-1-flash`** lewat **Kenari.id**.
@@ -15,6 +15,18 @@ model AI **`deepseek-v4-1-flash`** lewat **Kenari.id**.
 | Model | Kenari.id, OpenAI-compatible, default `deepseek-v4-1-flash` |
 
 ## Menjalankan
+
+### Alamat saat disajikan
+
+| Alamat | Isi |
+|---|---|
+| `/` | **halaman penjelasan** (yang muncul pertama kali) |
+| `/app/` | **aplikasi** — dashboard AI yang bisa dipakai |
+| `/prototipe/` | salinan halaman penjelasan (tautan lama tetap hidup) |
+| `/api/...` | backend |
+
+`npm run build` menaruh aplikasi di `dist/app/` dan halaman penjelasan di
+`dist/index.html`, jadi root situs menampilkan penjelasan lebih dulu.
 
 ```bash
 npm install --include=dev   # --include=dev WAJIB bila NODE_ENV=production

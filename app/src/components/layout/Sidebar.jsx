@@ -90,7 +90,7 @@ export default function Sidebar({ active, onSelect, t = (k) => k }) {
         </div>
 
         <a
-          href="/prototipe/"
+          href="/"
           className="mt-2 flex h-10 items-center justify-center gap-2 rounded-xl text-[0.8rem] font-semibold text-navy-500 transition-colors hover:bg-slate-100 hover:text-navy-800 lg:justify-start lg:px-3"
           title={t('nav.kembali')}
         >

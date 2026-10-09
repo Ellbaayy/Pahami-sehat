@@ -129,7 +129,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
             </p>
           </div>
           <a
-            href="/prototipe/"
+            href="/"
             className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl text-[0.85rem] font-semibold text-navy-500 transition-colors hover:bg-slate-100"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />

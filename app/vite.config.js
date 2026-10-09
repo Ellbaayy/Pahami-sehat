@@ -7,7 +7,10 @@ export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: 'dist',
+    // aplikasi dibangun ke dist/app/ supaya halaman penjelasan bisa menempati
+    // root situs (dist/index.html) — jadi alamat pertama yang muncul adalah
+    // halaman penjelasan, bukan aplikasi
+    outDir: 'dist/app',
     emptyOutDir: true,
     // jangan inline font/logo — biar ukuran asset gampang dipantau
     assetsInlineLimit: 0,

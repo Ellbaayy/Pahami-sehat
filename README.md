@@ -16,8 +16,16 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 
 | Folder | Peran |
 |---|---|
-| [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite). Ini yang dijalankan saat video demo dan Grand Final. |
-| [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, demo tiap fitur. Untuk presentasi & video demo. |
+| [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
+| [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
+
+### Alamat di situs
+
+| Alamat | Isi |
+|---|---|
+| `/` | halaman penjelasan — yang muncul pertama kali dibuka |
+| `/app/` | aplikasi yang bisa dipakai |
+| `/prototipe/` | salinan halaman penjelasan (tautan lama tetap hidup) |
 
 ```
 pahami-sehat/
