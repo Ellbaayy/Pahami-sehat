@@ -60,6 +60,7 @@ export default function QuizPanel() {
         eyebrow="Alat ukur"
         title="Kuesioner HLS-SF12"
         description="Versi ringkas. Semua perhitungan dilakukan lokal di peramban — tidak ada jawaban yang dikirim ke mana pun."
+        ilustrasi="kuesioner"
       />
 
       <form onSubmit={submit} noValidate>

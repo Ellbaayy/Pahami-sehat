@@ -39,6 +39,7 @@ export default function ThreadPanel({
         eyebrow="Asisten"
         title={t('tanya.judul')}
         description={t('tanya.sub')}
+        ilustrasi="tanya"
       />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_1px_2px_rgba(15,30,51,0.04)]">

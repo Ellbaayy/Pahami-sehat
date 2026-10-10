@@ -32,6 +32,7 @@ export default function VoicePanel({ onUse }) {
         eyebrow="Mode suara"
         title="Tanya dengan suara"
         description="Cocok untuk yang lebih nyaman berbicara daripada mengetik. Hasil ucapannya langsung jadi teks, siap dikirim ke Tanya AI."
+        ilustrasi="suara"
       />
 
       <Card className="flex flex-col items-center gap-5 p-[clamp(1.25rem,1rem+1.2vw,2.5rem)] text-center">
