@@ -32,6 +32,7 @@ import {
 } from './prompts.js'
 import { cariInternet } from './cari.js'
 import { kontenHarianLengkap } from './konten.js'
+import { bahasaJawaban } from './bahasa.js'
 
 /* ---------------------------------------------------------------- util ---- */
 
@@ -98,7 +99,14 @@ function rapikanBahasa(v) {
   return String(v ?? '').toLowerCase().startsWith('en') ? 'en' : 'id'
 }
 
-const NAMA_BAHASA = { id: 'Bahasa Indonesia', en: 'English' }
+/**
+ * Bahasa jawaban: ikuti bahasa pesan pengguna; kalau pesannya terlalu
+ * pendek/netral untuk dipastikan, baru pakai bahasa antarmuka.
+ */
+function pilihBahasa(pesan, bahasaUi) {
+  const b = bahasaJawaban(pesan, bahasaUi)
+  return { nama: b.nama, kodeAsal: b.dariPesan ? 'pesan' : null, kode: b.kode }
+}
 
 /** Ringkas daftar hasil pencarian untuk dikirim ke frontend (tanpa isi panjang). */
 function ringkasHasilCari(hasil = []) {
@@ -156,12 +164,12 @@ rute.post('/api/tanya', bungkus(async (req, res) => {
   if (pertanyaan.length > 4000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Pertanyaan terlalu panjang (maks 4000 karakter).' })
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
-  const bahasa = NAMA_BAHASA[rapikanBahasa(req.body?.bahasa)]
+  const bhs = pilihBahasa(pertanyaan, rapikanBahasa(req.body?.bahasa))
 
   // Obrolan biasa (sapaan / basa-basi) tidak perlu dicari di internet dan
   // tidak perlu menampilkan daftar sumber — tidak ada yang diverifikasi.
   if (deteksiSantai(pertanyaan)) {
-    const ps = promptSantai({ pertanyaan, bahasa })
+    const ps = promptSantai({ pertanyaan, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
     const h = await chat({ messages: [
       { role: 'system', content: ps.system },
       { role: 'user', content: ps.user },
@@ -173,7 +181,7 @@ rute.post('/api/tanya', bungkus(async (req, res) => {
   // cari di internet dulu supaya jawabannya berbasis sumber nyata
   const { hasil: hasilCari } = await cariInternet(pertanyaan)
 
-  const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa })
+  const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
   const hasil = await chat({ messages: [
     { role: 'system', content: p.system },
     { role: 'user', content: p.user },
@@ -189,13 +197,13 @@ rute.post('/api/sederhanakan', bungkus(async (req, res) => {
   if (teks.length > 8000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Teks terlalu panjang (maks 8000 karakter).' })
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
-  const bahasa = NAMA_BAHASA[rapikanBahasa(req.body?.bahasa)]
+  const bhs = pilihBahasa(teks, rapikanBahasa(req.body?.bahasa))
 
   // pakai 120 karakter pertama sebagai kata kunci pencarian — cukup untuk
   // menemukan istilahnya tanpa membuang waktu pada teks panjang
   const { hasil: hasilCari } = await cariInternet(teks.slice(0, 120))
 
-  const p = promptSederhanakanDenganCari({ teks, tingkat, hasilCari, bahasa })
+  const p = promptSederhanakanDenganCari({ teks, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
   const hasil = await chat({ messages: [
     { role: 'system', content: p.system },
     { role: 'user', content: p.user },
@@ -211,11 +219,11 @@ rute.post('/api/verifikasi', bungkus(async (req, res) => {
   if (klaim.length > 4000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Klaim terlalu panjang (maks 4000 karakter).' })
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
-  const bahasa = NAMA_BAHASA[rapikanBahasa(req.body?.bahasa)]
+  const bhs = pilihBahasa(klaim, rapikanBahasa(req.body?.bahasa))
 
   const { hasil: hasilCari } = await cariInternet(klaim)
 
-  const p = promptVerifikasiDenganCari({ klaim, tingkat, hasilCari, bahasa })
+  const p = promptVerifikasiDenganCari({ klaim, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
   const hasil = await chat({ messages: [
     { role: 'system', content: p.system },
     { role: 'user', content: p.user },
@@ -237,7 +245,7 @@ rute.post('/api/tanya/stream', bungkus(async (req, res) => {
   if (!pertanyaan) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Pertanyaan masih kosong.' })
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
-  const bahasa = NAMA_BAHASA[rapikanBahasa(req.body?.bahasa)]
+  const bhs = pilihBahasa(pertanyaan, rapikanBahasa(req.body?.bahasa))
 
   res.set({
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -262,7 +270,7 @@ rute.post('/api/tanya/stream', bungkus(async (req, res) => {
     // Obrolan biasa: langsung jawab tanpa mencari dan tanpa daftar sumber.
     if (deteksiSantai(pertanyaan)) {
       kirim('status', { pesan: 'Menyiapkan jawaban…' })
-      const ps = promptSantai({ pertanyaan, bahasa })
+      const ps = promptSantai({ pertanyaan, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
       const ekstrakSantai = buatEkstrak('jawaban')
 
       const h = await chatStream({
@@ -290,7 +298,7 @@ rute.post('/api/tanya/stream', bungkus(async (req, res) => {
 
     // 2) baru minta model menyusun jawaban dari hasil itu
     kirim('status', { pesan: 'Menyiapkan jawaban…' })
-    const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa })
+    const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
 
     // hanya alirkan isi field "jawaban", bukan JSON mentahnya
     const ekstrak = buatEkstrak('jawaban')
