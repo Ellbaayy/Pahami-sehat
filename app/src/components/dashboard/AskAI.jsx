@@ -25,6 +25,7 @@ export default function AskAI({
   t = (k) => k,
   serverOnline = true,
   serverMemuat = false,
+  bahasa = 'id',
 }) {
   const id = useId()
 
@@ -201,7 +202,7 @@ export default function AskAI({
             {result.jawaban}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <TombolDengar teks={result.jawaban} />
+            <TombolDengar teks={result.jawaban} bahasa={bahasa} />
           </div>
           <PoinKunci items={result.poinKunci} />
           <SourcePills

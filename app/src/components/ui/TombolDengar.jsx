@@ -4,11 +4,16 @@ import { ttsBaca, ttsBerhenti, ttsDidukung, ttsSedangBicara } from '../../lib/tt
 import { cn } from '../../lib/cn'
 
 /**
- * Tombol "Dengar" — membacakan teks dengan suara peramban.
- * Menyembunyikan diri kalau peramban tidak mendukung, supaya tidak ada
- * tombol mati.
+ * Tombol "Dengar" — membacakan teks.
+ *
+ * Suara utamanya datang dari server (suara neural, nadanya mengikuti isi
+ * kalimat). Suara bawaan peramban hanya cadangan kalau server tidak bisa
+ * dihubungi. Karena itu tombol ini TIDAK disembunyikan lagi di peramban tanpa
+ * Web Speech API — yang lama menyembunyikannya, padahal suara server tetap bisa.
+ *
+ * `bahasa` menentukan suara: 'id', 'jv' (Jawa), atau 'su' (Sunda).
  */
-export default function TombolDengar({ teks, label = 'Dengar', className }) {
+export default function TombolDengar({ teks, label = 'Dengar', bahasa = 'id', className }) {
   const [bicara, setBicara] = useState(false)
   const [error, setError] = useState(null)
 
@@ -16,8 +21,6 @@ export default function TombolDengar({ teks, label = 'Dengar', className }) {
     // kalau komponen dilepas saat sedang bicara, hentikan
     return () => ttsBerhenti()
   }, [])
-
-  if (!ttsDidukung()) return null
 
   const klik = () => {
     if (ttsSedangBicara()) {
@@ -27,6 +30,7 @@ export default function TombolDengar({ teks, label = 'Dengar', className }) {
     }
     setError(null)
     const jalan = ttsBaca(teks, {
+      bahasa,
       onMulai: () => setBicara(true),
       onSelesai: () => setBicara(false),
       onError: (e) => {
