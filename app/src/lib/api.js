@@ -50,6 +50,12 @@ async function minta(path, { method = 'GET', body, signal } = {}) {
 export const ambilMeta = () => minta('/meta')
 export const ambilHealth = () => minta('/health')
 
+/**
+ * Konten harian untuk Beranda (topik populer, artikel, tips).
+ * Diperbarui sekali sehari di sisi server — lihat server/konten.js.
+ */
+export const ambilKonten = (signal) => minta('/konten', { signal })
+
 export const tanya = ({ pertanyaan, tingkat, bahasa }, signal) =>
   minta('/tanya', { method: 'POST', body: { pertanyaan, tingkat, bahasa }, signal })
 

@@ -21,7 +21,7 @@ import { TOPICS, ARTICLES, HEALTH_TIP, HISTORY } from './data/dummy'
 import { TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
 import { gunakanBahasa } from './lib/useBahasa'
-import { tanyaStream } from './lib/api'
+import { tanyaStream, ambilKonten } from './lib/api'
 import { ttsBaca, ttsBerhenti } from './lib/tts'
 import { ambilCache, hapusCache, hapusSatu, simpanCache, sedangOffline, MAKS_TERSIMPAN } from './lib/offline'
 
@@ -65,6 +65,39 @@ export default function App() {
   // supaya `ask` selalu melihat nilai tts terbaru tanpa ikut jadi dependensi
   const ttsAutoRef = useRef(settings.tts)
   ttsAutoRef.current = settings.tts
+
+  // --- konten harian (topik populer, artikel, tips) ----------------------
+  // Isinya diperbarui sekali sehari di sisi server (server/konten.js).
+  // Selama belum termuat — atau kalau server tidak bisa dihubungi — yang
+  // tampil adalah konten bawaan supaya halaman tidak pernah kosong.
+  const [konten, setKonten] = useState({
+    topik: TOPICS,
+    artikel: ARTICLES,
+    tips: HEALTH_TIP,
+    dariServer: false,
+    diperbarui: null,
+    diperiksa: null,
+  })
+
+  useEffect(() => {
+    const ac = new AbortController()
+    ambilKonten(ac.signal)
+      .then((d) => {
+        if (!d?.ok) return
+        setKonten({
+          topik: d.topik?.length ? d.topik : TOPICS,
+          artikel: d.artikel?.length ? d.artikel : ARTICLES,
+          tips: d.tips ?? HEALTH_TIP,
+          dariServer: true,
+          diperbarui: d.diperbarui ?? null,
+          diperiksa: d.diperiksa ?? null,
+        })
+      })
+      .catch(() => {
+        /* server mati / offline -> pakai konten bawaan, tidak perlu diumumkan */
+      })
+    return () => ac.abort()
+  }, [])
 
   // --- mode hemat sinyal -------------------------------------------------
   const [daftarCache, setDaftarCache] = useState(() => ambilCache())
@@ -172,8 +205,10 @@ export default function App() {
       return
     }
     setSelectedTopic(id)
-    const label = TOPICS.find((t) => t.id === id)?.label ?? ''
-    ask(`Apa yang perlu saya ketahui tentang ${label.toLowerCase()}?`)
+    const t = konten.topik.find((x) => x.id === id)
+    const label = t?.label ?? ''
+    // pakai kalimat tanya yang disiapkan server; kalau tidak ada, susun sendiri
+    ask(t?.tanya ?? `Apa yang perlu saya ketahui tentang ${label.toLowerCase()}?`)
   }
 
   const useVoiceResult = (text) => {
@@ -279,9 +314,15 @@ export default function App() {
                   serverOnline={server.online}
                   serverMemuat={server.memuat}
                 />
-                <TopicChips topics={TOPICS} selected={selectedTopic} onSelect={handleTopic} />
-                <HealthTip tip={HEALTH_TIP} />
-                <ArticleGrid articles={ARTICLES} />
+                <TopicChips
+                  topics={konten.topik}
+                  selected={selectedTopic}
+                  onSelect={handleTopic}
+                  diperbarui={konten.diperbarui}
+                  diperiksa={konten.diperiksa}
+                />
+                <HealthTip tip={konten.tips} />
+                <ArticleGrid articles={konten.artikel} />
                 <RecentHistory items={history} onSeeAll={() => navigate('riwayat')} />
               </div>
             ) : null}

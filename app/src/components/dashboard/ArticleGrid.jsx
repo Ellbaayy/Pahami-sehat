@@ -7,6 +7,9 @@ const TINTS = {
   brand: { wrap: 'bg-brand-50 text-brand-600', tag: 'bg-white/80 text-brand-700 ring-brand-100' },
   sky: { wrap: 'bg-sky-50 text-sky-600', tag: 'bg-white/80 text-sky-600 ring-sky-100' },
   amber: { wrap: 'bg-amber-50 text-amber-600', tag: 'bg-white/80 text-amber-700 ring-amber-100' },
+  rose: { wrap: 'bg-rose-50 text-rose-600', tag: 'bg-white/80 text-rose-700 ring-rose-100' },
+  purple: { wrap: 'bg-purple-50 text-purple-600', tag: 'bg-white/80 text-purple-700 ring-purple-100' },
+  teal: { wrap: 'bg-teal-50 text-teal-600', tag: 'bg-white/80 text-teal-700 ring-teal-100' },
 }
 
 const ICONS = { Literasi: FileText, Vaksinasi: Syringe, Gizi: Utensils }
@@ -15,33 +18,50 @@ function ArticleCard({ article }) {
   const [open, setOpen] = useState(false)
   const Icon = ICONS[article.category] ?? FileText
   const tint = TINTS[article.tint] ?? TINTS.brand
+  const punyaGambar = Boolean(article.gambar)
 
   return (
     <Card
       as="article"
       className="group flex flex-col overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:border-brand-200 focus-within:border-brand-300"
     >
-      {/* thumbnail */}
+      {/* thumbnail — pakai gambar asli dari sumber bila ada */}
       <div className={cn('relative aspect-video w-full overflow-hidden', tint.wrap)}>
-        <svg
-          viewBox="0 0 320 180"
-          className="absolute inset-0 h-full w-full opacity-30"
-          aria-hidden="true"
-        >
-          <g fill="currentColor">
-            <circle cx="30" cy="30" r="4" />
-            <circle cx="60" cy="30" r="4" />
-            <circle cx="90" cy="30" r="4" />
-            <circle cx="30" cy="60" r="4" />
-            <circle cx="60" cy="60" r="4" />
-            <circle cx="290" cy="150" r="4" />
-            <circle cx="260" cy="150" r="4" />
-            <circle cx="230" cy="150" r="4" />
-          </g>
-        </svg>
-        <span className="absolute inset-0 grid place-items-center">
-          <Icon className="size-14" strokeWidth={1.4} aria-hidden="true" />
-        </span>
+        {punyaGambar ? (
+          <img
+            src={article.gambar}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+            onError={(e) => {
+              // gambar gagal dimuat: sembunyikan, latar warna tetap tampil
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+        ) : (
+          <>
+            <svg
+              viewBox="0 0 320 180"
+              className="absolute inset-0 h-full w-full opacity-30"
+              aria-hidden="true"
+            >
+              <g fill="currentColor">
+                <circle cx="30" cy="30" r="4" />
+                <circle cx="60" cy="30" r="4" />
+                <circle cx="90" cy="30" r="4" />
+                <circle cx="30" cy="60" r="4" />
+                <circle cx="60" cy="60" r="4" />
+                <circle cx="290" cy="150" r="4" />
+                <circle cx="260" cy="150" r="4" />
+                <circle cx="230" cy="150" r="4" />
+              </g>
+            </svg>
+            <span className="absolute inset-0 grid place-items-center">
+              <Icon className="size-14" strokeWidth={1.4} aria-hidden="true" />
+            </span>
+          </>
+        )}
         <span
           className={cn(
             'absolute top-3 left-3 rounded-full px-2.5 py-1 text-[0.7rem] font-bold ring-1',
@@ -64,6 +84,17 @@ function ArticleCard({ article }) {
             <p className="mt-2 text-[0.74rem] font-semibold text-brand-700">
               Sumber: {article.source}
             </p>
+            {article.url ? (
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1 text-[0.74rem] font-semibold text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-800"
+              >
+                Baca artikel aslinya
+                <ArrowRight className="size-3" aria-hidden="true" />
+              </a>
+            ) : null}
           </div>
         ) : null}
 
