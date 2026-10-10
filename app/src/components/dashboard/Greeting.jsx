@@ -33,12 +33,12 @@ export default function Greeting() {
         </p>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.76rem] font-semibold text-navy-700 ring-1 ring-slate-200">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.76rem] font-semibold text-navy-700 ring-1 ring-line-200">
             <ShieldCheck className="size-3.5 text-brand-600" aria-hidden="true" />
             Bersumber resmi
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.76rem] font-semibold text-navy-700 ring-1 ring-slate-200">
-            <AudioLines className="size-3.5 text-sky-600" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.76rem] font-semibold text-navy-700 ring-1 ring-line-200">
+            <AudioLines className="size-3.5 text-sky-700" aria-hidden="true" />
             Mode suara tersedia
           </span>
         </div>

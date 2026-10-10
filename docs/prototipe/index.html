@@ -227,7 +227,7 @@
       <ul class="f-list" style="margin-top:.6rem">
         <li><strong>1 · Terpahami</strong> — penerjemah bahasa medis + 4 tingkat baca (Anak-anak, Remaja, Dewasa, Lansia).</li>
         <li><strong>2 · Terjangkau</strong> — hasil bisa dibacakan (TTS) dan pertanyaan bisa dikirim lewat suara.</li>
-        <li><strong>3 · Tersambung</strong> — mode hemat sinyal untuk menyimpan jawaban terakhir.</li>
+        <li><strong>3 · Terbaca semua</strong> — mode kontras tinggi untuk pengguna gangguan penglihatan.</li>
         <li><strong>4 · Terpercaya</strong> — setiap jawaban dicari dulu di internet, sumber resmi didahulukan, dan URL-nya ditampilkan agar pengguna bisa memastikan sendiri.</li>
       </ul>
     </div>
@@ -405,50 +405,42 @@
         <p class="note-box">🎙️ <strong>Status:</strong> pembacaan suara (TTS) <strong>sudah aktif</strong> — memakai mesin suara sistem lewat peramban. Pengenalan suara (STT) aktif di Chrome dan Edge; di Brave belum, karena Brave memblokir layanan suara daring.</p>
       </article>
 
-      <!-- 3. Mode hemat sinyal -->
+      <!-- 3. Mode kontras tinggi -->
       <article class="feature-card f-purple reveal">
-        <div class="f-head"><span class="f-num">3</span><h3>Mode Hemat Sinyal</h3></div>
+        <div class="f-head"><span class="f-num">3</span><h3>Mode Kontras Tinggi</h3></div>
         <ul class="f-list">
-          <li><strong>Tujuan:</strong> jawaban terakhir tetap bisa dibaca &amp; didengar tanpa internet.</li>
-          <li><strong>Titik keputusan:</strong> sinyal internet tersedia? Tidak → konten dari simpanan · Ya → ambil versi terbaru.</li>
-          <li><strong>Untungnya:</strong> tidak perlu loading ulang, hemat kuota, hemat daya, hemat server.</li>
-          <li><strong>TTS:</strong> dijalankan di perangkat pengguna, bukan di server.</li>
+          <li><strong>Tujuan:</strong> tetap terbaca oleh pengguna gangguan penglihatan — termasuk lansia dengan penglihatan menurun.</li>
+          <li><strong>Yang berubah:</strong> warna teks jadi hampir hitam, huruf dasar membesar 112%, garis kartu dan kolom isian dipertebal.</li>
+          <li><strong>Batas fokus:</strong> outline hitam 3 piksel, supaya penanda posisi papan ketik terlihat di atas warna apa pun.</li>
+          <li><strong>Untungnya:</strong> satu sakelar, tidak perlu memasang apa pun; seluruh halaman ikut berubah sekaligus.</li>
         </ul>
 
         <div class="demo">
           <div class="offline-toggle">
             <div>
-              <strong>Mode hemat sinyal</strong>
-              <span class="demo-tag">Konten tersimpan di perangkat</span>
+              <strong>Mode kontras tinggi</strong>
+              <span class="demo-tag">Tampilan diperjelas</span>
             </div>
-            <span class="switch" role="switch" aria-checked="false" aria-label="Ilustrasi sakelar mode hemat sinyal"><span></span></span>
+            <span class="switch" role="switch" aria-checked="false" aria-label="Ilustrasi sakelar mode kontras tinggi"><span></span></span>
           </div>
 
           <ul class="check-list">
-            <li>Konten inti bisa dibaca &amp; didengar</li>
-            <li>Halaman tidak perlu dimuat ulang</li>
-            <li>TTS berjalan di perangkat pengguna</li>
+            <li>Teks hampir hitam di atas latar hampir putih</li>
+            <li>Huruf dasar membesar 112%</li>
+            <li>Garis batas dan batas fokus dipertebal</li>
           </ul>
 
           <div class="offline-visual">
-            <span class="off-ic" aria-hidden="true">📵</span>
-            <span>Tetap bisa diakses tanpa internet</span>
-          </div>
-
-          <div class="signal-decision">
-            <span class="signal-q">Titik keputusan: sinyal internet tersedia?</span>
-            <div class="signal-branches">
-              <span class="branch">📵 Tidak ada sinyal → konten dari simpanan</span>
-              <span class="branch">📶 Ada sinyal → ambil versi terbaru</span>
-            </div>
+            <span class="off-ic" aria-hidden="true">🔲</span>
+            <span>Tetap terbaca tanpa bantuan alat lain</span>
           </div>
 
           <div class="savings">
-            <span>💾 Hemat kuota</span><span>🔋 Hemat daya</span><span>🛠️ Hemat server</span>
+            <span>👁️ Kontras WCAG AAA</span><span>🔍 Huruf lebih besar</span><span>⌨️ Fokus jelas</span>
           </div>
         </div>
 
-        <p class="note-box">📡 <strong>Status:</strong> <strong>sudah aktif.</strong> Menyalakan sakelarnya di Pengaturan menyimpan jawaban terakhir di perangkat, lalu ditampilkan kembali di Beranda saat sinyal hilang.</p>
+        <p class="note-box">🔳 <strong>Status:</strong> <strong>sudah aktif.</strong> Menyalakan sakelarnya di Pengaturan langsung mengubah seluruh tampilan.</p>
       </article>
 
       <!-- 4. Verifikasi sumber -->
@@ -513,8 +505,8 @@
         <h3>📋 Status tiap fitur — apa yang sudah jalan, apa yang masih rencana</h3>
         <p class="finding-lead">Ditulis apa adanya, supaya tidak ada klaim yang berlebihan.</p>
         <ul class="f-list" style="margin-top:.9rem">
-          <li><strong>Sudah jalan:</strong> Tanya AI (streaming), <strong>pencarian internet + sumber yang bisa dibuka</strong>, Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, kuesioner HLS-SF12, riwayat sesi, <strong>baca otomatis (TTS)</strong>, <strong>tanya dengan suara (STT)</strong>, <strong>mode hemat sinyal (10 jawaban terakhir)</strong>, dan <strong>antarmuka dua bahasa</strong> (Indonesia / Inggris).</li>
-          <li><strong>Semua pengaturan berfungsi:</strong> tingkat baca, mode hemat sinyal, putar suara otomatis, dan bahasa antarmuka — tidak ada yang hanya jadi hiasan.</li>
+          <li><strong>Sudah jalan:</strong> Tanya AI (streaming), <strong>pencarian internet + sumber yang bisa dibuka</strong>, Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, kuesioner HLS-SF12, riwayat sesi, <strong>baca otomatis (TTS)</strong>, <strong>tanya dengan suara (STT)</strong>, <strong>mode kontras tinggi</strong>, dan <strong>antarmuka dua bahasa</strong> (Indonesia / Inggris).</li>
+          <li><strong>Semua pengaturan berfungsi:</strong> tingkat baca, mode kontras tinggi, putar suara otomatis, dan bahasa antarmuka — tidak ada yang hanya jadi hiasan.</li>
           <li><strong>Belum ada:</strong> foto/OCR (belum ada pustaka pengenalan gambar) dan terjemahan ke bahasa daerah (baru pilihan bahasanya).</li>
         </ul>
       </div>
@@ -770,7 +762,7 @@
     <div class="footer-col">
       <h4>Sumber resmi</h4>
       <p class="src-badges col"><span>Kemenkes RI</span><span>WHO</span><span>BPOM</span></p>
-      <p class="footer-note">Halaman penjelasan (statis). Aplikasi yang bisa dicoba ada di halaman utama — di sana fitur AI sudah terhubung ke model sungguhan, termasuk baca otomatis dan mode hemat sinyal. Foto/OCR belum ada.</p>
+      <p class="footer-note">Halaman penjelasan (statis). Aplikasi yang bisa dicoba ada di halaman utama — di sana fitur AI sudah terhubung ke model sungguhan, termasuk baca otomatis dan mode kontras tinggi. Foto/OCR belum ada.</p>
     </div>
   </div>
   <div class="container footer-bottom">

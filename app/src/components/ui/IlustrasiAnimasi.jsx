@@ -22,7 +22,7 @@ import kuesionerDiam from '../../assets/ilustrasi/kuesioner.png'
  *
  * Dua alasan kenapa tidak memakai pustaka Lottie di peramban:
  *   1. Pustaka itu menambah ~80 KB ke unduhan awal. Aplikasi ini justru punya
- *      fitur "mode hemat sinyal", jadi berat ekstra terasa bertolak belakang.
+ *      fitur "mode kontras tinggi", jadi berat ekstra terasa bertolak belakang.
  *   2. Animasi Lottie tidak bisa dijeda, sedangkan produk ini menonjolkan
  *      aksesibilitas pada `prefers-reduced-motion`.
  *

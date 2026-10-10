@@ -12,7 +12,7 @@ import { cn } from '../../lib/cn'
 export default function Sidebar({ active, onSelect, t = (k) => k }) {
   return (
     <aside
-      className="sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-slate-200 bg-white md:flex md:w-[76px] lg:w-[240px]"
+      className="sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-line-200 bg-white md:flex md:w-[76px] lg:w-[240px]"
       aria-label="Navigasi utama"
     >
       {/* brand */}
@@ -34,7 +34,7 @@ export default function Sidebar({ active, onSelect, t = (k) => k }) {
         </span>
       </div>
 
-      <div className="mx-3 mb-2 hidden h-px bg-slate-200 lg:block" />
+      <div className="mx-3 mb-2 hidden h-px bg-surface-200 lg:block" />
 
       {/* menu */}
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2.5 py-2 lg:px-3.5">
@@ -56,7 +56,7 @@ export default function Sidebar({ active, onSelect, t = (k) => k }) {
                 'justify-center lg:justify-start',
                 isActive
                   ? 'bg-brand-50 text-brand-700'
-                  : 'text-navy-500 hover:bg-slate-100 hover:text-navy-800 active:bg-slate-200/70',
+                  : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800 active:bg-surface-200/70',
               )}
             >
               <Icon
@@ -91,7 +91,7 @@ export default function Sidebar({ active, onSelect, t = (k) => k }) {
 
         <a
           href="/"
-          className="mt-2 flex h-10 items-center justify-center gap-2 rounded-xl text-[0.8rem] font-semibold text-navy-500 transition-colors hover:bg-slate-100 hover:text-navy-800 lg:justify-start lg:px-3"
+          className="mt-2 flex h-10 items-center justify-center gap-2 rounded-xl text-[0.8rem] font-semibold text-navy-500 transition-colors hover:bg-surface-100 hover:text-navy-800 lg:justify-start lg:px-3"
           title={t('nav.kembali')}
         >
           <ArrowLeft className="size-4 shrink-0" aria-hidden="true" />

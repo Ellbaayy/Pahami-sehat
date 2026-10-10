@@ -73,9 +73,9 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
         role="dialog"
         aria-modal="true"
         aria-label="Menu navigasi"
-        className="rise absolute inset-y-0 left-0 flex w-[min(19rem,84vw)] flex-col border-r border-slate-200 bg-white shadow-2xl"
+        className="rise absolute inset-y-0 left-0 flex w-[min(19rem,84vw)] flex-col border-r border-line-200 bg-white shadow-2xl"
       >
-        <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3.5">
+        <div className="flex items-center gap-3 border-b border-line-100 px-4 py-3.5">
           <img src={logo} alt="" width={30} height={27} className="size-[30px] shrink-0 object-contain" />
           <span className="min-w-0 leading-tight">
             <strong className="block truncate text-[0.95rem] font-extrabold tracking-tight text-navy-900">
@@ -106,7 +106,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                   isActive
                     ? 'bg-brand-50 text-brand-700'
-                    : 'text-navy-500 hover:bg-slate-100 hover:text-navy-800 active:bg-slate-200/70',
+                    : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800 active:bg-surface-200/70',
                 )}
               >
                 <Icon
@@ -119,7 +119,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
           })}
         </nav>
 
-        <div className="border-t border-slate-100 p-3.5">
+        <div className="border-t border-line-100 p-3.5">
           <div className="rounded-xl bg-brand-50 p-3.5 ring-1 ring-brand-100">
             <span className="mb-1.5 inline-flex size-7 items-center justify-center rounded-full bg-white text-brand-600 shadow-sm">
               <Activity className="size-4" aria-hidden="true" />
@@ -130,7 +130,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
           </div>
           <a
             href="/"
-            className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl text-[0.85rem] font-semibold text-navy-500 transition-colors hover:bg-slate-100"
+            className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl text-[0.85rem] font-semibold text-navy-500 transition-colors hover:bg-surface-100"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             {t('nav.kembali')}

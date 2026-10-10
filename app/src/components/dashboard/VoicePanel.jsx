@@ -76,7 +76,7 @@ export default function VoicePanel({ onUse }) {
               key={i}
               className={cn(
                 'w-1.5 rounded-full transition-all duration-300',
-                suara.mendengar ? 'bg-brand-400' : 'bg-slate-200',
+                suara.mendengar ? 'bg-brand-400' : 'bg-surface-200',
               )}
               style={{
                 height: suara.mendengar ? `${16 + ((i * 37) % 22)}px` : '6px',
@@ -97,11 +97,11 @@ export default function VoicePanel({ onUse }) {
                 : 'Tekan untuk bicara'}
         </p>
 
-        <div className="min-h-[4.5rem] w-full max-w-[46rem] rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3.5 text-left">
+        <div className="min-h-[4.5rem] w-full max-w-[46rem] rounded-xl border border-dashed border-line-300 bg-surface-50 px-4 py-3.5 text-left">
           {teks ? (
             <p className="text-[0.95rem] leading-relaxed text-navy-700">{teks}</p>
           ) : (
-            <p className="flex items-center gap-2 text-[0.88rem] text-slate-500">
+            <p className="flex items-center gap-2 text-[0.88rem] text-muted-500">
               <AudioLines className="size-4" aria-hidden="true" />
               Teks hasil ucapan akan muncul di sini.
             </p>
@@ -141,7 +141,7 @@ export default function VoicePanel({ onUse }) {
 
       {suara.error ? <Peringatan pesan={suara.error} code="mikrofon" /> : null}
 
-      <p className="text-[0.82rem] text-slate-500">
+      <p className="text-[0.82rem] text-muted-500">
         Pengenalan suara memakai fitur bawaan peramban (Web Speech API). Chrome dan Edge
         mendukung; Brave memblokir layanan suara daring sehingga belum bisa, dan Firefox
         belum menyediakannya. Tidak ada rekaman yang dikirim ke server kami.

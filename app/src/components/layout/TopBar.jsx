@@ -7,7 +7,7 @@ import logo from '../../assets/logo-mark.png'
  */
 export default function TopBar({ onOpenMenu, menuOpen, unread, onDismissNotif }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md md:hidden">
+    <header className="sticky top-0 z-40 border-b border-line-200 bg-white/90 backdrop-blur-md md:hidden">
       <div className="flex h-14 items-center gap-2 px-3 sm:px-4">
         <button
           type="button"
@@ -15,7 +15,7 @@ export default function TopBar({ onOpenMenu, menuOpen, unread, onDismissNotif })
           aria-label="Buka menu navigasi"
           aria-expanded={menuOpen ? 'true' : 'false'}
           aria-controls="mobile-drawer"
-          className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-navy-700 transition-colors hover:bg-slate-50 active:bg-slate-100"
+          className="grid size-10 shrink-0 place-items-center rounded-xl border border-line-200 text-navy-700 transition-colors hover:bg-surface-50 active:bg-surface-100"
         >
           <Menu className="size-5" aria-hidden="true" />
         </button>
@@ -32,7 +32,7 @@ export default function TopBar({ onOpenMenu, menuOpen, unread, onDismissNotif })
             type="button"
             onClick={onDismissNotif}
             aria-label={unread ? 'Notifikasi, 1 belum dibaca' : 'Notifikasi, tidak ada yang baru'}
-            className="relative grid size-10 place-items-center rounded-xl text-navy-500 transition-colors hover:bg-slate-100 hover:text-navy-800"
+            className="relative grid size-10 place-items-center rounded-xl text-navy-500 transition-colors hover:bg-surface-100 hover:text-navy-800"
           >
             <Bell className="size-5" aria-hidden="true" />
             {unread ? (
@@ -51,7 +51,7 @@ export function DrawerCloseButton({ onClick }) {
       type="button"
       onClick={onClick}
       aria-label="Tutup menu navigasi"
-      className="grid size-9 shrink-0 place-items-center rounded-lg text-navy-500 transition-colors hover:bg-slate-100 hover:text-navy-800 lg:hidden"
+      className="grid size-9 shrink-0 place-items-center rounded-lg text-navy-500 transition-colors hover:bg-surface-100 hover:text-navy-800 lg:hidden"
     >
       <X className="size-5" aria-hidden="true" />
     </button>

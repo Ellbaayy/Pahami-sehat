@@ -76,8 +76,8 @@ export default function AskAI({
         <div
           className={cn(
             'flex flex-1 items-start gap-2 rounded-2xl border bg-white px-3.5 py-3 transition-colors duration-200',
-            'focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100',
-            loading ? 'border-brand-200' : 'border-slate-200 hover:border-slate-300',
+            'focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100',
+            loading ? 'border-brand-200' : 'border-line-200 hover:border-line-300',
           )}
         >
           <label htmlFor={id} className="sr-only">
@@ -95,7 +95,7 @@ export default function AskAI({
               }
             }}
             placeholder={t('tanya.placeholder')}
-            className="min-h-[3.25rem] flex-1 resize-none bg-transparent text-[0.95rem] leading-relaxed text-navy-900 outline-none placeholder:text-slate-500"
+            className="min-h-[3.25rem] flex-1 resize-none bg-transparent text-[0.95rem] leading-relaxed text-navy-900 outline-none placeholder:text-muted-500"
           />
           <button
             type="button"
@@ -120,7 +120,7 @@ export default function AskAI({
               'disabled:cursor-not-allowed disabled:opacity-45',
               suara.mendengar
                 ? 'bg-rose-500 text-white animate-pulse'
-                : 'bg-slate-100 text-navy-500 hover:bg-brand-50 hover:text-brand-600',
+                : 'bg-surface-100 text-navy-500 hover:bg-brand-50 hover:text-brand-600',
             )}
           >
             <Mic className="size-[17px]" aria-hidden="true" />
@@ -140,7 +140,7 @@ export default function AskAI({
         </Button>
       </form>
 
-      <p className="mt-2 text-[0.8rem] text-slate-500">
+      <p className="mt-2 text-[0.8rem] text-muted-500">
         {suara.mendengar ? (
           suara.sementara ? (
             <span className="text-brand-600">“{suara.sementara}”</span>
@@ -188,7 +188,7 @@ export default function AskAI({
           )}
         </div>
       ) : result ? (
-        <div className="rise mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4" aria-live="polite">
+        <div className="rise mt-4 rounded-xl border border-line-200 bg-surface-50/70 p-4" aria-live="polite">
           <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-600">
             {result.verdict === 'tidak_didukung'
               ? t('tanya.verdictNegatif')
@@ -209,7 +209,7 @@ export default function AskAI({
             negative={result.verdict === 'tidak_didukung'}
           />
           {result.catatan ? (
-            <p className="mt-2 text-[0.78rem] text-slate-500">{result.catatan}</p>
+            <p className="mt-2 text-[0.78rem] text-muted-500">{result.catatan}</p>
           ) : null}
         </div>
       ) : null}

@@ -93,8 +93,8 @@ export default function QuizPanel() {
                           'focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand-500',
                           'sm:flex-1 sm:justify-center',
                           checked
-                            ? 'border-brand-400 bg-brand-50 text-brand-700'
-                            : 'border-slate-200 bg-white text-navy-500 hover:border-slate-300 hover:bg-slate-50',
+                            ? 'border-brand-500 bg-brand-50 text-brand-700'
+                            : 'border-line-200 bg-white text-navy-500 hover:border-line-300 hover:bg-surface-50',
                         )}
                       >
                         <input
@@ -143,7 +143,7 @@ export default function QuizPanel() {
           >
             Ulangi
           </Button>
-          <span className="self-center text-[0.82rem] text-slate-500 sm:ml-auto">
+          <span className="self-center text-[0.82rem] text-muted-500 sm:ml-auto">
             {answered} dari {QUIZ_ITEMS.length} terjawab
           </span>
         </div>
@@ -180,7 +180,7 @@ export default function QuizPanel() {
             <p className="mt-2 max-w-[60ch] text-[0.92rem] leading-relaxed text-navy-700">
               {result.advice}
             </p>
-            <p className="mt-3 text-[0.76rem] text-slate-500">
+            <p className="mt-3 text-[0.76rem] text-muted-500">
               Hasil ini alat bantu belajar, bukan diagnosis medis.
             </p>
           </div>

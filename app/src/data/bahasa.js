@@ -122,19 +122,14 @@ const KAMUS = {
     'set.sub': 'Disimpan di peramban ini saja. Tidak ada akun, tidak ada server.',
     'set.tingkat': 'Tingkat baca',
     'set.tingkatSub': 'Target penyederhanaan jawaban dan artikel, dipilih menurut umur pembaca.',
-    'set.offline': 'Mode hemat sinyal',
-    'set.offlineSub': 'Simpan 10 jawaban terakhir di perangkat ini supaya tetap bisa dibaca saat sinyal hilang.',
+    'set.kontras': 'Mode kontras tinggi',
+    'set.kontrasSub': 'Teks lebih gelap, huruf lebih besar, garis dan batas fokus dipertebal — untuk gangguan penglihatan.',
     'set.tts': 'Putar suara otomatis',
     'set.ttsSub': 'Setiap jawaban AI langsung dibacakan dengan suara peramban.',
     'set.bahasa': 'Bahasa antarmuka',
     'set.bahasaSub': 'Mengubah seluruh tampilan dan bahasa jawaban AI.',
     'set.catatan': 'Semua preferensi tersimpan di peramban, bukan di server.',
 
-    // offline
-    'off.tersimpan': 'Jawaban terakhir tersimpan',
-    'off.sedangOffline': 'Sedang offline — jawaban terakhir',
-    'off.diPerangkat': 'Tersimpan di perangkat ini saja',
-    'off.dengar': 'Dengar tersimpan',
 
     // label tingkat baca
     'tingkat.anak': 'Anak-anak',
@@ -237,18 +232,13 @@ const KAMUS = {
     'set.sub': 'Stored in this browser only. No account, no server.',
     'set.tingkat': 'Reading level',
     'set.tingkatSub': 'Target simplification level for answers and articles, chosen by reader age.',
-    'set.offline': 'Low-signal mode',
-    'set.offlineSub': 'Keep the last 10 answers on this device so they stay readable when the signal drops.',
+    'set.kontras': 'High contrast mode',
+    'set.kontrasSub': 'Darker text, larger type, thicker borders and focus rings — for low vision.',
     'set.tts': 'Auto-play voice',
     'set.ttsSub': 'Every AI answer is read aloud with the browser voice.',
     'set.bahasa': 'Interface language',
     'set.bahasaSub': 'Changes the whole interface and the language of AI answers.',
     'set.catatan': 'All preferences are stored in the browser, not on the server.',
-
-    'off.tersimpan': 'Last answer saved',
-    'off.sedangOffline': 'Offline — last answer',
-    'off.diPerangkat': 'Saved on this device only',
-    'off.dengar': 'Listen to saved',
 
     'tingkat.anak': 'Children',
     'tingkat.remaja': 'Teens',
