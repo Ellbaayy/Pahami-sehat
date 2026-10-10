@@ -272,19 +272,31 @@ GAYA: ${t.gaya}`
  * Ada DUA hal yang diatur di sini, dan urutannya penting:
  *   1. Bahasa jawaban wajib mengikuti bahasa yang dipakai pengguna. Ini
  *      aturan utama — kalau pengguna menulis bahasa Inggris, jawabannya
- *      bahasa Inggris, walau bahasa antarmuka sedang Indonesia.
+ *      bahasa Inggris, walau bahasa antarmuka sedang Indonesia. Termasuk
+ *      bahasa daerah: kalau pengguna menulis bahasa Jawa, jawablah bahasa Jawa.
  *   2. Bahasa antarmuka dipakai sebagai cadangan saja, kalau pesan pengguna
  *      terlalu pendek/netral untuk bisa dipastikan bahasanya.
  *
- * Poin 1 ditulis di dalam system prompt supaya tetap berlaku walau pesan
- * pengguna memakai bahasa yang tidak diperkirakan sebelumnya.
+ * Poin 1 ditulis di dalam system prompt supaya tetap berlaku untuk bahasa
+ * apa pun — termasuk bahasa daerah yang tidak mungkin didaftar satu per satu
+ * (Indonesia punya 718 bahasa daerah).
+ *
+ * PENGAMAN BAHASA DAERAH — ini penting dan bukan sekadar pelengkap:
+ * uji coba menunjukkan model ini lancar memakai bahasa daerah yang besar
+ * (Jawa, Sunda, Bali, Minangkabau, Batak, Bugis, Makassar, dsb), tetapi
+ * untuk bahasa daerah yang sangat kecil penuturnya (mis. Nias, Asmat, Biak)
+ * model bisa MENGOBRAK-ABRIK kata yang terlihat seperti bahasa daerah tapi
+ * artinya kosong — dan itu berbahaya untuk informasi kesehatan.
+ * Karena itu ada tiga aturan pengaman di bawah.
  */
 function blokBahasa(bahasa, kodeAsal = null) {
   const dariPesan = kodeAsal === 'pesan'
   return `BAHASA JAWABAN — ATURAN UTAMA:
 Jawablah dalam BAHASA YANG SAMA dengan pesan pengguna. Kalau pengguna menulis
 dalam bahasa Inggris, jawablah dalam bahasa Inggris. Kalau pengguna menulis
-dalam bahasa Indonesia, jawab dalam bahasa Indonesia. Aturan ini berlaku untuk
+dalam bahasa Indonesia, jawab dalam bahasa Indonesia. Kalau pengguna menulis
+dalam bahasa daerah Indonesia (mis. Jawa, Sunda, Bali, Minangkabau, Bugis,
+Batak, Madura), jawablah dalam bahasa daerah itu. Aturan ini berlaku untuk
 semua bagian jawaban: "jawaban", "poin_kunci", "catatan", dan "sumber".
 Jangan mencampur dua bahasa dalam satu jawaban.
 
@@ -295,7 +307,29 @@ ${
 satu kata netral), pakailah ${bahasa}.`
 }
 Istilah teknis atau nama lembaga boleh tetap dalam bentuk aslinya
-(mis. "Kemenkes RI", "WHO", nama obat).`
+(mis. "Kemenkes RI", "WHO", nama obat).
+
+PENGAMAN BILA MENJAWAB DALAM BAHASA DAERAH:
+1. JAWABLAH DALAM BAHASA DAERAH ITU. Jangan menolak, dan jangan menulis
+   kalimat pembuka seperti "aku tidak bisa menjawab dalam bahasa daerah ini"
+   lalu tetap menjawab dalam bahasa daerah — itu bertentangan sendiri dan
+   membingungkan pengguna. Untuk bahasa daerah yang kamu kuasai (mis. Jawa,
+   Sunda, Bali, Minangkabau, Batak, Bugis, Makassar, Madura, Banjar, Sasak),
+   langsung jawab dalam bahasa itu tanpa basa-basi.
+2. BILA BENAR-BENAR TIDAK MAMPU, AKUI SEKALI SAJA. Hanya untuk bahasa daerah
+   yang penuturnya sangat sedikit dan kamu memang tidak menguasainya, jangan
+   mengarang kalimat yang bentuknya seperti bahasa daerah tetapi artinya
+   kosong — itu berbahaya untuk informasi kesehatan. Dalam keadaan itu,
+   jawablah dalam bahasa Indonesia, dan tuliskan alasannya SEKALI di bagian
+   "catatan" dengan kalimat sederhana, tanpa mengulang-ulang permintaan maaf.
+3. ANGKA WAJIB UTUH. Semua angka, satuan, rentang normal, dan dosis harus
+   tetap benar dan tidak boleh berubah arti. Tulis angkanya apa adanya
+   (mis. "120/80 mmHg"), jangan diterjemahkan ke kata-kata.
+4. ISTILAH MEDIS BOLEH TETAP. Nama penyakit, obat, dan istilah medis boleh
+   tetap dalam bahasa Indonesia atau Inggris, karena menerjemahkannya justru
+   berisiko salah. Yang diterjemahkan adalah kalimat penjelasnya.
+5. HANYA TERJEMAHKAN YANG ADA DI SUMBER. Jangan menambah angka, gejala, atau
+   klaim yang tidak ada di sumber yang diberikan, dalam bahasa apa pun.`
 }
 
 const BATAS_PANJANG = 'Jawaban maksimal 220 kata. Ringkas, tidak bertele-tele.'

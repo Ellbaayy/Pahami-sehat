@@ -37,6 +37,89 @@ const RESMI = [
 const BATAS_ISI = 1500
 const BATAS_REF = 6
 
+/* --------------------------------------------------------------- simpanan -- */
+
+/**
+ * Simpanan sementara hasil pencarian.
+ *
+ * Kenapa perlu: Wikipedia membatasi jumlah permintaan dari satu alamat IP.
+ * Uji coba menunjukkan panggilan beruntun membuat hasil pencarian kosong
+ * secara diam-diam — permintaan pertama dapat 8 hasil, permintaan berikutnya
+ * 0. Karena itu hasil yang sudah didapat disimpan sebentar dan dipakai ulang,
+ * supaya pertanyaan yang sama (atau sering diulang saat menguji) tidak
+ * menembak Wikipedia berkali-kali.
+ */
+const SIMPANAN = new Map()
+const SIMPANAN_MS = 15 * 60 * 1000 // 15 menit
+const SIMPANAN_MAKS = 200
+
+function kunciSimpanan(q) {
+  return String(q ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
+function ambilSimpanan(q) {
+  const k = kunciSimpanan(q)
+  const isi = SIMPANAN.get(k)
+  if (!isi) return null
+  if (Date.now() - isi.waktu > SIMPANAN_MS) {
+    SIMPANAN.delete(k)
+    return null
+  }
+  return isi.data
+}
+
+function simpanHasil(q, data) {
+  const k = kunciSimpanan(q)
+  if (!k) return
+  if (SIMPANAN.size >= SIMPANAN_MAKS) {
+    // buang yang paling lama
+    const tertua = [...SIMPANAN.entries()].sort((a, b) => a[1].waktu - b[1].waktu)[0]
+    if (tertua) SIMPANAN.delete(tertua[0])
+  }
+  SIMPANAN.set(k, { waktu: Date.now(), data })
+}
+
+/** Jeda kecil — dipakai supaya permintaan ke Wikipedia tidak beruntun. */
+const jeda = (ms) => new Promise((r) => setTimeout(r, ms))
+
+/* ------------------------------------------------------- antrean Wikipedia -- */
+
+/**
+ * Semua permintaan ke Wikipedia lewat SATU antrean, satu per satu.
+ *
+ * Kenapa: Wikipedia membalas HTTP 429 "You are making too many requests to the
+ * API" kalau permintaan datang beruntun. Uji coba membuktikan ini: empat
+ * permintaan beruntun langsung kena 429, dan setelah ~5 detik tenang baru
+ * pulih. Dulu setiap pertanyaan menembak 5-6 permintaan sekaligus, jadi
+ * pertanyaan ketiga dan seterusnya hampir selalu kosong — dan karena gagalnya
+ * "diam-diam", tampak seolah-olah memang tidak ada sumber.
+ *
+ * Dua pengaman:
+ *   1. JEDA_MIN — jarak paling sedikit antar permintaan (satu per satu).
+ *   2. jedaPaksa — kalau kena 429, SELURUH antrean berhenti dulu beberapa
+ *      detik, bukan hanya permintaan yang gagal itu.
+ */
+let antrean = Promise.resolve()
+let terakhirPanggil = 0
+let jedaPaksa = 0
+const JEDA_MIN = 300
+
+function lewatAntrean(fn) {
+  const jalan = antrean.then(async () => {
+    const sekarang = Date.now()
+    const tunggu = Math.max(0, terakhirPanggil + JEDA_MIN - sekarang, jedaPaksa - sekarang)
+    if (tunggu > 0) await jeda(tunggu)
+    terakhirPanggil = Date.now()
+    return fn()
+  })
+  // rantai tetap berjalan walau satu tugas gagal
+  antrean = jalan.then(
+    () => {},
+    () => {},
+  )
+  return jalan
+}
+
 function resmikah(url) {
   try {
     const h = new URL(url).hostname.replace(/^www\./, '')
@@ -44,6 +127,49 @@ function resmikah(url) {
   } catch {
     return false
   }
+}
+
+/**
+ * Ambil JSON dari Wikipedia dengan pengaman.
+ *
+ * Menangani: (1) pembatasan 429 dengan mundur panjang, (2) percobaan ulang,
+ * (3) balasan berisi "error" walau status HTTP 200, (4) halaman non-JSON.
+ */
+async function ambilJson(url, { percobaan = 3, timeoutMs = 12000 } = {}) {
+  let terakhir = null
+  for (let i = 0; i < percobaan; i++) {
+    try {
+      const res = await lewatAntrean(() =>
+        fetch(url, {
+          headers: { 'User-Agent': UA, 'Accept-Language': 'id,en;q=0.8' },
+          signal: AbortSignal.timeout(timeoutMs),
+        }),
+      )
+
+      if (res.status === 429) {
+        // Jeda tetap 5 detik, tidak menaik. Uji coba: pembatasan Wikipedia
+        // hilang setelah ~5 detik tenang, jadi menunggu 16 detik hanya
+        // memperlambat tanpa menambah peluang berhasil.
+        jedaPaksa = Date.now() + 5000
+        throw new Error('HTTP 429 — pembatasan Wikipedia')
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+      const teks = await res.text()
+      let data
+      try {
+        data = JSON.parse(teks)
+      } catch {
+        throw new Error('balasan bukan JSON')
+      }
+      if (data?.error) throw new Error(data.error.info || 'balasan berisi error')
+      return data
+    } catch (e) {
+      terakhir = e
+      if (i < percobaan - 1) await jeda(500)
+    }
+  }
+  throw terakhir ?? new Error('gagal mengambil data')
 }
 
 async function ambil(url, timeoutMs = 12000) {
@@ -126,41 +252,31 @@ function relevankah(item, kata) {
 
 /** Cari artikel Wikipedia Indonesia yang relevan. */
 async function cariWikipedia(q, maks = 4) {
+  // SATU permintaan saja: generator=search sekaligus mengembalikan judul,
+  // URL, dan ringkasan (prop=extracts). Dulu ini 5 permintaan terpisah
+  // (1 cari + 4 ringkasan) dan itulah pemicu utama pembatasan Wikipedia.
   const url =
-    'https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=' +
+    'https://id.wikipedia.org/w/api.php?action=query&generator=search' +
+    '&gsrsearch=' +
     encodeURIComponent(q) +
-    `&srlimit=${maks}&format=json&origin=*`
-  const d = await (
-    await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(10000) })
-  ).json()
-  const judul = (d?.query?.search ?? []).map((x) => x.title).slice(0, maks)
-  if (!judul.length) return []
+    `&gsrlimit=${maks}&prop=extracts|info&exintro=1&explaintext=1&exsentences=6&inprop=url` +
+    '&format=json&origin=*'
+  const d = await ambilJson(url)
+  const halaman = Object.values(d?.query?.pages ?? {})
+  if (!halaman.length) return []
 
-  const hasil = await Promise.all(
-    judul.map(async (j) => {
-      try {
-        const s = await (
-          await fetch(`https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(j)}`, {
-            headers: { 'User-Agent': UA },
-            signal: AbortSignal.timeout(10000),
-          })
-        ).json()
-        if (!s?.extract) return null
-        return {
-          judul: s.title,
-          url:
-            s.content_urls?.desktop?.page ??
-            `https://id.wikipedia.org/wiki/${encodeURIComponent(j)}`,
-          ringkas: String(s.extract).slice(0, 700),
-          resmi: false,
-          jenis: 'ensiklopedia',
-        }
-      } catch {
-        return null
-      }
-    }),
-  )
-  return hasil.filter(Boolean)
+  // urutkan sesuai peringkat pencarian (generator tidak menjamin urutan)
+  halaman.sort((a, b) => (a.index ?? 99) - (b.index ?? 99))
+
+  return halaman
+    .filter((h) => h?.extract)
+    .map((h) => ({
+      judul: h.title,
+      url: h.fullurl ?? `https://id.wikipedia.org/wiki/${encodeURIComponent(h.title)}`,
+      ringkas: String(h.extract).replace(/\s+/g, ' ').trim().slice(0, 700),
+      resmi: false,
+      jenis: 'ensiklopedia',
+    }))
 }
 
 /**
@@ -175,9 +291,7 @@ async function referensiResmi(judulArtikel) {
       'https://id.wikipedia.org/w/api.php?action=parse&page=' +
       encodeURIComponent(judulArtikel) +
       '&prop=externallinks&format=json&origin=*'
-    const d = await (
-      await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(12000) })
-    ).json()
+    const d = await ambilJson(url)
     const semua = d?.parse?.externallinks ?? []
     return [...new Set(semua)]
       .filter((u) => resmikah(u))
@@ -203,7 +317,21 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2 } = {}) {
   const kata0 = String(q ?? '').trim().slice(0, 300)
   if (!kata0) return { hasil: [], ringkas: '', catatan: '' }
 
-  const wiki = await cariWikipedia(kata0, maksArtikel + 1).catch(() => [])
+  // pakai simpanan kalau ada — supaya tidak menembak Wikipedia berkali-kali
+  const tersimpan = ambilSimpanan(kata0)
+  if (tersimpan) return tersimpan
+
+  let wiki = await cariWikipedia(kata0, maksArtikel).catch(() => [])
+
+  // Kalau kosong, kemungkinan besar karena pembatasan Wikipedia — bukan karena
+  // memang tidak ada artikelnya. Tunggu sebentar lalu coba sekali lagi. Ini
+  // penting: kegagalan sementara yang dibiarkan akan terlihat oleh pengguna
+  // sebagai "tidak ada sumber", padahal sumbernya ada.
+  if (!wiki.length) {
+    await jeda(4000)
+    wiki = await cariWikipedia(kata0, maksArtikel).catch(() => [])
+  }
+
   const kata = kataPenting(kata0)
   const relevan = wiki.filter((h) => relevankah(h, kata))
 
@@ -213,17 +341,18 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2 } = {}) {
   // referensi resmi dari artikel teratas
   const ref = await referensiResmi(dipakai[0]?.judul)
 
-  // ambil isi beberapa halaman resmi supaya model punya bahan nyata
-  await Promise.all(
-    ref.slice(0, ambilIsi).map(async (h) => {
-      try {
-        const isi = bersihkan(keTeks(await ambil(h.url, 12000)))
-        if (isi.length > 150) h.isi = isi
-      } catch {
-        /* halaman resmi gagal diambil — URL tetap ditampilkan */
-      }
-    }),
-  )
+  // Ambil isi beberapa halaman resmi supaya model punya bahan nyata.
+  // Dijalankan berurutan dengan jeda kecil — situs pemerintah juga membatasi
+  // permintaan beruntun, dan jumlahnya sedikit (maks 2) jadi tidak lambat.
+  for (const h of ref.slice(0, ambilIsi)) {
+    try {
+      const isi = bersihkan(keTeks(await ambil(h.url, 12000)))
+      if (isi.length > 150) h.isi = isi
+    } catch {
+      /* halaman resmi gagal diambil — URL tetap ditampilkan */
+    }
+    await jeda(200)
+  }
 
   const hasil = [...dipakai, ...ref]
 
@@ -239,5 +368,12 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2 } = {}) {
     ? `Sumber resmi diambil dari daftar referensi artikel ensiklopedia — ${ref.length} dokumen lembaga resmi ditemukan.`
     : 'Belum ada dokumen lembaga resmi yang ditemukan untuk pertanyaan ini.'
 
-  return { hasil, ringkas: bagian, catatan }
+  const keluaran = { hasil, ringkas: bagian, catatan }
+
+  // Hanya simpan kalau memang ada hasil. Hasil kosong TIDAK disimpan, supaya
+  // kegagalan sementara (mis. kena pembatasan Wikipedia) tidak ikut tersimpan
+  // dan pertanyaan berikutnya masih dicoba lagi.
+  if (hasil.length) simpanHasil(kata0, keluaran)
+
+  return keluaran
 }
