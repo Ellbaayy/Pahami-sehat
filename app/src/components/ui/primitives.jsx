@@ -1,6 +1,6 @@
 import { Loader2, AlertCircle } from 'lucide-react'
 import { cn } from '../../lib/cn'
-import kosong from '../../assets/ilustrasi/kosong.png'
+import IlustrasiAnimasi from './IlustrasiAnimasi'
 
 /* ---------------- Card ---------------- */
 export function Card({ className, children, as: Tag = 'div', ...rest }) {
@@ -103,14 +103,9 @@ export function EmptyState({ icon: Icon, title, description, action }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-10 text-center">
       {/* Ilustrasi netral — muncul hanya saat belum ada isi, jadi tidak pernah ramai */}
-      <img
-        src={kosong}
-        alt=""
-        width={600}
-        height={600}
-        className="mb-1 w-[clamp(7.5rem,22vw,11rem)] select-none"
-        decoding="async"
-        draggable={false}
+      <IlustrasiAnimasi
+        nama="kosong"
+        className="mb-1 w-[clamp(7.5rem,22vw,11rem)]"
       />
       {Icon ? (
         <span className="grid size-11 place-items-center rounded-full bg-white text-brand-600 shadow-sm">

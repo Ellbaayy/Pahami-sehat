@@ -1,6 +1,13 @@
 import { ShieldCheck, AudioLines } from 'lucide-react'
-import sapaan from '../../assets/ilustrasi/sapaan.png'
+import IlustrasiAnimasi from '../ui/IlustrasiAnimasi'
 
+/**
+ * Sapaan pembuka di Beranda.
+ *
+ * Ilustrasi dokter yang bergerak berdiri di sebelah sapaan supaya halaman
+ * langsung terasa hidup. Jumlah ilustrasi di aplikasi ini sengaja dijaga
+ * sedikit — dashboard adalah alat kerja, bukan halaman cerita.
+ */
 export default function Greeting() {
   return (
     <section
@@ -39,15 +46,13 @@ export default function Greeting() {
 
       {/* Ilustrasi sapaan — menyusut proporsional di tablet, disembunyikan di layar kecil */}
       <div className="hidden w-[clamp(9rem,19vw,15.5rem)] shrink-0 sm:block">
-        <img
-          src={sapaan}
-          alt="Ilustrasi seseorang melambai menyapa"
-          width={600}
-          height={600}
-          className="h-auto w-full select-none"
-          decoding="async"
-          draggable={false}
+        <IlustrasiAnimasi
+          nama="sapaan"
+          className="h-auto w-full"
         />
+        <span className="sr-only">
+          Ilustrasi dokter menyapa di halaman beranda
+        </span>
       </div>
     </section>
   )
