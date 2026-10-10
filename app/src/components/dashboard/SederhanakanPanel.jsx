@@ -57,7 +57,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
                 type="button"
                 onClick={() => onTingkatChange(t.kunci)}
                 aria-pressed={tingkat === t.kunci}
-                title={`Target setara kelas ${t.targetKelas}`}
+                title={`Perkiraan umur pembaca ${t.usia}`}
                 className={
                   'h-11 whitespace-nowrap rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200 ' +
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ' +
@@ -144,7 +144,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-[0.74rem] font-bold text-brand-700 ring-1 ring-brand-100">
               <FileText className="size-3.5" aria-hidden="true" />
-              Tingkat {hasil.tingkat.label} · target kelas {hasil.tingkat.targetKelas}
+              Tingkat {hasil.tingkat.label} · umur {hasil.tingkat.usia}
             </span>
           </div>
 

@@ -9,26 +9,26 @@
  * konsisten dan bisa dipertanggungjawabkan di depan juri.
  */
 
-/** Tingkat baca — target Flesch-grade (dikalibrasi ×0,6 untuk bahasa Indonesia). */
+/** Tingkat baca — patokan UMUR pembaca, bukan kelas sekolah. */
 export const TINGKAT = {
   anak: {
     label: 'Anak-anak',
-    targetKelas: 6,
+    usia: '9–11 tahun',
     gaya: 'Kalimat pendek (maksimal ~10 kata). Pakai kata sehari-hari dan perumpamaan sederhana. Hindari istilah medis; kalau terpaksa, langsung jelaskan dalam tanda kurung.',
   },
   remaja: {
     label: 'Remaja',
-    targetKelas: 9,
+    usia: '12–25 tahun',
     gaya: 'Kalimat sedang. Istilah medis boleh dipakai asal dijelaskan sekali di tempat pertama.',
   },
   dewasa: {
     label: 'Dewasa',
-    targetKelas: 12,
+    usia: '26–59 tahun',
     gaya: 'Bahasa informatif seperti artikel kesehatan umum. Istilah medis boleh langsung dipakai.',
   },
   lansia: {
     label: 'Lansia',
-    targetKelas: 8,
+    usia: '60 tahun ke atas',
     gaya: 'Kalimat pendek dan jelas, huruf besar-kecil normal, hindari singkatan. Sapa dengan tenang, jangan menggurui. Istilah medis wajib dijelaskan.',
   },
 }
@@ -262,7 +262,7 @@ FORMAT KELUARAN — balas HANYA JSON valid, tanpa teks pembuka, tanpa pagar kode
 
 function blokTingkat(tingkat) {
   const t = TINGKAT[tingkat] ?? TINGKAT[TINGKAT_DEFAULT]
-  return `TINGKAT PEMBACA: ${t.label} (target setara kelas ${t.targetKelas}).
+  return `TINGKAT PEMBACA: ${t.label} (perkiraan umur pembaca ${t.usia}).
 GAYA: ${t.gaya}`
 }
 

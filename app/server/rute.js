@@ -68,7 +68,7 @@ function bentukHasil(mentah, tingkat, { verdictKey = null } = {}) {
       jawaban: '',
       poinKunci: [],
       sumber: [],
-      tingkat: { kunci: tingkat, label: t.label, targetKelas: t.targetKelas },
+      tingkat: { kunci: tingkat, label: t.label, usia: t.usia },
     }
   }
   const sumber = Array.isArray(mentah.sumber)
@@ -88,7 +88,7 @@ function bentukHasil(mentah, tingkat, { verdictKey = null } = {}) {
     poinKunci: Array.isArray(mentah.poin_kunci) ? mentah.poin_kunci.map((p) => String(p).trim()).filter(Boolean) : [],
     sumber,
     catatan: String(mentah.catatan ?? '').trim(),
-    tingkat: { kunci: tingkat, label: t.label, targetKelas: t.targetKelas },
+    tingkat: { kunci: tingkat, label: t.label, usia: t.usia },
   }
   if (verdictKey) out.verdict = String(mentah[verdictKey] ?? 'tidak_bisa_dipastikan').trim()
   return out
@@ -235,7 +235,7 @@ rute.get('/api/meta', (_req, res) => {
     tingkat: Object.entries(TINGKAT).map(([kunci, t]) => ({
       kunci,
       label: t.label,
-      targetKelas: t.targetKelas,
+      usia: t.usia,
     })),
     tingkatDefault: TINGKAT_DEFAULT,
     batasKata: 220,

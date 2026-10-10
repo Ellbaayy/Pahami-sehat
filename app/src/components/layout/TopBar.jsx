@@ -39,13 +39,6 @@ export default function TopBar({ onOpenMenu, menuOpen, unread, onDismissNotif })
               <span className="absolute top-2 right-2.5 size-2 rounded-full bg-rose-500 ring-2 ring-white" />
             ) : null}
           </button>
-          <span
-            className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-500 text-[0.72rem] font-extrabold text-white ring-2 ring-brand-100"
-            aria-label="Akun demo: Pahami Sehat"
-            role="img"
-          >
-            PS
-          </span>
         </div>
       </div>
     </header>
