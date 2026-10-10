@@ -99,13 +99,25 @@ const POLA_SAPA = [
   // salam
   /^(halo|hallo|helo|hello|hai|hei|hi|yo|woi|assalamualaikum|assalamu|salam|permisi|pagi|siang|sore|malam|selamat\s*(pagi|siang|sore|malam|datang|malam))[\s!.,?]*$/i,
   /^selamat\s+(pagi|siang|sore|malam|datang|beraktivitas|istirahat)/i,
-  // menanyakan kabar
-  /^(apa\s+kabar|gimana\s+kabar|bagaimana\s+kabar|kabarnya|gmn\s+kbr|kbr)\b/i,
-  /kamu\s+(baik|sehat|oke|ok|gimana|gmn)\b/i,
+  // menanyakan kabar — TIDAK diikat ke awal kalimat, karena "halo, apa kabar?"
+  // juga harus terbaca sebagai obrolan, bukan pertanyaan kesehatan
+  /\b(apa\s+kabar|gimana\s+kabar|bagaimana\s+kabar|kabarnya|gmn\s+kbr|kbr)\b/i,
+  /\bkamu\s+(baik|sehat|oke|ok|gimana|gmn)\b/i,
   // terima kasih
   /^(makasih|terima\s*kasih|thanks|thank\s*you|thx|tq|tks|syukron)\b/i,
   // salam perpisahan
   /^(dadah|dah|bye|byebye|sampai\s*jumpa|selamat\s*tinggal|pamit|see\s*you)\b/i,
+  // salam & basa-basi bahasa Inggris — sebelumnya belum ada, sehingga
+  // "hello, how are you?" ikut dianggap pertanyaan yang perlu dicari sumbernya
+  /\bhow\s+are\s+you\b/i,
+  /\bhow\s+(is|are)\s+(it|things|you\s+doing|everything)\b/i,
+  /\bhow'?s\s+it\s+going\b/i,
+  /\bwhat'?s\s+up\b/i,
+  /\bnice\s+to\s+(meet|see)\s+you\b/i,
+  /\bhow\s+do\s+you\s+do\b/i,
+  /^good\s+(morning|afternoon|evening|night)\b/i,
+  /\b(hi|hello|hey)\s+there\b/i,
+  /\bhave\s+a\s+(nice|good|great)\s+day\b/i,
   // basa-basi
   /^(lagi\s+apa|sedang\s+apa|ngapain|lagi\s+ngapain|apa\s+kegiatanmu)\b/i,
   /^(selamat\s+kerja|semangat|semangat\s+ya|good\s*luck|sukses)\b/i,
@@ -188,7 +200,7 @@ export function deteksiSantai(teks) {
    memberi diagnosis.
    ========================================================================== */
 
-export function promptSantai({ pertanyaan, bahasa = 'Bahasa Indonesia' }) {
+export function promptSantai({ pertanyaan, bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
   return {
     system: `Kamu adalah asisten kesehatan ramah di aplikasi "Pahami Sehat".
 
@@ -205,8 +217,9 @@ ATURAN:
 5. Kalau pengguna tampak ingin bertanya soal kesehatan, arahkan dengan santai
    supaya menuliskannya — jangan menebak-nebak keluhannya.
 6. Kamu bukan dokter. Jangan memberi diagnosis, resep, atau dosis.
-7. Bahasa: ${bahasa}.
-8. Jangan pakai emoji berlebihan. Satu saja cukup bila perlu.
+7. Jangan pakai emoji berlebihan. Satu saja cukup bila perlu.
+
+${blokBahasa(bahasa, kodeAsal)}
 
 FORMAT KELUARAN — balas HANYA JSON valid, tanpa teks pembuka, tanpa pagar kode:
 {
@@ -253,10 +266,42 @@ function blokTingkat(tingkat) {
 GAYA: ${t.gaya}`
 }
 
+/**
+ * Aturan bahasa.
+ *
+ * Ada DUA hal yang diatur di sini, dan urutannya penting:
+ *   1. Bahasa jawaban wajib mengikuti bahasa yang dipakai pengguna. Ini
+ *      aturan utama — kalau pengguna menulis bahasa Inggris, jawabannya
+ *      bahasa Inggris, walau bahasa antarmuka sedang Indonesia.
+ *   2. Bahasa antarmuka dipakai sebagai cadangan saja, kalau pesan pengguna
+ *      terlalu pendek/netral untuk bisa dipastikan bahasanya.
+ *
+ * Poin 1 ditulis di dalam system prompt supaya tetap berlaku walau pesan
+ * pengguna memakai bahasa yang tidak diperkirakan sebelumnya.
+ */
+function blokBahasa(bahasa, kodeAsal = null) {
+  const dariPesan = kodeAsal === 'pesan'
+  return `BAHASA JAWABAN — ATURAN UTAMA:
+Jawablah dalam BAHASA YANG SAMA dengan pesan pengguna. Kalau pengguna menulis
+dalam bahasa Inggris, jawablah dalam bahasa Inggris. Kalau pengguna menulis
+dalam bahasa Indonesia, jawab dalam bahasa Indonesia. Aturan ini berlaku untuk
+semua bagian jawaban: "jawaban", "poin_kunci", "catatan", dan "sumber".
+Jangan mencampur dua bahasa dalam satu jawaban.
+
+${
+  dariPesan
+    ? `Bahasa pesan pengguna terdeteksi: ${bahasa}. Pakailah bahasa itu.`
+    : `Kalau bahasa pesan pengguna tidak bisa dipastikan (mis. hanya angka atau
+satu kata netral), pakailah ${bahasa}.`
+}
+Istilah teknis atau nama lembaga boleh tetap dalam bentuk aslinya
+(mis. "Kemenkes RI", "WHO", nama obat).`
+}
+
 const BATAS_PANJANG = 'Jawaban maksimal 220 kata. Ringkas, tidak bertele-tele.'
 
 /** Pertanyaan bebas dari user (fitur "Tanya AI"). */
-export function promptTanya({ pertanyaan, tingkat, bahasa = 'Bahasa Indonesia' }) {
+export function promptTanya({ pertanyaan, tingkat, bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
   return {
     system: `Kamu adalah mesin penyederhana informasi kesehatan untuk aplikasi "Pahami Sehat".
 
@@ -267,7 +312,7 @@ ${RUBRIK}
 
 ${blokTingkat(tingkat)}
 
-BAHASA: ${bahasa}.
+${blokBahasa(bahasa, kodeAsal)}
 ${BATAS_PANJANG}
 
 ${KELUARAN_JSON}`,
@@ -276,7 +321,7 @@ ${KELUARAN_JSON}`,
 }
 
 /** Terjemahkan teks medis mentah (hasil lab, label obat, artikel, broadcast WA). */
-export function promptSederhanakan({ teks, tingkat, bahasa = 'Bahasa Indonesia' }) {
+export function promptSederhanakan({ teks, tingkat, bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
   return {
     system: `Kamu adalah penerjemah bahasa medis untuk aplikasi "Pahami Sehat".
 
@@ -292,7 +337,7 @@ ${RUBRIK}
 
 ${blokTingkat(tingkat)}
 
-BAHASA: ${bahasa}.
+${blokBahasa(bahasa, kodeAsal)}
 ${BATAS_PANJANG}
 
 ${KELUARAN_JSON}`,
@@ -301,7 +346,7 @@ ${KELUARAN_JSON}`,
 }
 
 /** Verifikasi klaim kesehatan (mis. broadcast WhatsApp). */
-export function promptVerifikasi({ klaim, tingkat, bahasa = 'Bahasa Indonesia' }) {
+export function promptVerifikasi({ klaim, tingkat, bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
   return {
     system: `Kamu adalah pemeriksa klaim kesehatan untuk aplikasi "Pahami Sehat".
 
@@ -317,7 +362,7 @@ ${RUBRIK}
 
 ${blokTingkat(tingkat)}
 
-BAHASA: ${bahasa}.
+${blokBahasa(bahasa, kodeAsal)}
 ${BATAS_PANJANG}
 
 FORMAT KELUARAN — balas HANYA JSON valid, tanpa teks pembuka, tanpa pagar kode:
@@ -372,8 +417,8 @@ function rapikanHasil(hasil = []) {
 }
 
 /** Pertanyaan bebas + hasil pencarian. */
-export function promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia' }) {
-  const dasar = promptTanya({ pertanyaan, tingkat, bahasa })
+export function promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
+  const dasar = promptTanya({ pertanyaan, tingkat, bahasa, kodeAsal })
   return {
     system: `${dasar.system}
 
@@ -387,8 +432,8 @@ harus URL persis dari daftar.`,
 }
 
 /** Verifikasi klaim + hasil pencarian. */
-export function promptVerifikasiDenganCari({ klaim, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia' }) {
-  const dasar = promptVerifikasi({ klaim, tingkat, bahasa })
+export function promptVerifikasiDenganCari({ klaim, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
+  const dasar = promptVerifikasi({ klaim, tingkat, bahasa, kodeAsal })
   return {
     system: `${dasar.system}
 
@@ -401,8 +446,8 @@ dari hasil pencarian di atas. Verdict harus didasarkan pada hasil pencarian itu.
 }
 
 /** Sederhanakan teks + (opsional) hasil pencarian untuk melengkapi istilah. */
-export function promptSederhanakanDenganCari({ teks, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia' }) {
-  const dasar = promptSederhanakan({ teks, tingkat, bahasa })
+export function promptSederhanakanDenganCari({ teks, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
+  const dasar = promptSederhanakan({ teks, tingkat, bahasa, kodeAsal })
   return {
     system: `${dasar.system}
 
