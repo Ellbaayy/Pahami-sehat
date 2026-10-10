@@ -386,6 +386,16 @@ export default function App() {
                 </>
               )}
             </p>
+            <p className="flex items-center gap-1.5 text-[0.78rem] text-slate-500">
+              <a
+                href="https://storyset.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-dotted underline-offset-2 hover:text-navy-700"
+              >
+                Ilustrasi: Storyset
+              </a>
+            </p>
           </div>
         </footer>
       </div>
