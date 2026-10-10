@@ -77,6 +77,7 @@ export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline
                 type="button"
                 onClick={() => onTingkatChange(t.kunci)}
                 aria-pressed={tingkat === t.kunci}
+                title={`Perkiraan umur pembaca ${t.usia}`}
                 className={
                   'h-11 whitespace-nowrap rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200 ' +
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ' +

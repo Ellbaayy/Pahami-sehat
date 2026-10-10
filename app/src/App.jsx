@@ -448,7 +448,7 @@ export default function App() {
         <footer className="border-t border-slate-200 bg-white px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-5">
           <div className="mx-auto flex w-full max-w-[86rem] flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <p className="text-[0.8rem] font-semibold text-navy-700">
-              Pahami Sehat <span className="font-normal text-slate-500">· LOGICODIX 2026</span>
+              Pahami Sehat <span className="font-normal text-slate-500">· Created by NØCTURNE</span>
             </p>
             <p className="flex items-center gap-1.5 text-[0.78rem] text-slate-500">
               {server.memuat ? (

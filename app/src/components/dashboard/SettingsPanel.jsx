@@ -67,6 +67,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
                   type="button"
                   onClick={() => set('level', t.kunci)}
                   aria-pressed={settings.level === t.kunci}
+                  title={`Perkiraan umur pembaca ${t.usia}`}
                   className={cn(
                     'h-11 min-w-[3.25rem] whitespace-nowrap rounded-lg px-3 text-[0.85rem] font-bold transition-colors duration-200',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
