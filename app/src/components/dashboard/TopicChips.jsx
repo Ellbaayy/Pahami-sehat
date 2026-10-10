@@ -6,11 +6,44 @@ import { SectionHeading } from '../ui/primitives'
  * - desktop : chip tersusun horizontal
  * - tablet  : chip wrap ke baris berikutnya
  * - mobile  : rail chip bisa digeser horizontal (tanpa overflow halaman)
+ *
+ * Isinya berasal dari konten harian (server/konten.js). Dua tanggalnya
+ * dibedakan dengan sengaja:
+ *   - "Diperbarui"    -> kapan isinya benar-benar berubah
+ *   - "Terakhir dicek"-> kapan sistem mengecek sumbernya (bisa tiap hari,
+ *                        walau isinya belum tentu berubah)
+ * Jadi kalau belum ada artikel baru, halaman tidak berpura-pura memperbarui
+ * apa pun — yang tampil apa adanya adalah tanggal pengecekannya.
  */
-export default function TopicChips({ topics, selected, onSelect }) {
+export default function TopicChips({ topics, selected, onSelect, diperbarui, diperiksa }) {
+  const tgl = (iso) =>
+    iso
+      ? new Date(iso).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : null
+
+  const tglDiperbarui = tgl(diperbarui)
+  const tglDiperiksa = tgl(diperiksa)
+  const belumBerubah = tglDiperbarui && tglDiperiksa && tglDiperbarui === tglDiperiksa
+
   return (
     <section aria-labelledby="topik-title">
-      <SectionHeading id="topik-title" title="Topik populer" />
+      <SectionHeading
+        id="topik-title"
+        title="Topik populer"
+        action={
+          tglDiperiksa ? (
+            <p className="text-[0.74rem] font-medium text-slate-600">
+              {belumBerubah
+                ? `Diperbarui ${tglDiperbarui}`
+                : `Terakhir dicek ${tglDiperiksa} · diperbarui ${tglDiperbarui}`}
+            </p>
+          ) : null
+        }
+      />
 
       <div
         role="group"

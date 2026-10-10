@@ -21,7 +21,9 @@ import { buatEkstrak } from './ekstrak.js'
 import {
   TINGKAT,
   TINGKAT_DEFAULT,
+  deteksiSantai,
   promptTanya,
+  promptSantai,
   promptSederhanakan,
   promptVerifikasi,
   promptTanyaDenganCari,
@@ -29,6 +31,7 @@ import {
   promptVerifikasiDenganCari,
 } from './prompts.js'
 import { cariInternet } from './cari.js'
+import { kontenHarianLengkap } from './konten.js'
 
 /* ---------------------------------------------------------------- util ---- */
 
@@ -118,6 +121,22 @@ rute.get('/api/health', bungkus(async (_req, res) => {
   res.json({ server: 'ok', kenari: sehat, ...safeInfo() })
 }))
 
+/**
+ * Konten harian untuk Beranda: topik populer, artikel, dan tips.
+ *
+ * Isinya diambil dari kanal resmi Kemenkes dan diperbarui sekali sehari
+ * (lihat server/konten.js). Frontend memakai ini supaya halaman Beranda
+ * tidak menampilkan artikel yang itu-itu saja.
+ *
+ * `?paksa=1` memaksa pengambilan ulang — berguna saat menguji.
+ */
+rute.get('/api/konten', bungkus(async (req, res) => {
+  const paksa = String(req.query?.paksa ?? '') === '1'
+  const data = await kontenHarianLengkap({ paksa })
+  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400')
+  res.json({ ok: true, ...data })
+}))
+
 rute.get('/api/meta', (_req, res) => {
   res.json({
     model: config.model,
@@ -138,6 +157,18 @@ rute.post('/api/tanya', bungkus(async (req, res) => {
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
   const bahasa = NAMA_BAHASA[rapikanBahasa(req.body?.bahasa)]
+
+  // Obrolan biasa (sapaan / basa-basi) tidak perlu dicari di internet dan
+  // tidak perlu menampilkan daftar sumber — tidak ada yang diverifikasi.
+  if (deteksiSantai(pertanyaan)) {
+    const ps = promptSantai({ pertanyaan, bahasa })
+    const h = await chat({ messages: [
+      { role: 'system', content: ps.system },
+      { role: 'user', content: ps.user },
+    ] })
+    const santai = bentukHasil(ambilJson(h.text), tingkat)
+    return res.json({ ...santai, santai: true, hasilCari: [], usage: h.usage })
+  }
 
   // cari di internet dulu supaya jawabannya berbasis sumber nyata
   const { hasil: hasilCari } = await cariInternet(pertanyaan)
@@ -228,6 +259,30 @@ rute.post('/api/tanya/stream', bungkus(async (req, res) => {
   })
 
   try {
+    // Obrolan biasa: langsung jawab tanpa mencari dan tanpa daftar sumber.
+    if (deteksiSantai(pertanyaan)) {
+      kirim('status', { pesan: 'Menyiapkan jawaban…' })
+      const ps = promptSantai({ pertanyaan, bahasa })
+      const ekstrakSantai = buatEkstrak('jawaban')
+
+      const h = await chatStream({
+        messages: [
+          { role: 'system', content: ps.system },
+          { role: 'user', content: ps.user },
+        ],
+        signal: ac.signal,
+        onDelta: (t) => {
+          const bersih = ekstrakSantai.dorong(t)
+          if (bersih) kirim('delta', { teks: bersih })
+        },
+      })
+
+      const santai = bentukHasil(ambilJson(h.text), tingkat)
+      kirim('hasil', { ...santai, santai: true, hasilCari: [], usage: h.usage })
+      res.write('event: selesai\ndata: {}\n\n')
+      return
+    }
+
     // 1) cari di internet dulu
     kirim('status', { pesan: 'Mencari sumber terpercaya…' })
     const { hasil: hasilCari } = await cariInternet(pertanyaan)

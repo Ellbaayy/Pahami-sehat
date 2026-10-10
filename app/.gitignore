@@ -10,3 +10,7 @@ public/prototipe
 .env
 .env.local
 !.env.example
+
+# Simpanan konten harian (dibuat ulang otomatis oleh server/konten.js)
+.cache-konten.json
+
