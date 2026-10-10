@@ -1,12 +1,23 @@
 /**
  * Hook pengenalan suara (Web Speech API).
  *
- * Dipakai tombol mikrofon di Tanya AI dan panel Suara.
+ * Dipakai tombol mikrofon di Tanya AI, panel Suara, dan panel Tanya.
  * Semua berjalan di perangkat pengguna — tidak ada audio yang dikirim ke server kita.
  *
- * Peramban yang mendukung: Chrome, Edge, dan turunan Chromium.
- * Firefox/Safari sebagian belum — kalau tidak didukung, hook melaporkan
- * `didukung: false` supaya UI bisa menonaktifkan tombolnya dengan jujur.
+ * Peramban yang mendukung: Google Chrome dan Microsoft Edge.
+ * Chromium polos (termasuk Brave) memblokir layanan suara daring milik Google,
+ * sehingga gagal dengan error 'network'. Firefox belum menyediakannya.
+ * Kalau tidak didukung, hook melaporkan `didukung: false` supaya UI bisa
+ * menonaktifkan tombolnya dengan jujur.
+ *
+ * CATATAN PENTING soal `sementara` dan `onHasil`:
+ * `sementara` HANYA berisi teks yang belum pasti (interim). Begitu pengenalan
+ * selesai, hasil akhir dikirim lewat `onHasil`, lalu `sementara` dikosongkan.
+ * Jadi komponen yang membaca `sementara` saja akan kehilangan hasil akhirnya —
+ * pernah terjadi di panel Suara, kotaknya tetap kosong padahal Chrome sudah
+ * mengenali ucapannya dengan benar. Untuk mencegah itu terulang, hook ini
+ * menyimpan hasil akhir di `hasil` juga, sehingga pemanggil yang tidak
+ * memasang `onHasil` tetap bisa menampilkannya.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -20,6 +31,7 @@ export function gunakanSuara({ bahasa = 'id-ID', onHasil } = {}) {
   const [mendengar, setMendengar] = useState(false)
   const [error, setError] = useState(null)
   const [sementara, setSementara] = useState('')
+  const [hasil, setHasil] = useState('')
   const ref = useRef(null)
   const hasilRef = useRef(onHasil)
   hasilRef.current = onHasil
@@ -50,6 +62,7 @@ export function gunakanSuara({ bahasa = 'id-ID', onHasil } = {}) {
 
     r.onstart = () => {
       setError(null)
+      setHasil('') // mulai merekam ulang -> buang hasil sebelumnya
       setMendengar(true)
     }
 
@@ -63,20 +76,41 @@ export function gunakanSuara({ bahasa = 'id-ID', onHasil } = {}) {
       }
       if (antara) setSementara(antara)
       if (akhir) {
+        const bersih = akhir.trim()
         setSementara('')
-        hasilRef.current?.(akhir.trim())
+        // simpan juga di state supaya tetap tampil walau pemanggil tidak
+        // memasang onHasil
+        setHasil(bersih)
+        hasilRef.current?.(bersih)
       }
     }
 
     r.onerror = (e) => {
-      const pesan =
-        e.error === 'not-allowed' || e.error === 'service-not-allowed'
-          ? 'Izin mikrofon ditolak. Izinkan akses mikrofon di peramban lalu coba lagi.'
-          : e.error === 'no-speech'
-            ? 'Tidak ada suara yang terdengar. Coba bicara lagi.'
-            : e.error === 'audio-capture'
-              ? 'Mikrofon tidak terdeteksi.'
-              : `Pengenalan suara gagal (${e.error}).`
+      // Pesannya dibedakan per sebab supaya pengguna tahu harus berbuat apa.
+      // 'network' paling sering muncul di Chromium tanpa layanan suara Google
+      // (Brave, Chromium polos, distro Linux) — layanan pengenalan suara
+      // memang daring, jadi tanpa sambungan ke sana fitur ini tidak bisa jalan.
+      let pesan
+      switch (e.error) {
+        case 'not-allowed':
+        case 'service-not-allowed':
+          pesan = 'Izin mikrofon ditolak. Izinkan akses mikrofon di peramban, lalu coba lagi.'
+          break
+        case 'no-speech':
+          pesan = 'Tidak ada suara yang terdengar. Coba bicara lagi lebih dekat ke mikrofon.'
+          break
+        case 'audio-capture':
+          pesan = 'Mikrofon tidak terdeteksi. Pastikan ada mikrofon yang terpasang.'
+          break
+        case 'network':
+          pesan =
+            'Peramban ini memblokir layanan suara daring, jadi pengenalan suara tidak bisa jalan. Coba di Google Chrome atau Microsoft Edge.'
+          break
+        case 'aborted':
+          return // dibatalkan sendiri — bukan kesalahan
+        default:
+          pesan = `Pengenalan suara gagal (${e.error}).`
+      }
       setError(pesan)
     }
 
@@ -103,13 +137,22 @@ export function gunakanSuara({ bahasa = 'id-ID', onHasil } = {}) {
     }
   }, [])
 
+  /** Kosongkan hasil supaya bisa mulai dari bersih. */
+  const bersihkan = useCallback(() => {
+    setHasil('')
+    setSementara('')
+    setError(null)
+  }, [])
+
   return {
     didukung: Boolean(Rekognisi),
     mendengar,
     sementara,
+    hasil,
     error,
     mulai,
     berhenti,
+    bersihkan,
     bersihkanError: () => setError(null),
   }
 }

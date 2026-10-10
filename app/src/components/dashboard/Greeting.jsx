@@ -44,8 +44,10 @@ export default function Greeting() {
         </div>
       </div>
 
-      {/* Ilustrasi sapaan — menyusut proporsional di tablet, disembunyikan di layar kecil */}
-      <div className="hidden w-[clamp(9rem,19vw,15.5rem)] shrink-0 sm:block">
+      {/* Ilustrasi sapaan — ikut tampil di ponsel (di atas teks), lalu pindah
+          ke samping kanan pada layar >=640px. Sebelumnya disembunyikan di
+          bawah 640px sehingga animasinya tidak pernah terlihat di ponsel. */}
+      <div className="order-first w-[clamp(6rem,26vw,9rem)] shrink-0 sm:order-none sm:w-[clamp(9rem,19vw,15.5rem)]">
         <IlustrasiAnimasi
           nama="sapaan"
           className="h-auto w-full"

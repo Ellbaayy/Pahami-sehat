@@ -16,7 +16,11 @@ import { cn } from '../../lib/cn'
  */
 export default function VoicePanel({ onUse }) {
   const suara = gunakanSuara({ bahasa: 'id-ID' })
-  const teks = suara.sementara || ''
+  // Teks yang ditampilkan = hasil akhir kalau sudah ada, kalau belum pakai
+  // teks sementara (yang muncul sambil bicara). Sebelumnya hanya `sementara`
+  // yang dibaca, dan karena hook mengosongkannya begitu hasil akhir datang,
+  // kotaknya tetap kosong walau ucapannya sudah dikenali dengan benar.
+  const teks = suara.hasil || suara.sementara || ''
 
   // hentikan mikrofon saat panel ditinggalkan
   useEffect(() => () => suara.berhenti(), []) // eslint-disable-line react-hooks/exhaustive-deps

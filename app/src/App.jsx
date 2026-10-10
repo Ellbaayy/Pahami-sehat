@@ -112,7 +112,14 @@ function simpanSetelan(s) {
 export default function App() {
   const [active, setActive] = useState('beranda')
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [unread, setUnread] = useState(true)
+  // pemberitahuan: titik merah hilang setelah panel dibuka sekali
+  const [notifDibaca, setNotifDibaca] = useState(() => {
+    try {
+      return localStorage.getItem('pahami-sehat:notif-dibaca') === '1'
+    } catch {
+      return false
+    }
+  })
 
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -178,6 +185,40 @@ export default function App() {
   useEffect(() => {
     simpanSetelan(settings)
   }, [settings])
+
+  // --- pemberitahuan -------------------------------------------------------
+  // Isinya dihitung dari keadaan nyata, bukan contoh: kapan konten harian
+  // terakhir diperbarui, berapa jawaban tersimpan, dan apakah server hidup.
+  const notifikasi = []
+  if (konten.diperbarui) {
+    notifikasi.push({
+      id: 'konten',
+      jenis: 'konten',
+      judul: 'Konten harian diperbarui',
+      isi: `Topik populer dan artikel sudah memakai terbitan terbaru.`,
+      waktu: new Date(konten.diperbarui).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }),
+    })
+  }
+  if (history.length) {
+    notifikasi.push({
+      id: 'riwayat',
+      jenis: 'riwayat',
+      judul: `${history.length} pertanyaan tersimpan`,
+      isi: 'Tersimpan di peramban ini saja — buka Riwayat untuk melihatnya lagi.',
+    })
+  }
+  if (!server.memuat && !server.online) {
+    notifikasi.push({
+      id: 'server',
+      jenis: 'server',
+      judul: 'Server tidak terhubung',
+      isi: 'Jawaban AI belum bisa dibuat. Periksa koneksi lalu muat ulang.',
+    })
+  }
 
   // --- mode kontras tinggi ----------------------------------------------
   // Mengubah warna teks & permukaan, ketebalan garis, ukuran huruf dasar, dan
@@ -289,8 +330,21 @@ export default function App() {
         <TopBar
           onOpenMenu={() => setDrawerOpen(true)}
           menuOpen={drawerOpen}
-          unread={unread}
-          onDismissNotif={() => setUnread(false)}
+          notifikasi={notifikasi}
+          belumDibaca={!notifDibaca}
+          onBaca={() => {
+            setNotifDibaca(true)
+            try {
+              localStorage.setItem('pahami-sehat:notif-dibaca', '1')
+            } catch {
+              /* diabaikan */
+            }
+          }}
+          onBuka={(n) => {
+            if (n.jenis === 'konten') navigate('beranda')
+            else if (n.jenis === 'riwayat') navigate('riwayat')
+          }}
+          t={t}
         />
         <MobileDrawer
           open={drawerOpen}
