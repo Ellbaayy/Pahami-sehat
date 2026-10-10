@@ -4,38 +4,55 @@
  * Tujuan: jawaban AI mengikuti BAHASA YANG DIPAKAI PENGGUNA, bukan hanya
  * mengikuti pilihan bahasa antarmuka di Pengaturan. Kalau pengguna menulis
  * dalam bahasa Inggris sementara antarmukanya berbahasa Indonesia, jawabannya
- * tetap harus bahasa Inggris.
+ * tetap harus bahasa Inggris. Kalau pengguna menulis bahasa Jawa, jawabannya
+ * bahasa Jawa.
  *
  * Pendekatannya sengaja sederhana dan bisa diprediksi (bukan panggilan model
  * tambahan): hitung kata-kata penanda tiap bahasa, lalu pilih yang paling
  * kuat. Alasannya sama seperti pendeteksi obrolan di prompts.js — tidak
  * menambah waktu tunggu maupun biaya, dan bisa diuji.
  *
+ * KENAPA TIDAK MENDAFTAR SETIAP BAHASA DAERAH
+ * Indonesia punya 718 bahasa daerah. Mendaftar semuanya mustahil, dan yang
+ * lebih penting: untuk bahasa daerah yang penuturnya sangat sedikit (mis.
+ * Nias, Asmat, Biak) model bahasa memang tidak menguasainya dengan aman —
+ * pernah terbukti model mengarang kalimat yang bentuknya seperti bahasa
+ * daerah tetapi artinya kosong. Karena itu di sini cukup dideteksi
+ * "INI BAHASA DAERAH, BUKAN INDONESIA BAKU", lalu biarkan model mengenali
+ * bahasanya sendiri dari teks, dengan aturan pengaman di prompts.js yang
+ * mewajibkannya jujur kalau tidak mampu.
+ *
+ * Cara membedakannya: bahasa Indonesia baku memakai kata fungsi yang sangat
+ * khas dan selalu muncul (yang, dan, dengan, tidak, itu, ini, adalah...).
+ * Bahasa daerah memakai kata fungsi yang berbeda (Jawa: sing, iku, lan, ora;
+ * Sunda: anu, jeung, henteu; Bali: sane, muah, tusing). Jadi yang dihitung
+ * bukan "bahasa apa ini", melainkan "apakah kalimat ini memakai kata fungsi
+ * Indonesia baku atau tidak".
+ *
  * Kalau tidak yakin (mis. pesan cuma "ok" atau berisi angka saja), fungsi ini
  * mengembalikan null supaya pemanggil memakai bahasa antarmuka sebagai
- * cadangan. Promptnya juga tetap memuat aturan umum "jawab dalam bahasa yang
- * sama dengan pesan pengguna", jadi bahasa di luar daftar ini pun tetap
- * tertangani.
+ * cadangan.
  */
 
-/** Kata penanda bahasa Indonesia. Bobot 2 = sangat khas, 1 = umum. */
-const ID_KHAS = [
+/** Kata fungsi bahasa Indonesia baku — hampir selalu ada di kalimat Indonesia. */
+const ID_FUNGSI = new Set([
   'yang', 'dan', 'dengan', 'untuk', 'dari', 'pada', 'adalah', 'tidak', 'bukan',
   'bisa', 'dapat', 'akan', 'sudah', 'belum', 'saya', 'aku', 'kamu', 'anda',
-  'kami', 'kita', 'mereka', 'dia', 'gimana', 'bagaimana', 'kenapa', 'mengapa',
-  'berapa', 'kapan', 'dimana', 'siapa', 'juga', 'saja', 'kalau', 'jika',
-  'karena', 'supaya', 'agar', 'atau', 'tapi', 'tetapi', 'sangat', 'lebih',
-  'paling', 'harus', 'mau', 'ingin', 'sedang', 'telah', 'oleh', 'itu', 'ini',
-  'apa', 'apakah', 'boleh', 'tolong', 'mohon', 'memang', 'masih', 'pernah',
-  'sedikit', 'banyak', 'semua', 'setiap', 'waktu', 'orang', 'hari', 'tahun',
-]
+  'kami', 'kita', 'mereka', 'dia', 'ini', 'itu', 'apa', 'apakah', 'bagaimana',
+  'gimana', 'kenapa', 'mengapa', 'berapa', 'kapan', 'dimana', 'siapa', 'juga',
+  'saja', 'kalau', 'jika', 'karena', 'supaya', 'agar', 'atau', 'tapi', 'tetapi',
+  'sangat', 'lebih', 'paling', 'harus', 'oleh', 'sedang', 'telah', 'boleh',
+  'tolong', 'mohon', 'masih', 'pernah', 'semua', 'setiap', 'waktu', 'orang',
+  'hari', 'tahun', 'ada', 'ke', 'di', 'se', 'nya', 'lah', 'kah',
+])
 
+/** Kata penanda bahasa Indonesia yang lebih longgar (bobot lebih kecil). */
 const ID_KHAS2 = [
   'halo', 'hai', 'terima', 'kasih', 'makasih', 'maaf', 'permisi', 'silakan',
   'selamat', 'pagi', 'siang', 'sore', 'malam', 'kabar', 'baik', 'sehat',
   'sakit', 'obat', 'dokter', 'penyakit', 'gejala', 'demam', 'darah', 'gizi',
-  'makanan', 'anak', 'bayi', 'hamil', 'imunisasi', 'vaksin', 'rumah', 'sakit',
-  'pusing', 'batuk', 'pilek', 'nyeri', 'perut', 'kepala', 'badan', 'tubuh',
+  'makanan', 'anak', 'bayi', 'hamil', 'imunisasi', 'vaksin', 'rumah', 'pusing',
+  'batuk', 'pilek', 'nyeri', 'perut', 'kepala', 'badan', 'tubuh',
 ]
 
 /** Kata penanda bahasa Inggris. */
@@ -57,6 +74,50 @@ const EN_KHAS2 = [
   'blood', 'food', 'nutrition', 'child', 'baby', 'pregnant', 'vaccine',
   'hospital', 'headache', 'cough', 'cold', 'stomach', 'body', 'feel',
 ]
+
+/**
+ * Kata fungsi/penanda bahasa daerah Indonesia.
+ *
+ * Yang didaftar di sini hanya bahasa daerah yang jumlah penuturnya besar dan
+ * modelnya terbukti mampu — selebihnya terdeteksi lewat aturan "tidak memakai
+ * kata fungsi Indonesia baku" di bawah.
+ *
+ * Satu kata bisa muncul di beberapa bahasa daerah (mis. "kita" di Bali =
+ * "kita" di Indonesia), jadi yang dihitung hanya kata yang benar-benar khas.
+ */
+const DAERAH_MARKA = new Set([
+  // Jawa
+  'sing', 'iku', 'iki', 'ora', 'yen', 'kanggo', 'saka', 'wis', 'durung',
+  'akeh', 'dina', 'sawise', 'yaiku', 'disebabake', 'ditularake', 'gigitan',
+  'biasane', 'gejalane', 'nggih', 'menika', 'punika', 'saged', 'boten',
+  'dereng', 'matur', 'nuwun', 'piye', 'kabare', 'kepriye', 'nganggo', 'ngangge',
+  'takon', 'pira', 'pinten', 'lara', 'ngelu', 'dhuwur', 'cokotan', 'waras',
+  'muntah', 'ruam', 'perih', 'abot',
+  // Sunda
+  'anu', 'jeung', 'henteu', 'moal', 'keur', 'tina', 'geus', 'kumaha', 'naon',
+  'sabaraha', 'damang', 'abdi', 'kuring', 'ieu', 'eta', 'panyakit',
+  'disababkeun', 'ditularkeun', 'sanggeus', 'poé', 'gegel', 'reungit',
+  'terangkeun', 'jentrekeun', 'sebutkeun', 'atuh', 'euy', 'teu', 'tiasa',
+  // Bali
+  'sane', 'muah', 'tusing', 'nenten', 'puniki', 'saking', 'sampun', 'wenten',
+  'kenken', 'tiang', 'indik', 'kacatet', 'maosang', 'anake', 'keni', 'ngelah',
+  'ketahne', 'tegeh', 'muriang', 'mangkin', 'lantas',
+  // Minangkabau
+  'indak', 'ado', 'nan', 'bara', 'baa', 'ambo', 'denai', 'inyo', 'manjalehan',
+  'damam', 'sakik', 'kapalo', 'manggilo', 'sasudah', 'tasadio', 'jalehkan',
+  'babuah', 'karano', 'biasonyo', 'batanyo', 'kaba',
+  // Batak (Toba/Karo/Mandailing)
+  'songon', 'ahu', 'naeng', 'manungkun', 'taringot', 'sahit', 'ndang', 'dohot',
+  'molo', 'dung', 'ito',
+  // Bugis / Makassar
+  'aga', 'kareba', 'maelo', 'sibawa', 'maraddi', 'pannessa', 'wissengi',
+  'sipura', 'engka', 'tenri', 'battala', 'kodong', 'baji',
+  // Madura
+  'berempa', 'kabarra', 'sengko', 'terro', 'nyakorat', 'engko',
+  // Banjar / Palembang / Betawi / Sasak / Aceh
+  'kada', 'napa', 'ikam', 'sidin', 'teungoh', 'beutoi', 'laju', 'hantom',
+  'nde', 'lalo', 'kance', 'dende', 'nike', 'taok', 'ndak', 'aok',
+])
 
 function kataDari(teks) {
   return String(teks ?? '')
@@ -84,21 +145,32 @@ const EN_FRASA = [
 ]
 
 function hitung(kata, daftar, bobot) {
-  const set = new Set(daftar)
+  const set = daftar instanceof Set ? daftar : new Set(daftar)
   return kata.reduce((n, k) => (set.has(k) ? n + bobot : n), 0)
 }
 
 /**
  * Tebak bahasa sebuah pesan.
  *
+ * Urutan pemeriksaan penting:
+ *   1. Inggris — kalau menang jelas, sudah pasti bukan bahasa daerah.
+ *   2. Bahasa daerah — kalau ada penanda daerah DAN kalimatnya tidak memakai
+ *      kata fungsi Indonesia baku. Inilah kuncinya: setiap kalimat Indonesia
+ *      yang wajar pasti memuat kata fungsi seperti "yang", "dan", "dengan",
+ *      "tidak". Kalimat daerah tidak memakainya, melainkan "sing", "lan",
+ *      "ora" (Jawa) atau "anu", "jeung", "henteu" (Sunda). Jadi yang dinilai
+ *      bukan "ini bahasa apa", melainkan "apakah ini Indonesia baku".
+ *   3. Indonesia sebagai sisanya.
+ *
  * @param {string} teks
- * @returns {'id'|'en'|null} null = belum bisa dipastikan
+ * @returns {'id'|'en'|'daerah'|null} null = belum bisa dipastikan
  */
 export function deteksiBahasa(teks) {
   const kata = kataDari(teks)
   if (!kata.length) return null
 
-  let id = hitung(kata, ID_KHAS, 2) + hitung(kata, ID_KHAS2, 1)
+  const idFungsi = hitung(kata, ID_FUNGSI, 1)
+  let id = idFungsi * 2 + hitung(kata, ID_KHAS2, 1)
   let en = hitung(kata, EN_KHAS, 2) + hitung(kata, EN_KHAS2, 1)
 
   // imbuhan khas Indonesia (-nya, meN-, -kan, ber-, ter-, peN-) menambah
@@ -116,8 +188,15 @@ export function deteksiBahasa(teks) {
   // frasa Inggris utuh — nilainya lebih besar karena beberapa kata sekaligus
   if (EN_FRASA.some((re) => re.test(teks))) en += 4
 
-  // huruf yang hampir hanya muncul di bahasa Indonesia
-  if (/[éè]/.test(teks)) en += 1
+  const daerah = hitung(kata, DAERAH_MARKA, 1)
+
+  // 1) Inggris menang jelas
+  if (en > id && en >= 2) return 'en'
+
+  // 2) Bahasa daerah: ada penanda daerah, dan kalimatnya TIDAK memakai kata
+  //    fungsi Indonesia baku. Batas 2 dipakai supaya kalimat Indonesia yang
+  //    kebetulan memuat satu kata mirip tidak salah dibaca.
+  if (daerah >= 1 && idFungsi < 2) return 'daerah'
 
   if (id === 0 && en === 0) return null
   if (id === en) return null
@@ -128,6 +207,9 @@ export function deteksiBahasa(teks) {
 export const NAMA_BAHASA = {
   id: 'Bahasa Indonesia',
   en: 'English',
+  // sengaja bukan nama bahasa tertentu: model mengenali sendiri bahasanya dari
+  // teks pengguna, dan aturan pengaman di prompts.js menjaga keakuratannya
+  daerah: 'bahasa daerah Indonesia yang dipakai pengguna (ikuti bahasa pesan pengguna)',
 }
 
 /**
@@ -139,7 +221,7 @@ export const NAMA_BAHASA = {
  *
  * @param {string} pesan - teks yang ditulis pengguna
  * @param {'id'|'en'} bahasaUi - pilihan bahasa antarmuka
- * @returns {{ kode: 'id'|'en', nama: string, dariPesan: boolean }}
+ * @returns {{ kode: 'id'|'en'|'daerah', nama: string, dariPesan: boolean }}
  */
 export function bahasaJawaban(pesan, bahasaUi = 'id') {
   const dariPesan = deteksiBahasa(pesan)
