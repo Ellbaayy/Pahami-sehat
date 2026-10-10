@@ -59,7 +59,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
                 aria-pressed={tingkat === t.kunci}
                 title={`Target setara kelas ${t.targetKelas}`}
                 className={
-                  'h-9 rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200 ' +
+                  'h-11 whitespace-nowrap rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200 ' +
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ' +
                   (tingkat === t.kunci
                     ? 'bg-brand-500 text-white'

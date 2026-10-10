@@ -39,6 +39,39 @@ function kePesan(h) {
   }
 }
 
+/**
+ * Riwayat pertanyaan.
+ *
+ * Disimpan di localStorage peramban supaya benar-benar bertahan setelah
+ * halaman dimuat ulang — bukan hanya selama sesi. Panel Riwayat menyatakan
+ * "tersimpan di memori peramban saja", jadi datanya memang harus ada di sana;
+ * sebelumnya riwayat hanya hidup di state React dan hilang begitu halaman
+ * disegarkan.
+ *
+ * Isinya sengaja dibatasi 12 entri terakhir, dan jawaban dipotong 96 karakter
+ * supaya tidak memakan ruang penyimpanan.
+ */
+const KUNCI_RIWAYAT = 'pahami-sehat:riwayat'
+const MAKS_RIWAYAT = 12
+
+function bacaRiwayat() {
+  try {
+    const isi = JSON.parse(localStorage.getItem(KUNCI_RIWAYAT) || '[]')
+    if (!Array.isArray(isi) || !isi.length) return null
+    return isi.filter((x) => x && x.id && x.question)
+  } catch {
+    return null
+  }
+}
+
+function simpanRiwayat(daftar) {
+  try {
+    localStorage.setItem(KUNCI_RIWAYAT, JSON.stringify(daftar.slice(0, MAKS_RIWAYAT)))
+  } catch {
+    /* penyimpanan penuh / diblokir — riwayat tetap jalan untuk sesi ini */
+  }
+}
+
 export default function App() {
   const [active, setActive] = useState('beranda')
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -54,8 +87,13 @@ export default function App() {
   const [askedQuestion, setAskedQuestion] = useState('')
   const [selectedTopic, setSelectedTopic] = useState(null)
   const [thread, setThread] = useState([])
-  const [history, setHistory] = useState(HISTORY)
+  const [history, setHistory] = useState(() => bacaRiwayat() ?? HISTORY)
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+
+  // simpan riwayat ke peramban setiap kali berubah
+  useEffect(() => {
+    simpanRiwayat(history)
+  }, [history])
 
   const server = useServer()
   const { kode: kodeBahasa, t } = gunakanBahasa(settings.lang)
@@ -172,17 +210,19 @@ export default function App() {
             setThread((prev) => [...prev, { id: `a${Date.now()}`, role: 'ai', ...kePesan(h) }])
             // putar suara otomatis kalau diaktifkan di Pengaturan
             if (ttsAutoRef.current) ttsBaca(h.jawaban)
-            setHistory((prev) => [
-              {
-                id: `n${Date.now()}`,
-                question: text,
-                answer:
-                  h.jawaban?.length > 96 ? `${h.jawaban.slice(0, 96).trimEnd()}…` : h.jawaban,
-                time: 'Baru saja',
-                sources: (h.sumber ?? []).map((s) => s.penerbit || s.judul).filter(Boolean),
-              },
-              ...prev,
-            ])
+            setHistory((prev) =>
+              [
+                {
+                  id: `n${Date.now()}`,
+                  question: text,
+                  answer:
+                    h.jawaban?.length > 96 ? `${h.jawaban.slice(0, 96).trimEnd()}…` : h.jawaban,
+                  time: 'Baru saja',
+                  sources: (h.sumber ?? []).map((s) => s.penerbit || s.judul).filter(Boolean),
+                },
+                ...prev,
+              ].slice(0, MAKS_RIWAYAT),
+            )
           },
         },
       )
