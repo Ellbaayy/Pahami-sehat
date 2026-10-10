@@ -5,7 +5,7 @@ import { cn } from '../../lib/cn'
 
 const TINTS = {
   brand: { wrap: 'bg-brand-50 text-brand-600', tag: 'bg-white/80 text-brand-700 ring-brand-100' },
-  sky: { wrap: 'bg-sky-50 text-sky-600', tag: 'bg-white/80 text-sky-600 ring-sky-100' },
+  sky: { wrap: 'bg-sky-100 text-sky-700', tag: 'bg-white/80 text-sky-700 ring-sky-100' },
   amber: { wrap: 'bg-amber-50 text-amber-600', tag: 'bg-white/80 text-amber-700 ring-amber-100' },
   rose: { wrap: 'bg-rose-50 text-rose-600', tag: 'bg-white/80 text-rose-700 ring-rose-100' },
   purple: { wrap: 'bg-purple-50 text-purple-600', tag: 'bg-white/80 text-purple-700 ring-purple-100' },
@@ -79,7 +79,7 @@ function ArticleCard({ article }) {
         <p className="mt-1.5 text-[0.87rem] leading-relaxed text-navy-500">{article.excerpt}</p>
 
         {open ? (
-          <div className="rise mt-3 border-t border-dashed border-slate-200 pt-3">
+          <div className="rise mt-3 border-t border-dashed border-line-200 pt-3">
             <p className="text-[0.87rem] leading-relaxed text-navy-700">{article.body}</p>
             <p className="mt-2 text-[0.74rem] font-semibold text-brand-700">
               Sumber: {article.source}
@@ -89,7 +89,7 @@ function ArticleCard({ article }) {
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-1.5 inline-flex items-center gap-1 text-[0.74rem] font-semibold text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-800"
+                className="mt-1.5 inline-flex items-center gap-1 text-[0.74rem] font-semibold text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-700"
               >
                 Baca artikel aslinya
                 <ArrowRight className="size-3" aria-hidden="true" />
@@ -99,7 +99,7 @@ function ArticleCard({ article }) {
         ) : null}
 
         <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
-          <span className="inline-flex items-center gap-1.5 text-[0.76rem] font-medium text-slate-500">
+          <span className="inline-flex items-center gap-1.5 text-[0.76rem] font-medium text-muted-500">
             <Clock className="size-3.5" aria-hidden="true" />
             {article.readTime}
           </span>

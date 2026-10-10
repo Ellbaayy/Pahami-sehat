@@ -1,4 +1,4 @@
-import { WifiOff, Volume2, Languages } from 'lucide-react'
+import { Contrast, Volume2, Languages } from 'lucide-react'
 import { Card, SectionHeading } from '../ui/primitives'
 import { cn } from '../../lib/cn'
 import { TINGKAT } from '../../data/tingkat'
@@ -15,7 +15,7 @@ function Switch({ checked, onChange, label }) {
       className={cn(
         'relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
-        checked ? 'bg-brand-500' : 'bg-slate-300',
+        checked ? 'bg-brand-500' : 'bg-surface-300',
       )}
     >
       <span
@@ -51,7 +51,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
         description={t('set.sub')}
       />
 
-      <Card className="divide-y divide-slate-100 overflow-hidden">
+      <Card className="divide-y divide-line-100 overflow-hidden">
         <Row
           title={t('set.tingkat')}
           description={t('set.tingkatSub')}
@@ -59,7 +59,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
             <div
               role="group"
               aria-label={t('umum.tingkatBaca')}
-              className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1"
+              className="flex flex-wrap gap-1 rounded-xl border border-line-200 bg-white p-1"
             >
               {TINGKAT.map((t) => (
                 <button
@@ -73,7 +73,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                     settings.level === t.kunci
                       ? 'bg-brand-500 text-white'
-                      : 'text-navy-500 hover:bg-slate-100 hover:text-navy-800',
+                      : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800',
                   )}
                 >
                   {labelTingkat(t.kunci)}
@@ -86,16 +86,16 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
         <Row
           title={
             <span className="inline-flex items-center gap-2">
-              <WifiOff className="size-4 text-brand-600" aria-hidden="true" />
-              {t('set.offline')}
+              <Contrast className="size-4 text-brand-600" aria-hidden="true" />
+              {t('set.kontras')}
             </span>
           }
-          description={t('set.offlineSub')}
+          description={t('set.kontrasSub')}
           control={
             <Switch
-              checked={settings.offline}
-              onChange={(v) => set('offline', v)}
-              label={t('set.offline')}
+              checked={settings.kontras}
+              onChange={(v) => set('kontras', v)}
+              label={t('set.kontras')}
             />
           }
         />
@@ -103,7 +103,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
         <Row
           title={
             <span className="inline-flex items-center gap-2">
-              <Volume2 className="size-4 text-sky-600" aria-hidden="true" />
+              <Volume2 className="size-4 text-sky-700" aria-hidden="true" />
               {t('set.tts')}
             </span>
           }
@@ -130,7 +130,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
               aria-label={t('set.bahasa')}
               value={settings.lang}
               onChange={(e) => set('lang', e.target.value)}
-              className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
             >
               {BAHASA.map((b) => (
                 <option key={b.kunci} value={b.kunci}>
@@ -142,7 +142,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
         />
       </Card>
 
-      <p className="text-[0.8rem] text-slate-500">
+      <p className="text-[0.8rem] text-muted-500">
         {t('set.catatan')}
       </p>
     </div>

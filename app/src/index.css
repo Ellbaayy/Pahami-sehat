@@ -31,16 +31,100 @@
   --color-sky-200: #bfe1fd;
   --color-sky-500: #38a3e8;
   --color-sky-600: #1f86cc;
+  --color-sky-700: #15639a;
 
   /* navy gelap untuk teks */
   --color-navy-900: #0f1e33;
   --color-navy-800: #16273f;
   --color-navy-700: #1e3554;
   --color-navy-500: #45597a;
+
+  /* permukaan & teks redup — dipakai tombol non-aktif dan keterangan kecil.
+     Semua token ini ikut ditimpa di mode kontras tinggi, jadi jangan
+     memakai warna Tailwind bawaan untuk keperluan yang sama. */
+  --color-surface-50: #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-muted-500: #64748b;
+  --color-muted-600: #475569;
+  --color-line-100: #f1f5f9;
+  --color-line-200: #e2e8f0;
+  --color-line-300: #cbd5e1;
+  --color-bg: #f7fafc;
 }
 
 :root {
   color-scheme: light;
+}
+
+/**
+ * Mode kontras tinggi.
+ *
+ * Untuk pengguna dengan gangguan penglihatan. Yang dinaikkan bukan hanya
+ * kontras teks, tetapi juga:
+ *   - batas fokus (outline hitam tebal 3px, terlihat di atas warna apa pun)
+ *   - ukuran huruf dasar (112%) supaya keterangan kecil ikut terbaca
+ *   - ketebalan garis batas, supaya tepi kartu dan kolom isian jelas
+ *
+ * Warna teks diambil hampir hitam (#000) dan latar hampir putih, sehingga
+ * rasionya jauh di atas ambang WCAG AAA (7:1).
+ *
+ * CATATAN PENTING soal `--color-white`: token ini dipakai untuk DUA hal yang
+ * berlawanan — `bg-white` (permukaan kartu) dan `text-white` (teks di atas
+ * tombol berwarna). Karena itu token ini TIDAK boleh ditimpa; kalau ditimpa,
+ * teks pada tombol berwarna akan hilang. Yang diganti adalah token
+ * permukaan yang khusus disediakan di atas.
+ */
+html.kontras-tinggi {
+  --color-navy-900: #000000;
+  --color-navy-800: #000000;
+  --color-navy-700: #0a0a0a;
+  --color-navy-500: #141414;
+  --color-muted-500: #1a1a1a;
+  --color-muted-600: #0a0a0a;
+
+  --color-surface-50: #ffffff;
+  --color-surface-100: #f0f0f0;
+  --color-surface-200: #c9c9c9;
+  --color-surface-300: #8a8a8a;
+
+  --color-line-100: #b8b8b8;
+  --color-line-200: #8a8a8a;
+  --color-line-300: #5c5c5c;
+
+  --color-bg: #ffffff;
+
+  /* aksen dibuat lebih gelap supaya teks putih di atasnya tetap terbaca */
+  --color-brand-400: #0a6f66;
+  --color-brand-500: #06564f;
+  --color-brand-600: #04423d;
+  --color-brand-700: #02302c;
+  --color-sky-500: #10527f;
+  --color-sky-600: #0d4266;
+
+  font-size: 112%;
+}
+
+html.kontras-tinggi body {
+  background-color: #ffffff;
+}
+
+/* batas fokus harus terlihat di atas latar terang maupun gelap */
+html.kontras-tinggi :focus-visible {
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+}
+
+/* garis batas dipertebal supaya tepi kartu & kolom isian jelas */
+html.kontras-tinggi .border,
+html.kontras-tinggi [class*='border-'] {
+  border-width: 2px;
+}
+
+/* garis pemisah ikut dipertebal, kalau tidak jadi tak terlihat */
+html.kontras-tinggi .divide-y > :not([hidden]) ~ :not([hidden]) {
+  border-top-width: 2px;
 }
 
 html {

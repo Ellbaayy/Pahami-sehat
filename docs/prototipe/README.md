@@ -59,7 +59,7 @@ docs/prototipe/
      → loop balik 1×), output = versi sederhana + indikator tingkat baca
      + SUMBER + tombol **Dengar** (TTS Web Speech API)
    - Mode suara: mic simulasi + TTS + pilihan bahasa daerah
-   - Mode hemat sinyal: toggle + titik keputusan **sinyal internet tersedia?**
+   - Mode kontras tinggi: toggle untuk gangguan penglihatan (warna, huruf, garis, fokus)
      (cabang cache vs versi terbaru, ikut `navigator.onLine` + event online/offline)
    - Verifikasi: percabangan **VERDICT SESUAI** (kutipan sumber) vs
      **VERDICT TIDAK DITEMUKAN** (diarahkan ke Kemenkes/WHO/BPOM),

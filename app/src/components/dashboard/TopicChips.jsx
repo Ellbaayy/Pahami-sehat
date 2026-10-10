@@ -36,7 +36,7 @@ export default function TopicChips({ topics, selected, onSelect, diperbarui, dip
         title="Topik populer"
         action={
           tglDiperiksa ? (
-            <p className="text-[0.74rem] font-medium text-slate-600">
+            <p className="text-[0.74rem] font-medium text-muted-600">
               {belumBerubah
                 ? `Diperbarui ${tglDiperbarui}`
                 : `Terakhir dicek ${tglDiperiksa} · diperbarui ${tglDiperbarui}`}
@@ -64,7 +64,7 @@ export default function TopicChips({ topics, selected, onSelect, diperbarui, dip
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                 isActive
                   ? 'bg-brand-500 text-white shadow-[0_6px_16px_-8px_rgba(13,132,120,0.8)]'
-                  : 'border border-slate-200 bg-white text-navy-700 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 active:translate-y-0',
+                  : 'border border-line-200 bg-white text-navy-700 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 active:translate-y-0',
               )}
             >
               {t.label}

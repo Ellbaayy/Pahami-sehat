@@ -7,7 +7,7 @@ export function Card({ className, children, as: Tag = 'div', ...rest }) {
   return (
     <Tag
       className={cn(
-        'rounded-2xl border border-slate-200/80 bg-white',
+        'rounded-2xl border border-line-200/80 bg-white',
         'shadow-[0_1px_2px_rgba(15,30,51,0.04),0_8px_24px_-16px_rgba(15,30,51,0.10)]',
         'transition-[box-shadow,transform,border-color] duration-200 ease-out',
         className,
@@ -71,9 +71,9 @@ export function SectionHeading({ eyebrow, title, description, action, id, ilustr
 const BTN_VARIANTS = {
   primary:
     'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-600 shadow-[0_6px_16px_-8px_rgba(13,132,120,0.7)]',
-  soft: 'bg-brand-50 text-brand-700 hover:bg-brand-100 border border-brand-100',
-  neutral: 'bg-white text-navy-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50',
-  ghost: 'text-navy-500 hover:text-navy-800 hover:bg-slate-100',
+  soft: 'bg-brand-50 text-brand-700 hover:bg-brand-200 border border-brand-100',
+  neutral: 'bg-white text-navy-700 border border-line-200 hover:border-line-300 hover:bg-surface-50',
+  ghost: 'text-navy-500 hover:text-navy-800 hover:bg-surface-100',
 }
 
 const BTN_SIZES = {
@@ -122,7 +122,7 @@ export function Skeleton({ className }) {
 /* ---------------- Empty state ---------------- */
 export function EmptyState({ icon: Icon, title, description, action }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-10 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line-300 bg-surface-50/60 px-6 py-10 text-center">
       {/* Ilustrasi netral — muncul hanya saat belum ada isi, jadi tidak pernah ramai */}
       <IlustrasiAnimasi
         nama="kosong"
@@ -147,7 +147,7 @@ export function EmptyState({ icon: Icon, title, description, action }) {
 export function SourcePills({ sources = [], negative = false, label = 'Sumber' }) {
   if (!sources.length) return null
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-slate-200 pt-3">
+    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-line-200 pt-3">
       <span className="text-[0.68rem] font-bold tracking-[0.12em] uppercase text-navy-500">
         {label}
       </span>
@@ -157,9 +157,9 @@ export function SourcePills({ sources = [], negative = false, label = 'Sumber' }
         const gaya = cn(
           'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold',
           negative
-            ? 'bg-sky-50 text-sky-600 ring-1 ring-sky-100'
+            ? 'bg-sky-100 text-sky-700 ring-1 ring-sky-100'
             : 'bg-brand-50 text-brand-700 ring-1 ring-brand-100',
-          url && 'underline decoration-dotted underline-offset-2 transition-colors hover:bg-brand-100',
+          url && 'underline decoration-dotted underline-offset-2 transition-colors hover:bg-brand-200',
         )
         const isi = (
           <>
@@ -193,7 +193,7 @@ export function SourcePills({ sources = [], negative = false, label = 'Sumber' }
 export function PoinKunci({ items = [] }) {
   if (!items.length) return null
   return (
-    <details className="group mt-3 rounded-xl border border-slate-200 bg-white/70 px-3.5 py-2.5">
+    <details className="group mt-3 rounded-xl border border-line-200 bg-white/70 px-3.5 py-2.5">
       <summary className="flex cursor-pointer items-center gap-2 text-[0.78rem] font-bold text-navy-700 marker:content-none">
         <span className="text-brand-600 transition-transform group-open:rotate-90" aria-hidden="true">
           ▸
@@ -203,12 +203,12 @@ export function PoinKunci({ items = [] }) {
       <ul className="mt-2 space-y-1.5 pl-1">
         {items.map((p, i) => (
           <li key={i} className="flex gap-2 text-[0.84rem] leading-snug text-navy-700">
-            <span className="text-brand-500" aria-hidden="true">•</span>
+            <span className="text-brand-600" aria-hidden="true">•</span>
             <span>{p}</span>
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-[0.7rem] text-slate-500">
+      <p className="mt-2 text-[0.7rem] text-muted-500">
         Daftar ini ditandai lebih dulu sebelum bahasa disederhanakan — bukti kelengkapan informasi terjaga.
       </p>
     </details>
@@ -267,7 +267,7 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
   return (
     <details
       open
-      className="mt-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3"
+      className="mt-3 rounded-xl border border-line-200 bg-white px-3.5 py-3"
     >
       <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-[0.8rem] font-bold text-navy-800 marker:content-none">
         <span aria-hidden="true">🔎</span>
@@ -279,14 +279,14 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
         ) : null}
       </summary>
 
-      <p className="mt-2 text-[0.78rem] text-slate-600">
+      <p className="mt-2 text-[0.78rem] text-muted-600">
         Silakan cek sendiri lewat tautan di bawah — jangan percaya begitu saja.
         {!dipakai.length ? ' Model belum mengutip satu pun; daftar ini hasil pencarian mentah.' : ''}
       </p>
 
       <ul className="mt-2.5 space-y-2">
         {semua.map((s, i) => (
-          <li key={`${s.url}-${i}`} className="rounded-lg border border-slate-100 bg-slate-50/60 p-2.5">
+          <li key={`${s.url}-${i}`} className="rounded-lg border border-line-100 bg-surface-50/60 p-2.5">
             <div className="flex items-start gap-2">
               <span className="shrink-0" aria-hidden="true">{s.resmi ? '🏛️' : s.dipakai ? '✅' : '🔗'}</span>
               <div className="min-w-0 flex-1">
@@ -296,7 +296,7 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
                     <span className="ml-1.5 text-[0.68rem] font-bold text-brand-600">SUMBER RESMI</span>
                   ) : null}
                   {!s.dipakai ? (
-                    <span className="ml-1.5 text-[0.68rem] font-normal text-slate-500">ditemukan, belum dikutip</span>
+                    <span className="ml-1.5 text-[0.68rem] font-normal text-muted-500">ditemukan, belum dikutip</span>
                   ) : null}
                 </p>
                 {s.url ? (
@@ -304,14 +304,14 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-0.5 block truncate font-mono text-[0.72rem] text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-800"
+                    className="mt-0.5 block truncate font-mono text-[0.72rem] text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-700"
                     title={s.url}
                     aria-label={`Buka sumber: ${s.judul || s.url}`}
                   >
                     {s.url}
                   </a>
                 ) : (
-                  <p className="mt-0.5 text-[0.72rem] text-slate-500">(tanpa tautan)</p>
+                  <p className="mt-0.5 text-[0.72rem] text-muted-500">(tanpa tautan)</p>
                 )}
               </div>
             </div>
@@ -319,7 +319,7 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
         ))}
       </ul>
 
-      <p className="mt-2.5 text-[0.7rem] text-slate-500">
+      <p className="mt-2.5 text-[0.7rem] text-muted-500">
         Jawaban disusun dari hasil pencarian internet yang diambil saat pertanyaan diproses.
         Tanda ✅ berarti sumber itu dipakai di jawaban; 🏛️ menandai lembaga resmi.
       </p>

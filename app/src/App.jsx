@@ -15,17 +15,15 @@ import ThreadPanel from './components/dashboard/ThreadPanel'
 import SederhanakanPanel from './components/dashboard/SederhanakanPanel'
 import VerifikasiPanel from './components/dashboard/VerifikasiPanel'
 import { SectionHeading, EmptyState } from './components/ui/primitives'
-import TombolDengar from './components/ui/TombolDengar'
-import { History, ArrowLeft, PlugZap, Plug, WifiOff } from 'lucide-react'
+import { History, ArrowLeft, PlugZap, Plug } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP, HISTORY } from './data/dummy'
-import { TINGKAT_DEFAULT } from './data/tingkat'
+import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
 import { gunakanBahasa } from './lib/useBahasa'
 import { tanyaStream, ambilKonten } from './lib/api'
 import { ttsBaca, ttsBerhenti } from './lib/tts'
-import { ambilCache, hapusCache, hapusSatu, simpanCache, sedangOffline, MAKS_TERSIMPAN } from './lib/offline'
 
-const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, offline: false, tts: false, lang: 'id' }
+const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, kontras: false, tts: false, lang: 'id' }
 
 /** Balasan API → bentuk yang dipakai komponen tampilan. */
 function kePesan(h) {
@@ -72,6 +70,45 @@ function simpanRiwayat(daftar) {
   }
 }
 
+/**
+ * Setelan pengguna.
+ *
+ * Disimpan di localStorage supaya bertahan antar kunjungan. Panel Pengaturan
+ * menyatakan "Disimpan di peramban ini saja", jadi datanya memang harus ada di
+ * sana. Ini penting terutama untuk mode kontras tinggi: pengguna gangguan
+ * penglihatan tidak boleh dipaksa menyalakannya ulang setiap kali membuka
+ * aplikasi.
+ *
+ * Nilai dari penyimpanan TIDAK dipercaya begitu saja — bisa saja sudah tua
+ * atau diubah tangan. Setiap kolom diperiksa satu per satu, dan yang tidak
+ * sah diganti nilai bawaan.
+ */
+const KUNCI_SETELAN = 'pahami-sehat:setelan'
+
+function bacaSetelan() {
+  try {
+    const isi = JSON.parse(localStorage.getItem(KUNCI_SETELAN) || 'null')
+    if (!isi || typeof isi !== 'object') return DEFAULT_SETTINGS
+    const tingkatSah = TINGKAT.some((x) => x.kunci === isi.level)
+    return {
+      level: tingkatSah ? isi.level : DEFAULT_SETTINGS.level,
+      kontras: isi.kontras === true,
+      tts: isi.tts === true,
+      lang: isi.lang === 'en' ? 'en' : 'id',
+    }
+  } catch {
+    return DEFAULT_SETTINGS
+  }
+}
+
+function simpanSetelan(s) {
+  try {
+    localStorage.setItem(KUNCI_SETELAN, JSON.stringify(s))
+  } catch {
+    /* penyimpanan diblokir — setelan tetap jalan untuk sesi ini */
+  }
+}
+
 export default function App() {
   const [active, setActive] = useState('beranda')
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -88,7 +125,7 @@ export default function App() {
   const [selectedTopic, setSelectedTopic] = useState(null)
   const [thread, setThread] = useState([])
   const [history, setHistory] = useState(() => bacaRiwayat() ?? HISTORY)
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+  const [settings, setSettings] = useState(() => bacaSetelan())
 
   // simpan riwayat ke peramban setiap kali berubah
   useEffect(() => {
@@ -137,39 +174,20 @@ export default function App() {
     return () => ac.abort()
   }, [])
 
-  // --- mode hemat sinyal -------------------------------------------------
-  const [daftarCache, setDaftarCache] = useState(() => ambilCache())
-  const [offline, setOffline] = useState(() => sedangOffline())
-
-  // pantau status jaringan
+  // setelan disimpan ke peramban setiap kali berubah
   useEffect(() => {
-    const naik = () => setOffline(false)
-    const turun = () => setOffline(true)
-    window.addEventListener('online', naik)
-    window.addEventListener('offline', turun)
-    return () => {
-      window.removeEventListener('online', naik)
-      window.removeEventListener('offline', turun)
-    }
-  }, [])
+    simpanSetelan(settings)
+  }, [settings])
 
-  // simpan cache saat jawaban baru masuk, kalau modenya menyala
+  // --- mode kontras tinggi ----------------------------------------------
+  // Mengubah warna teks & permukaan, ketebalan garis, ukuran huruf dasar, dan
+  // batas fokus sekaligus. Dipasang sebagai kelas pada <html> supaya seluruh
+  // halaman ikut — termasuk bagian yang bukan dirender React.
   useEffect(() => {
-    if (!settings.offline || !result) return
-    const oke = simpanCache({ pertanyaan: askedQuestion, hasil: result, tingkat: settings.level })
-    if (oke) setDaftarCache(ambilCache())
-  }, [result, settings.offline, settings.level, askedQuestion])
-
-  // matikan mode hemat sinyal → bersihkan simpanan
-  const ubahSettings = useCallback((baru) => {
-    setSettings((lama) => {
-      if (lama.offline && !baru.offline) {
-        hapusCache()
-        setDaftarCache([])
-      }
-      return baru
-    })
-  }, [])
+    const akar = document.documentElement
+    akar.classList.toggle('kontras-tinggi', Boolean(settings.kontras))
+    return () => akar.classList.remove('kontras-tinggi')
+  }, [settings.kontras])
 
   const navigate = useCallback((id) => {
     setActive(id)
@@ -257,7 +275,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-dvh w-full bg-[#f7fafc]">
+    <div className="flex min-h-dvh w-full bg-bg">
       <a
         href="#konten"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-xl focus:bg-brand-600 focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white"
@@ -290,54 +308,6 @@ export default function App() {
             {active === 'beranda' ? (
               <div className="space-y-[clamp(1.4rem,1.1rem+1.1vw,2.4rem)]">
                 <Greeting />
-
-                {/* mode hemat sinyal: jawaban terakhir tetap bisa dibaca tanpa internet */}
-                {settings.offline && daftarCache.length ? (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <WifiOff className="size-4 shrink-0 text-amber-700" aria-hidden="true" />
-                      <p className="text-[0.8rem] font-bold tracking-wide text-amber-800 uppercase">
-                        {offline ? t('off.sedangOffline') : t('off.tersimpan')} ({daftarCache.length}/{MAKS_TERSIMPAN})
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          hapusCache()
-                          setDaftarCache([])
-                        }}
-                        className="ml-auto text-[0.76rem] font-semibold text-amber-800 underline decoration-dotted underline-offset-2 hover:text-amber-900"
-                      >
-                        {t('umum.kosongkan')}
-                      </button>
-                    </div>
-
-                    <ul className="max-h-[22rem] space-y-2 overflow-y-auto pr-1">
-                      {daftarCache.map((c) => (
-                        <li key={c.id} className="rounded-xl border border-amber-200/70 bg-white/80 p-3">
-                          <p className="text-[0.84rem] font-semibold text-navy-800">“{c.pertanyaan}”</p>
-                          <p className="mt-1 text-[0.88rem] leading-relaxed whitespace-pre-wrap text-navy-700">
-                            {c.jawaban}
-                          </p>
-                          <div className="mt-2 flex flex-wrap items-center gap-3">
-                            <TombolDengar teks={c.jawaban} label={t('off.dengar')} />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                hapusSatu(c.id)
-                                setDaftarCache(ambilCache())
-                              }}
-                              className="text-[0.76rem] font-semibold text-slate-500 hover:text-rose-600"
-                            >
-                              {t('umum.kosongkan')}
-                            </button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <p className="mt-2 text-[0.72rem] text-amber-700">{t('off.diPerangkat')}</p>
-                  </div>
-                ) : null}
 
                 <AskAI
                   t={t}
@@ -440,17 +410,17 @@ export default function App() {
 
             {active === 'kuesioner' ? <QuizPanel t={t} /> : null}
             {active === 'pengaturan' ? (
-              <SettingsPanel settings={settings} onChange={ubahSettings} t={t} labelTingkat={labelTingkat} />
+              <SettingsPanel settings={settings} onChange={setSettings} t={t} labelTingkat={labelTingkat} />
             ) : null}
           </div>
         </main>
 
-        <footer className="border-t border-slate-200 bg-white px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-5">
+        <footer className="border-t border-line-200 bg-white px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-5">
           <div className="mx-auto flex w-full max-w-[86rem] flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <p className="text-[0.8rem] font-semibold text-navy-700">
-              Pahami Sehat <span className="font-normal text-slate-500">· Created by NØCTURNE</span>
+              Pahami Sehat <span className="font-normal text-muted-500">· Created by NØCTURNE</span>
             </p>
-            <p className="flex items-center gap-1.5 text-[0.78rem] text-slate-500">
+            <p className="flex items-center gap-1.5 text-[0.78rem] text-muted-500">
               {server.memuat ? (
                 <>
                   <Plug className="size-3.5" aria-hidden="true" /> {t('umum.memeriksa')}
@@ -468,7 +438,7 @@ export default function App() {
                 </>
               )}
             </p>
-            <p className="flex items-center gap-1.5 text-[0.78rem] text-slate-500">
+            <p className="flex items-center gap-1.5 text-[0.78rem] text-muted-500">
               <a
                 href="https://lottiefiles.com/free-animation/doctor-welcoming-pacient-xsA9dFGcUA"
                 target="_blank"

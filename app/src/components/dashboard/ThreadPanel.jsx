@@ -42,7 +42,7 @@ export default function ThreadPanel({
         ilustrasi="tanya"
       />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_1px_2px_rgba(15,30,51,0.04)]">
+      <div className="rounded-2xl border border-line-200 bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_1px_2px_rgba(15,30,51,0.04)]">
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -50,7 +50,7 @@ export default function ThreadPanel({
           }}
           className="flex flex-col gap-3 lg:flex-row lg:items-stretch"
         >
-          <div className="flex flex-1 items-start gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 transition-colors focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100 hover:border-slate-300">
+          <div className="flex flex-1 items-start gap-2 rounded-2xl border border-line-200 bg-white px-3.5 py-3 transition-colors focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100 hover:border-line-300">
             <label htmlFor="thread-input" className="sr-only">
               Pertanyaan kesehatan
             </label>
@@ -60,7 +60,7 @@ export default function ThreadPanel({
               value={input}
               onChange={(e) => onInputChange(e.target.value)}
               placeholder={PLACEHOLDER}
-              className="min-h-[3.25rem] flex-1 resize-none bg-transparent text-[0.95rem] leading-relaxed text-navy-900 outline-none placeholder:text-slate-500"
+              className="min-h-[3.25rem] flex-1 resize-none bg-transparent text-[0.95rem] leading-relaxed text-navy-900 outline-none placeholder:text-muted-500"
             />
             <button
               type="button"
@@ -79,7 +79,7 @@ export default function ThreadPanel({
                 'disabled:cursor-not-allowed disabled:opacity-45',
                 suara.mendengar
                   ? 'bg-rose-500 text-white animate-pulse'
-                  : 'bg-slate-100 text-navy-500 hover:bg-brand-50 hover:text-brand-600',
+                  : 'bg-surface-100 text-navy-500 hover:bg-brand-50 hover:text-brand-600',
               )}
             >
               <Mic className="size-4" aria-hidden="true" />
@@ -132,7 +132,7 @@ export default function ThreadPanel({
                 'rise max-w-[min(100%,46rem)] rounded-2xl border p-4',
                 m.role === 'user'
                   ? 'ml-auto border-brand-500 bg-brand-500 text-white'
-                  : 'border-slate-200 bg-white',
+                  : 'border-line-200 bg-white',
               )}
             >
               <p
@@ -159,7 +159,7 @@ export default function ThreadPanel({
                   <PoinKunci items={m.poinKunci} />
                   <SourcePills sources={m.sources} negative={m.verdict === 'negative'} />
                   {m.catatan ? (
-                    <p className="mt-2 text-[0.78rem] text-slate-500">{m.catatan}</p>
+                    <p className="mt-2 text-[0.78rem] text-muted-500">{m.catatan}</p>
                   ) : null}
                 </>
               ) : null}
@@ -167,7 +167,7 @@ export default function ThreadPanel({
           ))}
 
           {loading ? (
-            <li className="max-w-[min(100%,46rem)] rounded-2xl border border-slate-200 bg-white p-4">
+            <li className="max-w-[min(100%,46rem)] rounded-2xl border border-line-200 bg-white p-4">
               {streaming ? (
                 <>
                   <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-600">

@@ -49,7 +49,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
           <div
             role="group"
             aria-label={t('umum.tingkatBaca')}
-            className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1"
+            className="flex flex-wrap gap-1 rounded-xl border border-line-200 bg-white p-1"
           >
             {TINGKAT.map((t) => (
               <button
@@ -63,7 +63,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ' +
                   (tingkat === t.kunci
                     ? 'bg-brand-500 text-white'
-                    : 'text-navy-500 hover:bg-slate-100 hover:text-navy-800')
+                    : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800')
                 }
               >
                 {labelTingkat(t.kunci)}
@@ -92,7 +92,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
           value={teks}
           onChange={(e) => setTeks(e.target.value)}
           placeholder={t('sed.placeholder')}
-          className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-[0.92rem] leading-relaxed text-navy-900 outline-none transition-colors placeholder:text-slate-500 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          className="w-full resize-y rounded-xl border border-line-200 bg-white px-3.5 py-3 text-[0.92rem] leading-relaxed text-navy-900 outline-none transition-colors placeholder:text-muted-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
         />
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -120,7 +120,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
               {t('umum.kosongkan')}
             </button>
           ) : null}
-          <span className="ml-auto text-[0.78rem] text-slate-500">{teks.length} karakter</span>
+          <span className="ml-auto text-[0.78rem] text-muted-500">{teks.length} karakter</span>
         </div>
 
         {!serverOnline && !serverMemuat ? (
@@ -158,7 +158,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
           <PoinKunci items={hasil.poinKunci} />
           <SourcePills sources={hasil.sumber} />
           {hasil.catatan ? (
-            <p className="mt-2 text-[0.78rem] text-slate-500">{hasil.catatan}</p>
+            <p className="mt-2 text-[0.78rem] text-muted-500">{hasil.catatan}</p>
           ) : null}
         </Card>
       ) : null}

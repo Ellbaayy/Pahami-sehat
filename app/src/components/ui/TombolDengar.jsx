@@ -44,11 +44,11 @@ export default function TombolDengar({ teks, label = 'Dengar', className }) {
         onClick={klik}
         aria-pressed={bicara}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5',
+          'inline-flex items-center gap-1.5 rounded-lg border border-line-200 bg-white px-3 py-1.5',
           'text-[0.82rem] font-semibold text-navy-600 transition-colors',
           'hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
-          bicara && 'border-brand-400 bg-brand-50 text-brand-700',
+          bicara && 'border-brand-500 bg-brand-50 text-brand-700',
           className,
         )}
       >
