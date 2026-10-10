@@ -60,6 +60,7 @@ export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline
         eyebrow="Fitur inti"
         title={t('ver.judul')}
         description={t('ver.sub')}
+        ilustrasi="verifikasi"
       />
 
       <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">

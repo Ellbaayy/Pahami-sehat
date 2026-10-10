@@ -20,7 +20,14 @@ export function Card({ className, children, as: Tag = 'div', ...rest }) {
 }
 
 /* ---------------- Section heading ---------------- */
-export function SectionHeading({ eyebrow, title, description, action, id }) {
+/**
+ * Judul bagian, dipakai di semua panel fitur.
+ *
+ * `ilustrasi` bersifat opsional: diisi nama aset dari IlustrasiAnimasi supaya
+ * tiap fitur punya ciri visual sendiri. Sengaja tidak selalu diisi —
+ * Pengaturan dibiarkan bersih, dan Panel lain diisi secukupnya saja.
+ */
+export function SectionHeading({ eyebrow, title, description, action, id, ilustrasi }) {
   return (
     <div className="mb-[clamp(0.85rem,1.4vw,1.35rem)] flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
       <div className="min-w-0">
@@ -41,7 +48,21 @@ export function SectionHeading({ eyebrow, title, description, action, id }) {
           </p>
         ) : null}
       </div>
-      {action}
+      {action || ilustrasi ? (
+        <div className="flex shrink-0 items-center gap-3 self-center">
+          {action}
+          {ilustrasi ? (
+            /* kotak berukuran tetap + object-contain, supaya semua ilustrasi
+               menempati ruang yang sama walau rasio gambarnya berbeda-beda */
+            <div className="grid size-[clamp(3.25rem,6vw,5.25rem)] place-items-center">
+              <IlustrasiAnimasi
+                nama={ilustrasi}
+                className="h-auto max-h-full w-auto max-w-full"
+              />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }

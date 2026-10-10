@@ -4,9 +4,21 @@ import sapaanWebp from '../../assets/ilustrasi/sapaan.webp'
 import sapaanDiam from '../../assets/ilustrasi/sapaan.png'
 import kosongWebp from '../../assets/ilustrasi/kosong.webp'
 import kosongDiam from '../../assets/ilustrasi/kosong.png'
+import tanyaWebp from '../../assets/ilustrasi/tanya.webp'
+import tanyaDiam from '../../assets/ilustrasi/tanya.png'
+import sederhanakanWebp from '../../assets/ilustrasi/sederhanakan.webp'
+import sederhanakanDiam from '../../assets/ilustrasi/sederhanakan.png'
+import verifikasiWebp from '../../assets/ilustrasi/verifikasi.webp'
+import verifikasiDiam from '../../assets/ilustrasi/verifikasi.png'
+import suaraWebp from '../../assets/ilustrasi/suara.webp'
+import suaraDiam from '../../assets/ilustrasi/suara.png'
+import riwayatWebp from '../../assets/ilustrasi/riwayat.webp'
+import riwayatDiam from '../../assets/ilustrasi/riwayat.png'
+import kuesionerWebp from '../../assets/ilustrasi/kuesioner.webp'
+import kuesionerDiam from '../../assets/ilustrasi/kuesioner.png'
 
 /**
- * Ilustrasi karakter yang bergerak.
+ * Ilustrasi bergerak per fitur.
  *
  * Dua alasan kenapa tidak memakai pustaka Lottie di peramban:
  *   1. Pustaka itu menambah ~80 KB ke unduhan awal. Aplikasi ini justru punya
@@ -15,16 +27,26 @@ import kosongDiam from '../../assets/ilustrasi/kosong.png'
  *      aksesibilitas pada `prefers-reduced-motion`.
  *
  * Sebagai gantinya, animasinya sudah dirender lebih dulu dan disimpan sebagai
- * WebP animasi (transparan, looping, 60-110 KB). Kalau pengguna memilih
- * "kurangi gerak", yang ditampilkan hanyalah bingkai diamnya.
+ * WebP animasi (transparan, looping). Kalau pengguna memilih "kurangi gerak",
+ * yang ditampilkan hanyalah bingkai diamnya.
  *
  * Sumber animasi: LottieFiles, gratis di bawah Lottie Simple License
  * (boleh komersial, atribusi tidak wajib tetapi kami cantumkan di footer).
+ *
+ * Tiap animasi sudah diperiksa frame per frame: tidak ada frame yang nyaris
+ * kosong (supaya tidak berkedip saat loop), ada variasi gerak nyata, dan
+ * sambungan loop-nya halus.
  */
 
 const ASET = {
   sapaan: { webp: sapaanWebp, diam: sapaanDiam, lebar: 360, tinggi: 240 },
-  kosong: { webp: kosongWebp, diam: kosongDiam, lebar: 220, tinggi: 220 },
+  kosong: { webp: kosongWebp, diam: kosongDiam, lebar: 180, tinggi: 180 },
+  tanya: { webp: tanyaWebp, diam: tanyaDiam, lebar: 220, tinggi: 112 },
+  sederhanakan: { webp: sederhanakanWebp, diam: sederhanakanDiam, lebar: 186, tinggi: 186 },
+  verifikasi: { webp: verifikasiWebp, diam: verifikasiDiam, lebar: 220, tinggi: 220 },
+  suara: { webp: suaraWebp, diam: suaraDiam, lebar: 186, tinggi: 186 },
+  riwayat: { webp: riwayatWebp, diam: riwayatDiam, lebar: 220, tinggi: 220 },
+  kuesioner: { webp: kuesionerWebp, diam: kuesionerDiam, lebar: 220, tinggi: 220 },
 }
 
 function bacaKurangiGerak() {
@@ -48,7 +70,7 @@ export function useKurangiGerak() {
 }
 
 /**
- * @param {'sapaan'|'kosong'} nama - nama ilustrasi
+ * @param {'sapaan'|'kosong'|'tanya'|'sederhanakan'|'verifikasi'|'suara'|'riwayat'|'kuesioner'} nama
  */
 export default function IlustrasiAnimasi({ nama, className = '' }) {
   const aset = ASET[nama]

@@ -333,6 +333,7 @@ export default function App() {
                   eyebrow="Arsip"
                   title="Riwayat"
                   description="Pertanyaan yang diajukan pada sesi ini. Tersimpan di memori peramban saja."
+                  ilustrasi="riwayat"
                 />
                 {history.length === 0 ? (
                   <EmptyState

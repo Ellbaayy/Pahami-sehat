@@ -40,6 +40,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
         eyebrow="Fitur inti"
         title={t('sed.judul')}
         description={t('sed.sub')}
+        ilustrasi="sederhanakan"
       />
 
       <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
