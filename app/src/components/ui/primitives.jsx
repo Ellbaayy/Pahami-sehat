@@ -306,6 +306,7 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
                     rel="noopener noreferrer"
                     className="mt-0.5 block truncate font-mono text-[0.72rem] text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-800"
                     title={s.url}
+                    aria-label={`Buka sumber: ${s.judul || s.url}`}
                   >
                     {s.url}
                   </a>

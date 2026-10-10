@@ -30,12 +30,12 @@ function Switch({ checked, onChange, label }) {
 
 function Row({ title, description, control }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-[clamp(0.95rem,0.85rem+0.4vw,1.35rem)] py-4">
-      <div className="min-w-0 flex-1">
+    <div className="flex flex-col gap-y-3 px-[clamp(0.95rem,0.85rem+0.4vw,1.35rem)] py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4">
+      <div className="min-w-0 sm:flex-1">
         <p className="text-[0.95rem] font-semibold text-navy-900">{title}</p>
         <p className="mt-0.5 text-[0.84rem] leading-snug text-navy-500">{description}</p>
       </div>
-      <div className="shrink-0">{control}</div>
+      <div className="sm:shrink-0">{control}</div>
     </div>
   )
 }
@@ -59,7 +59,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
             <div
               role="group"
               aria-label={t('umum.tingkatBaca')}
-              className="flex rounded-xl border border-slate-200 bg-white p-1"
+              className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1"
             >
               {TINGKAT.map((t) => (
                 <button
@@ -68,7 +68,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
                   onClick={() => set('level', t.kunci)}
                   aria-pressed={settings.level === t.kunci}
                   className={cn(
-                    'h-9 min-w-[3.25rem] rounded-lg px-3 text-[0.85rem] font-bold transition-colors duration-200',
+                    'h-11 min-w-[3.25rem] whitespace-nowrap rounded-lg px-3 text-[0.85rem] font-bold transition-colors duration-200',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                     settings.level === t.kunci
                       ? 'bg-brand-500 text-white'
