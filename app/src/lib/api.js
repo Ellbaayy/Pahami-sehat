@@ -6,7 +6,9 @@
  * alamat relatif "/api" selalu benar di kedua mode.
  */
 
-const BASE = '/api'
+/** Dasar alamat API — dipakai juga oleh modul lain (mis. lib/tts.js). */
+export const API_BASE = '/api'
+const BASE = API_BASE
 
 /** Error dari API, sudah membawa kode yang bisa ditampilkan ke user. */
 export class ApiError extends Error {

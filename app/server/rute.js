@@ -18,6 +18,7 @@ import { Router } from 'express'
 import { config, safeInfo } from './config.js'
 import { KenariError, chat, chatStream, cekSehat } from './kenari.js'
 import { buatEkstrak } from './ekstrak.js'
+import { buatSuara, tentukanBahasa, pilihSuara } from './suara.js'
 import {
   TINGKAT,
   TINGKAT_DEFAULT,
@@ -241,6 +242,47 @@ rute.get('/api/meta', (_req, res) => {
     batasKata: 220,
   })
 })
+
+/**
+ * Suara natural untuk jawaban AI.
+ *
+ * Menerima teks + bahasa, mengembalikan MP3. Dipakai tombol "Dengar" di
+ * aplikasi. Nada tiap kalimat mengikuti isinya (lihat server/suara.js).
+ *
+ * Kalau layanan suara Microsoft tidak bisa dihubungi, balasannya 502 dengan
+ * kode `suara_gagal` supaya frontend bisa jatuh ke suara bawaan peramban
+ * tanpa menampilkan error yang membingungkan.
+ */
+rute.post('/api/suara', bungkus(async (req, res) => {
+  const teks = String(req.body?.teks ?? '').trim()
+  if (!teks) {
+    return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Teks masih kosong.' })
+  }
+
+  // Bahasa ditentukan dari ISI TEKS lebih dulu (Jawa/Sunda), baru kode dari
+  // aplikasi sebagai cadangan — kode itu bahasa antarmuka, bukan bahasa jawaban.
+  const diminta = String(req.body?.bahasa ?? '').trim().toLowerCase()
+  const bahasa = tentukanBahasa(teks, diminta)
+
+  try {
+    const audio = await buatSuara(teks, { bahasa })
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': String(audio.length),
+      // suara untuk teks yang sama tidak berubah -> boleh disimpan sebentar
+      'Cache-Control': 'public, max-age=3600',
+    })
+    return res.send(audio)
+  } catch (e) {
+    return res.status(502).json({
+      ok: false,
+      code: 'suara_gagal',
+      pesan: 'Suara natural sedang tidak bisa dibuat. Peramban akan memakai suara bawaannya.',
+      suara: pilihSuara(bahasa, teks),
+      rinci: String(e?.message ?? '').slice(0, 200),
+    })
+  }
+}))
 
 rute.post('/api/tanya', bungkus(async (req, res) => {
   const pertanyaan = String(req.body?.pertanyaan ?? '').trim()

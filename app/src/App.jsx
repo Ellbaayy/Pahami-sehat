@@ -365,6 +365,7 @@ export default function App() {
 
                 <AskAI
                   t={t}
+                  bahasa={kodeBahasa}
                   value={input}
                   onChange={setInput}
                   onAsk={ask}
@@ -377,6 +378,7 @@ export default function App() {
                   sumberCari={sumberCari}
                   serverOnline={server.online}
                   serverMemuat={server.memuat}
+                  bahasa={kodeBahasa}
                 />
                 <TopicChips
                   topics={konten.topik}
@@ -405,6 +407,7 @@ export default function App() {
                 sumberCari={sumberCari}
                 serverOnline={server.online}
                 serverMemuat={server.memuat}
+                bahasa={kodeBahasa}
               />
             ) : null}
 
@@ -416,6 +419,7 @@ export default function App() {
                 onTingkatChange={(lv) => setSettings((s) => ({ ...s, level: lv }))}
                 serverOnline={server.online}
                 serverMemuat={server.memuat}
+                bahasa={kodeBahasa}
               />
             ) : null}
 
@@ -427,6 +431,7 @@ export default function App() {
                 onTingkatChange={(lv) => setSettings((s) => ({ ...s, level: lv }))}
                 serverOnline={server.online}
                 serverMemuat={server.memuat}
+                bahasa={kodeBahasa}
               />
             ) : null}
 

@@ -29,7 +29,15 @@ const VERDICT = {
  * Cek klaim kesehatan — untuk broadcast WhatsApp yang mencurigakan.
  * Model diminta jujur: "tidak bisa dipastikan" adalah jawaban yang sah.
  */
-export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline, serverMemuat, t = (k) => k, labelTingkat = (x) => x }) {
+export default function VerifikasiPanel({
+  tingkat,
+  onTingkatChange,
+  serverOnline,
+  serverMemuat,
+  bahasa = 'id',
+  t = (k) => k,
+  labelTingkat = (x) => x,
+}) {
   const [klaim, setKlaim] = useState('')
   const [loading, setLoading] = useState(false)
   const [hasil, setHasil] = useState(null)
@@ -155,7 +163,7 @@ export default function VerifikasiPanel({ tingkat, onTingkatChange, serverOnline
           </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <TombolDengar teks={hasil.jawaban} />
+            <TombolDengar teks={hasil.jawaban} bahasa={bahasa} />
           </div>
           <PoinKunci items={hasil.poinKunci} />
           <SourcePills

@@ -12,7 +12,15 @@ const CONTOH = `Hipertensi merupakan kondisi kronis yang ditandai dengan peningk
  * Tempel teks medis mentah (hasil lab, label obat, artikel, broadcast WA),
  * lalu model menyederhanakannya pada tingkat baca yang dipilih.
  */
-export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnline, serverMemuat, t = (k) => k, labelTingkat = (x) => x }) {
+export default function SederhanakanPanel({
+  tingkat,
+  onTingkatChange,
+  serverOnline,
+  serverMemuat,
+  bahasa = 'id',
+  t = (k) => k,
+  labelTingkat = (x) => x,
+}) {
   const [teks, setTeks] = useState('')
   const [loading, setLoading] = useState(false)
   const [hasil, setHasil] = useState(null)
@@ -153,7 +161,7 @@ export default function SederhanakanPanel({ tingkat, onTingkatChange, serverOnli
           </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <TombolDengar teks={hasil.jawaban} />
+            <TombolDengar teks={hasil.jawaban} bahasa={bahasa} />
           </div>
           <PoinKunci items={hasil.poinKunci} />
           <SourcePills sources={hasil.sumber} />
