@@ -19,6 +19,15 @@
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 
+  /* ---------------- halaman muat: tampil 1 detik, lalu hilang ---------------- */
+  const splash = $('#splash');
+  if (splash) {
+    window.setTimeout(() => {
+      splash.classList.add('is-done');
+      window.setTimeout(() => splash.remove(), 500);
+    }, 1000);
+  }
+
   /* ---------------- navbar: menempel + hamburger ---------------- */
   const navbar = $('#navbar');
   const navToggle = $('#navToggle');

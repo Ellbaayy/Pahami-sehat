@@ -7,6 +7,11 @@ export default function HealthTip({ tip }) {
   const [open, setOpen] = useState(false)
   if (!tip) return null
 
+  // Teks lanjutan HARUS datang dari sumbernya (tip.selengkapnya). Sebelumnya
+  // kotak ini memuat tulisan tetap di dalam komponen, sehingga muncul di bawah
+  // judul apa pun — termasuk judul yang tidak berhubungan dengan isinya.
+  const lanjutan = (tip.selengkapnya ?? '').trim()
+
   return (
     <Card className="relative overflow-hidden border-brand-100 bg-brand-50/60 p-[clamp(1.05rem,0.9rem+0.6vw,1.6rem)]">
       <span className="absolute inset-y-0 left-0 w-[3px] bg-brand-500" aria-hidden="true" />
@@ -26,14 +31,9 @@ export default function HealthTip({ tip }) {
             {tip.body}
           </p>
 
-          {open ? (
+          {open && lanjutan ? (
             <div className="rise mt-3 max-w-[68ch] rounded-xl bg-white/80 p-3.5 ring-1 ring-brand-100">
-              <p className="text-[0.87rem] leading-relaxed text-navy-700">
-                Mulai dari satu kebiasaan kecil yang mudah dijaga, misalnya menentukan jam
-                tidur tetap setiap hari. Kebiasaan yang konsisten lebih mudah dipertahankan
-                daripada perubahan besar sekaligus. Bila keluhan tidur berlanjut lebih dari
-                dua minggu dan mengganggu aktivitas, diskusikan dengan tenaga kesehatan.
-              </p>
+              <p className="text-[0.87rem] leading-relaxed text-navy-700">{lanjutan}</p>
             </div>
           ) : null}
 
@@ -50,23 +50,37 @@ export default function HealthTip({ tip }) {
           </ul>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-brand-700 ring-1 ring-brand-100">
-              Sumber: {tip.source}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              className="-ml-1"
-            >
-              {open ? 'Tutup' : 'Baca selengkapnya'}
-              {open ? (
-                <ChevronUp className="size-4" aria-hidden="true" />
-              ) : (
-                <ChevronDown className="size-4" aria-hidden="true" />
-              )}
-            </Button>
+            {/* Sumber bisa dibuka supaya pembaca bisa memeriksa sendiri */}
+            {tip.url ? (
+              <a
+                href={tip.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-brand-700 ring-1 ring-brand-100 underline decoration-dotted underline-offset-2 transition-colors hover:bg-brand-200"
+              >
+                Sumber: {tip.source}
+              </a>
+            ) : (
+              <span className="rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-brand-700 ring-1 ring-brand-100">
+                Sumber: {tip.source}
+              </span>
+            )}
+            {lanjutan ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+                className="-ml-1"
+              >
+                {open ? 'Tutup' : 'Baca selengkapnya'}
+                {open ? (
+                  <ChevronUp className="size-4" aria-hidden="true" />
+                ) : (
+                  <ChevronDown className="size-4" aria-hidden="true" />
+                )}
+              </Button>
+            ) : null}
           </div>
         </div>
       </div>

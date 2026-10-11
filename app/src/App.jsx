@@ -15,6 +15,7 @@ import ThreadPanel from './components/dashboard/ThreadPanel'
 import SederhanakanPanel from './components/dashboard/SederhanakanPanel'
 import VerifikasiPanel from './components/dashboard/VerifikasiPanel'
 import { SectionHeading, EmptyState } from './components/ui/primitives'
+import LoadingPage from './components/LoadingPage'
 import { History, ArrowLeft, PlugZap, Plug } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP, HISTORY } from './data/dummy'
 import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
@@ -316,7 +317,9 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-dvh w-full bg-bg">
+    <>
+      <LoadingPage />
+      <div className="flex min-h-dvh w-full bg-bg">
       <a
         href="#konten"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-xl focus:bg-brand-600 focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white"
@@ -510,6 +513,7 @@ export default function App() {
           </div>
         </footer>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
