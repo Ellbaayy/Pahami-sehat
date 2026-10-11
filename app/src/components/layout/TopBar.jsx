@@ -1,16 +1,32 @@
 import { useEffect, useRef, useState } from 'react'
-import { Menu, Bell, X, Info, Archive, Plug } from 'lucide-react'
+import {
+  Menu,
+  Bell,
+  X,
+  Info,
+  Archive,
+  Plug,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-react'
 import logo from '../../assets/logo-mark.png'
 import { cn } from '../../lib/cn'
 
 /**
- * Header khusus mobile (<md). Tablet memakai rail icon-only,
- * jadi header ini tidak ikut muncul di sana.
+ * Header aplikasi — tampil di SEMUA ukuran layar.
+ *
+ * Di ponsel (<md) header ini memuat tombol yang membuka DRAWER navigasi.
+ * Di tablet & desktop (md+) memuat tombol yang membuka-tutup SIDEBAR
+ * (rail ikon <-> penuh). Dua tombol itu tidak pernah muncul bersamaan:
+ * drawer hanya untuk <md, sidebar hanya untuk md+.
  *
  * Lonceng di kanan membuka daftar pemberitahuan. Isinya BUKAN contoh: setiap
  * butir dihitung dari keadaan nyata aplikasi (kapan konten harian terakhir
  * diperbarui, berapa jawaban tersimpan, apakah server terhubung). Titik merah
  * menandai ada butir yang belum dibaca, dan itu ikut tersimpan di peramban.
+ *
+ * Catatan: karena header kini tampil di semua ukuran, lonceng pemberitahuan
+ * ikut tampil di tablet & desktop (sebelumnya hanya di ponsel).
  */
 
 const IKON = { konten: Info, riwayat: Archive, server: Plug }
@@ -18,6 +34,8 @@ const IKON = { konten: Info, riwayat: Archive, server: Plug }
 export default function TopBar({
   onOpenMenu,
   menuOpen,
+  sidebarTerbuka = true,
+  onToggleSidebar,
   notifikasi = [],
   belumDibaca = false,
   onBaca,
@@ -58,21 +76,46 @@ export default function TopBar({
     onBuka?.(n)
   }
 
+  const labelSidebar = sidebarTerbuka ? t('nav.tutupSidebar') : t('nav.bukaSidebar')
+
   return (
-    <header className="sticky top-0 z-40 border-b border-line-200 bg-white/90 backdrop-blur-md md:hidden">
+    <header className="sticky top-0 z-40 border-b border-line-200 bg-white/90 backdrop-blur-md">
       <div className="flex h-14 items-center gap-2 px-3 sm:px-4">
+        {/* ponsel: buka drawer */}
         <button
           type="button"
           onClick={onOpenMenu}
-          aria-label="Buka menu navigasi"
+          aria-label={t('nav.menu')}
           aria-expanded={menuOpen ? 'true' : 'false'}
           aria-controls="mobile-drawer"
-          className="grid size-10 shrink-0 place-items-center rounded-xl border border-line-200 text-navy-700 transition-colors hover:bg-surface-50 active:bg-surface-100"
+          className="grid size-10 shrink-0 place-items-center rounded-xl border border-line-200 text-navy-700 transition-colors hover:bg-surface-50 active:bg-surface-100 md:hidden"
         >
           <Menu className="size-5" aria-hidden="true" />
         </button>
 
-        <a href="./" className="-ml-1 flex min-h-11 min-w-0 items-center gap-2 rounded-lg px-1">
+        {/* tablet & desktop: buka-tutup sidebar */}
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label={labelSidebar}
+          title={labelSidebar}
+          aria-expanded={sidebarTerbuka ? 'true' : 'false'}
+          aria-controls="sidebar-utama"
+          className={cn(
+            'hidden size-10 shrink-0 place-items-center rounded-xl border border-line-200 md:grid',
+            'text-navy-700 transition-colors hover:bg-surface-50 active:bg-surface-100',
+            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
+          )}
+        >
+          {sidebarTerbuka ? (
+            <PanelLeftClose className="size-5" aria-hidden="true" />
+          ) : (
+            <PanelLeftOpen className="size-5" aria-hidden="true" />
+          )}
+        </button>
+
+        {/* brand — di md+ sudah ada di sidebar, jadi di sini hanya untuk ponsel */}
+        <a href="./" className="-ml-1 flex min-h-11 min-w-0 items-center gap-2 rounded-lg px-1 md:hidden">
           <img src={logo} alt="" width={26} height={24} className="size-[26px] shrink-0 object-contain" />
           <span className="truncate text-[0.95rem] font-extrabold tracking-tight text-navy-900">
             Pahami Sehat
@@ -180,7 +223,7 @@ export function DrawerCloseButton({ onClick }) {
       type="button"
       onClick={onClick}
       aria-label="Tutup menu navigasi"
-      className="grid size-9 shrink-0 place-items-center rounded-lg text-navy-500 transition-colors hover:bg-surface-100 hover:text-navy-800 lg:hidden"
+      className="grid size-9 shrink-0 place-items-center rounded-lg text-navy-500 transition-colors hover:bg-surface-100 hover:text-navy-800"
     >
       <X className="size-5" aria-hidden="true" />
     </button>
