@@ -89,6 +89,10 @@ export const HEALTH_TIP = {
   title: 'Istirahat cukup, daya tahan tubuh ikut terjaga',
   body: 'Tidur berkualitas membantu tubuh memperbaiki sel dan menjaga sistem imun tetap bekerja optimal. Usahakan jam tidur yang sama setiap hari, kurangi layar menjelang tidur, dan pastikan kamar cukup gelap serta sejuk.',
   bullets: ['Jam tidur konsisten', 'Kurangi layar 30 menit sebelum tidur', 'Kamar gelap dan sejuk'],
+  // Dipakai tombol "Baca selengkapnya". Isinya harus menyambung dengan `body`
+  // di atas — jangan diisi topik lain, karena kartu ini muncul apa adanya.
+  selengkapnya:
+    'Mulai dari satu kebiasaan kecil yang mudah dijaga, misalnya menentukan jam tidur tetap setiap hari. Kebiasaan yang konsisten lebih mudah dipertahankan daripada perubahan besar sekaligus. Bila keluhan tidur berlanjut lebih dari dua minggu dan mengganggu aktivitas, diskusikan dengan tenaga kesehatan.',
   source: 'Kemenkes RI',
 }
 
