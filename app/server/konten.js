@@ -180,7 +180,12 @@ function potongKalimat(teks, maks) {
   if (t.length <= maks) return t
   const potong = t.slice(0, maks)
   const titik = Math.max(potong.lastIndexOf('. '), potong.lastIndexOf('? '), potong.lastIndexOf('! '))
-  return titik > maks * 0.5 ? potong.slice(0, titik + 1) : `${potong.trimEnd()}…`
+  if (titik > maks * 0.5) return potong.slice(0, titik + 1)
+  // Tidak ada batas kalimat di paruh kedua: mundur ke batas KATA. Berhenti di
+  // tengah kata pernah menghasilkan teks seperti "…kurang disukai ba".
+  const spasi = potong.lastIndexOf(' ')
+  const rapi = (spasi > 0 ? potong.slice(0, spasi) : potong).replace(/[\s,;:\-–—]+$/, '')
+  return `${rapi}…`
 }
 
 /** Ambil kalimat-kalimat awal sebagai butir ringkas (bukan karangan). */
@@ -188,7 +193,9 @@ function butirDari(teks, maks = 3) {
   return String(teks ?? '')
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 25 && s.length < 110)
+    // wajib diakhiri tanda baca: kalimat sisa dari teks yang terpotong
+    // (mis. "Jika aktivitas tersebut baik, tentunya p") hanya membingungkan.
+    .filter((s) => s.length > 25 && s.length < 110 && /[.!?]$/.test(s))
     .slice(0, maks)
 }
 
@@ -255,12 +262,21 @@ async function isiArtikel(item) {
   // Ringkasan: kandidatnya deskripsi resmi halaman itu, lalu paragraf-paragraf
   // awalnya. Dipilih yang pertama lolos saringan — karena ada kalanya deskripsi
   // resminya sendiri dibuka dengan kutipan akademis.
+  // Ringkasan wajib berakhir di akhir kalimat. Meta description sumber kadang
+  // sudah terpotong di tengah kata oleh penerbitnya sendiri (mis. "...disukai
+  // ba"); kalau dipakai apa adanya, kartunya terbaca seperti rusak.
   const kandidat = [desc, ...paragraf]
-  const ringkas = kandidat.find((x) => x && x.length > 60 && layakSebagaiRingkasan(x)) ?? ''
+  const ringkas =
+    kandidat.find(
+      (x) => x && x.length > 60 && layakSebagaiRingkasan(x) && /[.!?]$/.test(x.trim()),
+    ) ?? ''
 
+  // `tubuh` dipotong di batas kalimat, bukan di tengah kata seperti slice()
+  // mentah — kalimat yang menggantung lalu lolos jadi "butir" tips.
+  const gabung = paragraf.slice(0, 2).join(' ')
   return {
     ringkas: potongKalimat(ringkas, 260),
-    tubuh: paragraf.slice(0, 2).join(' ').slice(0, 900),
+    tubuh: potongKalimat(gabung, 900),
     gambar,
   }
 }
@@ -295,7 +311,7 @@ function susun(pool) {
       category,
       tint,
       title: d.judul,
-      excerpt: d.ringkas || d.tubuh.slice(0, 160),
+      excerpt: d.ringkas || potongKalimat(d.tubuh, 160),
       body: d.tubuh || d.ringkas,
       source: PENERBIT,
       url: d.url,
@@ -308,13 +324,19 @@ function susun(pool) {
   // butir — jadi isinya memang kalimat sumber, bukan buatan
   let tips = null
   for (const d of siap) {
+    // Artikel yang isinya masih kepotong (ditandai "…") tidak layak jadi tips:
+    // butirnya cuma kalimat sisa.
+    if (/…$/.test(d.tubuh ?? '')) continue
     const butir = butirDari(d.tubuh, 3)
     if (butir.length >= 2) {
       tips = {
         label: 'Tips Kesehatan Hari Ini',
         title: d.judul,
-        body: d.ringkas || d.tubuh.slice(0, 260),
+        body: d.ringkas || potongKalimat(d.tubuh, 260),
         bullets: butir,
+        // teks lanjutan untuk tombol "Baca selengkapnya" — tetap dari sumber,
+        // bukan tulisan tetap di dalam komponen
+        selengkapnya: potongKalimat(d.tubuh, 900),
         source: PENERBIT,
         url: d.url,
       }
