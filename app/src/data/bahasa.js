@@ -29,6 +29,8 @@ const KAMUS = {
     'nav.pengaturan': 'Pengaturan',
     'nav.kembali': 'Kembali ke situs',
     'nav.menu': 'Buka menu',
+    'nav.tutupSidebar': 'Tutup sidebar',
+    'nav.bukaSidebar': 'Buka sidebar',
 
     // umum
     'umum.terhubung': 'Terhubung',
@@ -149,6 +151,8 @@ const KAMUS = {
     'nav.pengaturan': 'Settings',
     'nav.kembali': 'Back to site',
     'nav.menu': 'Open menu',
+    'nav.tutupSidebar': 'Collapse sidebar',
+    'nav.bukaSidebar': 'Expand sidebar',
 
     'umum.terhubung': 'Connected',
     'umum.memeriksa': 'Checking server…',

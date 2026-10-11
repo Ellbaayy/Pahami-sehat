@@ -110,9 +110,35 @@ function simpanSetelan(s) {
   }
 }
 
+/**
+ * Sidebar desktop/tablet: terbuka (penuh) atau tertutup (rail ikon).
+ *
+ * Disimpan di peramban supaya pilihan jagi tidak kembali tertutup setiap
+ * halaman dimuat ulang. Bawaannya TERBUKA — halaman yang baru pertama dibuka
+ * harus langsung memperlihatkan navigasi lengkap, bukan rail ikon.
+ */
+const KUNCI_SIDEBAR = 'pahami-sehat:sidebar-terbuka'
+
+function bacaSidebar() {
+  try {
+    return localStorage.getItem(KUNCI_SIDEBAR) !== '0'
+  } catch {
+    return true
+  }
+}
+
+function simpanSidebar(terbuka) {
+  try {
+    localStorage.setItem(KUNCI_SIDEBAR, terbuka ? '1' : '0')
+  } catch {
+    /* penyimpanan diblokir — pilihan tetap jalan untuk sesi ini */
+  }
+}
+
 export default function App() {
   const [active, setActive] = useState('beranda')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [sidebarTerbuka, setSidebarTerbuka] = useState(bacaSidebar)
   // pemberitahuan: titik merah hilang setelah panel dibuka sekali
   const [notifDibaca, setNotifDibaca] = useState(() => {
     try {
@@ -327,12 +353,20 @@ export default function App() {
         Lompat ke konten utama
       </a>
 
-      <Sidebar active={active} onSelect={navigate} t={t} />
+      <Sidebar active={active} onSelect={navigate} terbuka={sidebarTerbuka} t={t} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
           onOpenMenu={() => setDrawerOpen(true)}
           menuOpen={drawerOpen}
+          sidebarTerbuka={sidebarTerbuka}
+          onToggleSidebar={() =>
+            setSidebarTerbuka((v) => {
+              const jadi = !v
+              simpanSidebar(jadi)
+              return jadi
+            })
+          }
           notifikasi={notifikasi}
           belumDibaca={!notifDibaca}
           onBaca={() => {
