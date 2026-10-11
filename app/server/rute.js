@@ -33,6 +33,7 @@ import {
 } from './prompts.js'
 import { cariInternet } from './cari.js'
 import { kataKunciPencarian } from './kataKunci.js'
+import { batasi } from './batas.js'
 import { kontenHarianLengkap } from './konten.js'
 import { bahasaJawaban } from './bahasa.js'
 
@@ -150,6 +151,26 @@ const bungkus = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).
 
 const rute = Router()
 
+/**
+ * Pembatas permintaan.
+ *
+ * Endpoint di bawah ini memanggil layanan luar yang BERBIAYA atau BERBEBAN:
+ * model AI Kenari (berbayar) dan Wikipedia/Kemenkes (berbagi sumber daya).
+ * Alamat aplikasi terbuka untuk umum, jadi tanpa pembatas siapa pun bisa
+ * menghabiskan kuota akun — termasuk saat lomba berlangsung.
+ *
+ * Batasnya sengaja LONGGAR (20 permintaan/menit per alamat IP) supaya
+ * presentasi dan pengujian juri tidak pernah terganggu, tetapi penyalahgunaan
+ * kasar tetap tertahan. Selain itu ada batas total per-instance (300/menit)
+ * yang menutup celah pemutaran alamat IP.
+ *
+ * Lihat catatan jujur soal sifat per-instance di server/batas.js.
+ */
+const batasTanya = batasi({ maks: 20, maksTotal: 300, nama: 'pertanyaan' })
+const batasCari = batasi({ maks: 20, maksTotal: 300, nama: 'permintaan' })
+const batasSuara = batasi({ maks: 20, maksTotal: 300, nama: 'permintaan suara' })
+const batasKonten = batasi({ maks: 60, maksTotal: 600, nama: 'permintaan konten' })
+
 rute.get('/api/health', bungkus(async (_req, res) => {
   const sehat = await cekSehat()
   res.json({ server: 'ok', kenari: sehat, ...safeInfo() })
@@ -164,7 +185,7 @@ rute.get('/api/health', bungkus(async (_req, res) => {
  *
  * `?paksa=1` memaksa pengambilan ulang — berguna saat menguji.
  */
-rute.get('/api/konten', bungkus(async (req, res) => {
+rute.get('/api/konten', batasKonten, bungkus(async (req, res) => {
   const paksa = String(req.query?.paksa ?? '') === '1'
   const data = await kontenHarianLengkap({ paksa })
   res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400')
@@ -194,7 +215,7 @@ rute.get('/api/meta', (_req, res) => {
  * kode `suara_gagal` supaya frontend bisa jatuh ke suara bawaan peramban
  * tanpa menampilkan error yang membingungkan.
  */
-rute.post('/api/suara', bungkus(async (req, res) => {
+rute.post('/api/suara', batasSuara, bungkus(async (req, res) => {
   const teks = String(req.body?.teks ?? '').trim()
   if (!teks) {
     return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Teks masih kosong.' })
@@ -219,13 +240,13 @@ rute.post('/api/suara', bungkus(async (req, res) => {
       ok: false,
       code: 'suara_gagal',
       pesan: 'Suara natural sedang tidak bisa dibuat. Peramban akan memakai suara bawaannya.',
-      suara: pilihSuara(bahasa, teks),
+      suara: pilihSuara(bahasa),
       rinci: String(e?.message ?? '').slice(0, 200),
     })
   }
 }))
 
-rute.post('/api/tanya', bungkus(async (req, res) => {
+rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
   const pertanyaan = String(req.body?.pertanyaan ?? '').trim()
   if (!pertanyaan) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Pertanyaan masih kosong.' })
   if (pertanyaan.length > 4000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Pertanyaan terlalu panjang (maks 4000 karakter).' })
@@ -258,7 +279,7 @@ rute.post('/api/tanya', bungkus(async (req, res) => {
   res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage: hasil.usage })
 }))
 
-rute.post('/api/sederhanakan', bungkus(async (req, res) => {
+rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
   const teks = String(req.body?.teks ?? '').trim()
   if (!teks) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Teks masih kosong.' })
   if (teks.length > 8000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Teks terlalu panjang (maks 8000 karakter).' })
@@ -282,7 +303,7 @@ rute.post('/api/sederhanakan', bungkus(async (req, res) => {
   res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage: hasil.usage })
 }))
 
-rute.post('/api/verifikasi', bungkus(async (req, res) => {
+rute.post('/api/verifikasi', batasCari, bungkus(async (req, res) => {
   const klaim = String(req.body?.klaim ?? '').trim()
   if (!klaim) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Klaim masih kosong.' })
   if (klaim.length > 4000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Klaim terlalu panjang (maks 4000 karakter).' })
@@ -309,7 +330,7 @@ rute.post('/api/verifikasi', bungkus(async (req, res) => {
  * Streaming SSE — untuk efek "mengetik" di UI.
  * Kirim event: `status`, `delta`, `hasil` (JSON final), atau `error`.
  */
-rute.post('/api/tanya/stream', bungkus(async (req, res) => {
+rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
   const pertanyaan = String(req.body?.pertanyaan ?? '').trim()
   if (!pertanyaan) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Pertanyaan masih kosong.' })
 

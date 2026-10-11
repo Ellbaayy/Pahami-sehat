@@ -4,6 +4,18 @@
  * (diisi lewat `--env-file=.env` atau environment shell).
  */
 
+/**
+ * Batas waktu permintaan ke Kenari.
+ *
+ * KENAPA 50 DETIK, BUKAN 120: di Vercel, fungsi serverless dipaksa berhenti
+ * setelah maxDuration (lihat app/vercel.json — 60 detik). Kalau batas internal
+ * lebih panjang dari itu, yang terjadi saat model lambat adalah PLATFORM yang
+ * memutus koneksi lebih dulu — pengguna melihat koneksi terputus tanpa pesan,
+ * bukan galat yang jelas. Dengan batas internal lebih pendek, kita sendiri
+ * yang menyerah lebih dulu dan bisa mengirim pesan yang bisa dibaca.
+ */
+const BATAS_AMAN_MS = 50_000
+
 function required(name) {
   const v = process.env[name]
   if (!v || !v.trim()) {
@@ -24,7 +36,10 @@ export const config = {
   /** batas token output; Kenari tidak menolak hingga 4000 pada akun saldo 0 */
   maxTokens: Number(process.env.MAX_TOKENS || 1500),
   temperature: Number(process.env.TEMPERATURE || 0.3),
-  requestTimeoutMs: Number(process.env.REQUEST_TIMEOUT_MS || 120000),
+  requestTimeoutMs: Math.min(
+    Number(process.env.REQUEST_TIMEOUT_MS || BATAS_AMAN_MS),
+    BATAS_AMAN_MS,
+  ),
 }
 
 /** Info aman untuk ditampilkan (tanpa membocorkan key). */
