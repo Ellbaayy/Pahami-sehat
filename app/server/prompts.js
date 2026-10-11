@@ -59,7 +59,7 @@ export const TINGKAT_DEFAULT = 'anak'
    ========================================================================== */
 
 /** Kata yang menandakan pesan menyentuh topik kesehatan. */
-const KATA_KESEHATAN = [
+export const KATA_KESEHATAN = [
   // keluhan & gejala
   'sakit', 'nyeri', 'demam', 'panas', 'pusing', 'mual', 'muntah', 'batuk', 'pilek',
   'flu', 'sesak', 'lemas', 'letih', 'lelah', 'gatal', 'bengkak', 'luka', 'patah',
