@@ -204,6 +204,45 @@ body {
   animation: riseIn 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
+/* ---------- halaman muat aplikasi (splash) — tampil 1 detik ---------- */
+@keyframes splashBreath {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+.splash-breath {
+  animation: splashBreath 0.85s ease-in-out infinite alternate;
+}
+
+@keyframes splashEcg {
+  from {
+    stroke-dashoffset: 240;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.splash-ecg {
+  stroke-dasharray: 240;
+  animation: splashEcg 1s ease-out both;
+}
+
+@keyframes splashFill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.splash-fill {
+  transform-origin: left;
+  animation: splashFill 1s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
