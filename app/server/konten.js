@@ -62,6 +62,26 @@ const PENERBIT = 'Kemenkes RI'
 const BERLAKU_MS = 24 * 60 * 60 * 1000 // sekali sehari
 const MAKS_POOL = 40 // batas artikel yang disimpan di simpanan
 
+/**
+ * Berapa artikel yang diambil ISI-nya (bukan cuma judul) setiap kali
+ * menyegarkan.
+ *
+ * KENAPA DIBATASI: dulu SELURUH pool diambil isinya sekaligus — sampai 40
+ * permintaan ke situs Kemenkes dalam satu tarikan. Padahal tampilan hanya
+ * memakai 5 topik, 4 artikel, dan 1 tips (lihat `susun()`). Di serverless ini
+ * terasa sekali: berkas cache tidak bisa ditulis (lihat catatan di
+ * `simpanKeDisk`), jadi setiap instance baru mengulang pengambilan itu.
+ *
+ * Pengukuran: 12 permintaan pada cache kosong (1 daftar + 11 isi artikel).
+ * Angka itu naik terus seiring pool bertambah, sampai batas atas 40.
+ *
+ * Angka 8 dipilih dari kebutuhan nyata `susun()`: 5 topik + 4 artikel
+ * (beririsan) + 1 calon tips, ditambah cadangan untuk artikel yang gagal
+ * diambil. Karena `gabungPool()` menaruh artikel terbaru di depan, delapan
+ * yang diambil selalu yang paling baru — jadi kesegaran isi tetap terjaga.
+ */
+const MAKS_DETAIL = 8
+
 /* ------------------------------------------------------------------ util -- */
 
 async function ambil(url, timeoutMs = 15000) {
@@ -350,10 +370,27 @@ function susun(pool) {
 /* ------------------------------------------------------------- simpanan -- */
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const BERKAS = join(__dirname, '..', '.cache-konten.json')
+
+/**
+ * Berkas cache konten.
+ *
+ * Bisa diarahkan lewat CACHE_KONTEN ke lokasi yang memang boleh ditulis.
+ * Di Vercel, berkas di dalam paket fungsi bersifat READ-ONLY, sehingga
+ * penulisan ke sini selalu gagal — lihat catatan di `simpanKeDisk`.
+ */
+const BERKAS = process.env.CACHE_KONTEN || join(__dirname, '..', '.cache-konten.json')
 
 let diMemori = null
 let sedangMengambil = null
+
+/**
+ * Apakah penulisan cache ke berkas memang mungkin?
+ *
+ * null = belum pernah dicoba. Setelah percobaan pertama gagal, nilainya jadi
+ * false dan percobaan berikutnya dilewati — supaya tidak ada penulisan gagal
+ * berulang yang hanya membuang waktu di setiap permintaan.
+ */
+let bisaTulisBerkas = null
 
 const sekarangISO = () => new Date().toISOString()
 const besokISO = () => new Date(Date.now() + BERLAKU_MS).toISOString()
@@ -374,12 +411,33 @@ async function bacaDariDisk() {
   }
 }
 
+/**
+ * Simpan cache konten ke berkas.
+ *
+ * CATATAN PENTING soal serverless (Vercel):
+ * berkas di dalam paket fungsi bersifat READ-ONLY, jadi penulisan ke sini
+ * SELALU gagal di sana. Dulu kegagalan itu ditelan diam-diam, sehingga setiap
+ * instance serverless yang baru selalu memulai dari nol dan mengulang seluruh
+ * pengambilan artikel — padahal hasilnya sudah ada.
+ *
+ * Sekarang: kalau penulisan gagal karena berkas tidak bisa ditulis, kita
+ * mencatatnya dan berhenti mencoba lagi. Isinya tetap ada di memori instance
+ * itu, dan di produksi lapisan cache Vercel-lah yang menahan permintaan
+ * berikutnya (endpoint /api/konten memakai Cache-Control 5 menit + stale).
+ * Di komputer sendiri, berkas ini tetap ditulis seperti biasa.
+ */
 async function simpanKeDisk(data) {
+  if (bisaTulisBerkas === false) return
   try {
     await mkdir(dirname(BERKAS), { recursive: true })
     await writeFile(BERKAS, JSON.stringify(data), 'utf8')
-  } catch {
-    /* gagal menyimpan tidak fatal — konten tetap ada di memori */
+    bisaTulisBerkas = true
+  } catch (e) {
+    // EROFS (read-only) dan EACCES (tanpa izin) = lingkungan serverless.
+    // Tidak perlu dicoba lagi; selain itu dicoba lagi di kesempatan berikutnya.
+    if (e?.code === 'EROFS' || e?.code === 'EACCES' || e?.code === 'EPERM') {
+      bisaTulisBerkas = false
+    }
   }
 }
 
@@ -420,11 +478,15 @@ export async function kontenHarian({ paksa = false } = {}) {
       }
 
       // 4) Ya -> Update Informasi.
-      //    Hanya artikel yang belum punya detail yang perlu diambil.
+      //    Hanya artikel yang belum punya detail yang perlu diambil, dan
+      //    jumlahnya dibatasi MAKS_DETAIL (lihat catatan di atas konstanta itu).
       const pool = gabungPool(diMemori?.pool ?? [], daftar)
+      let diambil = 0
       await Promise.all(
         pool.map(async (d) => {
           if (d.ringkas || d.tubuh) return
+          if (diambil >= MAKS_DETAIL) return
+          diambil += 1
           try {
             Object.assign(d, await isiArtikel(d))
           } catch {

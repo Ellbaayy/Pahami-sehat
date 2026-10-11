@@ -6,9 +6,23 @@ Proyek untuk **LOGICODIX 2026 Hackathon** — subtema **Inclusive Health & Well-
 Masalah yang disasar: informasi kesehatan di Indonesia bukan langka, tapi sering tidak
 sampai dan tidak dipahami oleh yang paling membutuhkan.
 
-> Status: **MVP berjalan.** Fitur AI sudah memanggil model sungguhan
-> (`deepseek-v4-1-flash` lewat Kenari.id) dari server Express sendiri.
-> Yang masih simulasi: input suara dan OCR (belum pakai Web Speech API / Tesseract).
+> Status: **MVP berjalan.** Fitur AI memanggil model sungguhan
+> (`deepseek-v4-1-flash` lewat Kenari.id) dari server Express sendiri, dan
+> setiap jawaban disertai sumber yang bisa dibuka pengguna.
+>
+> **Status tiap fitur — apa adanya:**
+>
+> | Fitur | Keadaan |
+> |---|---|
+> | Tanya AI + sumber | berjalan. Pencarian memakai kata kunci terpilih, bukan kalimat pengguna apa adanya |
+> | Sederhanakan teks | berjalan (4 tingkat baca) |
+> | Cek klaim | berjalan (verdict + sumber) |
+> | Suara dibacakan | berjalan — suara neural, nada mengikuti isi kalimat |
+> | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya |
+> | Pindai foto / OCR | **belum ada.** Bukan simulasi — fiturnya memang belum dibuat |
+>
+> Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
+> 20 permintaan/menit per alamat IP (lihat `app/server/batas.js`).
 
 ---
 

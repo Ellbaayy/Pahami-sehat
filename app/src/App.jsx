@@ -402,7 +402,6 @@ export default function App() {
 
                 <AskAI
                   t={t}
-                  bahasa={kodeBahasa}
                   value={input}
                   onChange={setInput}
                   onAsk={ask}

@@ -52,8 +52,8 @@ const SERENTAK = 4
 
 /**
  * Pilih suara berdasarkan bahasa jawaban.
- * @param {'id'|'en'|'daerah'|string} kode
- * @param {string} contohTeks - teks jawaban, dipakai menebak bahasa daerah
+ *
+ * @param {'id'|'jv'|'su'|'en'|string} kode
  */
 export function pilihSuara(kode) {
   return SUARA[kode] ?? SUARA.id
