@@ -15,6 +15,7 @@ import ThreadPanel from './components/dashboard/ThreadPanel'
 import SederhanakanPanel from './components/dashboard/SederhanakanPanel'
 import VerifikasiPanel from './components/dashboard/VerifikasiPanel'
 import { SectionHeading, EmptyState } from './components/ui/primitives'
+import BatasGalat from './components/ui/BatasGalat'
 import LoadingPage from './components/LoadingPage'
 import { History, ArrowLeft, PlugZap, Plug } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP, HISTORY } from './data/dummy'
@@ -356,7 +357,11 @@ export default function App() {
       <Sidebar active={active} onSelect={navigate} terbuka={sidebarTerbuka} t={t} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar
+        <BatasGalat
+          judul="Bagian atas aplikasi gagal ditampilkan"
+          pesan="Navigasi dan tombol pemberitahuan tidak bisa ditampilkan. Isi halaman di bawahnya masih bisa dipakai."
+        >
+          <TopBar
           onOpenMenu={() => setDrawerOpen(true)}
           menuOpen={drawerOpen}
           sidebarTerbuka={sidebarTerbuka}
@@ -382,7 +387,8 @@ export default function App() {
             else if (n.jenis === 'riwayat') navigate('riwayat')
           }}
           t={t}
-        />
+          />
+        </BatasGalat>
         <MobileDrawer
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
@@ -391,6 +397,10 @@ export default function App() {
           t={t}
         />
 
+        <BatasGalat
+          judul="Isi halaman gagal ditampilkan"
+          pesan="Terjadi kesalahan saat menampilkan bagian ini. Coba pindah ke menu lain lewat navigasi, atau muat ulang halaman."
+        >
         <main
           id="konten"
           className="flex-1 px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-[clamp(1.25rem,1rem+1vw,2.25rem)]"
@@ -509,7 +519,12 @@ export default function App() {
             ) : null}
           </div>
         </main>
+        </BatasGalat>
 
+        <BatasGalat
+          judul="Bagian bawah halaman gagal ditampilkan"
+          pesan="Keterangan kaki halaman tidak bisa ditampilkan. Isi halaman di atasnya masih bisa dipakai."
+        >
         <footer className="border-t border-line-200 bg-white px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-5">
           <div className="mx-auto flex w-full max-w-[86rem] flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <p className="text-[0.8rem] font-semibold text-navy-700">
@@ -545,6 +560,7 @@ export default function App() {
             </p>
           </div>
         </footer>
+        </BatasGalat>
       </div>
       </div>
     </>

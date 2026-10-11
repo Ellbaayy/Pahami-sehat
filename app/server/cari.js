@@ -225,14 +225,6 @@ function bersihkan(teks) {
 }
 
 /**
- * Kata penting dari pertanyaan — sekarang tinggal di server/kataKunci.js supaya
- * aturan kata ganti orang dan kata umum hanya ada di SATU tempat. Dulu daftar
- * di sini tidak memuat "saya", "kepada", atau "menderita", sehingga penyaring
- * relevansi ikut buta terhadap kata yang justru merusak pencarian.
- */
-export { kataPenting }
-
-/**
  * Saring artikel supaya yang tidak nyambung tidak ikut.
  * Kata penting wajib muncul di JUDUL — pernah kejadian pencarian "demam berdarah"
  * memunculkan artikel film dan artikel Ebola karena isinya menyebut istilah itu.

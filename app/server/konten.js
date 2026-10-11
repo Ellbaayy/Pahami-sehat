@@ -54,6 +54,8 @@ import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { potongKalimat, butirDari } from './teks.js'
+
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
 
@@ -192,31 +194,6 @@ function layakSebagaiRingkasan(p) {
   if (/\b(?:abad|teori|peneliti|profesor)\b/i.test(p)) return false
   if (/^(seorang|menurut|berdasarkan|dalam\s+buku|pada\s+abad|teori)/i.test(p)) return false
   return true
-}
-
-/** Potong di batas kalimat supaya tidak menggantung. */
-function potongKalimat(teks, maks) {
-  const t = String(teks ?? '').trim()
-  if (t.length <= maks) return t
-  const potong = t.slice(0, maks)
-  const titik = Math.max(potong.lastIndexOf('. '), potong.lastIndexOf('? '), potong.lastIndexOf('! '))
-  if (titik > maks * 0.5) return potong.slice(0, titik + 1)
-  // Tidak ada batas kalimat di paruh kedua: mundur ke batas KATA. Berhenti di
-  // tengah kata pernah menghasilkan teks seperti "…kurang disukai ba".
-  const spasi = potong.lastIndexOf(' ')
-  const rapi = (spasi > 0 ? potong.slice(0, spasi) : potong).replace(/[\s,;:\-–—]+$/, '')
-  return `${rapi}…`
-}
-
-/** Ambil kalimat-kalimat awal sebagai butir ringkas (bukan karangan). */
-function butirDari(teks, maks = 3) {
-  return String(teks ?? '')
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    // wajib diakhiri tanda baca: kalimat sisa dari teks yang terpotong
-    // (mis. "Jika aktivitas tersebut baik, tentunya p") hanya membingungkan.
-    .filter((s) => s.length > 25 && s.length < 110 && /[.!?]$/.test(s))
-    .slice(0, maks)
 }
 
 /* ----------------------------------------------- LANGKAH: Cari Informasi -- */

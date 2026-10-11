@@ -124,10 +124,15 @@ export function nadaKalimat(kalimat, posisi = {}) {
 }
 
 /**
- * Potong teks jadi kalimat-kalimat yang layak dibacakan.
+ * Pecah teks jadi kalimat-kalimat yang layak dibacakan.
  * Kalimat yang sangat pendek digabung supaya tidak ada bagian yang terputus-putus.
+ *
+ * CATATAN NAMA: dulu fungsi ini bernama `potongKalimat`, sama seperti fungsi
+ * pemotong teks di server/teks.js — padahal tugasnya berbeda (memecah jadi
+ * daftar kalimat, bukan memotong panjang). Nama yang sama untuk dua tugas
+ * berbeda mudah tertukar saat dirawat, jadi sekarang dinamai `pecahKalimat`.
  */
-export function potongKalimat(teks) {
+export function pecahKalimat(teks) {
   const bersih = String(teks ?? '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -162,7 +167,7 @@ async function buatBagian(tts, kalimat, opsi) {
  * @returns {Promise<Buffer>}
  */
 export async function buatSuara(teks, { bahasa = 'id' } = {}) {
-  const kalimat = potongKalimat(teks)
+  const kalimat = pecahKalimat(teks)
   if (!kalimat.length) throw new Error('Tidak ada teks untuk dibacakan.')
 
   const suara = pilihSuara(bahasa, teks)
