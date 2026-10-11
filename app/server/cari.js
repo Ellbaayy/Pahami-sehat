@@ -16,6 +16,8 @@
  * Semua yang ditampilkan adalah URL nyata yang bisa dibuka pengguna.
  */
 
+import { kataPenting } from './kataKunci.js'
+
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
 
@@ -222,21 +224,13 @@ function bersihkan(teks) {
   return baris.join('\n').slice(0, BATAS_ISI)
 }
 
-/** Kata penting dari pertanyaan (buang kata tanya dan kata umum). */
-const KATA_UMUM = new Set([
-  'apa', 'itu', 'yang', 'dan', 'atau', 'untuk', 'dari', 'ke', 'di', 'pada', 'dengan', 'adalah',
-  'berapa', 'bagaimana', 'kapan', 'mengapa', 'kenapa', 'siapa', 'dimana', 'mana', 'ini',
-  'the', 'what', 'how', 'when', 'why', 'who', 'which', 'is', 'are', 'of', 'to', 'in', 'on',
-  'for', 'and', 'or', 'bisa', 'dapat', 'harus', 'tidak', 'kasus', 'tahun', 'terbaru', 'data',
-])
-
-function kataPenting(teks) {
-  return String(teks)
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .split(/\s+/)
-    .filter((k) => k.length > 3 && !KATA_UMUM.has(k))
-}
+/**
+ * Kata penting dari pertanyaan — sekarang tinggal di server/kataKunci.js supaya
+ * aturan kata ganti orang dan kata umum hanya ada di SATU tempat. Dulu daftar
+ * di sini tidak memuat "saya", "kepada", atau "menderita", sehingga penyaring
+ * relevansi ikut buta terhadap kata yang justru merusak pencarian.
+ */
+export { kataPenting }
 
 /**
  * Saring artikel supaya yang tidak nyambung tidak ikut.
@@ -248,6 +242,56 @@ function relevankah(item, kata) {
   const judul = String(item.judul ?? '').toLowerCase()
   const isi = String(item.ringkas ?? '').toLowerCase()
   return kata.some((k) => judul.includes(k)) && kata.some((k) => isi.includes(k))
+}
+
+/**
+ * Kata yang menandakan sebuah artikel memang membahas kesehatan.
+ *
+ * KENAPA PERLU: pencarian Wikipedia mencocokkan huruf, bukan makna, sehingga
+ * istilah yang sah sering menemukan artikel yang sama sekali lain topiknya.
+ * Bukti terukur dari API Wikipedia Indonesia:
+ *   "pusing"  -> "Syahrini", "Cowok Bikin Pusing", "Ateng Bikin Pusing"
+ *   "mual"    -> "Aik Mual, Praya, Lombok Tengah"
+ *   "bengkak" -> "Bengkak, Wongsorejo, Banyuwangi", "Nematoda bengkak akar"
+ *   "kelelahan" -> "Perunggu (grup musik)", "Bahlil Lahadalia"
+ *
+ * Cara membedakannya: artikel kesehatan hampir selalu memakai kata seperti
+ * "penyakit", "gejala", "kondisi", "tubuh" di kalimat pertamanya, sedangkan
+ * artikel tentang orang/tempat/lagu tidak. Diuji ke 16 istilah: seluruh
+ * artikel yang salah tersaring, seluruh artikel yang benar tetap lolos.
+ *
+ * CATATAN: kata di sini TIDAK boleh terlalu pendek. "sel" pernah dipakai dan
+ * ikut cocok dengan "selatan" dan "selesai" — jadi "sel darah"/"sel tubuh"
+ * yang dipakai. Pencocokan juga memakai BATAS KATA, bukan potongan huruf.
+ */
+const KONTEKS_KESEHATAN = [
+  'penyakit', 'kondisi', 'gejala', 'tubuh', 'kesehatan', 'infeksi', 'sensasi',
+  'peradangan', 'medis', 'obat', 'klinis', 'kelainan', 'sakit', 'nyeri',
+  'gatal', 'perawatan', 'pengobatan', 'virus', 'bakteri', 'darah',
+  'jaringan', 'organ', 'sindrom', 'diagnosis', 'pasien', 'dokter', 'kulit',
+  'otot', 'saraf', 'pernapasan', 'pencernaan', 'imun', 'gizi', 'vitamin',
+  'pencegahan', 'terapi', 'herbal', 'tanaman obat', 'sel darah', 'sel tubuh',
+]
+
+const POLA_KONTEKS = KONTEKS_KESEHATAN.map((k) => ({
+  kata: k,
+  pola: new RegExp(`(?<!\\p{L})${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?!\\p{L})`, 'u'),
+}))
+
+/**
+ * Apakah artikel ini benar-benar membahas kesehatan?
+ *
+ * @param {object} item - hasil pencarian (judul, ringkas/isi)
+ * @param {string[]} kecuali - kata yang TIDAK dihitung sebagai konteks.
+ *   Ini penting: tanpa ini, artikel "Daun gatal" lolos hanya karena judulnya
+ *   memuat kata "gatal" — kata yang kebetulan juga jadi bahan pencarian.
+ *   Yang kita cari adalah bukti kesehatan DI LUAR kata yang sudah dicari.
+ */
+function berkonteksKesehatan(item, kecuali = []) {
+  const teks = `${item.judul ?? ''} ${item.ringkas ?? ''} ${item.isi ?? ''}`.toLowerCase()
+  if (!teks.trim()) return false
+  const larangan = new Set(kecuali.map((k) => String(k).toLowerCase()))
+  return POLA_KONTEKS.some(({ kata, pola }) => !larangan.has(kata) && pola.test(teks))
 }
 
 /** Cari artikel Wikipedia Indonesia yang relevan. */
@@ -321,6 +365,12 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2 } = {}) {
   const tersimpan = ambilSimpanan(kata0)
   if (tersimpan) return tersimpan
 
+  // Yang dikirim ke Wikipedia adalah KATA KUNCI, bukan kalimat pengguna apa
+  // adanya. Dulu kalimat utuh dikirim, dan hasilnya artikel yang tidak
+  // nyambung: "...saya sering merasa lemas" menghasilkan "Charles Darwin",
+  // "saya menderita gatal-gatal..." menghasilkan "Gangguan obsesif–kompulsif".
+  // Sekarang bahan pencariannya sudah dipilih di rute (lihat kataKunci.js) dan
+  // tiba di sini sebagai istilah pendek seperti "gatal" atau "kelelahan".
   let wiki = await cariWikipedia(kata0, maksArtikel).catch(() => [])
 
   // Kalau kosong, kemungkinan besar karena pembatasan Wikipedia — bukan karena
@@ -333,10 +383,17 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2 } = {}) {
   }
 
   const kata = kataPenting(kata0)
-  const relevan = wiki.filter((h) => relevankah(h, kata))
+  const relevan = wiki.filter((h) => relevankah(h, kata) && berkonteksKesehatan(h, kata))
 
-  // kalau penyaringan terlalu ketat, pakai hasil teratas saja daripada kosong
-  const dipakai = relevan.length ? relevan : wiki.slice(0, 1)
+  // Kalau tidak ada satu pun hasil yang menyentuh kata kunci, LEBIH BAIK
+  // mengembalikan kosong daripada menyodorkan artikel teratas.
+  //
+  // Ini pernah jadi sumber jawaban yang menyesatkan: pertanyaan soal gatal
+  // dijawab dengan sumber tentang OCD, dan model terpaksa berkata "sumber yang
+  // ada hanya membahas gangguan obsesif-kompulsif". Modelnya jujur, tapi kita
+  // sendiri yang menyodorkan sumber salah. Dengan mengosongkan di sini, model
+  // akan mengatakan informasi belum ditemukan — dan itu jawaban yang benar.
+  const dipakai = relevan
 
   // referensi resmi dari artikel teratas
   const ref = await referensiResmi(dipakai[0]?.judul)

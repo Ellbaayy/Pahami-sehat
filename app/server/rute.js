@@ -32,6 +32,7 @@ import {
   promptVerifikasiDenganCari,
 } from './prompts.js'
 import { cariInternet } from './cari.js'
+import { kataKunciPencarian } from './kataKunci.js'
 import { kontenHarianLengkap } from './konten.js'
 import { bahasaJawaban } from './bahasa.js'
 
@@ -119,87 +120,27 @@ function ringkasHasilCari(hasil = []) {
 }
 
 /**
- * Kata kunci cadangan untuk pencarian.
+ * Cari sumber untuk sebuah pertanyaan.
  *
- * Kalau pengguna bertanya dalam bahasa daerah, kata kuncinya juga bahasa
- * daerah — dan artikel kesehatan resmi hampir selalu berbahasa Indonesia,
- * sehingga pencariannya kosong. Akibatnya model tidak punya bahan dan
- * terpaksa menolak menjawab, padahal sebenarnya mampu.
+ * Bahan pencariannya dipilih oleh kataKunci.js — SATU tempat untuk seluruh
+ * aturan (kata ganti orang, pemetaan kata keluhan, istilah kesehatan).
  *
- * Solusinya: kalau pencarian pertama tidak menghasilkan apa-apa, cari ulang
- * memakai istilah Indonesia yang setara. Istilah medisnya sendiri biasanya
- * sama (mis. "demam berdarah"), jadi cukup mengambil kata yang dikenali.
- */
-function kataKunciIndonesia(teks) {
-  const bersih = String(teks ?? '')
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-  // Istilah kesehatan, diurutkan dari yang paling khusus ke paling umum.
-  // Yang dipakai hanya SATU istilah terpanjang — bukan gabungan beberapa.
-  // Alasannya: gabungan seperti "demam berdarah demam gejala" justru membuat
-  // pencarian kosong, sedangkan "demam berdarah" saja sudah menemukan
-  // artikel yang tepat. Kata umum seperti "gejala" tidak perlu ikut.
-  const ISTILAH = [
-    'demam berdarah', 'kencing manis', 'tekanan darah', 'kesehatan mental',
-    'rumah sakit', 'tuberkulosis', 'kolesterol', 'hipertensi', 'pencegahan',
-    'pengobatan', 'imunisasi', 'puskesmas', 'stunting', 'diabetes', 'kanker',
-    'stroke', 'anemia', 'malaria', 'vitamin', 'kehamilan', 'depresi', 'jantung',
-    'dengue', 'asma', 'gizi', 'obat', 'vaksin', 'diare', 'batuk', 'demam',
-    'hamil', 'bayi', 'anak', 'tbc', 'dbd', 'gejala',
-  ]
-
-  const ketemu = ISTILAH.filter((k) => bersih.includes(k))
-  if (ketemu.length) {
-    // paling panjang = paling khusus (mis. "demam berdarah" menang atas "demam")
-    return ketemu.sort((a, b) => b.length - a.length)[0]
-  }
-
-  // tidak ada istilah yang dikenali: buang kata tanya & kata perintah dari
-  // pelbagai bahasa, sisakan yang paling mungkin berupa istilah
-  const BUANG = new Set([
-    'apa', 'itu', 'yang', 'dan', 'atau', 'untuk', 'dari', 'ke', 'di', 'pada',
-    'dengan', 'adalah', 'berapa', 'bagaimana', 'kapan', 'mengapa', 'kenapa',
-    'siapa', 'dimana', 'mana', 'ini', 'tolong', 'coba', 'jelaskan', 'terangkan',
-    'sebutkan', 'nganggo', 'ngangge', 'make', 'basa', 'bahasa', 'jo', 'bahaso',
-    'dalam', 'pakai', 'menggunakan', 'dong', 'ya', 'kok', 'terangno',
-    'terangin', 'terangkeun', 'jalehkan', 'sakeudeung', 'mangga',
-  ])
-  const sisa = bersih.split(' ').filter((k) => k.length > 3 && !BUANG.has(k))
-  return sisa.slice(0, 2).join(' ')
-}
-
-/**
- * Cari sumber untuk sebuah pertanyaan, dengan cadangan bahasa Indonesia.
+ * Kalimat pengguna TIDAK lagi dipakai sebagai kandidat pencarian. Dulu itu
+ * dilakukan sebagai cadangan, dan hasilnya selalu artikel yang tidak nyambung:
+ * "...saya sering merasa lemas" menghasilkan "Arjuna" dan "Hantu Longga",
+ * "saya menderita gatal-gatal..." menghasilkan "Siproheptadin". Kalau istilah
+ * yang dipilih tidak menemukan apa-apa, lebih baik mengembalikan kosong dan
+ * membiarkan model berkata jujur bahwa sumbernya belum ditemukan.
  *
  * @param {string} teks - pertanyaan/teks pengguna apa adanya
- * @param {{ kodeAsal?: string|null }} opsi
  * @returns {Promise<{ hasil: Array, dipakaiKataKunci: string|null }>}
  */
-async function cariDenganCadangan(teks, { kodeAsal = null } = {}) {
-  const kunci = kataKunciIndonesia(teks)
-  const asli = String(teks ?? '').trim()
+async function cariDenganCadangan(teks) {
+  const kunci = kataKunciPencarian(teks)
+  if (!kunci) return { hasil: [], dipakaiKataKunci: null }
 
-  // Urutan pencarian: istilah Indonesia dulu, baru pertanyaan asli.
-  //
-  // Alasannya dua:
-  //   1. Kalau pengguna menulis bahasa daerah, pertanyaan aslinya berisi kata
-  //      daerah sehingga pencarian hampir selalu kosong — dan tiap pencarian
-  //      kosong memakan waktu (percobaan ulang + jeda 4 detik).
-  //   2. Bahkan untuk pertanyaan Indonesia biasa, istilah pendek seperti
-  //      "demam berdarah" justru lebih tepat daripada kalimat panjang
-  //      "Apa gejala demam berdarah? Terangno nganggo basa Jawa.".
-  const kandidat = []
-  if (kunci && kunci.toLowerCase() !== asli.toLowerCase()) kandidat.push(kunci)
-  kandidat.push(asli)
-
-  for (const k of kandidat) {
-    const { hasil } = await cariInternet(k)
-    if (hasil.length) return { hasil, dipakaiKataKunci: k === asli ? null : k }
-  }
-  return { hasil: [], dipakaiKataKunci: null }
+  const { hasil } = await cariInternet(kunci)
+  return { hasil, dipakaiKataKunci: hasil.length ? kunci : null }
 }
 
 /** Bungkus handler async supaya error-nya tertangkap middleware error. */
@@ -305,7 +246,7 @@ rute.post('/api/tanya', bungkus(async (req, res) => {
   }
 
   // cari di internet dulu supaya jawabannya berbasis sumber nyata
-  const { hasil: hasilCari } = await cariDenganCadangan(pertanyaan, { kodeAsal: bhs.kodeAsal })
+  const { hasil: hasilCari } = await cariDenganCadangan(pertanyaan)
 
   const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
   const hasil = await chat({ messages: [
@@ -329,7 +270,7 @@ rute.post('/api/sederhanakan', bungkus(async (req, res) => {
   // menemukan istilahnya tanpa membuang waktu pada teks panjang.
   // Kalau teksnya bahasa daerah, pencarian itu kosong, jadi dipakai cadangan
   // istilah Indonesia lewat cariDenganCadangan.
-  const { hasil: hasilCari } = await cariDenganCadangan(teks.slice(0, 120), { kodeAsal: bhs.kodeAsal })
+  const { hasil: hasilCari } = await cariDenganCadangan(teks.slice(0, 120))
 
   const p = promptSederhanakanDenganCari({ teks, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
   const hasil = await chat({ messages: [
@@ -349,7 +290,7 @@ rute.post('/api/verifikasi', bungkus(async (req, res) => {
   const tingkat = rapikanTingkat(req.body?.tingkat)
   const bhs = pilihBahasa(klaim, rapikanBahasa(req.body?.bahasa))
 
-  const { hasil: hasilCari } = await cariDenganCadangan(klaim, { kodeAsal: bhs.kodeAsal })
+  const { hasil: hasilCari } = await cariDenganCadangan(klaim)
 
   const p = promptVerifikasiDenganCari({ klaim, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
   const hasil = await chat({ messages: [
@@ -421,7 +362,7 @@ rute.post('/api/tanya/stream', bungkus(async (req, res) => {
 
     // 1) cari di internet dulu
     kirim('status', { pesan: 'Mencari sumber terpercaya…' })
-    const { hasil: hasilCari } = await cariDenganCadangan(pertanyaan, { kodeAsal: bhs.kodeAsal })
+    const { hasil: hasilCari } = await cariDenganCadangan(pertanyaan)
     kirim('sumber', { hasil: ringkasHasilCari(hasilCari) })
 
     // 2) baru minta model menyusun jawaban dari hasil itu
