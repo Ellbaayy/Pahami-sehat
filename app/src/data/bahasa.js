@@ -161,11 +161,30 @@ const KAMUS = {
     'pindai.privasi3': 'Teks hanya dikirim ke server AI kalau kamu sendiri menekan “Sederhanakan” atau “Tanya AI soal ini”.',
 
     // kuesioner
+    'kuis.eyebrow': 'Kuesioner Kesehatan',
     'kuis.judul': 'Kuesioner HLS-SF12',
-    'kuis.sub': 'Versi ringkas. Semua perhitungan dilakukan lokal di peramban — tidak ada jawaban yang dikirim ke mana pun.',
+    'kuis.sub': 'Kuesioner ini berisi 12 pertanyaan untuk menilai seberapa mudah informasi kesehatan dipahami oleh Anda.',
+    'kuis.waktu': '± 5 menit',
+    'kuis.instruksi': 'Pilih salah satu jawaban yang paling sesuai dengan kondisi Anda.',
+    'kuis.pertanyaanDari': 'Pertanyaan {n} dari {b}',
+    'kuis.sebelumnya': 'Sebelumnya',
+    'kuis.selanjutnya': 'Selanjutnya',
     'kuis.lihat': 'Lihat hasil',
     'kuis.ulangi': 'Ulangi',
     'kuis.hasil': 'Literasi kesehatan',
+    'kuis.progres': 'Progres Kuesioner',
+    'kuis.selesai': '{n} dari {b} pertanyaan selesai',
+    'kuis.terjawabDari': '{a} dari {b} terjawab',
+
+    // empat pilihan jawaban + subteksnya
+    'kuis.opsi0': 'Sangat sulit',
+    'kuis.opsi0Sub': 'Saya hampir tidak mengerti sama sekali.',
+    'kuis.opsi1': 'Kadang sulit',
+    'kuis.opsi1Sub': 'Saya sering bingung, perlu waktu lebih lama untuk memahami.',
+    'kuis.opsi2': 'Mudah',
+    'kuis.opsi2Sub': 'Saya cukup mudah memahami sebagian besar informasi.',
+    'kuis.opsi3': 'Sangat mudah',
+    'kuis.opsi3Sub': 'Saya sangat mudah memahami informasi kesehatan.',
 
     // obrolan tersimpan
     'sesi.eyebrow': 'Arsip',
@@ -240,10 +259,17 @@ const KAMUS = {
     // tanya AI (tambahan)
 
     // kuesioner (tambahan)
-    'kuis.eyebrow': 'Alat ukur',
-    'kuis.pernyataan': 'Pernyataan literasi kesehatan',
+    'kuis.tentang': 'Tentang Kuesioner',
+    'kuis.tentangIsi':
+      'Kuesioner HLS-SF12 mengukur tingkat literasi kesehatan Anda, sehingga kami dapat memberikan informasi kesehatan yang sesuai dengan kebutuhan Anda.',
+    'kuis.tips': 'Tips Mengisi',
+    'kuis.tip1': 'Pilih jawaban yang paling sesuai dengan pengalaman Anda.',
+    'kuis.tip2': 'Tidak ada jawaban benar atau salah.',
+    'kuis.tip3': 'Jawaban Anda bersifat rahasia dan hanya digunakan untuk meningkatkan kualitas layanan.',
+    'kuis.saranDari':
+      'Semakin mudah Anda memahami informasi kesehatan, semakin baik keputusan untuk kesehatan Anda.',
     'kuis.hasilTampil': 'Hasil akan tampil di sini',
-    'kuis.hasilTampilSub': 'Jawab kelima pernyataan di atas, lalu tekan Lihat hasil.',
+    'kuis.hasilTampilSub': 'Jawab ke-12 pertanyaan di atas, lalu tekan Lihat hasil.',
     'kuis.baik': 'Baik',
     'kuis.sedang': 'Sedang',
     'kuis.perluDukungan': 'Perlu dukungan',
@@ -444,11 +470,29 @@ const KAMUS = {
     'pindai.privasi2': 'No photo, resulting text, or scan history is stored on the server. Closing this page erases everything.',
     'pindai.privasi3': 'The text is only sent to the AI server when you yourself press “Simplify” or “Ask AI about this”.',
 
+    'kuis.eyebrow': 'Health Questionnaire',
     'kuis.judul': 'HLS-SF12 Questionnaire',
-    'kuis.sub': 'Short version. All calculation happens locally in your browser — no answers are sent anywhere.',
+    'kuis.sub': 'This questionnaire has 12 questions to assess how easily you understand health information.',
+    'kuis.waktu': '± 5 minutes',
+    'kuis.instruksi': 'Choose the one answer that best matches your condition.',
+    'kuis.pertanyaanDari': 'Question {n} of {b}',
+    'kuis.sebelumnya': 'Previous',
+    'kuis.selanjutnya': 'Next',
     'kuis.lihat': 'See result',
     'kuis.ulangi': 'Retry',
     'kuis.hasil': 'Health literacy',
+    'kuis.progres': 'Questionnaire Progress',
+    'kuis.selesai': '{n} of {b} questions completed',
+    'kuis.terjawabDari': '{a} of {b} answered',
+
+    'kuis.opsi0': 'Very difficult',
+    'kuis.opsi0Sub': 'I hardly understand it at all.',
+    'kuis.opsi1': 'Sometimes difficult',
+    'kuis.opsi1Sub': 'I often get confused and need more time to understand.',
+    'kuis.opsi2': 'Easy',
+    'kuis.opsi2Sub': 'I understand most of the information quite easily.',
+    'kuis.opsi3': 'Very easy',
+    'kuis.opsi3Sub': 'I understand health information very easily.',
 
     'sesi.eyebrow': 'Archive',
     'sesi.judul': 'Conversation History',
@@ -515,10 +559,17 @@ const KAMUS = {
     'tips.tutup': 'Close',
     'tips.sumber': 'Source',
 
-    'kuis.eyebrow': 'Measuring tool',
-    'kuis.pernyataan': 'Health literacy statements',
+    'kuis.tentang': 'About the Questionnaire',
+    'kuis.tentangIsi':
+      'The HLS-SF12 questionnaire measures your health literacy level, so we can give you health information that matches your needs.',
+    'kuis.tips': 'Tips for Filling It In',
+    'kuis.tip1': 'Choose the answer that best matches your experience.',
+    'kuis.tip2': 'There are no right or wrong answers.',
+    'kuis.tip3': 'Your answers are confidential and used only to improve service quality.',
+    'kuis.saranDari':
+      'The easier you understand health information, the better the decisions you make for your health.',
     'kuis.hasilTampil': 'Your result will appear here',
-    'kuis.hasilTampilSub': 'Answer all five statements above, then press See result.',
+    'kuis.hasilTampilSub': 'Answer all 12 questions above, then press See result.',
     'kuis.baik': 'Good',
     'kuis.sedang': 'Moderate',
     'kuis.perluDukungan': 'Needs support',

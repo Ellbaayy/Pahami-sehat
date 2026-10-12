@@ -96,12 +96,33 @@ export const HEALTH_TIP = {
   source: 'Kemenkes RI',
 }
 
+/**
+ * 12 item HLS-SF12 (Health Literacy Short Form 12).
+ *
+ * BUKAN karangan: daftar ini diperoleh dari dua paper validasinya — Duong et
+ * al. (2019, HLRP) untuk 12 item aslinya, dan jurnal adaptasi bahasa Indonesia
+ * untuk terjemahannya. Rinciannya ada di docs/sumber-hls-sf12.txt.
+ *
+ * Kalimat pembuka skala aslinya ("Dalam skala dari sangat mudah hingga sangat
+ * sulit, seberapa mudah bagi Anda untuk …") sengaja dipindah ke UI sebagai
+ * pilihan radio, sehingga yang tersimpan tinggal "Seberapa mudah bagi Anda
+ * untuk …?" — maknanya tidak berubah, hanya tidak diulang 12 kali di layar.
+ *
+ * Sengaja TIDAK diterjemahkan ke Inggris: ini instrumen dengan kalimat baku,
+ * menerjemahkan ulang membuat skornya tidak bisa dibandingkan dengan rujukan.
+ */
 export const QUIZ_ITEMS = [
-  'Saya kesulitan memahami informasi kesehatan yang saya baca.',
-  'Saya tahu di mana menemukan informasi kesehatan yang tepercaya.',
-  'Istilah medis membuat saya bingung.',
-  'Saya bisa menilai apakah suatu informasi kesehatan itu benar.',
-  'Saya bisa menjelaskan kembali informasi yang diberikan tenaga kesehatan.',
+  'Seberapa mudah bagi Anda untuk menemukan informasi tentang penanganan atau perawatan penyakit yang Anda khawatirkan?',
+  'Seberapa mudah bagi Anda untuk memahami selebaran yang disertakan dengan obat Anda?',
+  'Seberapa mudah bagi Anda untuk menilai keuntungan dan kerugian dari pilihan penanganan atau perawatan yang berbeda?',
+  'Seberapa mudah bagi Anda untuk memanggil ambulans dalam keadaan darurat?',
+  'Seberapa mudah bagi Anda untuk menemukan informasi tentang cara mengelola masalah kesehatan mental seperti stres atau depresi?',
+  'Seberapa mudah bagi Anda untuk mengerti mengapa Anda membutuhkan pemeriksaan kesehatan (seperti pemeriksaan payudara, tes gula darah, tekanan darah)?',
+  'Seberapa mudah bagi Anda untuk menilai vaksinasi mana yang mungkin Anda perlukan?',
+  'Seberapa mudah bagi Anda untuk memutuskan bagaimana Anda dapat melindungi diri dari penyakit berdasarkan saran dari keluarga dan teman?',
+  'Seberapa mudah bagi Anda untuk mencari tahu tentang aktivitas (seperti meditasi, olahraga, jalan kaki, Pilates, dll.) yang baik untuk kesehatan mental Anda?',
+  'Seberapa mudah bagi Anda untuk mengerti informasi di media (seperti internet, koran, majalah) tentang bagaimana menjadi lebih sehat?',
+  'Seberapa mudah bagi Anda untuk menilai perilaku sehari-hari (seperti kebiasaan minum dan makan, olahraga, dll.) yang berhubungan dengan kesehatan Anda?',
+  'Seberapa mudah bagi Anda untuk bergabung dengan klub olahraga atau kelas olahraga jika Anda mau?',
 ]
 
-export const QUIZ_SCALE = ['Sangat sulit', 'Kadang sulit', 'Mudah', 'Sangat mudah']
