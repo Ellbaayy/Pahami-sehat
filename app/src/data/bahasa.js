@@ -45,8 +45,12 @@ const KAMUS = {
     'umum.poinKunciCatatan': 'Daftar ini ditandai lebih dulu sebelum bahasa disederhanakan — bukti kelengkapan informasi terjaga.',
     'umum.suaraGagal': 'Gagal memutar suara.',
     'umum.tidakAdaTeks': 'Tidak ada teks untuk dibacakan.',
+    'umum.umurPembaca': 'Perkiraan umur pembaca {usia}',
     /** Dipakai untuk memilih format tanggal yang sesuai bahasa antarmuka. */
     'umum.kodeLokal': 'id-ID',
+
+    /** Judul tab peramban — dipasang dari TopBar supaya ikut bahasa antarmuka. */
+    'app.judul': 'Dashboard — Pahami Sehat',
 
     // beranda
     'beranda.sapa': 'Halo!',
@@ -82,7 +86,7 @@ const KAMUS = {
     'tanya.pindaiJudul': 'Ubah foto jadi teks',
     'tanya.pindaiSub': 'Baca teks dari foto label obat, hasil lab, atau resep. Semuanya dibaca di perangkat ini, tidak diunggah ke mana pun.',
     'tanya.tutupPindai': 'Tutup pemindai',
-    'pindai.keKotak': 'Teksnya sudah masuk ke kotak isian di atas — periksa dan betulkan dulu, baru kirim.',
+    'pindai.keKotak': 'Teksnya sudah masuk ke kotak isian di atas — periksa dan betulkan dulu, baru kirim. Pembacaan suara memakai suara bawaan peramban.',
 
     // sumber
     'sumber.judul': 'Sumber jawaban',
@@ -103,7 +107,9 @@ const KAMUS = {
     'sed.proses': 'Menandai poin kunci lalu menyederhanakan bahasa…',
 
     // verifikasi
+    'ver.eyebrow': 'Fitur inti',
     'ver.judul': 'Cek klaim kesehatan',
+    'ver.contoh': 'Vaksin MMR menyebabkan autisme pada anak.',
     'ver.sub': "Tempel klaim dari broadcast atau media sosial. Model menilai apakah klaim itu didukung dokumen resmi — dan berani menjawab 'belum bisa dipastikan' kalau memang tidak ada dasarnya.",
     'ver.placeholder': 'Tempel klaim atau broadcast di sini…',
     'ver.tombol': 'Periksa klaim',
@@ -118,6 +124,28 @@ const KAMUS = {
     'suara.ariaMulai': 'Mulai perekaman suara',
     'suara.ariaHentikan': 'Hentikan perekaman',
     'suara.ariaTidakDidukung': 'Pengenalan suara tidak didukung peramban ini',
+    // pesan galat mikrofon — dipetakan dari kode galat peramban di lib/useSuara.js
+    'suara.galatTidakDidukung': 'Peramban ini belum mendukung pengenalan suara. Coba Chrome atau Edge.',
+    'suara.galatIzin': 'Izin mikrofon ditolak. Izinkan akses mikrofon di peramban, lalu coba lagi.',
+    'suara.galatTidakAdaSuara': 'Tidak ada suara yang terdengar. Coba bicara lagi lebih dekat ke mikrofon.',
+    'suara.galatTanpaMikrofon': 'Mikrofon tidak terdeteksi. Pastikan ada mikrofon yang terpasang.',
+    'suara.galatDaringDiblokir':
+      'Peramban ini memblokir layanan suara daring, jadi pengenalan suara tidak bisa jalan. Coba di Google Chrome atau Microsoft Edge.',
+    'suara.galatTidakBisaMulai': 'Tidak bisa memulai mikrofon.',
+    'suara.galatUmum': 'Pengenalan suara gagal. Coba lagi.',
+
+    // pesan galat pemindai foto — dari lib/ocr.js
+    'ocr.galatFotoTidakBisaDibuka': 'Foto tidak bisa dibuka.',
+    'ocr.galatUkuranTidakTerbaca': 'Ukuran foto tidak terbaca.',
+    'ocr.galatTidakBisaOlahGambar': 'Peramban ini tidak bisa mengolah gambar.',
+    'ocr.galatBelumAdaFoto': 'Belum ada foto yang dipilih.',
+    'ocr.galatTerlaluBesar': 'Foto terlalu besar ({mb} MB). Batasnya {maks} MB.',
+    'ocr.galatBukanGambar': 'Berkas itu bukan gambar. Pilih foto (JPG, PNG, atau WebP).',
+    'ocr.alasanKelebihanDigit':
+      'Angka ini mungkin kelebihan digit "1" dari tanda titik dua (:) yang salah terbaca.',
+    'ocr.alasanTanpaPemisah':
+      'Rangkaian angka ini panjang dan tanpa pemisah — periksa apakah pemisahnya hilang.',
+    'ocr.alasanPersenSalah': 'Tanda persen tampaknya terbaca sebagai huruf atau angka.',
 
     // pindai foto (OCR di peramban) — dilipat di dalam kotak isian Tanya AI
     'pindai.altPratinjau': 'Pratinjau foto yang akan dipindai',
@@ -304,6 +332,7 @@ const KAMUS = {
 
     // halaman pemuatan
     'load.memuat': 'Memuat Pahami Sehat',
+    'load.menyiapkan': 'Menyiapkan halaman…',
 
     // panel galat
     'galat.judul': 'Bagian ini gagal ditampilkan',
@@ -318,6 +347,7 @@ const KAMUS = {
     'galat.bawahPesan': 'Keterangan kaki halaman tidak bisa ditampilkan. Isi halaman di atasnya masih bisa dipakai.',
 
     // pengaturan
+    'set.eyebrow': 'Preferensi',
     'set.judul': 'Pengaturan',
     'set.sub': 'Disimpan di peramban ini saja. Tidak ada akun, tidak ada server.',
     'set.tingkat': 'Tingkat baca',
@@ -336,6 +366,19 @@ const KAMUS = {
     'tingkat.remaja': 'Remaja',
     'tingkat.dewasa': 'Dewasa',
     'tingkat.lansia': 'Lansia',
+
+    /**
+     * Rentang umur tiap tingkat — teks antarmuka, jadi ikut kamus.
+     *
+     * Sebelumnya rentang ini menempel di src/data/tingkat.js sebagai teks
+     * Indonesia, sehingga mode Inggris menampilkan "Estimated reader age
+     * 9–11 tahun" — separuh Indonesia. Data di tingkat.js tetap dipakai
+     * server/prompt; yang ditampilkan ke pengguna diambil dari sini.
+     */
+    'usia.anak': '9–11 tahun',
+    'usia.remaja': '12–25 tahun',
+    'usia.dewasa': '26–59 tahun',
+    'usia.lansia': '60 tahun ke atas',
   },
 
   en: {
@@ -363,9 +406,12 @@ const KAMUS = {
     'umum.poinKunci': 'Key points preserved',
     'umum.poinKunciCatatan': 'This list is marked first, before the language is simplified — proof that no information was lost.',
     'umum.suaraGagal': 'Could not play the audio.',
+    'umum.umurPembaca': 'Estimated reader age {usia}',
     'umum.tidakAdaTeks': 'There is no text to read aloud.',
     /** Dipakai untuk memilih format tanggal yang sesuai bahasa antarmuka. */
     'umum.kodeLokal': 'en-US',
+
+    'app.judul': 'Dashboard — Pahami Sehat',
 
     'beranda.sapa': 'Hello!',
     'beranda.tanya': 'How can we help?',
@@ -397,7 +443,7 @@ const KAMUS = {
     'tanya.pindaiJudul': 'Turn a photo into text',
     'tanya.pindaiSub': 'Read the text from a photo of a medicine label, lab result, or prescription. Everything is read on this device, never uploaded.',
     'tanya.tutupPindai': 'Close the scanner',
-    'pindai.keKotak': 'The text is now in the box above — check and correct it first, then send.',
+    'pindai.keKotak': 'The text is now in the box above — check and correct it first, then send. Voice playback uses the browser voice.',
 
     'sumber.judul': 'Answer sources',
     'sumber.cekSendiri': 'Check them yourself via the links below — do not just take our word for it.',
@@ -415,7 +461,9 @@ const KAMUS = {
     'sed.label': 'Medical text to simplify',
     'sed.proses': 'Marking key points, then simplifying the wording…',
 
+    'ver.eyebrow': 'Core feature',
     'ver.judul': 'Check health claims',
+    'ver.contoh': 'The MMR vaccine causes autism in children.',
     'ver.sub': "Paste a claim from a broadcast or social media. The model judges whether it is supported by official documents — and will say 'cannot be determined' when there is no basis.",
     'ver.placeholder': 'Paste the claim or broadcast here…',
     'ver.tombol': 'Check claim',
@@ -429,6 +477,28 @@ const KAMUS = {
     'suara.ariaMulai': 'Start recording',
     'suara.ariaHentikan': 'Stop recording',
     'suara.ariaTidakDidukung': 'Speech recognition is not supported by this browser',
+    // microphone error messages — mapped from browser error codes in lib/useSuara.js
+    'suara.galatTidakDidukung': 'This browser does not support speech recognition yet. Try Chrome or Edge.',
+    'suara.galatIzin': 'Microphone permission was denied. Allow microphone access in the browser, then try again.',
+    'suara.galatTidakAdaSuara': 'No speech was heard. Try speaking again, closer to the microphone.',
+    'suara.galatTanpaMikrofon': 'No microphone detected. Make sure a microphone is connected.',
+    'suara.galatDaringDiblokir':
+      'This browser blocks the online speech service, so speech recognition cannot run. Try Google Chrome or Microsoft Edge.',
+    'suara.galatTidakBisaMulai': 'Could not start the microphone.',
+    'suara.galatUmum': 'Speech recognition failed. Please try again.',
+
+    // photo scanner error messages — from lib/ocr.js
+    'ocr.galatFotoTidakBisaDibuka': 'The photo could not be opened.',
+    'ocr.galatUkuranTidakTerbaca': 'The photo size could not be read.',
+    'ocr.galatTidakBisaOlahGambar': 'This browser cannot process images.',
+    'ocr.galatBelumAdaFoto': 'No photo has been selected yet.',
+    'ocr.galatTerlaluBesar': 'The photo is too large ({mb} MB). The limit is {maks} MB.',
+    'ocr.galatBukanGambar': 'That file is not an image. Choose a photo (JPG, PNG, or WebP).',
+    'ocr.alasanKelebihanDigit':
+      'This number may have an extra "1" from a colon (:) that was misread.',
+    'ocr.alasanTanpaPemisah':
+      'This run of digits is long and has no separator — check whether the separator was lost.',
+    'ocr.alasanPersenSalah': 'The percent sign appears to have been read as a letter or digit.',
 
     'pindai.altPratinjau': 'Preview of the photo to be scanned',
     'pindai.ganti': 'Change photo',
@@ -599,6 +669,7 @@ const KAMUS = {
     'nav.isiDrawer': 'Health Information for Everyone',
 
     'load.memuat': 'Loading Pahami Sehat',
+    'load.menyiapkan': 'Preparing the page…',
 
     'galat.judul': 'This section failed to display',
     'galat.pesan': 'Something went wrong while displaying this section. The rest of the app still works.',
@@ -611,6 +682,7 @@ const KAMUS = {
     'galat.bawahJudul': 'The bottom of the page failed to display',
     'galat.bawahPesan': 'The footer cannot be shown. The page content above still works.',
 
+    'set.eyebrow': 'Preferences',
     'set.judul': 'Settings',
     'set.sub': 'Stored in this browser only. No account, no server.',
     'set.tingkat': 'Reading level',
@@ -627,6 +699,11 @@ const KAMUS = {
     'tingkat.remaja': 'Teens',
     'tingkat.dewasa': 'Adults',
     'tingkat.lansia': 'Elderly',
+
+    'usia.anak': '9–11 years',
+    'usia.remaja': '12–25 years',
+    'usia.dewasa': '26–59 years',
+    'usia.lansia': '60 years and over',
   },
 }
 

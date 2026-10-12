@@ -48,6 +48,16 @@ export default function DaftarObrolan({
   const tampil = ringkas ? sesi.slice(0, maks) : sesi
   const ada = pilih.length > 0
   const semuaDipilih = sesi.length > 0 && pilih.length === sesi.length
+  /**
+   * Id judul bagian ini — dipakai `aria-labelledby` pada <section>.
+   *
+   * Dulu `aria-labelledby="obrolan-title"` ditulis tetap, tapi di bentuk PENUH
+   * (halaman Riwayat) judulnya tidak dirender sama sekali — jadi id itu tidak
+   * ada dan bagian ini kehilangan namanya. Sekarang id-nya hanya dipasang kalau
+   * judulnya memang ada, dan di bentuk penuh diganti label yang benar-benar
+   * tersedia.
+   */
+  const idJudul = ringkas ? 'obrolan-title' : undefined
 
   const toggle = (id) =>
     setPilih((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
@@ -82,7 +92,7 @@ export default function DaftarObrolan({
 
   if (!sesi.length) {
     return (
-      <section aria-labelledby="obrolan-title">
+      <section aria-labelledby={idJudul} aria-label={idJudul ? undefined : t('sesi.judul')}>
         {kepala}
         <EmptyState
           icon={MessageSquareText}
@@ -97,7 +107,11 @@ export default function DaftarObrolan({
   }
 
   return (
-    <section aria-labelledby="obrolan-title" className="space-y-3">
+    <section
+      aria-labelledby={idJudul}
+      aria-label={idJudul ? undefined : t('sesi.judul')}
+      className="space-y-3"
+    >
       {kepala}
 
       {/* bilah tindakan — hanya di bentuk penuh, dan hanya kalau ada yang dipilih */}

@@ -38,6 +38,30 @@ const OCR = `${DASAR}ocr/`
 const BAHASA = 'ind+eng'
 
 /** Batas foto yang diterima (byte) dan sisi terpanjang setelah diperkecil. */
+/**
+ * Semua pesan berbahasa manusia di berkas ini berupa KUNCI KAMUS, bukan
+ * kalimat jadi — supaya ikut bahasa antarmuka. Yang menerjemahkan adalah
+ * pemanggil (PemindaiFoto), karena hanya pemanggil yang punya `t`.
+ * Kunci yang tidak dikenal dikembalikan apa adanya oleh t(), jadi kalau ada
+ * yang terlewat, yang tampil adalah kuncinya — kelihatan, bukan diam-diam
+ * berbahasa Indonesia di tengah antarmuka Inggris. */
+const GALAT = {
+  fotoTidakBisaDibuka: 'ocr.galatFotoTidakBisaDibuka',
+  ukuranTidakTerbaca: 'ocr.galatUkuranTidakTerbaca',
+  tidakBisaOlahGambar: 'ocr.galatTidakBisaOlahGambar',
+  belumAdaFoto: 'ocr.galatBelumAdaFoto',
+  terlaluBesar: 'ocr.galatTerlaluBesar',
+  bukanGambar: 'ocr.galatBukanGambar',
+}
+
+/** Alasan temuan angka mencurigakan — kunci kamus, sama seperti di atas. */
+const ALASAN = {
+  kelebihanDigit: 'ocr.alasanKelebihanDigit',
+  tanpaPemisah: 'ocr.alasanTanpaPemisah',
+  persenSalah: 'ocr.alasanPersenSalah',
+}
+
+/** Batas ukuran berkas foto. */
 export const MAKS_BYTE = 12 * 1024 * 1024
 /**
  * Batas sisi gambar yang diproses.
@@ -152,7 +176,7 @@ async function buatBitmap(file) {
     const img = new Image()
     await new Promise((selesai, gagal) => {
       img.onload = selesai
-      img.onerror = () => gagal(new Error('Foto tidak bisa dibuka.'))
+      img.onerror = () => gagal(new Error(GALAT.fotoTidakBisaDibuka))
       img.src = url
     })
     return img
@@ -289,7 +313,7 @@ async function siapkanGambar(file) {
   const bitmap = await buatBitmap(file)
   const lebarAsal = bitmap.width || bitmap.naturalWidth
   const tinggiAsal = bitmap.height || bitmap.naturalHeight
-  if (!lebarAsal || !tinggiAsal) throw new Error('Ukuran foto tidak terbaca.')
+  if (!lebarAsal || !tinggiAsal) throw new Error(GALAT.ukuranTidakTerbaca)
 
   const gambar = (skala) => {
     const lebar = Math.max(1, Math.round(lebarAsal * skala))
@@ -318,7 +342,7 @@ async function siapkanGambar(file) {
     canvas.width = lebar
     canvas.height = tinggi
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
-    if (!ctx) throw new Error('Peramban ini tidak bisa mengolah gambar.')
+    if (!ctx) throw new Error(GALAT.tidakBisaOlahGambar)
     ctx.imageSmoothingEnabled = true
     ctx.imageSmoothingQuality = 'high'
     ctx.drawImage(sumber, 0, 0, lebar, tinggi)
@@ -400,18 +424,18 @@ export function periksaAngkaMencurigakan(teks) {
   for (const m of isi.matchAll(/\b\d*(?:111|211|1121|1112)\d*\.?\d*\b/g)) {
     const p = m[0]
     if (p.length >= 4) {
-      tambah(p, 'Angka ini mungkin kelebihan digit "1" dari tanda titik dua (:) yang salah terbaca.')
+      tambah(p, ALASAN.kelebihanDigit)
     }
   }
 
   // 3) angka berkoma panjang tanpa pemisah ribuan yang wajar
   for (const m of isi.matchAll(/\b\d{7,}\b/g)) {
-    tambah(m[0], 'Rangkaian angka ini panjang dan tanpa pemisah — periksa apakah pemisahnya hilang.')
+    tambah(m[0], ALASAN.tanpaPemisah)
   }
 
   // 4) persen yang menempel pada angka lain, mis. "34Yo" atau "34%o"
   for (const m of isi.matchAll(/\b\d{2,3}\s?(?:Yo|96|%o)\b/g)) {
-    tambah(m[0], 'Tanda persen tampaknya terbaca sebagai huruf atau angka.')
+    tambah(m[0], ALASAN.persenSalah)
   }
 
   // CATATAN: sengaja TIDAK ada aturan "angka ini sepertinya kehilangan titik
@@ -476,14 +500,16 @@ export function rapikanTeks(mentah) {
  * @returns {Promise<{teks: string, keyakinan: number, lebar: number, tinggi: number}>}
  */
 export async function pindaiFoto(file, { onProgres, signal } = {}) {
-  if (!file) throw new Error('Belum ada foto yang dipilih.')
+  if (!file) throw new Error(GALAT.belumAdaFoto)
   if (file.size > MAKS_BYTE) {
-    throw new Error(
-      `Foto terlalu besar (${(file.size / 1048576).toFixed(1)} MB). Batasnya ${MAKS_BYTE / 1048576} MB.`,
-    )
+    // Angkanya ikut dibawa di `nilai` supaya pesannya tetap bisa diterjemahkan
+    // UTUH (termasuk besarannya), bukan disambung dari potongan kalimat.
+    const e = new Error(GALAT.terlaluBesar)
+    e.nilai = { mb: (file.size / 1048576).toFixed(1), maks: MAKS_BYTE / 1048576 }
+    throw e
   }
   if (file.type && !file.type.startsWith('image/')) {
-    throw new Error('Berkas itu bukan gambar. Pilih foto (JPG, PNG, atau WebP).')
+    throw new Error(GALAT.bukanGambar)
   }
   if (signal?.aborted) throw new DOMException('Dibatalkan', 'AbortError')
 

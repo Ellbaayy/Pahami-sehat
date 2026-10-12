@@ -67,6 +67,18 @@ export default function ThreadPanel({
 }) {
   const [seretFoto, setSeretFoto] = useState(false)
 
+  /**
+   * Sumber yang DIKUTIP MODEL, dari jawaban terakhir.
+   *
+   * Dulu di sini ditulis `sumber={[]}` — jadi panel sumber selalu menganggap
+   * tidak ada satu pun sumber yang dipakai, dan SEMUA sumber dilabeli
+   * "ditemukan, belum dikutip". Padahal modelnya memang mengembalikan sumber
+   * (diukur: 2 sumber — WHO dan Wikipedia — untuk pertanyaan demam berdarah),
+   * dan itulah bagian yang paling penting: sumber yang benar-benar dipakai.
+   * Sekarang daftar itu diteruskan apa adanya.
+   */
+  const sumberDikutip = [...thread].reverse().find((m) => m.role === 'ai')?.sources ?? []
+
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
@@ -195,7 +207,7 @@ export default function ThreadPanel({
         ) : null}
       </div>
 
-      <SumberJawaban cari={sumberCari} sumber={[]} t={t} />
+      <SumberJawaban cari={sumberCari} sumber={sumberDikutip} t={t} />
       {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
 
       {thread.length === 0 && !loading ? (

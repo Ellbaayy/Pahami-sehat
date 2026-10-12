@@ -46,7 +46,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
-        eyebrow="Preferensi"
+        eyebrow={t('set.eyebrow')}
         title={t('set.judul')}
         description={t('set.sub')}
       />
@@ -61,22 +61,22 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
               aria-label={t('umum.tingkatBaca')}
               className="flex flex-wrap gap-1 rounded-xl border border-line-200 bg-white p-1"
             >
-              {TINGKAT.map((t) => (
+              {TINGKAT.map((lv) => (
                 <button
-                  key={t.kunci}
+                  key={lv.kunci}
                   type="button"
-                  onClick={() => set('level', t.kunci)}
-                  aria-pressed={settings.level === t.kunci}
-                  title={`Perkiraan umur pembaca ${t.usia}`}
+                  onClick={() => set('level', lv.kunci)}
+                  aria-pressed={settings.level === lv.kunci}
+                  title={t('umum.umurPembaca', { usia: t(`usia.${lv.kunci}`) })}
                   className={cn(
                     'h-11 min-w-[3.25rem] whitespace-nowrap rounded-lg px-3 text-[0.85rem] font-bold transition-colors duration-200',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
-                    settings.level === t.kunci
+                    settings.level === lv.kunci
                       ? 'bg-brand-500 text-white'
                       : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800',
                   )}
                 >
-                  {labelTingkat(t.kunci)}
+                  {labelTingkat(lv.kunci)}
                 </button>
               ))}
             </div>

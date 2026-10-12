@@ -5,21 +5,16 @@ import TombolDengar from '../ui/TombolDengar'
 import { TINGKAT } from '../../data/tingkat'
 import { verifikasi } from '../../lib/api'
 
-const CONTOH = 'Vaksin MMR menyebabkan autisme pada anak.'
-
 const VERDICT = {
   didukung: {
-    label: 'Didukung sumber',
     Ikon: ShieldCheck,
     kelas: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   },
   tidak_didukung: {
-    label: 'Tidak didukung sumber',
     Ikon: ShieldAlert,
     kelas: 'border-rose-200 bg-rose-50 text-rose-700',
   },
   tidak_bisa_dipastikan: {
-    label: 'Belum bisa dipastikan',
     Ikon: ShieldQuestion,
     kelas: 'border-amber-200 bg-amber-50 text-amber-800',
   },
@@ -50,7 +45,12 @@ export default function VerifikasiPanel({
     setHasil(null)
     setError(null)
     try {
-      const d = await verifikasi({ klaim: isi, tingkat })
+      // `bahasa` WAJIB ikut. Tanpa ini, klaim yang terlalu pendek atau netral
+      // untuk dipastikan bahasanya (mis. "Vitamin C") selalu dijawab dalam
+      // bahasa Indonesia, walau antarmukanya Inggris — diukur: klaim
+      // "Vitamin C" dengan antarmuka Inggris dijawab Indonesia. Jalur Tanya AI
+      // sudah mengirim ini sejak awal; Cek Klaim ketinggalan.
+      const d = await verifikasi({ klaim: isi, tingkat, bahasa })
       setHasil(d)
     } catch (e) {
       setError({ pesan: e.message, code: e.code })
@@ -65,7 +65,7 @@ export default function VerifikasiPanel({
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
-        eyebrow="Fitur inti"
+        eyebrow={t('ver.eyebrow')}
         title={t('ver.judul')}
         description={t('ver.sub')}
         ilustrasi="verifikasi"
@@ -79,29 +79,29 @@ export default function VerifikasiPanel({
             aria-label={t('umum.tingkatBaca')}
             className="flex flex-wrap gap-1 rounded-xl border border-line-200 bg-white p-1"
           >
-            {TINGKAT.map((t) => (
+            {TINGKAT.map((lv) => (
               <button
-                key={t.kunci}
+                key={lv.kunci}
                 type="button"
-                onClick={() => onTingkatChange(t.kunci)}
-                aria-pressed={tingkat === t.kunci}
-                title={`Perkiraan umur pembaca ${t.usia}`}
+                onClick={() => onTingkatChange(lv.kunci)}
+                aria-pressed={tingkat === lv.kunci}
+                title={t('umum.umurPembaca', { usia: t(`usia.${lv.kunci}`) })}
                 className={
                   'h-11 whitespace-nowrap rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200 ' +
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ' +
-                  (tingkat === t.kunci
+                  (tingkat === lv.kunci
                     ? 'bg-brand-500 text-white'
                     : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800')
                 }
               >
-                {labelTingkat(t.kunci)}
+                {labelTingkat(lv.kunci)}
               </button>
             ))}
           </div>
           <button
             type="button"
             onClick={() => {
-              setKlaim(CONTOH)
+              setKlaim(t('ver.contoh'))
               setHasil(null)
               setError(null)
             }}
@@ -155,7 +155,9 @@ export default function VerifikasiPanel({
         <Card className="rise p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
           <div className={`mb-3 inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 ${v.kelas}`}>
             <v.Ikon className="size-4 shrink-0" aria-hidden="true" />
-            <span className="text-[0.86rem] font-bold">{labelVerdict[hasil.verdict] ?? v.label}</span>
+            <span className="text-[0.86rem] font-bold">
+              {labelVerdict[hasil.verdict] ?? t('ver.tidakPasti')}
+            </span>
           </div>
 
           <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-navy-800">

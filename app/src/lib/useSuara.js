@@ -1,7 +1,7 @@
 /**
  * Hook pengenalan suara (Web Speech API).
  *
- * Dipakai tombol mikrofon di Tanya AI, panel Suara, dan panel Tanya.
+ * Dipakai tombol mikrofon di kotak isian Tanya AI.
  * Semua berjalan di perangkat pengguna — tidak ada audio yang dikirim ke server kita.
  *
  * Peramban yang mendukung: Google Chrome dan Microsoft Edge.
@@ -10,14 +10,19 @@
  * Kalau tidak didukung, hook melaporkan `didukung: false` supaya UI bisa
  * menonaktifkan tombolnya dengan jujur.
  *
+ * SOAL BAHASA PESAN GALAT
+ * Hook ini mengembalikan KUNCI KAMUS (mis. 'suara.galatIzin'), BUKAN kalimat
+ * jadi. Sebelumnya kalimatnya ditulis di sini, sehingga pesan galat mikrofon
+ * tetap berbahasa Indonesia walau antarmukanya Inggris — padahal seluruh teks
+ * antarmuka wajib lewat kamus. Pemanggil yang menerjemahkan, karena hanya
+ * pemanggil yang punya `t`.
+ *
  * CATATAN PENTING soal `sementara` dan `onHasil`:
  * `sementara` HANYA berisi teks yang belum pasti (interim). Begitu pengenalan
  * selesai, hasil akhir dikirim lewat `onHasil`, lalu `sementara` dikosongkan.
- * Jadi komponen yang membaca `sementara` saja akan kehilangan hasil akhirnya —
- * pernah terjadi di panel Suara, kotaknya tetap kosong padahal Chrome sudah
- * mengenali ucapannya dengan benar. Untuk mencegah itu terulang, hook ini
- * menyimpan hasil akhir di `hasil` juga, sehingga pemanggil yang tidak
- * memasang `onHasil` tetap bisa menampilkannya.
+ * Jadi komponen yang membaca `sementara` saja akan kehilangan hasil akhirnya.
+ * Untuk mencegah itu, hook ini menyimpan hasil akhir di `hasil` juga, sehingga
+ * pemanggil yang tidak memasang `onHasil` tetap bisa menampilkannya.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -26,6 +31,15 @@ const Rekognisi =
   typeof window !== 'undefined'
     ? window.SpeechRecognition || window.webkitSpeechRecognition
     : undefined
+
+/** Kode galat peramban -> kunci kamus. Yang tidak dikenal pakai kunci umum. */
+const KUNCI_GALAT = {
+  'not-allowed': 'suara.galatIzin',
+  'service-not-allowed': 'suara.galatIzin',
+  'no-speech': 'suara.galatTidakAdaSuara',
+  'audio-capture': 'suara.galatTanpaMikrofon',
+  network: 'suara.galatDaringDiblokir',
+}
 
 export function gunakanSuara({ bahasa = 'id-ID', onHasil } = {}) {
   const [mendengar, setMendengar] = useState(false)
@@ -49,7 +63,7 @@ export function gunakanSuara({ bahasa = 'id-ID', onHasil } = {}) {
 
   const mulai = useCallback(() => {
     if (!Rekognisi) {
-      setError('Peramban ini belum mendukung pengenalan suara. Coba Chrome atau Edge.')
+      setError('suara.galatTidakDidukung')
       return
     }
     if (ref.current) return // sedang jalan
@@ -86,32 +100,10 @@ export function gunakanSuara({ bahasa = 'id-ID', onHasil } = {}) {
     }
 
     r.onerror = (e) => {
-      // Pesannya dibedakan per sebab supaya pengguna tahu harus berbuat apa.
-      // 'network' paling sering muncul di Chromium tanpa layanan suara Google
-      // (Brave, Chromium polos, distro Linux) — layanan pengenalan suara
-      // memang daring, jadi tanpa sambungan ke sana fitur ini tidak bisa jalan.
-      let pesan
-      switch (e.error) {
-        case 'not-allowed':
-        case 'service-not-allowed':
-          pesan = 'Izin mikrofon ditolak. Izinkan akses mikrofon di peramban, lalu coba lagi.'
-          break
-        case 'no-speech':
-          pesan = 'Tidak ada suara yang terdengar. Coba bicara lagi lebih dekat ke mikrofon.'
-          break
-        case 'audio-capture':
-          pesan = 'Mikrofon tidak terdeteksi. Pastikan ada mikrofon yang terpasang.'
-          break
-        case 'network':
-          pesan =
-            'Peramban ini memblokir layanan suara daring, jadi pengenalan suara tidak bisa jalan. Coba di Google Chrome atau Microsoft Edge.'
-          break
-        case 'aborted':
-          return // dibatalkan sendiri — bukan kesalahan
-        default:
-          pesan = `Pengenalan suara gagal (${e.error}).`
-      }
-      setError(pesan)
+      // Kode galat peramban dipetakan ke kunci kamus, bukan kalimat jadi —
+      // supaya pesannya ikut bahasa antarmuka. 'aborted' bukan kesalahan.
+      if (e.error === 'aborted') return
+      setError(KUNCI_GALAT[e.error] ?? 'suara.galatUmum')
     }
 
     r.onend = () => {
@@ -125,7 +117,7 @@ export function gunakanSuara({ bahasa = 'id-ID', onHasil } = {}) {
       r.start()
     } catch {
       ref.current = null
-      setError('Tidak bisa memulai mikrofon.')
+      setError('suara.galatTidakBisaMulai')
     }
   }, [bahasa])
 
@@ -153,6 +145,5 @@ export function gunakanSuara({ bahasa = 'id-ID', onHasil } = {}) {
     mulai,
     berhenti,
     bersihkan,
-    bersihkanError: () => setError(null),
   }
 }

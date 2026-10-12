@@ -76,6 +76,18 @@ export default function TopBar({
     onBuka?.(n)
   }
 
+  /**
+   * Judul dokumen ikut bahasa antarmuka.
+   *
+   * Dulu judulnya ditulis tetap di index.html ("Dashboard — Pahami Sehat"),
+   * sehingga tab peramban tetap berbahasa Indonesia walau antarmukanya
+   * Inggris. `index.html` tidak punya akses ke kamus, jadi yang menyesuaikan
+   * adalah di sini — satu tempat, sama seperti atribut `lang` pada <html>.
+   */
+  useEffect(() => {
+    document.title = t('app.judul')
+  }, [t])
+
   const labelSidebar = sidebarTerbuka ? t('nav.tutupSidebar') : t('nav.bukaSidebar')
 
   return (

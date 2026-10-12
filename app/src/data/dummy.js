@@ -14,40 +14,6 @@ export const TOPICS = [
   { id: 'mental', label: 'Kesehatan Mental' },
 ]
 
-/** Jawaban simulasi per topik — dipilih saat user menekan chip. */
-export const TOPIC_ANSWERS = {
-  demam: {
-    text: 'Demam adalah respons alami tubuh terhadap infeksi. Pada orang dewasa, demam ringan biasanya cukup diatasi dengan istirahat dan minum yang banyak. Segera cari pertolongan medis bila disertai kejang, kesadaran menurun, atau tidak membaik dalam tiga hari.',
-    sources: ['Kemenkes RI', 'WHO'],
-    verdict: 'ok',
-  },
-  obat: {
-    text: 'Obat diminum sesuai dosis dan interval yang tertulis pada kemasan atau resep. Jangan menghentikan antibiotik sebelum habis hanya karena keluhan membaik — sisa bakteri bisa menjadi resisten terhadap obat.',
-    sources: ['BPOM', 'Kemenkes RI'],
-    verdict: 'ok',
-  },
-  imunisasi: {
-    text: 'Imunisasi melindungi anak dari penyakit yang berat dan menular. Jadwal imunisasi dasar diberikan sesuai usia; keterlambatan masih bisa dikejar dengan jadwal susulan yang dipandu tenaga kesehatan.',
-    sources: ['Kemenkes RI', 'WHO'],
-    verdict: 'ok',
-  },
-  gizi: {
-    text: 'Pola makan seimbang berarti porsi karbohidrat, protein, sayur, dan buah terbagi rata sepanjang hari. Kurangi gula, garam, dan lemak berlebih, dan baca label gizi sebelum membeli makanan kemasan.',
-    sources: ['Kemenkes RI'],
-    verdict: 'ok',
-  },
-  mental: {
-    text: 'Kesehatan mental sama pentingnya dengan kesehatan fisik. Bila perasaan cemas atau sedih bertahan lama dan mengganggu aktivitas sehari-hari, bicarakan dengan orang terpercaya atau tenaga kesehatan.',
-    sources: ['WHO', 'Kemenkes RI'],
-    verdict: 'ok',
-  },
-  generic: {
-    text: 'Pertanyaanmu kami ringkas dengan rubric prompting — poin kunci wajib tetap dipertahankan, lalu disederhanakan ke tingkat baca yang kamu pilih. Setiap jawaban selalu menyertakan sumber resmi agar bisa kamu verifikasi sendiri.',
-    sources: ['Kemenkes RI'],
-    verdict: 'ok',
-  },
-}
-
 export const ARTICLES = [
   {
     id: 'a1',

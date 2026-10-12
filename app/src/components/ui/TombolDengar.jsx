@@ -46,7 +46,9 @@ export default function TombolDengar({
       onSelesai: () => setBicara(false),
       onError: (e) => {
         setBicara(false)
-        setError(typeof e === 'string' ? e : t('umum.suaraGagal'))
+        // `e` bisa berupa KUNCI kamus (dari lib/tts.js) atau kalimat jadi —
+        // kunci yang tidak dikenal dikembalikan apa adanya oleh t().
+        setError(typeof e === 'string' ? t(e) : t('umum.suaraGagal'))
       },
     })
     if (!jalan) setError(t('umum.tidakAdaTeks'))

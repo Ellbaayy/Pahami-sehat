@@ -49,7 +49,6 @@ async function minta(path, { method = 'GET', body, signal } = {}) {
 
 /* ------------------------------------------------------------- endpoint --- */
 
-export const ambilMeta = () => minta('/meta')
 export const ambilHealth = () => minta('/health')
 
 /**
