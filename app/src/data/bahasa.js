@@ -188,6 +188,13 @@ const KAMUS = {
     'riw.keBeranda': 'Ke Beranda',
     'riw.baruSaja': 'Baru saja',
     'riw.contohJudul': 'Contoh riwayat',
+    'riw.hapus': 'Hapus',
+    'riw.hapusSatu': 'Hapus pertanyaan: {tanya}',
+    'riw.hapusSemua': 'Hapus semua',
+    'riw.terhapusSatu': 'Pertanyaan dihapus dari riwayat.',
+    'riw.terhapusSemua': '{n} pertanyaan dihapus dari riwayat.',
+    'riw.batalkan': 'Batalkan',
+    'riw.dikembalikan': 'Riwayat dikembalikan.',
 
     // artikel & topik di Beranda
     'art.judul': 'Artikel kesehatan',
@@ -443,6 +450,13 @@ const KAMUS = {
     'riw.keBeranda': 'Go to Home',
     'riw.baruSaja': 'Just now',
     'riw.contohJudul': 'Example history',
+    'riw.hapus': 'Delete',
+    'riw.hapusSatu': 'Delete question: {tanya}',
+    'riw.hapusSemua': 'Delete all',
+    'riw.terhapusSatu': 'Question deleted from history.',
+    'riw.terhapusSemua': '{n} questions deleted from history.',
+    'riw.batalkan': 'Undo',
+    'riw.dikembalikan': 'History restored.',
 
     'art.judul': 'Health articles',
     'art.sub': 'Short reads from the official channel of Indonesia\u2019s Ministry of Health.',
