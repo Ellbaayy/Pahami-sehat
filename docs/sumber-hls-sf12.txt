@@ -1,0 +1,35 @@
+Sumber 12 item HLS-SF12 (Health Literacy Short Form 12)
+========================================================
+
+Dua paper utama, dicek silang:
+
+1. Duong TV, Aringazina A, Baisunova G, et al.
+   "Development and Validation of a New Short-Form Health Literacy Instrument
+   (HLS-SF12) for the General Public in Six Asian Countries."
+   HLRP: Health Literacy Research and Practice, 2019.
+   https://pmc.ncbi.nlm.nih.gov/articles/PMC6607763/
+   -> 12 item asli (versi Inggris, B1..B12 / item 2_2, 2_6, 2_10, 2_15,
+      2_18, 2_23, 2_26, 2_30, 2_33, 2_39, 2_43, 2_45) dari HLS-EU-Q47.
+
+2. "Properti Psikometri Skala Literasi Kesehatan dalam Bahasa Indonesia"
+   (adaptasi & validasi HLS-SF12 ke bahasa Indonesia, 18-60 th, Jawa Tengah;
+   Cronbach's alpha 0.899, Aiken's V 0.75-0.917)
+   journals.unisba.ac.id/index.php/JRP/article/download/8050/3275
+   -> TEKS INDONESIA resmi HL1..HL12. Dilindungi Cloudflare, jadi teksnya
+      diambil dari cuplikan hasil pencariannya per item (12 dari 12 item
+      terkonfirmasi kutipan langsungnya).
+
+Dimensi: 3 domain (perawatan kesehatan, pencegahan penyakit, promosi
+kesehatan) x 4 tahap (menemukan, memahami, menilai, menerapkan) = 12 dimensi.
+
+Skala resmi 4 titik: sangat sulit (1) .. sangat mudah (4), diindeks 0-50.
+
+KLAIM TIDAK DIBUAT SENDIRI
+- Teks pertanyaan  = terjemahan terverifikasi di atas, hanya kalimat pembuka
+  skala ("Dalam skala dari sangat mudah hingga sangat sulit,") dipindah ke
+  UI sebagai pilihan radio, sehingga yang tersimpan tinggal
+  "Seberapa mudah bagi Anda untuk ...?" — maknanya tidak berubah.
+- Subteks tiap opsi jawaban (mis. "Saya hampir tidak mengerti sama sekali.")
+  = salinan literal dari rancangan screenshot yang diminta jagi. Itu teks
+  antarmuka, BAGIAN dari instrumen HLS-SF12.
+- 5 pernyataan lama di QUIZ_ITEMS BUKAN item HLS-SF12 dan sudah diganti.
