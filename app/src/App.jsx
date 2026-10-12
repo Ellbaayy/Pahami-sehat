@@ -319,15 +319,24 @@ export default function App() {
   /**
    * Kirim isi kotak ke AI — satu pintu untuk mode Tanya dan Sederhanakan.
    *
-   * Kiriman yang datang dari Beranda langsung MEMINDAHKAN pengguna ke halaman
-   * Tanya AI: pertanyaan muncul di sana sebagai gelembung pertama, dan
-   * jawabannya menyusul di tempat yang sama.
+   * Dua asal kiriman diperlakukan BERBEDA, dan itu disengaja:
+   *
+   *   - Dari Beranda: SELALU jadi obrolan baru. Pengguna yang mengirim dari
+   *     Beranda sedang memulai sesuatu, bukan melanjutkan — jadi utasannya
+   *     dimulai dari kosong dan obrolan yang tadi terbuka ditinggalkan utuh
+   *     (tetap ada di Riwayat, tidak diubah). Kalau kiriman ini malah
+   *     menempel ke obrolan yang sedang dibuka, pertanyaan baru akan muncul
+   *     di tengah percakapan lama yang tidak ada hubungannya.
+   *   - Dari halaman Tanya AI: menambah ke obrolan yang sedang dibuka, supaya
+   *     percakapan yang sudah berjalan bisa dilanjutkan.
+   *
+   * Kiriman dari Beranda juga langsung MEMINDAHKAN pengguna ke halaman Tanya
+   * AI: pertanyaan muncul di sana sebagai gelembung pertama, jawabannya
+   * menyusul di tempat yang sama.
    *
    * Jawaban yang masuk disimpan ke SESI, bukan ke daftar pertanyaan terpisah:
    * seluruh utasan (jawaban, poin kunci, sumber) ikut tersimpan apa adanya,
-   * supaya bisa dibuka lagi nanti tanpa kehilangan apa pun. Sesi baru dibuat
-   * hanya kalau belum ada sesi aktif — pertanyaan berikutnya menambah ke sesi
-   * yang sedang dibuka, sehingga percakapan bisa dilanjutkan.
+   * supaya bisa dibuka lagi nanti tanpa kehilangan apa pun.
    */
   const kirim = useCallback(
     (raw, modeKirim = 'tanya') => {
@@ -338,6 +347,9 @@ export default function App() {
       const ac = new AbortController()
       batalRef.current = ac
 
+      // dihitung SEBELUM halaman dipindah, karena setelah ini `active` berubah
+      const dariBeranda = active === 'beranda'
+
       setLoading(true)
       setError(null)
       setStreamTeks('')
@@ -346,19 +358,21 @@ export default function App() {
       setSalin(null)
 
       // --- pindah halaman dulu, baru pertanyaan muncul di sana ---
-      if (active === 'beranda') {
+      if (dariBeranda) {
         setActive('tanya')
         setDrawerOpen(false)
       }
 
       const pesanUser = { id: `u${Date.now()}`, role: 'user', text, mode: modeKirim }
-      // gelembung user muncul langsung; jawaban AI menyusul saat selesai
-      setThread((prev) => [...prev, pesanUser])
+      // gelembung user muncul langsung; jawaban AI menyusul saat selesai.
+      // Dari Beranda utasannya dimulai dari kosong — itu obrolan baru.
+      if (dariBeranda) setThread([pesanUser])
+      else setThread((prev) => [...prev, pesanUser])
 
       // sesi dibuat lebih dulu (dengan pertanyaan saja) supaya pengguna sudah
       // melihat obrolannya tersimpan walau jawabannya belum datang — dan kalau
       // jawabannya gagal, pertanyaannya tidak ikut hilang begitu saja
-      let idSesi = sesiAktifId
+      let idSesi = dariBeranda ? null : sesiAktifId
       const kini = Date.now()
       if (!idSesi) {
         idSesi = `s${kini}`
