@@ -17,8 +17,9 @@ import VerifikasiPanel from './components/dashboard/VerifikasiPanel'
 import ScanPanel from './components/dashboard/ScanPanel'
 import { SectionHeading, EmptyState } from './components/ui/primitives'
 import BatasGalat from './components/ui/BatasGalat'
+import ToastBatal from './components/ui/ToastBatal'
 import LoadingPage from './components/LoadingPage'
-import { History, ArrowLeft, PlugZap, Plug } from 'lucide-react'
+import { History, ArrowLeft, PlugZap, Plug, Trash2 } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP, contohRiwayat } from './data/dummy'
 import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
@@ -189,6 +190,47 @@ export default function App() {
   const [riwayat, setRiwayat] = useState(() => bacaRiwayat())
   const [settings, setSettings] = useState(() => bacaSetelan())
 
+  /**
+   * Penghapusan riwayat — selalu bisa dibatalkan.
+   *
+   * `batal` menyimpan daftar SEBELUM dihapus, jadi pembatalan mengembalikan
+   * keadaan persis seperti semula (termasuk urutannya). Ini pilihan yang
+   * disengaja dibanding dialog "Yakin mau hapus?": dialog mengembalikan data
+   * hanya secara teori, sedangkan pembatalan mengembalikannya sungguhan.
+   *
+   * Penghapusannya dihitung dari `riwayat` yang sedang tampil, BUKAN di dalam
+   * fungsi updater setRiwayat. Memanggil setBatal dari dalam updater adalah
+   * efek samping di tengah perhitungan state — React boleh menjalankannya dua
+   * kali (StrictMode) dan hasilnya jadi tidak bisa diprediksi.
+   */
+  const [batal, setBatal] = useState(null)
+
+  const hapusRiwayat = useCallback(
+    (id) => {
+      const daftar = riwayat ?? []
+      const dibuang = daftar.find((h) => h.id === id)
+      if (!dibuang) return
+      setBatal({ jenis: 'satu', sebelum: daftar, judul: dibuang.question })
+      const sisa = daftar.filter((h) => h.id !== id)
+      // daftar kosong -> null, supaya contoh riwayat kembali tampil
+      setRiwayat(sisa.length ? sisa : null)
+    },
+    [riwayat],
+  )
+
+  const hapusSemuaRiwayat = useCallback(() => {
+    if (!riwayat?.length) return
+    setBatal({ jenis: 'semua', sebelum: riwayat, judul: null })
+    setRiwayat(null)
+  }, [riwayat])
+
+  const batalkanHapus = useCallback(() => {
+    setBatal((b) => {
+      if (b) setRiwayat(b.sebelum)
+      return null
+    })
+  }, [])
+
   const { kode: kodeBahasa, t } = gunakanBahasa(settings.lang)
 
   // Yang ditampilkan: riwayat sungguhan kalau ada, kalau belum pakai contoh.
@@ -196,10 +238,18 @@ export default function App() {
   const history = riwayat?.length ? riwayat : contohRiwayat(kodeBahasa)
   const adaRiwayatSungguhan = Boolean(riwayat?.length)
 
-  // simpan riwayat ke peramban setiap kali berubah — hanya yang sungguhan,
-  // supaya contoh tidak pernah ikut tersimpan sebagai data pengguna
+  /**
+   * Simpan riwayat ke peramban setiap kali berubah.
+   *
+   * `null` berarti "tidak ada riwayat sungguhan", dan itu HARUS tetap tersimpan
+   * sebagai daftar kosong. Sebelumnya fungsi ini melewatkan null sepenuhnya,
+   * sehingga setelah "Hapus semua" kunci penyimpanannya tidak pernah ditimpa —
+   * localStorage masih memegang daftar lama, dan riwayat yang sudah dihapus
+   * muncul kembali begitu halaman disegarkan. Data yang sudah dihapus tidak
+   * boleh bisa hidup lagi.
+   */
   useEffect(() => {
-    if (riwayat) simpanRiwayat(riwayat)
+    simpanRiwayat(riwayat ?? [])
   }, [riwayat])
 
   const server = useServer()
@@ -562,6 +612,18 @@ export default function App() {
                   title={t('riw.judul')}
                   description={t('riw.sub')}
                   ilustrasi="riwayat"
+                  action={
+                    adaRiwayatSungguhan ? (
+                      <button
+                        type="button"
+                        onClick={hapusSemuaRiwayat}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line-200 bg-white px-3 py-1.5 text-[0.8rem] font-semibold text-navy-600 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
+                      >
+                        <Trash2 className="size-3.5" aria-hidden="true" />
+                        {t('riw.hapusSemua')}
+                      </button>
+                    ) : null
+                  }
                 />
                 {/* Yang dinilai "kosong" adalah riwayat SUNGGUHAN. Kalau contoh
                     masih ditampilkan, daftarnya tetap tampil — bukan pesan
@@ -589,7 +651,14 @@ export default function App() {
                     </p>
                   </>
                 ) : null}
-                <RecentHistory items={history} max={history.length} t={t} />
+                {/* onHapus HANYA diberikan saat ada riwayat sungguhan — kalau
+                    yang tampil contoh, tombol hapusnya tidak masuk akal. */}
+                <RecentHistory
+                  items={history}
+                  max={history.length}
+                  onHapus={adaRiwayatSungguhan ? hapusRiwayat : undefined}
+                  t={t}
+                />
               </div>
             ) : null}
 
@@ -644,6 +713,22 @@ export default function App() {
         </BatasGalat>
       </div>
       </div>
+
+      {/* Notifikasi pembatalan penghapusan riwayat. Ditempatkan di luar
+          BatasGalat supaya tetap muncul walau bagian lain gagal render —
+          justru saat ada masalah, kemampuan membatalkan paling dibutuhkan. */}
+      {batal ? (
+        <ToastBatal
+          pesan={
+            batal.jenis === 'semua'
+              ? t('riw.terhapusSemua', { n: batal.sebelum.length })
+              : t('riw.terhapusSatu')
+          }
+          onBatal={batalkanHapus}
+          onTutup={() => setBatal(null)}
+          t={t}
+        />
+      ) : null}
     </>
   )
 }

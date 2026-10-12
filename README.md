@@ -20,6 +20,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Suara dibacakan | berjalan — suara neural, nada mengikuti isi kalimat |
 > | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya |
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
+> | Riwayat pertanyaan | berjalan. Tersimpan di peramban saja (bukan server), maksimal 12 entri. Bisa **dihapus satu per satu atau sekaligus**, dan setiap penghapusan **bisa dibatalkan** |
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
 > 20 permintaan/menit per alamat IP (lihat `app/server/batas.js`).
