@@ -13,8 +13,13 @@ import { cn } from '../../lib/cn'
  *
  * Peramban yang belum mendukung (mis. Firefox) akan menampilkan pesan jujur
  * dan tombolnya dinonaktifkan — bukan pura-pura merekam.
+ *
+ * Seluruh teks diambil dari kamus lewat `t()` supaya ikut bahasa antarmuka.
+ * Sebelumnya semuanya ditulis tetap di sini, sehingga panel ini tetap
+ * berbahasa Indonesia walau antarmukanya sudah diset Inggris — padahal kunci
+ * kamusnya (suara.*) sudah tersedia sejak awal dan tidak pernah dipakai.
  */
-export default function VoicePanel({ onUse }) {
+export default function VoicePanel({ onUse, t = (k) => k }) {
   const suara = gunakanSuara({ bahasa: 'id-ID' })
   // Teks yang ditampilkan = hasil akhir kalau sudah ada, kalau belum pakai
   // teks sementara (yang muncul sambil bicara). Sebelumnya hanya `sementara`
@@ -33,9 +38,9 @@ export default function VoicePanel({ onUse }) {
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
-        eyebrow="Mode suara"
-        title="Tanya dengan suara"
-        description="Cocok untuk yang lebih nyaman berbicara daripada mengetik. Hasil ucapannya langsung jadi teks, siap dikirim ke Tanya AI."
+        eyebrow={t('suara.eyebrow')}
+        title={t('suara.judul')}
+        description={t('suara.sub')}
         ilustrasi="suara"
       />
 
@@ -47,16 +52,12 @@ export default function VoicePanel({ onUse }) {
           aria-pressed={suara.mendengar}
           aria-label={
             !suara.didukung
-              ? 'Pengenalan suara tidak didukung peramban ini'
+              ? t('suara.ariaTidakDidukung')
               : suara.mendengar
-                ? 'Hentikan perekaman'
-                : 'Mulai perekaman suara'
+                ? t('suara.ariaHentikan')
+                : t('suara.ariaMulai')
           }
-          title={
-            suara.didukung
-              ? undefined
-              : 'Peramban ini belum mendukung pengenalan suara — coba Chrome atau Edge'
-          }
+          title={suara.didukung ? undefined : t('suara.tidakDidukung')}
           className={cn(
             'grid size-20 place-items-center rounded-full transition-all duration-300 sm:size-24',
             'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500',
@@ -93,12 +94,12 @@ export default function VoicePanel({ onUse }) {
 
         <p className="text-[0.95rem] font-semibold text-navy-800">
           {!suara.didukung
-            ? 'Peramban ini belum mendukung pengenalan suara'
+            ? t('suara.tidakDidukung')
             : suara.mendengar
-              ? 'Mendengarkan… silakan bicara'
+              ? t('suara.mendengar')
               : teks
-                ? 'Ucapan dikenali'
-                : 'Tekan untuk bicara'}
+                ? t('suara.dikenali')
+                : t('suara.tekan')}
         </p>
 
         <div className="min-h-[4.5rem] w-full max-w-[46rem] rounded-xl border border-dashed border-line-300 bg-surface-50 px-4 py-3.5 text-left">
@@ -107,7 +108,7 @@ export default function VoicePanel({ onUse }) {
           ) : (
             <p className="flex items-center gap-2 text-[0.88rem] text-muted-500">
               <AudioLines className="size-4" aria-hidden="true" />
-              Teks hasil ucapan akan muncul di sini.
+              {t('suara.placeholder')}
             </p>
           )}
         </div>
@@ -122,7 +123,7 @@ export default function VoicePanel({ onUse }) {
             className="sm:w-auto sm:flex-1"
           >
             <RotateCcw className="size-4" aria-hidden="true" />
-            Ulangi
+            {t('suara.ulangi')}
           </Button>
           <Button
             size="lg"
@@ -131,25 +132,21 @@ export default function VoicePanel({ onUse }) {
             full
             className="sm:w-auto sm:flex-1"
           >
-            Gunakan hasil
+            {t('suara.gunakan')}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Button>
         </div>
 
         {teks ? (
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <TombolDengar teks={teks} label="Dengar ulang ucapan" />
+            <TombolDengar teks={teks} label={t('suara.dengarUlang')} t={t} />
           </div>
         ) : null}
       </Card>
 
       {suara.error ? <Peringatan pesan={suara.error} code="mikrofon" /> : null}
 
-      <p className="text-[0.82rem] text-muted-500">
-        Pengenalan suara memakai fitur bawaan peramban (Web Speech API). Chrome dan Edge
-        mendukung; Brave memblokir layanan suara daring sehingga belum bisa, dan Firefox
-        belum menyediakannya. Tidak ada rekaman yang dikirim ke server kami.
-      </p>
+      <p className="text-[0.82rem] text-muted-500">{t('suara.catatan')}</p>
     </div>
   )
 }

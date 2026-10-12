@@ -509,7 +509,13 @@ export async function kontenHarian({ paksa = false } = {}) {
  */
 export async function kontenHarianLengkap({ paksa = false } = {}) {
   const d = await kontenHarian({ paksa })
-  // `pool` tidak dikirim ke tampilan — isinya besar dan tidak dipakai
-  const { pool, ...kirim } = d
+  // Yang TIDAK dikirim ke tampilan:
+  //   - pool          : isinya besar dan tidak dipakai
+  //   - sidik         : sidik jari internal isi sumber; tidak ada gunanya bagi
+  //                     pengguna dan membocorkan cara kerja pengecekan
+  //   - sumberHalaman : alamat sumber internal (ayosehat.kemkes.go.id). Alamat
+  //                     itu sudah tampil di setiap artikel lewat kolom `url`,
+  //                     jadi tidak perlu dikirim lagi sebagai metadata.
+  const { pool, sidik, sumberHalaman, ...kirim } = d
   return { ...kirim, jumlahTersimpan: pool?.length ?? 0 }
 }

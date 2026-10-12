@@ -114,7 +114,7 @@ export default function ThreadPanel({
       </div>
 
       {suara.error ? <Peringatan pesan={suara.error} code="mikrofon" /> : null}
-      <SumberJawaban cari={sumberCari} sumber={[]} />
+      <SumberJawaban cari={sumberCari} sumber={[]} t={t} />
       {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
 
       {thread.length === 0 && !loading ? (
@@ -154,10 +154,10 @@ export default function ThreadPanel({
               {m.role === 'ai' ? (
                 <>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <TombolDengar teks={m.text} />
+                    <TombolDengar teks={m.text} t={t} />
                   </div>
-                  <PoinKunci items={m.poinKunci} />
-                  <SourcePills sources={m.sources} negative={m.verdict === 'negative'} />
+                  <PoinKunci items={m.poinKunci} t={t} />
+                  <SourcePills sources={m.sources} negative={m.verdict === 'negative'} t={t} />
                   {m.catatan ? (
                     <p className="mt-2 text-[0.78rem] text-muted-500">{m.catatan}</p>
                   ) : null}

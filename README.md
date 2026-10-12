@@ -182,8 +182,21 @@ node uji-ocr.mjs        # 36 pemeriksaan: perapian teks & penandaan angka
 
 Bagian yang butuh peramban sungguhan (mesin OCR-nya sendiri) diuji manual:
 jalankan `npm start`, buka `/app/`, pilih menu **Pindai Foto**, masukkan foto
-label obat atau hasil lab, lalu periksa bahwa teksnya muncul dan tidak ada
-permintaan jaringan yang keluar (tab Network harus tetap kosong).
+label obat atau hasil lab, lalu periksa bahwa teksnya muncul.
+
+**Cara memeriksa "tanpa internet" yang benar.** Yang membuktikan janji
+"foto tidak keluar dari perangkat" adalah uji blokir: halangi
+`cdn.jsdelivr.net`, `unpkg.com`, `cdnjs.cloudflare.com`, dan
+`raw.githubusercontent.com`, lalu pindai ulang — hasilnya harus sama. Uji itu
+sudah dijalankan dan lulus (492 karakter, hasil identik).
+
+Menonton tab Network saja **tidak cukup**, dan ini perlu disebut apa adanya:
+tesseract.js memuat mesinnya di dalam Web Worker lewat `importScripts()`, dan
+panggilan itu **tidak terekam** oleh perekam `fetch`/`XMLHttpRequest` maupun
+oleh sebagian tampilan tab Network. Jadi "tab Network kosong" bukan bukti
+yang sah untuk berkas yang diambil worker — walau di kasus ini memang tidak
+ada permintaan ke luar, karena seluruh berkas disajikan dari
+`app/public/ocr/` di situs sendiri.
 
 ### Menyetel mutu pembacaan
 
@@ -213,6 +226,38 @@ untuk bahasa Indonesia):
 
 Lansia ditargetkan **lebih sederhana** dari Dewasa karena Flesch-grade mengukur
 kerumitan teks, bukan usia pembaca.
+
+---
+
+## Menjalankan uji
+
+Semua uji di bawah ini berjalan tanpa jaringan dan tanpa API key, kecuali yang
+ditandai. Jalankan dari akar repo:
+
+```bash
+node uji-batas.mjs        # batas panjang & laju tiap rute
+node uji-ekstrak.mjs      # penarikan konten dari HTML sumber
+node uji-kata-kunci.mjs   # pencocokan kata kunci topik
+node uji-teks.mjs         # perapian teks & pemotongan kalimat
+node uji-ocr.mjs          # 36 pemeriksaan: perapian teks & penandaan angka
+node uji-bahasa.mjs       # 25 pemeriksaan: kesehatan kamus id/en
+```
+
+`uji-bahasa.mjs` menjaga tiga cacat kamus sekaligus: kunci yang dipakai tapi
+tidak ada, kunci yang hanya ada di satu bahasa, dan kunci yang menganggur
+(tidak dipakai siapa pun). Ketiganya pernah terjadi di proyek ini.
+
+Dua skrip di bawah **butuh jaringan** dan hanya dipakai untuk memilih angka
+batas dari pengukuran, bukan untuk rutin:
+
+```bash
+node ukur-konten.mjs      # berapa permintaan jaringan saat cache konten kosong
+node ukur-suara.mjs       # berapa lama TTS benar-benar butuh (ini asal MAKS_SUARA)
+```
+
+Yang **tidak** bisa diuji dari terminal — karena butuh peramban sungguhan —
+diuji manual di `/app/`: mesin OCR, pengenalan suara, pemutaran suara, dan
+tampilan mode Inggris.
 
 ---
 

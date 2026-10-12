@@ -174,10 +174,10 @@ export default function SederhanakanPanel({
           </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <TombolDengar teks={hasil.jawaban} bahasa={bahasa} />
+            <TombolDengar teks={hasil.jawaban} bahasa={bahasa} t={t} />
           </div>
-          <PoinKunci items={hasil.poinKunci} />
-          <SourcePills sources={hasil.sumber} />
+          <PoinKunci items={hasil.poinKunci} t={t} />
+          <SourcePills sources={hasil.sumber} t={t} />
           {hasil.catatan ? (
             <p className="mt-2 text-[0.78rem] text-muted-500">{hasil.catatan}</p>
           ) : null}

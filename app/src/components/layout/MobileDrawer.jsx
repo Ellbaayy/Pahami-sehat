@@ -72,7 +72,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Menu navigasi"
+        aria-label={t('nav.drawer')}
         className="rise absolute inset-y-0 left-0 flex w-[min(19rem,84vw)] flex-col border-r border-line-200 bg-white shadow-2xl"
       >
         <div className="flex items-center gap-3 border-b border-line-100 px-4 py-3.5">
@@ -82,15 +82,15 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
               Pahami Sehat
             </strong>
             <small className="block truncate text-[0.66rem] font-medium text-navy-500">
-              Informasi Kesehatan untuk Semua
+              {t('nav.isiDrawer')}
             </small>
           </span>
           <span className="ml-auto">
-            <DrawerCloseButton onClick={onClose} />
+            <DrawerCloseButton onClick={onClose} t={t} />
           </span>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4" aria-label="Menu dashboard">
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4" aria-label={t('nav.drawerDashboard')}>
           {NAV_ITEMS.map(({ id, kunci, label, icon: Icon }) => {
             const teks = t(kunci) || label
             const isActive = active === id

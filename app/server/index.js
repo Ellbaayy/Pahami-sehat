@@ -30,7 +30,10 @@ app.use(rute)
 const APP_DIST = join(DIST, 'app')
 
 if (existsSync(DIST)) {
-  // halaman penjelasan ada di root (dist/index.html), salinannya di /prototipe/
+  // Halaman penjelasan menempati ROOT situs (dist/index.html), dan salinannya
+  // ada di /prototipe/ supaya tautan lama tetap hidup. Aplikasi React disajikan
+  // terpisah di /app/ (dist/app/) — jadi yang muncul pertama kali dibuka adalah
+  // halaman penjelasan, bukan aplikasi.
   app.use(express.static(DIST))
   // aplikasi React disajikan di /app/
   if (existsSync(APP_DIST)) app.use('/app', express.static(APP_DIST))

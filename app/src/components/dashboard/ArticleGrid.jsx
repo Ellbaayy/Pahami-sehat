@@ -14,7 +14,7 @@ const TINTS = {
 
 const ICONS = { Literasi: FileText, Vaksinasi: Syringe, Gizi: Utensils }
 
-function ArticleCard({ article }) {
+function ArticleCard({ article, t }) {
   const [open, setOpen] = useState(false)
   const Icon = ICONS[article.category] ?? FileText
   const tint = TINTS[article.tint] ?? TINTS.brand
@@ -82,7 +82,7 @@ function ArticleCard({ article }) {
           <div className="rise mt-3 border-t border-dashed border-line-200 pt-3">
             <p className="text-[0.87rem] leading-relaxed text-navy-700">{article.body}</p>
             <p className="mt-2 text-[0.74rem] font-semibold text-brand-700">
-              Sumber: {article.source}
+              {t('art.sumber')}: {article.source}
             </p>
             {article.url ? (
               <a
@@ -91,7 +91,7 @@ function ArticleCard({ article }) {
                 rel="noopener noreferrer"
                 className="mt-1.5 inline-flex items-center gap-1 text-[0.74rem] font-semibold text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-700"
               >
-                Baca artikel aslinya
+                {t('art.bacaAsli')}
                 <ArrowRight className="size-3" aria-hidden="true" />
               </a>
             ) : null}
@@ -104,7 +104,7 @@ function ArticleCard({ article }) {
             {article.readTime}
           </span>
           <Button variant="soft" size="sm" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-            {open ? 'Tutup' : 'Baca'}
+            {open ? t('art.tutup') : t('art.baca')}
             {open ? (
               <ChevronUp className="size-4" aria-hidden="true" />
             ) : (
@@ -123,19 +123,18 @@ function ArticleCard({ article }) {
 /**
  * Grid artikel — jumlah kolom mengikuti ruang yang tersedia (auto-fit + minmax),
  * bukan breakpoint kaku: 1 kolom di layar sempit, 3 kolom di desktop besar.
+ *
+ * Judul dan isi artikel TIDAK diterjemahkan — itu isi dari sumber Kemenkes,
+ * bukan teks antarmuka.
  */
-export default function ArticleGrid({ articles }) {
+export default function ArticleGrid({ articles, t = (k) => k }) {
   return (
     <section aria-labelledby="artikel-title">
-      <SectionHeading
-        id="artikel-title"
-        title="Artikel Kesehatan"
-        description="Bacaan singkat yang sudah disederhanakan, lengkap dengan rujukannya."
-      />
+      <SectionHeading id="artikel-title" title={t('art.judul')} description={t('art.sub')} />
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16.5rem),1fr))] gap-[clamp(0.85rem,1.2vw,1.35rem)]">
         {articles.map((a) => (
-          <ArticleCard key={a.id} article={a} />
+          <ArticleCard key={a.id} article={a} t={t} />
         ))}
       </div>
     </section>

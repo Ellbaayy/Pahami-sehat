@@ -404,7 +404,7 @@ export default function ScanPanel({ t = (k) => k, serverOnline, onKirimKe, bahas
                 />
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <TombolDengar teks={terkirim} bahasa={bahasa} />
+                  <TombolDengar teks={terkirim} bahasa={bahasa} t={t} />
                   <Button
                     type="button"
                     size="md"

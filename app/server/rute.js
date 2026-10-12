@@ -34,6 +34,14 @@ import {
 import { cariInternet } from './cari.js'
 import { kataKunciPencarian } from './kataKunci.js'
 import { batasi } from './batas.js'
+import {
+  LAJU,
+  MAKS_SEDERHANAKAN,
+  MAKS_SUARA,
+  MAKS_TANYA,
+  MAKS_VERIFIKASI,
+  SIMPANAN_HEALTH_MS,
+} from './batasInput.js'
 import { kontenHarianLengkap } from './konten.js'
 import { bahasaJawaban } from './bahasa.js'
 
@@ -159,21 +167,56 @@ const rute = Router()
  * Alamat aplikasi terbuka untuk umum, jadi tanpa pembatas siapa pun bisa
  * menghabiskan kuota akun — termasuk saat lomba berlangsung.
  *
- * Batasnya sengaja LONGGAR (20 permintaan/menit per alamat IP) supaya
- * presentasi dan pengujian juri tidak pernah terganggu, tetapi penyalahgunaan
- * kasar tetap tertahan. Selain itu ada batas total per-instance (300/menit)
- * yang menutup celah pemutaran alamat IP.
+ * Angka batasnya ada di server/batasInput.js (satu sumber kebenaran), bukan
+ * ditulis ulang di sini. Sebelumnya setiap rute menulis angkanya sendiri dan
+ * akibatnya tidak konsisten — ada yang terlewat sama sekali.
  *
  * Lihat catatan jujur soal sifat per-instance di server/batas.js.
  */
-const batasTanya = batasi({ maks: 20, maksTotal: 300, nama: 'pertanyaan' })
-const batasCari = batasi({ maks: 20, maksTotal: 300, nama: 'permintaan' })
-const batasSuara = batasi({ maks: 20, maksTotal: 300, nama: 'permintaan suara' })
-const batasKonten = batasi({ maks: 60, maksTotal: 600, nama: 'permintaan konten' })
+const batasTanya = batasi({ ...LAJU.tanya, nama: 'pertanyaan' })
+const batasCari = batasi({ ...LAJU.sederhanakan, nama: 'permintaan' })
+const batasVerifikasi = batasi({ ...LAJU.verifikasi, nama: 'permintaan' })
+const batasSuara = batasi({ ...LAJU.suara, nama: 'permintaan suara' })
+const batasKonten = batasi({ ...LAJU.konten, nama: 'permintaan konten' })
+const batasHealth = batasi({ ...LAJU.health, nama: 'pemeriksaan kesehatan' })
 
-rute.get('/api/health', bungkus(async (_req, res) => {
+/**
+ * Tolak masukan yang kepanjangan, dengan pesan yang menyebut batasnya.
+ * Dipakai bersama supaya setiap rute berperilaku sama.
+ *
+ * @returns {boolean} true kalau sudah dijawab (pemanggil harus berhenti)
+ */
+function tolakKalauPanjang(res, nilai, maks, nama) {
+  if (nilai.length <= maks) return false
+  res.status(400).json({
+    ok: false,
+    code: 'input_terlalu_panjang',
+    pesan: `${nama} terlalu panjang (maks ${maks.toLocaleString('id-ID')} karakter, terkirim ${nilai.length.toLocaleString('id-ID')}).`,
+  })
+  return true
+}
+
+/**
+ * Simpanan hasil pemeriksaan kesehatan.
+ *
+ * /api/health memanggil /models di Kenari. Tanpa simpanan, setiap permintaan
+ * menembak Kenari — diukur ~0,29 detik per panggilan, dan endpoint ini terbuka
+ * untuk umum. Dengan simpanan 15 detik, pemantauan tetap dapat jawaban segar
+ * sementara hujan permintaan tidak lagi membebani akun.
+ */
+let simpananHealth = null
+
+rute.get('/api/health', batasHealth, bungkus(async (_req, res) => {
+  const sekarang = Date.now()
+  if (simpananHealth && sekarang - simpananHealth.waktu < SIMPANAN_HEALTH_MS) {
+    res.set('X-Health-Cache', 'hit')
+    return res.json(simpananHealth.isi)
+  }
   const sehat = await cekSehat()
-  res.json({ server: 'ok', kenari: sehat, ...safeInfo() })
+  const isi = { server: 'ok', kenari: sehat, ...safeInfo() }
+  simpananHealth = { waktu: sekarang, isi }
+  res.set('X-Health-Cache', 'miss')
+  res.json(isi)
 }))
 
 /**
@@ -183,10 +226,21 @@ rute.get('/api/health', bungkus(async (_req, res) => {
  * (lihat server/konten.js). Frontend memakai ini supaya halaman Beranda
  * tidak menampilkan artikel yang itu-itu saja.
  *
- * `?paksa=1` memaksa pengambilan ulang — berguna saat menguji.
+ * SOAL `?paksa=1`
+ * Parameter ini memaksa pengambilan ulang dari situs Kemenkes. Dulu terbuka
+ * untuk siapa pun, dan itu berbahaya: dengan pembatas 60/menit, satu penyerang
+ * bisa memaksa 3.600 permintaan/jam ke server pemerintah — berisiko membuat IP
+ * kita diblokir, dan merusak fitur ini untuk semua orang.
+ *
+ * Sekarang hanya berfungsi kalau RAHASIA_PAKSA diisi di environment DAN
+ * nilainya cocok. Di produksi variabel itu tidak diisi, jadi parameter ini
+ * tidak berpengaruh apa-apa di sana. Saat menguji di komputer sendiri,
+ * jalankan:  RAHASIA_PAKSA=uji npm run server  lalu pakai ?paksa=uji
  */
 rute.get('/api/konten', batasKonten, bungkus(async (req, res) => {
-  const paksa = String(req.query?.paksa ?? '') === '1'
+  const rahasia = String(process.env.RAHASIA_PAKSA ?? '').trim()
+  const diminta = String(req.query?.paksa ?? '')
+  const paksa = Boolean(rahasia) && diminta === rahasia
   const data = await kontenHarianLengkap({ paksa })
   res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400')
   res.json({ ok: true, ...data })
@@ -220,6 +274,10 @@ rute.post('/api/suara', batasSuara, bungkus(async (req, res) => {
   if (!teks) {
     return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Teks masih kosong.' })
   }
+  // Dulu tidak ada batas sama sekali. Diuji: teks 3000, 4001, dan 20000
+  // karakter semuanya menggantung sampai koneksi diputus platform (60 detik)
+  // tanpa balasan apa pun. Sekarang ditolak lebih awal dengan pesan jelas.
+  if (tolakKalauPanjang(res, teks, MAKS_SUARA, 'Teks yang dibacakan')) return
 
   // Bahasa ditentukan dari ISI TEKS lebih dulu (Jawa/Sunda), baru kode dari
   // aplikasi sebagai cadangan — kode itu bahasa antarmuka, bukan bahasa jawaban.
@@ -236,12 +294,15 @@ rute.post('/api/suara', batasSuara, bungkus(async (req, res) => {
     })
     return res.send(audio)
   } catch (e) {
+    // Pesan galat dari layanan suara TIDAK dikirim ke klien. Endpoint ini
+    // terbuka untuk umum, dan pesan itu bisa memuat alamat internal atau
+    // rincian WebSocket. Cukup dicatat di log server.
+    console.error('[suara]', e?.message ?? e)
     return res.status(502).json({
       ok: false,
       code: 'suara_gagal',
       pesan: 'Suara natural sedang tidak bisa dibuat. Peramban akan memakai suara bawaannya.',
       suara: pilihSuara(bahasa),
-      rinci: String(e?.message ?? '').slice(0, 200),
     })
   }
 }))
@@ -249,7 +310,7 @@ rute.post('/api/suara', batasSuara, bungkus(async (req, res) => {
 rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
   const pertanyaan = String(req.body?.pertanyaan ?? '').trim()
   if (!pertanyaan) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Pertanyaan masih kosong.' })
-  if (pertanyaan.length > 4000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Pertanyaan terlalu panjang (maks 4000 karakter).' })
+  if (tolakKalauPanjang(res, pertanyaan, MAKS_TANYA, 'Pertanyaan')) return
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
   const bhs = pilihBahasa(pertanyaan, rapikanBahasa(req.body?.bahasa))
@@ -282,7 +343,7 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
 rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
   const teks = String(req.body?.teks ?? '').trim()
   if (!teks) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Teks masih kosong.' })
-  if (teks.length > 8000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Teks terlalu panjang (maks 8000 karakter).' })
+  if (tolakKalauPanjang(res, teks, MAKS_SEDERHANAKAN, 'Teks')) return
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
   const bhs = pilihBahasa(teks, rapikanBahasa(req.body?.bahasa))
@@ -303,10 +364,10 @@ rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
   res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage: hasil.usage })
 }))
 
-rute.post('/api/verifikasi', batasCari, bungkus(async (req, res) => {
+rute.post('/api/verifikasi', batasVerifikasi, bungkus(async (req, res) => {
   const klaim = String(req.body?.klaim ?? '').trim()
   if (!klaim) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Klaim masih kosong.' })
-  if (klaim.length > 4000) return res.status(400).json({ ok: false, code: 'input_terlalu_panjang', pesan: 'Klaim terlalu panjang (maks 4000 karakter).' })
+  if (tolakKalauPanjang(res, klaim, MAKS_VERIFIKASI, 'Klaim')) return
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
   const bhs = pilihBahasa(klaim, rapikanBahasa(req.body?.bahasa))
@@ -329,10 +390,22 @@ rute.post('/api/verifikasi', batasCari, bungkus(async (req, res) => {
 /**
  * Streaming SSE — untuk efek "mengetik" di UI.
  * Kirim event: `status`, `delta`, `hasil` (JSON final), atau `error`.
+ *
+ * BATAS PANJANG: dulu endpoint ini TIDAK punya batas sama sekali — dan itulah
+ * yang berbahaya, karena inilah endpoint yang benar-benar dipakai aplikasi.
+ * Diuji: 200.000 karakter diterima dan diproses (HTTP 200), padahal /api/tanya
+ * menolak masukan yang sama dengan 400. Sekarang batasnya sama dengan
+ * /api/tanya.
+ *
+ * PENTING soal urutan: penolakan harus dikirim sebagai JSON BIASA, bukan
+ * sebagai event SSE. Kalau header sudah di-flush sebagai text/event-stream,
+ * klien akan mencoba membacanya sebagai stream dan pesan galatnya tidak
+ * pernah sampai. Karena itu pemeriksaan input dilakukan SEBELUM header.
  */
 rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
   const pertanyaan = String(req.body?.pertanyaan ?? '').trim()
   if (!pertanyaan) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Pertanyaan masih kosong.' })
+  if (tolakKalauPanjang(res, pertanyaan, MAKS_TANYA, 'Pertanyaan')) return
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
   const bhs = pilihBahasa(pertanyaan, rapikanBahasa(req.body?.bahasa))
@@ -422,13 +495,21 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
 
 rute.use((err, _req, res, _next) => {
   const kenari = err instanceof KenariError
-  const status = kenari ? (err.status === 401 ? 502 : err.status) : 500
+  // Body yang terlalu besar ditangkap express.json() sebagai err.type.
+  // Tanpa penanganan ini, pengguna melihat "500 Terjadi kesalahan di server"
+  // padahal masalahnya cuma kiriman kepanjangan.
+  const terlaluBesar = err?.type === 'entity.too.large'
+  const status = terlaluBesar ? 413 : kenari ? (err.status === 401 ? 502 : err.status) : 500
   const isi = {
     ok: false,
-    code: kenari ? err.code : 'server_error',
-    pesan: kenari ? err.message : 'Terjadi kesalahan di server.',
+    code: terlaluBesar ? 'body_terlalu_besar' : kenari ? err.code : 'server_error',
+    pesan: terlaluBesar
+      ? 'Kiriman terlalu besar (maks 1 MB).'
+      : kenari
+        ? err.message
+        : 'Terjadi kesalahan di server.',
   }
-  if (!kenari) console.error('[server]', err)
+  if (!kenari && !terlaluBesar) console.error('[server]', err)
   if (res.headersSent) return res.end()
   res.status(status).json(isi)
 })
