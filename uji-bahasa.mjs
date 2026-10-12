@@ -76,7 +76,7 @@ console.log('\nkunci yang tidak dipakai siapa pun (kode mati)')
  * Banyak kunci diteruskan lewat VARIABEL, bukan literal:
  *   - Sidebar:  t(kunci)  dengan kunci dari NAV_ITEMS
  *   - Settings: labelTingkat(t.kunci) -> t(`tingkat.${kunci}`)
- *   - ScanPanel: t(p.kunci) dari pesanProgres()
+ *   - PemindaiFoto: t(p.kunci) dari pesanProgres()
  * Percobaan pertama memakai pola literal saja dan melaporkan 41 kunci
  * "menganggur" — hampir semuanya positif palsu. Karena itu kunci dianggap
  * dipakai kalau STRING-nya muncul di berkas sumber mana pun, atau kalau
@@ -124,9 +124,9 @@ cek('kunci tak dikenal dikembalikan apa adanya', tId('tidak.ada') === 'tidak.ada
 /* --------------------------------------------------- 5. kunci wajib ada */
 console.log('\nkunci penting (dipakai fitur inti)')
 for (const k of [
-  'nav.beranda', 'nav.pindai', 'beranda.sapa', 'suara.judul', 'suara.tekan',
+  'nav.beranda', 'nav.tanya', 'beranda.sapa', 'tanya.pindaiTombol', 'tanya.modeTanya',
   'riw.terakhir', 'kuis.judul', 'kuis.lihat', 'tips.label', 'art.judul',
-  'topik.judul', 'pindai.judul', 'pindai.tegasJudul', 'umum.kodeLokal',
+  'topik.judul', 'pindai.tombol', 'pindai.tegasJudul', 'umum.kodeLokal',
 ]) {
   cek(`ada di id & en: ${k}`, k in id && k in en)
 }
