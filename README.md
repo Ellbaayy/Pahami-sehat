@@ -19,10 +19,11 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Cek klaim | berjalan (verdict + sumber) |
 > | Suara dibacakan | berjalan — suara neural, nada mengikuti isi kalimat |
 > | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya |
-> | Pindai foto / OCR | **belum ada.** Bukan simulasi — fiturnya memang belum dibuat |
+> | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
 > 20 permintaan/menit per alamat IP (lihat `app/server/batas.js`).
+> Pindai foto tidak masuk hitungan itu karena tidak menyentuh server sama sekali.
 
 ---
 
@@ -45,6 +46,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 pahami-sehat/
 ├── app/                      ← PRODUK UTAMA (React + Express + Tailwind)
 │   ├── .env                  API key Kenari (JANGAN di-commit)
+│   ├── public/ocr/           mesin OCR: worker, core WASM, data bahasa
 │   ├── server/               backend Express: route, klien Kenari, prompt, rubrik
 │   ├── src/                  frontend React: App.jsx, lib/, data/, components/
 │   ├── index.html
@@ -101,8 +103,99 @@ python3 -m http.server 8080 --bind 127.0.0.1
 ```
 
 Halaman ini juga bisa dibuka langsung dari `index.html` di peramban (semua aset lokal).
-Tombol "Coba Demo" mengarah ke `app/dist/index.html`, jadi **build aplikasi dulu**
-kalau ingin tombol itu berfungsi.
+Tombol "Coba Aplikasinya" mengarah ke `/app/`, jadi **build aplikasi dulu**
+(`npm run build`) kalau ingin tombol itu berfungsi.
+
+---
+
+## Pindai foto (OCR) — seluruhnya di peramban
+
+Fitur ini membaca teks dari foto (label obat, hasil lab, resep) memakai
+`tesseract.js` (WebAssembly). **Tidak ada gambar yang dikirim ke server**, dan
+fitur ini tetap bekerja tanpa internet maupun tanpa API key.
+
+Mesinnya disajikan dari situs sendiri di `app/public/ocr/`, **bukan dari CDN**.
+Itu pilihan yang disengaja: kalau berkasnya diambil dari CDN, pemindaian akan
+mengirim permintaan ke pihak ketiga — dan janji "foto tidak keluar dari
+perangkat" jadi tidak benar.
+
+Isi `app/public/ocr/` (16,3 MB):
+
+| Berkas | Asal |
+|---|---|
+| `worker.min.js` | paket `tesseract.js` |
+| `tesseract-core-lstm.wasm.js`, `-simd-lstm`, `-relaxedsimd-lstm` | paket `tesseract.js-core` (tiga varian, dipilih sesuai dukungan peramban) |
+| `langdata/ind.traineddata`, `langdata/eng.traineddata` | [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) (Apache-2.0) |
+
+Memperbarui berkas mesin (hanya kalau versi `tesseract.js` dinaikkan):
+
+```bash
+cd app
+npm install tesseract.js@<versi>
+cp node_modules/tesseract.js/dist/worker.min.js public/ocr/
+cp node_modules/tesseract.js-core/tesseract-core-*-lstm.wasm.js public/ocr/
+# data bahasa dari tessdata_fast (1,1 MB untuk ind, 3,9 MB untuk eng)
+curl -sL -o public/ocr/langdata/ind.traineddata \
+  https://github.com/tesseract-ocr/tessdata_fast/raw/main/ind.traineddata
+curl -sL -o public/ocr/langdata/eng.traineddata \
+  https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata
+```
+
+### Batas yang diakui terbuka
+
+Diukur dengan tiga foto uji (dibuat dari teks asli, bukan gambar karangan), dan
+ini ditulis apa adanya. Angka di bawah berasal dari **membandingkan hasil yang
+benar-benar keluar dari aplikasi** dengan teks sumber yang diketahui — bukan dari
+perkiraan:
+
+| Foto uji | Akurasi huruf | Angka benar | Baris utuh | Angka yang salah |
+|---|---|---|---|---|
+| Label obat (teks besar) | 100,0% | 5/5 | 9/9 | — |
+| Hasil lab (teks sedang) | 99,7% | 15/16 | 11/12 | `11.2` |
+| Hasil lab (teks kecil) | 98,1% | 12/16 | 10/12 | `11.2`, `13.2`, `17.3`, `34` |
+
+Kesalahannya **berpola sama dan sudah diketahui sebabnya**: tanda titik dua `:`
+kadang terbaca sebagai angka `1`, sehingga `Hemoglobin : 11.2` menjadi
+`111.2`. Diuji pada empat ukuran gambar berbeda (2000–3800 px) — **tidak ada
+ukuran yang bebas dari kesalahan ini**. Pada teks kecil kesalahannya bertambah
+karena hurufnya terlalu rapat untuk dipisahkan dengan yakin.
+
+Karena itu:
+
+- **Angka yang mencurigakan ditandai**, tidak dibetulkan sendiri. Menebak angka
+  medis lebih berbahaya daripada tidak menebak.
+- **Peringatan tegas selalu tampil**: ini alat bantu baca, angka hasil lab wajib
+  dicocokkan ke kertas aslinya.
+- **Keyakinan mesin bukan jaminan.** Pernah 84% tapi angkanya salah. Angka itu
+  ditampilkan sebagai keterangan, bukan sebagai lampu hijau.
+- **Tulisan tangan belum ditangani.** Resep yang ditulis tangan akan gagal.
+
+Kesimpulan praktis: fitur ini andal untuk **label obat dan teks tercetak yang
+jelas**, dan berguna tapi **belum bisa dipercaya sendiri untuk hasil lab** —
+persis itulah yang dikatakan aplikasinya kepada pengguna.
+
+### Menguji pindai foto
+
+```bash
+node uji-ocr.mjs        # 36 pemeriksaan: perapian teks & penandaan angka
+```
+
+Bagian yang butuh peramban sungguhan (mesin OCR-nya sendiri) diuji manual:
+jalankan `npm start`, buka `/app/`, pilih menu **Pindai Foto**, masukkan foto
+label obat atau hasil lab, lalu periksa bahwa teksnya muncul dan tidak ada
+permintaan jaringan yang keluar (tab Network harus tetap kosong).
+
+### Menyetel mutu pembacaan
+
+`app/src/lib/ocr.js` menyimpan angka-angka yang dipilih dari pengukuran, bukan
+perkiraan. Kalau hasil pembacaan terasa memburuk, tiga hal ini yang pertama
+diperiksa:
+
+| Setelan | Nilai | Kenapa |
+|---|---|---|
+| `MAKS_SISI` / `MAKS_SISI_BESAR` | 2000 / 2600 px | huruf ~27 px benar untuk teks besar, ~35 px untuk teks kecil, ~44 px mulai salah |
+| `TINGGI_HURUF_IDEAL` | 34 px | tinggi huruf yang mendekati keduanya |
+| `AMBANG_RENTANG` | 110 | di bawah rentang kontras ini, perentangan kontras dipakai; di atasnya justru merusak (`11.2` jadi `21.2`) |
 
 ---
 

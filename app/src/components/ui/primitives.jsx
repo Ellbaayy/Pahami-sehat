@@ -1,4 +1,4 @@
-import { Loader2, AlertCircle } from 'lucide-react'
+import { Check, Landmark, Link, Loader2, AlertCircle, Search, ArrowRight } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import IlustrasiAnimasi from './IlustrasiAnimasi'
 
@@ -163,7 +163,11 @@ export function SourcePills({ sources = [], negative = false, label = 'Sumber' }
         )
         const isi = (
           <>
-            <span aria-hidden="true">{negative ? '→' : '✓'}</span>
+            {negative ? (
+              <ArrowRight className="size-3.5" aria-hidden="true" />
+            ) : (
+              <Check className="size-3.5" aria-hidden="true" />
+            )}
             {teks || url.replace(/^https?:\/\//, '').slice(0, 40)}
           </>
         )
@@ -270,7 +274,7 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
       className="mt-3 rounded-xl border border-line-200 bg-white px-3.5 py-3"
     >
       <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-[0.8rem] font-bold text-navy-800 marker:content-none">
-        <span aria-hidden="true">🔎</span>
+        <Search className="size-3.5 text-brand-600" aria-hidden="true" />
         {label} ({semua.length})
         {adaResmi ? (
           <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[0.68rem] font-bold text-brand-700 ring-1 ring-brand-100">
@@ -288,7 +292,13 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
         {semua.map((s, i) => (
           <li key={`${s.url}-${i}`} className="rounded-lg border border-line-100 bg-surface-50/60 p-2.5">
             <div className="flex items-start gap-2">
-              <span className="shrink-0" aria-hidden="true">{s.resmi ? '🏛️' : s.dipakai ? '✅' : '🔗'}</span>
+              {s.resmi ? (
+                <Landmark className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden="true" />
+              ) : s.dipakai ? (
+                <Check className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden="true" />
+              ) : (
+                <Link className="mt-0.5 size-4 shrink-0 text-muted-500" aria-hidden="true" />
+              )}
               <div className="min-w-0 flex-1">
                 <p className="text-[0.84rem] leading-snug font-semibold text-navy-800">
                   {s.judul}
@@ -321,7 +331,7 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
 
       <p className="mt-2.5 text-[0.7rem] text-muted-500">
         Jawaban disusun dari hasil pencarian internet yang diambil saat pertanyaan diproses.
-        Tanda ✅ berarti sumber itu dipakai di jawaban; 🏛️ menandai lembaga resmi.
+        Tanda centang berarti sumber itu dipakai di jawaban; ikon gedung menandai lembaga resmi.
       </p>
     </details>
   )

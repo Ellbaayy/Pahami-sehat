@@ -14,6 +14,7 @@ import SettingsPanel from './components/dashboard/SettingsPanel'
 import ThreadPanel from './components/dashboard/ThreadPanel'
 import SederhanakanPanel from './components/dashboard/SederhanakanPanel'
 import VerifikasiPanel from './components/dashboard/VerifikasiPanel'
+import ScanPanel from './components/dashboard/ScanPanel'
 import { SectionHeading, EmptyState } from './components/ui/primitives'
 import BatasGalat from './components/ui/BatasGalat'
 import LoadingPage from './components/LoadingPage'
@@ -343,6 +344,18 @@ export default function App() {
     navigate('tanya')
   }
 
+  /**
+   * Teruskan teks hasil pindai foto ke fitur lain.
+   *
+   * Teks ditaruh di kotak isian, bukan langsung dikirim: pengguna masih bisa
+   * memeriksa dan memperbaiki hasil pembacaan sebelum AI memakainya. Ini juga
+   * sebabnya hasil pindai tidak pernah otomatis dikirim ke mana pun.
+   */
+  const kirimHasilPindai = (tujuan, teks) => {
+    setInput(teks)
+    navigate(tujuan)
+  }
+
   return (
     <>
       <LoadingPage />
@@ -466,6 +479,8 @@ export default function App() {
                 serverOnline={server.online}
                 serverMemuat={server.memuat}
                 bahasa={kodeBahasa}
+                teksAwal={input}
+                onTeksAwalDipakai={() => setInput('')}
               />
             ) : null}
 
@@ -482,6 +497,15 @@ export default function App() {
             ) : null}
 
             {active === 'suara' ? <VoicePanel onUse={useVoiceResult} /> : null}
+
+            {active === 'pindai' ? (
+              <ScanPanel
+                t={t}
+                serverOnline={server.online}
+                onKirimKe={kirimHasilPindai}
+                bahasa={kodeBahasa}
+              />
+            ) : null}
 
             {active === 'riwayat' ? (
               <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">

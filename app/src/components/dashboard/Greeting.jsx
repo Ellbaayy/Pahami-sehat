@@ -1,4 +1,4 @@
-import { ShieldCheck, AudioLines } from 'lucide-react'
+import { ShieldCheck, AudioLines, Hand } from 'lucide-react'
 import IlustrasiAnimasi from '../ui/IlustrasiAnimasi'
 
 /**
@@ -22,7 +22,7 @@ export default function Greeting() {
           id="greeting-title"
           className="text-[clamp(1.6rem,1.2rem+1.6vw,2.6rem)] leading-[1.1] font-extrabold tracking-tight text-navy-900"
         >
-          Halo! <span aria-hidden="true">👋</span>
+          Halo! <Hand className="inline-block size-[0.85em] -translate-y-[0.08em] align-baseline text-brand-500" aria-hidden="true" />
         </h1>
         <p className="mt-2 text-[clamp(1.05rem,0.95rem+0.6vw,1.5rem)] font-semibold text-brand-600">
           Ada yang bisa kami bantu?
