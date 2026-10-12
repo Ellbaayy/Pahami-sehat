@@ -67,8 +67,7 @@ docs/prototipe/
 7. Gambaran Produk — mockup laptop (sidebar aktif) + mockup mobile
 8. Kuesioner HLS-SF12 — skor + donut chart + **saran** per kategori hasil
 9. Quote/tagline
-10. Cara Menembak Rubrik Penilaian — 5 pilar dengan bobot persen
-11. Footer
+10. Footer
 
 ## Aksesibilitas & responsif
 
