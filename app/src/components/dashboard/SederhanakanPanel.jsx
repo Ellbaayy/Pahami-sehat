@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FileText, Loader2, Wand2, Trash2 } from 'lucide-react'
 import { Button, Card, SectionHeading, SourcePills, PoinKunci, Peringatan } from '../ui/primitives'
 import TombolDengar from '../ui/TombolDengar'
@@ -20,11 +20,24 @@ export default function SederhanakanPanel({
   bahasa = 'id',
   t = (k) => k,
   labelTingkat = (x) => x,
+  /** Teks yang diisi dari fitur lain (mis. hasil Pindai Foto) — boleh kosong. */
+  teksAwal = '',
+  onTeksAwalDipakai,
 }) {
-  const [teks, setTeks] = useState('')
+  const [teks, setTeks] = useState(teksAwal)
   const [loading, setLoading] = useState(false)
   const [hasil, setHasil] = useState(null)
   const [error, setError] = useState(null)
+
+  // Teks yang datang dari fitur lain ditaruh di kotak isian, TIDAK langsung
+  // dikirim — pengguna masih bisa memeriksa dan membetulkannya lebih dulu.
+  useEffect(() => {
+    if (!teksAwal) return
+    setTeks(teksAwal)
+    setHasil(null)
+    setError(null)
+    onTeksAwalDipakai?.()
+  }, [teksAwal, onTeksAwalDipakai])
 
   const kirim = async () => {
     const isi = teks.trim()

@@ -39,6 +39,22 @@
   --maxw:1200px;
 }
 
+/* ---------- ikon (pengganti emoji) ----------
+   Ikon disisipkan sebagai SVG sebaris dari lucide (lisensi ISC), jadi:
+     - warnanya ikut `currentColor` — sama seperti teks di sekitarnya
+     - ukurannya ikut ukuran huruf induknya, termasuk saat pembaca memperbesar teks
+     - tidak ada permintaan jaringan tambahan
+   Sebelumnya di sini dipakai emoji; pada sebagian perangkat emoji tampil
+   berwarna dan berbeda-beda bentuknya, sehingga tidak seragam dengan aplikasi. */
+.ic-svg{
+  width:1.05em;height:1.05em;
+  display:inline-block;vertical-align:-.16em;
+  flex:none;
+}
+/* di dalam chip & label kecil, ikon dikecilkan sedikit */
+.chip-badge .ic-svg{width:1em;height:1em}
+.app-nav-item .ic-svg{width:1.15em;height:1.15em;vertical-align:-.2em}
+
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scroll-padding-top:88px}
 section[id]{scroll-margin-top:88px}
@@ -128,6 +144,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   padding:.42rem .85rem;border-radius:999px;font-size:.79rem;font-weight:700;
   background:#fff;border:1px solid var(--line);box-shadow:var(--shadow-sm);
 }
+.chip-badge .ic-svg{width:1.05em;height:1.05em;vertical-align:-.14em}
 .b-blue{color:var(--blue);border-color:#CFE0F7;background:var(--blue-soft)}
 .b-green{color:#1F7A5C;border-color:#CBE9DC;background:var(--green-soft)}
 .b-purple{color:#5B45B5;border-color:#DED6F8;background:var(--purple-soft)}
@@ -238,7 +255,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   width:38px;height:38px;border-radius:50%;background:var(--blue);color:#fff;
   display:grid;place-items:center;font-weight:800;font-size:.95rem;
 }
-.pc-head .ic{font-size:1.4rem}
+.pc-head .ic{font-size:1.4rem;line-height:0}
 .problem-card ul{margin:0;padding-left:1.1rem;color:var(--ink-2);font-size:.92rem}
 .problem-card li{margin-bottom:.35rem}
 .ul-cols{display:grid;gap:.35rem;padding-left:1.1rem}
@@ -275,7 +292,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 }
 .layer-card h3{font-size:1.02rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem}
 .layer-card p{font-size:.88rem;color:var(--ink-2);margin:0}
-.layer-ic{display:block;margin-top:.7rem;font-size:1.5rem;opacity:.55;line-height:1}
+.layer-ic{display:block;margin-top:.7rem;font-size:1.5rem;opacity:.55;line-height:0}
 .l1{background:linear-gradient(160deg,#fff,#EDF4FD);border-color:#D9E7FA}
 .l1 .layer-num{background:var(--blue)}
 .l1 h3{color:var(--blue)}
@@ -360,7 +377,7 @@ textarea{resize:vertical;min-height:76px}
 .voice-head{display:flex;align-items:flex-start;gap:.6rem}
 .avatar{
   width:38px;height:38px;border-radius:50%;background:#DCF1E7;display:grid;place-items:center;
-  font-size:1.15rem;flex:none;
+  font-size:1.15rem;flex:none;line-height:0;
 }
 .speech-bubble{
   background:#fff;border:1.5px solid var(--sky);color:var(--navy);
@@ -427,7 +444,7 @@ textarea{resize:vertical;min-height:76px}
   padding:.75rem;margin-top:.8rem;font-size:.85rem;font-weight:700;color:#5B45B5;
 }
 .offline-visual.is-off{opacity:.45;filter:grayscale(.6)}
-.off-ic{font-size:1.15rem}
+.off-ic{font-size:1.15rem;line-height:0}
 .savings{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.7rem}
 .savings span{
   background:var(--green-soft);border:1px solid #CBE9DC;color:#1F7A5C;
@@ -449,7 +466,7 @@ textarea{resize:vertical;min-height:76px}
   border-radius:10px;padding:.6rem .75rem;transition:border-color .18s,transform .18s;
 }
 .src-card:hover{border-color:var(--blue);transform:translateX(3px)}
-.src-ic{font-size:1.1rem}
+.src-ic{font-size:1.1rem;line-height:0}
 .src-body{display:flex;flex-direction:column;min-width:0}
 .src-body strong{font-size:.86rem;color:var(--navy)}
 .src-body small{font-size:.74rem;color:#5C697D;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -514,7 +531,7 @@ textarea{resize:vertical;min-height:76px}
 .ph-text{font-size:.9rem;color:var(--ink-2);margin:0 0 .9rem}
 .ph-mic{
   width:74px;height:74px;border-radius:50%;border:0;font-size:1.7rem;cursor:pointer;
-  background:linear-gradient(150deg,var(--blue),var(--sky));color:#fff;
+  background:linear-gradient(150deg,var(--blue),var(--sky));color:#fff;line-height:0;
   box-shadow:0 12px 26px rgba(29,78,166,.35);transition:transform .2s;
 }
 .ph-mic:hover{transform:scale(1.05)}
@@ -595,7 +612,7 @@ textarea{resize:vertical;min-height:76px}
 .rubric-item:hover{transform:translateX(5px);box-shadow:var(--shadow)}
 .r-ic{
   flex:none;width:46px;height:46px;border-radius:14px;background:var(--blue-soft);
-  display:grid;place-items:center;font-size:1.3rem;
+  display:grid;place-items:center;font-size:1.3rem;line-height:0;
 }
 .rubric-item:nth-child(2) .r-ic{background:var(--purple-soft)}
 .rubric-item:nth-child(3) .r-ic{background:#EDF3FB}
@@ -717,7 +734,7 @@ input,select,textarea{max-width:100%}
 }
 .flow-num{
   display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
-  background:var(--blue);color:#fff;font-weight:800;font-size:.85rem;margin-bottom:.55rem;
+  background:var(--blue);color:#fff;font-weight:800;font-size:.85rem;margin-bottom:.55rem;line-height:0;
 }
 .flow-step h3{font-size:.95rem;color:var(--navy);margin-bottom:.2rem}
 .flow-step p{font-size:.83rem;color:var(--ink-2);margin:0}
