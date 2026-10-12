@@ -8,24 +8,21 @@ import TopicChips from './components/dashboard/TopicChips'
 import ArticleGrid from './components/dashboard/ArticleGrid'
 import HealthTip from './components/dashboard/HealthTip'
 import RecentHistory from './components/dashboard/RecentHistory'
-import VoicePanel from './components/dashboard/VoicePanel'
 import QuizPanel from './components/dashboard/QuizPanel'
 import SettingsPanel from './components/dashboard/SettingsPanel'
 import ThreadPanel from './components/dashboard/ThreadPanel'
-import SederhanakanPanel from './components/dashboard/SederhanakanPanel'
 import VerifikasiPanel from './components/dashboard/VerifikasiPanel'
-import ScanPanel from './components/dashboard/ScanPanel'
 import { SectionHeading, EmptyState } from './components/ui/primitives'
 import BatasGalat from './components/ui/BatasGalat'
 import ToastBatal from './components/ui/ToastBatal'
 import LoadingPage from './components/LoadingPage'
 import { History, ArrowLeft, PlugZap, Plug, Trash2 } from 'lucide-react'
-import { TOPICS, ARTICLES, HEALTH_TIP, contohRiwayat } from './data/dummy'
+import { TOPICS, ARTICLES, HEALTH_TIP } from './data/dummy'
 import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
 import { gunakanBahasa } from './lib/useBahasa'
-import { tanyaStream, ambilKonten } from './lib/api'
-import { ttsBaca, ttsBerhenti } from './lib/tts'
+import { tanyaStream, sederhanakan, ambilKonten } from './lib/api'
+import { ttsBaca } from './lib/tts'
 
 const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, kontras: false, tts: false, lang: 'id' }
 
@@ -55,25 +52,36 @@ function kePesan(h) {
   }
 }
 
+/** Jawaban dipotong di riwayat supaya tidak memakan ruang penyimpanan. */
+const potongJawaban = (s) => (s?.length > 96 ? `${s.slice(0, 96).trimEnd()}…` : s)
+
+/** Contoh teks medis untuk mode Sederhanakan. */
+const CONTOH_SEDERHANAKAN =
+  'Hipertensi merupakan kondisi kronis yang ditandai dengan peningkatan tekanan darah arteri secara persisten di atas nilai ambang batas normal. Komplikasi meliputi hipertrofi ventrikel kiri, nefropati, dan retinopati. Terapi lini pertama: ACE inhibitor atau ARB, target <140/90 mmHg.'
+
 /**
  * Riwayat pertanyaan.
  *
  * Disimpan di localStorage peramban supaya benar-benar bertahan setelah
  * halaman dimuat ulang — bukan hanya selama sesi. Panel Riwayat menyatakan
- * "tersimpan di memori peramban saja", jadi datanya memang harus ada di sana;
- * sebelumnya riwayat hanya hidup di state React dan hilang begitu halaman
- * disegarkan.
+ * "tersimpan di memori peramban saja", jadi datanya memang harus ada di sana.
  *
- * Isinya sengaja dibatasi 12 entri terakhir, dan jawaban dipotong 96 karakter
- * supaya tidak memakan ruang penyimpanan.
+ * `null` = kuncinya belum pernah ada (belum pernah bertanya sama sekali).
+ * `[]` = sudah pernah, tapi sekarang kosong (semua dihapus). Keduanya tampil
+ * sebagai daftar kosong, dan tidak ada lagi contoh riwayat karangan yang
+ * mengisinya.
+ *
+ * Isinya sengaja dibatasi 12 entri terakhir.
  */
 const KUNCI_RIWAYAT = 'pahami-sehat:riwayat'
 const MAKS_RIWAYAT = 12
 
 function bacaRiwayat() {
   try {
-    const isi = JSON.parse(localStorage.getItem(KUNCI_RIWAYAT) || '[]')
-    if (!Array.isArray(isi) || !isi.length) return null
+    const mentah = localStorage.getItem(KUNCI_RIWAYAT)
+    if (mentah === null) return null
+    const isi = JSON.parse(mentah)
+    if (!Array.isArray(isi)) return null
     return isi.filter((x) => x && x.id && x.question)
   } catch {
     return null
@@ -171,22 +179,21 @@ export default function App() {
   const [statusPesan, setStatusPesan] = useState('')
   const [error, setError] = useState(null)
   const [sumberCari, setSumberCari] = useState([])
-  const [result, setResult] = useState(null)
-  const [askedQuestion, setAskedQuestion] = useState('')
   const [selectedTopic, setSelectedTopic] = useState(null)
   const [thread, setThread] = useState([])
 
   /**
-   * Riwayat yang ditampilkan.
+   * Mode komposer Tanya AI: 'tanya' (pertanyaan biasa) atau 'sederhanakan'
+   * (teks medis yang bahasanya disederhanakan).
    *
-   * `null` berarti "belum ada riwayat sungguhan" — dan itu BUKAN sama dengan
-   * "kosong". Yang ditampilkan saat null adalah contoh (contohRiwayat), supaya
-   * halaman Beranda tidak pernah kosong saat pertama dibuka. Pemisahan ini
-   * penting: notifikasi jumlah pertanyaan dan keadaan kosong di panel Riwayat
-   * harus menghitung yang SUNGGUHAN, bukan contohnya. Sebelumnya keduanya
-   * memakai satu daftar, sehingga contoh ikut dihitung sebagai "4 pertanyaan
-   * tersimpan" padahal belum ada satu pun pertanyaan diajukan.
+   * Keduanya berbagi kotak isian, tingkat baca, dan utas percakapan yang sama.
+   * Dulu masing-masing punya halaman sendiri sehingga pengguna harus
+   * berpindah-pindah untuk hal yang sebenarnya sama: menyiapkan teks.
    */
+  const [mode, setMode] = useState('tanya')
+  /** Pemindai foto dilipat di dalam kartu komposer, bukan halaman tersendiri. */
+  const [pindaiTerbuka, setPindaiTerbuka] = useState(false)
+
   const [riwayat, setRiwayat] = useState(() => bacaRiwayat())
   const [settings, setSettings] = useState(() => bacaSetelan())
 
@@ -211,9 +218,8 @@ export default function App() {
       const dibuang = daftar.find((h) => h.id === id)
       if (!dibuang) return
       setBatal({ jenis: 'satu', sebelum: daftar, judul: dibuang.question })
-      const sisa = daftar.filter((h) => h.id !== id)
-      // daftar kosong -> null, supaya contoh riwayat kembali tampil
-      setRiwayat(sisa.length ? sisa : null)
+      // daftar kosong -> [], bukan null: yang sudah dihapus tidak boleh hidup lagi
+      setRiwayat(daftar.filter((h) => h.id !== id))
     },
     [riwayat],
   )
@@ -221,7 +227,7 @@ export default function App() {
   const hapusSemuaRiwayat = useCallback(() => {
     if (!riwayat?.length) return
     setBatal({ jenis: 'semua', sebelum: riwayat, judul: null })
-    setRiwayat(null)
+    setRiwayat([])
   }, [riwayat])
 
   const batalkanHapus = useCallback(() => {
@@ -233,20 +239,17 @@ export default function App() {
 
   const { kode: kodeBahasa, t } = gunakanBahasa(settings.lang)
 
-  // Yang ditampilkan: riwayat sungguhan kalau ada, kalau belum pakai contoh.
-  // Contohnya ikut bahasa antarmuka (lihat data/dummy.js).
-  const history = riwayat?.length ? riwayat : contohRiwayat(kodeBahasa)
+  const history = riwayat ?? []
   const adaRiwayatSungguhan = Boolean(riwayat?.length)
 
   /**
    * Simpan riwayat ke peramban setiap kali berubah.
    *
-   * `null` berarti "tidak ada riwayat sungguhan", dan itu HARUS tetap tersimpan
-   * sebagai daftar kosong. Sebelumnya fungsi ini melewatkan null sepenuhnya,
-   * sehingga setelah "Hapus semua" kunci penyimpanannya tidak pernah ditimpa —
-   * localStorage masih memegang daftar lama, dan riwayat yang sudah dihapus
-   * muncul kembali begitu halaman disegarkan. Data yang sudah dihapus tidak
-   * boleh bisa hidup lagi.
+   * Daftar kosong HARUS tetap tersimpan. Sebelumnya fungsi ini melewatkan nilai
+   * kosong sepenuhnya, sehingga setelah "Hapus semua" kunci penyimpanannya tidak
+   * pernah ditimpa — localStorage masih memegang daftar lama, dan riwayat yang
+   * sudah dihapus muncul kembali begitu halaman disegarkan. Data yang sudah
+   * dihapus tidak boleh bisa hidup lagi.
    */
   useEffect(() => {
     simpanRiwayat(riwayat ?? [])
@@ -264,7 +267,7 @@ export default function App() {
   const labelTingkat = useCallback((kunci) => t(`tingkat.${kunci}`), [t])
   const batalRef = useRef(null)
 
-  // supaya `ask` selalu melihat nilai tts terbaru tanpa ikut jadi dependensi
+  // supaya `kirim` selalu melihat nilai tts terbaru tanpa ikut jadi dependensi
   const ttsAutoRef = useRef(settings.tts)
   ttsAutoRef.current = settings.tts
 
@@ -307,8 +310,8 @@ export default function App() {
   }, [settings])
 
   // --- pemberitahuan -------------------------------------------------------
-  // Isinya dihitung dari keadaan nyata, bukan contoh: kapan konten harian
-  // terakhir diperbarui, berapa jawaban tersimpan, dan apakah server hidup.
+  // Isinya dihitung dari keadaan nyata: kapan konten harian terakhir
+  // diperbarui, berapa jawaban tersimpan, dan apakah server hidup.
   const notifikasi = []
   if (konten.diperbarui) {
     notifikasi.push({
@@ -324,9 +327,6 @@ export default function App() {
       }),
     })
   }
-  // Notifikasi ini menghitung riwayat SUNGGUHAN, bukan contohnya. Sebelumnya
-  // memakai daftar tampilan, sehingga contoh ikut dihitung dan pengguna baru
-  // langsung melihat "4 pertanyaan tersimpan" padahal belum bertanya sekali pun.
   if (adaRiwayatSungguhan) {
     notifikasi.push({
       id: 'riwayat',
@@ -360,8 +360,20 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
-  const ask = useCallback(
-    (raw) => {
+  /**
+   * Kirim isi kotak ke AI — satu pintu untuk mode Tanya dan Sederhanakan.
+   *
+   * Kiriman yang datang dari Beranda langsung MEMINDAHKAN pengguna ke halaman
+   * Tanya AI: pertanyaan muncul di sana sebagai gelembung pertama, dan
+   * jawabannya menyusul di tempat yang sama. Jadi kartu di Beranda benar-benar
+   * hanya pintu masuk, bukan tempat menampilkan jawaban.
+   *
+   * Kedua mode berbagi utas, riwayat, dan pembacaan suara otomatis yang sama.
+   * Yang berbeda hanya rute server yang dipanggil dan apakah jawabannya
+   * mengalir (streaming) atau datang sekaligus.
+   */
+  const kirim = useCallback(
+    (raw, modeKirim = 'tanya') => {
       const text = (raw || '').trim()
       if (!text || loading) return
 
@@ -370,45 +382,64 @@ export default function App() {
       batalRef.current = ac
 
       setLoading(true)
-      setResult(null)
       setError(null)
       setStreamTeks('')
       setSumberCari([])
-      setStatusPesan(t('tanya.menyiapkan'))
-      setAskedQuestion(text)
       setInput('')
 
-      // bubble user muncul langsung; jawaban AI menyusul saat stream selesai
-      setThread((prev) => [...prev, { id: `u${Date.now()}`, role: 'user', text }])
+      // --- pindah halaman dulu, baru pertanyaan muncul di sana ---
+      if (active === 'beranda') {
+        setActive('tanya')
+        setDrawerOpen(false)
+      }
 
-      tanyaStream(
-        { pertanyaan: text, tingkat: settings.level, bahasa: kodeBahasa },
-        {
-          signal: ac.signal,
-          onStatus: (p) => setStatusPesan(terjemahkanStatus(p)),
-          onSumber: (h) => setSumberCari(h),
-          onDelta: (t) => setStreamTeks((prev) => prev + t),
-          onHasil: (h) => {
-            setResult(h)
-            setThread((prev) => [...prev, { id: `a${Date.now()}`, role: 'ai', ...kePesan(h) }])
-            // putar suara otomatis kalau diaktifkan di Pengaturan
-            if (ttsAutoRef.current) ttsBaca(h.jawaban)
-            setRiwayat((prev) =>
-              [
-                {
-                  id: `n${Date.now()}`,
-                  question: text,
-                  answer:
-                    h.jawaban?.length > 96 ? `${h.jawaban.slice(0, 96).trimEnd()}…` : h.jawaban,
-                  time: t('riw.baruSaja'),
-                  sources: (h.sumber ?? []).map((s) => s.penerbit || s.judul).filter(Boolean),
-                },
-                ...(prev ?? []),
-              ].slice(0, MAKS_RIWAYAT),
-            )
+      // gelembung user muncul langsung; jawaban AI menyusul saat selesai
+      setThread((prev) => [...prev, { id: `u${Date.now()}`, role: 'user', text, mode: modeKirim }])
+
+      /** Catat jawaban ke utas + riwayat. Dipakai kedua mode. */
+      const catatHasil = (h) => {
+        setThread((prev) => [...prev, { id: `a${Date.now()}`, role: 'ai', ...kePesan(h) }])
+        // putar suara otomatis kalau diaktifkan di Pengaturan
+        if (ttsAutoRef.current) ttsBaca(h.jawaban)
+        setRiwayat((prev) =>
+          [
+            {
+              id: `n${Date.now()}`,
+              question: text,
+              answer: potongJawaban(h.jawaban),
+              time: t('riw.baruSaja'),
+              sources: (h.sumber ?? []).map((s) => s.penerbit || s.judul).filter(Boolean),
+            },
+            ...(prev ?? []),
+          ].slice(0, MAKS_RIWAYAT),
+        )
+      }
+
+      let jalan
+      if (modeKirim === 'sederhanakan') {
+        setStatusPesan(t('sed.proses'))
+        jalan = sederhanakan(
+          { teks: text, tingkat: settings.level, bahasa: kodeBahasa },
+          ac.signal,
+        ).then((h) => {
+          catatHasil(h)
+          return h
+        })
+      } else {
+        setStatusPesan(t('tanya.menyiapkan'))
+        jalan = tanyaStream(
+          { pertanyaan: text, tingkat: settings.level, bahasa: kodeBahasa },
+          {
+            signal: ac.signal,
+            onStatus: (p) => setStatusPesan(terjemahkanStatus(p)),
+            onSumber: (h) => setSumberCari(h),
+            onDelta: (d) => setStreamTeks((prev) => prev + d),
+            onHasil: catatHasil,
           },
-        },
-      )
+        )
+      }
+
+      Promise.resolve(jalan)
         .catch((e) => {
           if (e?.name === 'AbortError') return
           setError({ pesan: e.message, code: e.code })
@@ -419,7 +450,7 @@ export default function App() {
           setStatusPesan('')
         })
     },
-    [loading, settings.level, t, terjemahkanStatus],
+    [active, loading, settings.level, kodeBahasa, t, terjemahkanStatus],
   )
 
   const handleTopic = (id) => {
@@ -428,28 +459,27 @@ export default function App() {
       return
     }
     setSelectedTopic(id)
-    const t = konten.topik.find((x) => x.id === id)
-    const label = t?.label ?? ''
+    const topik = konten.topik.find((x) => x.id === id)
+    const label = topik?.label ?? ''
+    setMode('tanya')
     // pakai kalimat tanya yang disiapkan server; kalau tidak ada, susun sendiri
-    ask(t?.tanya ?? `Apa yang perlu saya ketahui tentang ${label.toLowerCase()}?`)
-  }
-
-  const useVoiceResult = (text) => {
-    setInput(text)
-    navigate('tanya')
+    kirim(topik?.tanya ?? `Apa yang perlu saya ketahui tentang ${label.toLowerCase()}?`)
   }
 
   /**
-   * Teruskan teks hasil pindai foto ke fitur lain.
+   * Buka sebuah riwayat di halaman Tanya AI, siap dikirim ulang.
    *
-   * Teks ditaruh di kotak isian, bukan langsung dikirim: pengguna masih bisa
-   * memeriksa dan memperbaiki hasil pembacaan sebelum AI memakainya. Ini juga
-   * sebabnya hasil pindai tidak pernah otomatis dikirim ke mana pun.
+   * Riwayat yang diklik tidak langsung dikirim ke AI: teksnya ditaruh di kotak
+   * isian supaya pengguna bisa mengubahnya dulu kalau perlu.
    */
-  const kirimHasilPindai = (tujuan, teks) => {
-    setInput(teks)
-    navigate(tujuan)
-  }
+  const keTanya = useCallback(
+    (teks, modeKirim = 'tanya') => {
+      setMode(modeKirim)
+      setInput(teks)
+      navigate('tanya')
+    },
+    [navigate],
+  )
 
   return (
     <>
@@ -520,21 +550,16 @@ export default function App() {
               <div className="space-y-[clamp(1.4rem,1.1rem+1.1vw,2.4rem)]">
                 <Greeting t={t} />
 
+                {/* Pintu masuk saja: begitu dikirim, pengguna pindah ke Tanya AI */}
                 <AskAI
                   t={t}
                   value={input}
                   onChange={setInput}
-                  onAsk={ask}
+                  onKirim={(teks) => kirim(teks, 'tanya')}
                   loading={loading}
-                  question={askedQuestion}
-                  result={result}
-                  streaming={streamTeks}
-                  statusPesan={statusPesan}
-                  error={error}
-                  sumberCari={sumberCari}
                   serverOnline={server.online}
                   serverMemuat={server.memuat}
-                  bahasa={kodeBahasa}
+                  ringkas
                 />
                 <TopicChips
                   topics={konten.topik}
@@ -546,7 +571,12 @@ export default function App() {
                 />
                 <HealthTip tip={konten.tips} t={t} />
                 <ArticleGrid articles={konten.artikel} t={t} />
-                <RecentHistory items={history} onSeeAll={() => navigate('riwayat')} t={t} />
+                <RecentHistory
+                  items={history}
+                  onSeeAll={() => navigate('riwayat')}
+                  onKeTanya={keTanya}
+                  t={t}
+                />
               </div>
             ) : null}
 
@@ -555,7 +585,7 @@ export default function App() {
                 t={t}
                 input={input}
                 onInputChange={setInput}
-                onAsk={ask}
+                onKirim={kirim}
                 loading={loading}
                 thread={thread}
                 streaming={streamTeks}
@@ -565,20 +595,16 @@ export default function App() {
                 serverOnline={server.online}
                 serverMemuat={server.memuat}
                 bahasa={kodeBahasa}
-              />
-            ) : null}
-
-            {active === 'sederhanakan' ? (
-              <SederhanakanPanel
-                t={t}
-                labelTingkat={labelTingkat}
+                mode={mode}
+                onModeChange={setMode}
                 tingkat={settings.level}
                 onTingkatChange={(lv) => setSettings((s) => ({ ...s, level: lv }))}
-                serverOnline={server.online}
-                serverMemuat={server.memuat}
-                bahasa={kodeBahasa}
-                teksAwal={input}
-                onTeksAwalDipakai={() => setInput('')}
+                labelTingkat={labelTingkat}
+                onContohSederhanakan={() => setInput(CONTOH_SEDERHANAKAN)}
+                pindaiTerbuka={pindaiTerbuka}
+                onPindaiBuka={() => setPindaiTerbuka(true)}
+                onPindaiTutup={() => setPindaiTerbuka(false)}
+                onPindaiTeks={setInput}
               />
             ) : null}
 
@@ -590,17 +616,6 @@ export default function App() {
                 onTingkatChange={(lv) => setSettings((s) => ({ ...s, level: lv }))}
                 serverOnline={server.online}
                 serverMemuat={server.memuat}
-                bahasa={kodeBahasa}
-              />
-            ) : null}
-
-            {active === 'suara' ? <VoicePanel onUse={useVoiceResult} t={t} /> : null}
-
-            {active === 'pindai' ? (
-              <ScanPanel
-                t={t}
-                serverOnline={server.online}
-                onKirimKe={kirimHasilPindai}
                 bahasa={kodeBahasa}
               />
             ) : null}
@@ -625,40 +640,34 @@ export default function App() {
                     ) : null
                   }
                 />
-                {/* Yang dinilai "kosong" adalah riwayat SUNGGUHAN. Kalau contoh
-                    masih ditampilkan, daftarnya tetap tampil — bukan pesan
-                    kosong, karena pesan "belum ada riwayat" di bawah contoh
-                    justru membingungkan. */}
+                {/* Riwayat kosong tampil KOSONG — tidak ada contoh karangan
+                    yang mengisinya. Tombol hapus hanya diberikan saat ada
+                    riwayat sungguhan; kalau tidak ada, tombolnya tidak masuk akal. */}
                 {!adaRiwayatSungguhan ? (
-                  <>
-                    <EmptyState
-                      icon={History}
-                      title={t('riw.kosongJudul')}
-                      description={t('riw.kosongSub')}
-                      action={
-                        <button
-                          type="button"
-                          onClick={() => navigate('beranda')}
-                          className="mt-1 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
-                        >
-                          <ArrowLeft className="size-4" aria-hidden="true" />
-                          {t('riw.keBeranda')}
-                        </button>
-                      }
-                    />
-                    <p className="text-[0.78rem] font-semibold tracking-[0.1em] uppercase text-muted-500">
-                      {t('riw.contohJudul')}
-                    </p>
-                  </>
-                ) : null}
-                {/* onHapus HANYA diberikan saat ada riwayat sungguhan — kalau
-                    yang tampil contoh, tombol hapusnya tidak masuk akal. */}
-                <RecentHistory
-                  items={history}
-                  max={history.length}
-                  onHapus={adaRiwayatSungguhan ? hapusRiwayat : undefined}
-                  t={t}
-                />
+                  <EmptyState
+                    icon={History}
+                    title={t('riw.kosongJudul')}
+                    description={t('riw.kosongSub')}
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => navigate('tanya')}
+                        className="mt-1 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+                      >
+                        <ArrowLeft className="size-4" aria-hidden="true" />
+                        {t('riw.keTanya')}
+                      </button>
+                    }
+                  />
+                ) : (
+                  <RecentHistory
+                    items={history}
+                    max={history.length}
+                    onHapus={hapusRiwayat}
+                    onKeTanya={keTanya}
+                    t={t}
+                  />
+                )}
               </div>
             ) : null}
 

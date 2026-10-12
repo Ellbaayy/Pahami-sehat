@@ -8,19 +8,23 @@ import { cn } from '../../lib/cn'
  *
  * Teksnya diambil dari kamus lewat `t()` supaya ikut bahasa antarmuka.
  *
- * Tombol hapus per entri hanya muncul kalau `onHapus` diberikan. Itu disengaja:
- * di Beranda daftar ini kadang berisi CONTOH riwayat (belum ada pertanyaan
- * sungguhan), dan menghapus contoh tidak ada artinya — contoh itu bukan data
- * pengguna. Jadi pemanggil yang menentukan, bukan komponen ini.
+ * Tombol hapus per entri hanya muncul kalau `onHapus` diberikan, dan itu
+ * keputusan pemanggil: daftar kosong memang tidak punya apa pun untuk dihapus,
+ * jadi tombolnya tidak masuk akal.
  *
  * Tombolnya selalu terlihat di layar sentuh (tidak hover-only) karena hover
  * tidak ada di ponsel; di perangkat berkursor, warnanya baru menegas saat
  * barisnya disentuh. Ini yang membuat "hapus" tetap bisa dijangkau tanpa mouse.
+ *
+ * `onKeTanya` membuat tiap entri bisa dibuka lagi: teks pertanyaannya
+ * ditaruh di kotak isian Tanya AI, TIDAK langsung dikirim — pengguna masih
+ * bisa mengubahnya dulu. Tanpa prop itu, entri hanya bisa dibaca.
  */
 export default function RecentHistory({
   items,
   onSeeAll,
   onHapus,
+  onKeTanya,
   max = 4,
   t = (k) => k,
 }) {
@@ -62,7 +66,20 @@ export default function RecentHistory({
                 <MessageSquareText className="size-4" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[0.92rem] leading-snug font-semibold text-navy-900">{h.question}</p>
+                {onKeTanya ? (
+                  <button
+                    type="button"
+                    onClick={() => onKeTanya(h.question)}
+                    title={t('riw.bukaDiTanya')}
+                    className="block text-left text-[0.92rem] leading-snug font-semibold text-navy-900 underline decoration-dotted underline-offset-2 transition-colors hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                  >
+                    {h.question}
+                  </button>
+                ) : (
+                  <p className="text-[0.92rem] leading-snug font-semibold text-navy-900">
+                    {h.question}
+                  </p>
+                )}
                 <p className="mt-0.5 text-[0.82rem] leading-snug text-navy-500">{h.answer}</p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
                   <span className="text-[0.72rem] font-medium text-muted-500">{h.time}</span>
