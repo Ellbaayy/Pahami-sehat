@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Undo2, Check } from 'lucide-react'
+import { Undo2, Check, AlertCircle } from 'lucide-react'
 import { cn } from '../../lib/cn'
 
 /**
@@ -27,7 +27,14 @@ import { cn } from '../../lib/cn'
 const DURASI_MS = 6000
 const TICK_MS = 100
 
-export default function ToastBatal({ pesan, labelBatal, onBatal, onTutup, t = (k) => k }) {
+export default function ToastBatal({
+  pesan,
+  labelBatal,
+  onBatal,
+  onTutup,
+  ikon,
+  t = (k) => k,
+}) {
   const [sisa, setSisa] = useState(DURASI_MS)
   const [berhenti, setBerhenti] = useState(false)
   const [dibatalkan, setDibatalkan] = useState(false)
@@ -134,8 +141,10 @@ export default function ToastBatal({ pesan, labelBatal, onBatal, onTutup, t = (k
         )}
       >
         <div className="flex items-center gap-3 px-4 py-3">
-          {dibatalkan ? (
+          {dibatalkan || ikon === 'berhasil' ? (
             <Check className="size-4 shrink-0 text-emerald-400" aria-hidden="true" />
+          ) : ikon === 'gagal' ? (
+            <AlertCircle className="size-4 shrink-0 text-amber-400" aria-hidden="true" />
           ) : (
             <Undo2 className="size-4 shrink-0 text-white/70" aria-hidden="true" />
           )}

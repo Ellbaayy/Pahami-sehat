@@ -1,5 +1,14 @@
 import { useState } from 'react'
-import { MessagesSquare, Loader2, Camera, CameraOff, Wand2 } from 'lucide-react'
+import {
+  MessagesSquare,
+  Loader2,
+  Camera,
+  CameraOff,
+  Wand2,
+  SquarePen,
+  Share2,
+  Trash2,
+} from 'lucide-react'
 import {
   SectionHeading,
   EmptyState,
@@ -50,6 +59,11 @@ export default function ThreadPanel({
   onPindaiBuka,
   onPindaiTutup,
   onPindaiTeks,
+  judulSesi = '',
+  sesiAktif = false,
+  onSesiBaru,
+  onBagikan,
+  onHapusSesi,
 }) {
   const [seretFoto, setSeretFoto] = useState(false)
 
@@ -82,6 +96,53 @@ export default function ThreadPanel({
           </button>
         }
       />
+
+      {/* bilah sesi: judul obrolan yang sedang dibuka + tindakannya.
+          Tombolnya sengaja tidak muncul saat belum ada isi — "Bagikan" dan
+          "Hapus" pada obrolan kosong tidak ada artinya. */}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line-200 bg-white px-3.5 py-2.5">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+          <MessagesSquare className="size-4" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[0.88rem] font-semibold text-navy-900">
+            {sesiAktif ? judulSesi : t('sesi.belumDisimpan')}
+          </p>
+          <p className="text-[0.74rem] text-muted-500">
+            {sesiAktif ? t('sesi.tersimpanCatatan') : t('sesi.belumDisimpanCatatan')}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onSesiBaru}
+            disabled={loading}
+            className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-line-200 bg-white px-3 text-[0.8rem] font-semibold text-navy-600 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
+          >
+            <SquarePen className="size-3.5" aria-hidden="true" />
+            {t('sesi.baru')}
+          </button>
+          <button
+            type="button"
+            onClick={onBagikan}
+            disabled={!sesiAktif}
+            className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-line-200 bg-white px-3 text-[0.8rem] font-semibold text-navy-600 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
+          >
+            <Share2 className="size-3.5" aria-hidden="true" />
+            {t('sesi.bagikan')}
+          </button>
+          <button
+            type="button"
+            onClick={onHapusSesi}
+            disabled={!sesiAktif}
+            className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-line-200 bg-white px-3 text-[0.8rem] font-semibold text-navy-600 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500 disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
+          >
+            <Trash2 className="size-3.5" aria-hidden="true" />
+            {t('riw.hapus')}
+          </button>
+        </div>
+      </div>
 
       <div
         onDragOver={(e) => {

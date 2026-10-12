@@ -125,7 +125,7 @@ cek('kunci tak dikenal dikembalikan apa adanya', tId('tidak.ada') === 'tidak.ada
 console.log('\nkunci penting (dipakai fitur inti)')
 for (const k of [
   'nav.beranda', 'nav.tanya', 'beranda.sapa', 'tanya.pindaiTombol', 'tanya.modeTanya',
-  'riw.terakhir', 'kuis.judul', 'kuis.lihat', 'tips.label', 'art.judul',
+  'sesi.terakhir', 'kuis.judul', 'kuis.lihat', 'tips.label', 'art.judul',
   'topik.judul', 'pindai.tombol', 'pindai.tegasJudul', 'umum.kodeLokal',
 ]) {
   cek(`ada di id & en: ${k}`, k in id && k in en)

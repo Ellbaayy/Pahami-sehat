@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
 import MobileDrawer from './components/layout/MobileDrawer'
@@ -7,22 +7,31 @@ import AskAI from './components/dashboard/AskAI'
 import TopicChips from './components/dashboard/TopicChips'
 import ArticleGrid from './components/dashboard/ArticleGrid'
 import HealthTip from './components/dashboard/HealthTip'
-import RecentHistory from './components/dashboard/RecentHistory'
+import DaftarObrolan from './components/dashboard/DaftarObrolan'
 import QuizPanel from './components/dashboard/QuizPanel'
 import SettingsPanel from './components/dashboard/SettingsPanel'
 import ThreadPanel from './components/dashboard/ThreadPanel'
 import VerifikasiPanel from './components/dashboard/VerifikasiPanel'
-import { SectionHeading, EmptyState } from './components/ui/primitives'
+import { SectionHeading } from './components/ui/primitives'
 import BatasGalat from './components/ui/BatasGalat'
 import ToastBatal from './components/ui/ToastBatal'
+import PanelSalin from './components/ui/PanelSalin'
 import LoadingPage from './components/LoadingPage'
-import { History, ArrowLeft, PlugZap, Plug, Trash2 } from 'lucide-react'
+import { PlugZap, Plug, Trash2 } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP } from './data/dummy'
 import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
 import { gunakanBahasa } from './lib/useBahasa'
 import { tanyaStream, sederhanakan, ambilKonten } from './lib/api'
 import { ttsBaca } from './lib/tts'
+import {
+  bacaSesi,
+  simpanSesi,
+  judulDari,
+  teksBagikan,
+  salinTeks,
+  MAKS_SESI,
+} from './lib/sesi'
 
 const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, kontras: false, tts: false, lang: 'id' }
 
@@ -52,49 +61,9 @@ function kePesan(h) {
   }
 }
 
-/** Jawaban dipotong di riwayat supaya tidak memakan ruang penyimpanan. */
-const potongJawaban = (s) => (s?.length > 96 ? `${s.slice(0, 96).trimEnd()}…` : s)
-
 /** Contoh teks medis untuk mode Sederhanakan. */
 const CONTOH_SEDERHANAKAN =
   'Hipertensi merupakan kondisi kronis yang ditandai dengan peningkatan tekanan darah arteri secara persisten di atas nilai ambang batas normal. Komplikasi meliputi hipertrofi ventrikel kiri, nefropati, dan retinopati. Terapi lini pertama: ACE inhibitor atau ARB, target <140/90 mmHg.'
-
-/**
- * Riwayat pertanyaan.
- *
- * Disimpan di localStorage peramban supaya benar-benar bertahan setelah
- * halaman dimuat ulang — bukan hanya selama sesi. Panel Riwayat menyatakan
- * "tersimpan di memori peramban saja", jadi datanya memang harus ada di sana.
- *
- * `null` = kuncinya belum pernah ada (belum pernah bertanya sama sekali).
- * `[]` = sudah pernah, tapi sekarang kosong (semua dihapus). Keduanya tampil
- * sebagai daftar kosong, dan tidak ada lagi contoh riwayat karangan yang
- * mengisinya.
- *
- * Isinya sengaja dibatasi 12 entri terakhir.
- */
-const KUNCI_RIWAYAT = 'pahami-sehat:riwayat'
-const MAKS_RIWAYAT = 12
-
-function bacaRiwayat() {
-  try {
-    const mentah = localStorage.getItem(KUNCI_RIWAYAT)
-    if (mentah === null) return null
-    const isi = JSON.parse(mentah)
-    if (!Array.isArray(isi)) return null
-    return isi.filter((x) => x && x.id && x.question)
-  } catch {
-    return null
-  }
-}
-
-function simpanRiwayat(daftar) {
-  try {
-    localStorage.setItem(KUNCI_RIWAYAT, JSON.stringify(daftar.slice(0, MAKS_RIWAYAT)))
-  } catch {
-    /* penyimpanan penuh / diblokir — riwayat tetap jalan untuk sesi ini */
-  }
-}
 
 /**
  * Setelan pengguna.
@@ -180,6 +149,17 @@ export default function App() {
   const [error, setError] = useState(null)
   const [sumberCari, setSumberCari] = useState([])
   const [selectedTopic, setSelectedTopic] = useState(null)
+
+  /**
+   * Percakapan yang sedang dibuka.
+   *
+   * `sesiAktifId` null berarti percakapan ini BELUM tersimpan — belum ada
+   * pertanyaan yang berhasil dijawab. Begitu jawaban pertama masuk, sesi
+   * dibuat dan id-nya dipegang di sini, sehingga pertanyaan berikutnya
+   * menambah ke sesi yang sama (bisa dilanjutkan).
+   */
+  const [sesi, setSesi] = useState(() => bacaSesi())
+  const [sesiAktifId, setSesiAktifId] = useState(null)
   const [thread, setThread] = useState([])
 
   /**
@@ -194,66 +174,42 @@ export default function App() {
   /** Pemindai foto dilipat di dalam kartu komposer, bukan halaman tersendiri. */
   const [pindaiTerbuka, setPindaiTerbuka] = useState(false)
 
-  const [riwayat, setRiwayat] = useState(() => bacaRiwayat())
   const [settings, setSettings] = useState(() => bacaSetelan())
 
   /**
-   * Penghapusan riwayat — selalu bisa dibatalkan.
+   * Penghapusan obrolan — selalu bisa dibatalkan.
    *
    * `batal` menyimpan daftar SEBELUM dihapus, jadi pembatalan mengembalikan
    * keadaan persis seperti semula (termasuk urutannya). Ini pilihan yang
    * disengaja dibanding dialog "Yakin mau hapus?": dialog mengembalikan data
    * hanya secara teori, sedangkan pembatalan mengembalikannya sungguhan.
    *
-   * Penghapusannya dihitung dari `riwayat` yang sedang tampil, BUKAN di dalam
-   * fungsi updater setRiwayat. Memanggil setBatal dari dalam updater adalah
-   * efek samping di tengah perhitungan state — React boleh menjalankannya dua
-   * kali (StrictMode) dan hasilnya jadi tidak bisa diprediksi.
+   * `pesan` dipakai untuk memberi tahu hasil salin ("disalin" / "gagal
+   * disalin"). Dijadikan satu state dengan `batal` supaya keduanya tidak
+   * pernah tampil bertumpuk — dua notifikasi di tempat yang sama justru
+   * membingungkan.
    */
   const [batal, setBatal] = useState(null)
-
-  const hapusRiwayat = useCallback(
-    (id) => {
-      const daftar = riwayat ?? []
-      const dibuang = daftar.find((h) => h.id === id)
-      if (!dibuang) return
-      setBatal({ jenis: 'satu', sebelum: daftar, judul: dibuang.question })
-      // daftar kosong -> [], bukan null: yang sudah dihapus tidak boleh hidup lagi
-      setRiwayat(daftar.filter((h) => h.id !== id))
-    },
-    [riwayat],
-  )
-
-  const hapusSemuaRiwayat = useCallback(() => {
-    if (!riwayat?.length) return
-    setBatal({ jenis: 'semua', sebelum: riwayat, judul: null })
-    setRiwayat([])
-  }, [riwayat])
-
-  const batalkanHapus = useCallback(() => {
-    setBatal((b) => {
-      if (b) setRiwayat(b.sebelum)
-      return null
-    })
-  }, [])
+  const [salin, setSalin] = useState(null)
+  /**
+   * Teks bagikan yang gagal disalin otomatis. Diisi hanya saat papan klip
+   * diblokir; panelnya menampilkan teks itu untuk disalin sendiri.
+   */
+  const [salinManual, setSalinManual] = useState(null)
 
   const { kode: kodeBahasa, t } = gunakanBahasa(settings.lang)
 
-  const history = riwayat ?? []
-  const adaRiwayatSungguhan = Boolean(riwayat?.length)
-
-  /**
-   * Simpan riwayat ke peramban setiap kali berubah.
-   *
-   * Daftar kosong HARUS tetap tersimpan. Sebelumnya fungsi ini melewatkan nilai
-   * kosong sepenuhnya, sehingga setelah "Hapus semua" kunci penyimpanannya tidak
-   * pernah ditimpa — localStorage masih memegang daftar lama, dan riwayat yang
-   * sudah dihapus muncul kembali begitu halaman disegarkan. Data yang sudah
-   * dihapus tidak boleh bisa hidup lagi.
-   */
+  // Simpan setiap kali berubah. Daftar kosong HARUS tetap tersimpan: kalau
+  // tidak, kunci penyimpanannya tidak pernah ditimpa dan obrolan yang sudah
+  // dihapus muncul kembali begitu halaman disegarkan.
   useEffect(() => {
-    simpanRiwayat(riwayat ?? [])
-  }, [riwayat])
+    simpanSesi(sesi)
+  }, [sesi])
+
+  const sesiAktif = useMemo(
+    () => sesi.find((s) => s.id === sesiAktifId) ?? null,
+    [sesi, sesiAktifId],
+  )
 
   const server = useServer()
 
@@ -311,7 +267,7 @@ export default function App() {
 
   // --- pemberitahuan -------------------------------------------------------
   // Isinya dihitung dari keadaan nyata: kapan konten harian terakhir
-  // diperbarui, berapa jawaban tersimpan, dan apakah server hidup.
+  // diperbarui, berapa obrolan tersimpan, dan apakah server hidup.
   const notifikasi = []
   if (konten.diperbarui) {
     notifikasi.push({
@@ -327,12 +283,12 @@ export default function App() {
       }),
     })
   }
-  if (adaRiwayatSungguhan) {
+  if (sesi.length) {
     notifikasi.push({
-      id: 'riwayat',
-      jenis: 'riwayat',
-      judul: t('notif.riwayatJudul', { n: riwayat.length }),
-      isi: t('notif.riwayatIsi'),
+      id: 'sesi',
+      jenis: 'sesi',
+      judul: t('notif.obrolanJudul', { n: sesi.length }),
+      isi: t('notif.obrolanIsi'),
     })
   }
   if (!server.memuat && !server.online) {
@@ -365,12 +321,13 @@ export default function App() {
    *
    * Kiriman yang datang dari Beranda langsung MEMINDAHKAN pengguna ke halaman
    * Tanya AI: pertanyaan muncul di sana sebagai gelembung pertama, dan
-   * jawabannya menyusul di tempat yang sama. Jadi kartu di Beranda benar-benar
-   * hanya pintu masuk, bukan tempat menampilkan jawaban.
+   * jawabannya menyusul di tempat yang sama.
    *
-   * Kedua mode berbagi utas, riwayat, dan pembacaan suara otomatis yang sama.
-   * Yang berbeda hanya rute server yang dipanggil dan apakah jawabannya
-   * mengalir (streaming) atau datang sekaligus.
+   * Jawaban yang masuk disimpan ke SESI, bukan ke daftar pertanyaan terpisah:
+   * seluruh utasan (jawaban, poin kunci, sumber) ikut tersimpan apa adanya,
+   * supaya bisa dibuka lagi nanti tanpa kehilangan apa pun. Sesi baru dibuat
+   * hanya kalau belum ada sesi aktif — pertanyaan berikutnya menambah ke sesi
+   * yang sedang dibuka, sehingga percakapan bisa dilanjutkan.
    */
   const kirim = useCallback(
     (raw, modeKirim = 'tanya') => {
@@ -386,6 +343,7 @@ export default function App() {
       setStreamTeks('')
       setSumberCari([])
       setInput('')
+      setSalin(null)
 
       // --- pindah halaman dulu, baru pertanyaan muncul di sana ---
       if (active === 'beranda') {
@@ -393,25 +351,53 @@ export default function App() {
         setDrawerOpen(false)
       }
 
+      const pesanUser = { id: `u${Date.now()}`, role: 'user', text, mode: modeKirim }
       // gelembung user muncul langsung; jawaban AI menyusul saat selesai
-      setThread((prev) => [...prev, { id: `u${Date.now()}`, role: 'user', text, mode: modeKirim }])
+      setThread((prev) => [...prev, pesanUser])
 
-      /** Catat jawaban ke utas + riwayat. Dipakai kedua mode. */
-      const catatHasil = (h) => {
-        setThread((prev) => [...prev, { id: `a${Date.now()}`, role: 'ai', ...kePesan(h) }])
-        // putar suara otomatis kalau diaktifkan di Pengaturan
-        if (ttsAutoRef.current) ttsBaca(h.jawaban)
-        setRiwayat((prev) =>
+      // sesi dibuat lebih dulu (dengan pertanyaan saja) supaya pengguna sudah
+      // melihat obrolannya tersimpan walau jawabannya belum datang — dan kalau
+      // jawabannya gagal, pertanyaannya tidak ikut hilang begitu saja
+      let idSesi = sesiAktifId
+      const kini = Date.now()
+      if (!idSesi) {
+        idSesi = `s${kini}`
+        setSesiAktifId(idSesi)
+        setSesi((prev) =>
           [
             {
-              id: `n${Date.now()}`,
-              question: text,
-              answer: potongJawaban(h.jawaban),
-              time: t('riw.baruSaja'),
-              sources: (h.sumber ?? []).map((s) => s.penerbit || s.judul).filter(Boolean),
+              id: idSesi,
+              judul: judulDari(text),
+              dibuat: kini,
+              diperbarui: kini,
+              pesan: [pesanUser],
             },
             ...(prev ?? []),
-          ].slice(0, MAKS_RIWAYAT),
+          ].slice(0, MAKS_SESI),
+        )
+      } else {
+        setSesi((prev) =>
+          (prev ?? []).map((s) =>
+            s.id === idSesi
+              ? { ...s, diperbarui: kini, pesan: [...s.pesan, pesanUser] }
+              : s,
+          ),
+        )
+      }
+
+      /** Tambahkan jawaban AI ke utas + sesi. Dipakai kedua mode. */
+      const catatHasil = (h) => {
+        const pesanAi = { id: `a${Date.now()}`, role: 'ai', ...kePesan(h) }
+        setThread((prev) => [...prev, pesanAi])
+        // putar suara otomatis kalau diaktifkan di Pengaturan
+        if (ttsAutoRef.current) ttsBaca(h.jawaban)
+        const waktu = Date.now()
+        setSesi((prev) =>
+          (prev ?? []).map((s) =>
+            s.id === idSesi
+              ? { ...s, diperbarui: waktu, pesan: [...s.pesan, pesanAi] }
+              : s,
+          ),
         )
       }
 
@@ -450,7 +436,7 @@ export default function App() {
           setStatusPesan('')
         })
     },
-    [active, loading, settings.level, kodeBahasa, t, terjemahkanStatus],
+    [active, loading, sesiAktifId, settings.level, kodeBahasa, t, terjemahkanStatus],
   )
 
   const handleTopic = (id) => {
@@ -467,19 +453,118 @@ export default function App() {
   }
 
   /**
-   * Buka sebuah riwayat di halaman Tanya AI, siap dikirim ulang.
+   * Buka obrolan tersimpan di halaman Tanya AI.
    *
-   * Riwayat yang diklik tidak langsung dikirim ke AI: teksnya ditaruh di kotak
-   * isian supaya pengguna bisa mengubahnya dulu kalau perlu.
+   * Seluruh utasannya dikembalikan apa adanya, jadi bisa dibaca lagi dan
+   * DILANJUTKAN — pertanyaan berikutnya menambah ke sesi yang sama.
    */
-  const keTanya = useCallback(
-    (teks, modeKirim = 'tanya') => {
-      setMode(modeKirim)
-      setInput(teks)
+  const bukaSesi = useCallback(
+    (id) => {
+      const s = sesi.find((x) => x.id === id)
+      if (!s) return
+      batalRef.current?.abort()
+      setSesiAktifId(id)
+      setThread(s.pesan)
+      setMode('tanya')
+      setError(null)
+      setStreamTeks('')
+      setSumberCari([])
+      setInput('')
+      setPindaiTerbuka(false)
       navigate('tanya')
     },
-    [navigate],
+    [sesi, navigate],
   )
+
+  /** Mulai obrolan baru — sesi berikutnya dibuat saat pertanyaan pertama dikirim. */
+  const sesiBaru = useCallback(() => {
+    batalRef.current?.abort()
+    setSesiAktifId(null)
+    setThread([])
+    setInput('')
+    setError(null)
+    setStreamTeks('')
+    setSumberCari([])
+    setPindaiTerbuka(false)
+    navigate('tanya')
+  }, [navigate])
+
+  /**
+   * Bagikan obrolan: salin sebagai teks rapi ke papan klip.
+   *
+   * Poin kunci dan sumbernya ikut — di aplikasi inilah bukti bahwa jawabannya
+   * bisa dicek sendiri, jadi membagikan jawabannya tanpa sumber justru
+   * menghilangkan bagian yang paling penting.
+   *
+   * Hasilnya dilaporkan apa adanya: kalau penyalinan gagal (mis. peramban
+   * memblokir akses papan klip), pengguna diberi tahu gagal — bukan diam-diam
+   * mengaku berhasil.
+   */
+  const bagikan = useCallback(
+    async (daftar) => {
+      const isi = (Array.isArray(daftar) ? daftar : [daftar]).filter(Boolean)
+      if (!isi.length) return
+      const teks = teksBagikan(isi, t, t('umum.kodeLokal'))
+      const ok = await salinTeks(teks)
+      setBatal(null)
+      if (ok) {
+        setSalin({ ok: true, n: isi.length })
+        setSalinManual(null)
+      } else {
+        // papan klip diblokir -> jangan cuma memberi tahu gagal, sediakan
+        // teksnya supaya pengguna tetap bisa menyalin sendiri
+        setSalin(null)
+        setSalinManual({ teks, n: isi.length })
+      }
+    },
+    [t],
+  )
+
+  /**
+   * Hapus obrolan — bisa dibatalkan.
+   *
+   * Kalau yang dihapus adalah obrolan yang sedang dibuka, utasannya ikut
+   * dikosongkan; kalau tidak, pengguna akan tetap melihat percakapan yang
+   * sudah tidak ada di daftar.
+   */
+  const hapusSesi = useCallback(
+    (ids) => {
+      const daftar = ids ?? []
+      if (!daftar.length) return
+      const sebelum = sesi
+      const dibuang = sebelum.filter((s) => daftar.includes(s.id))
+      if (!dibuang.length) return
+
+      setBatal({ sebelum, jumlah: dibuang.length })
+      setSalin(null)
+      const sisa = sebelum.filter((s) => !daftar.includes(s.id))
+      setSesi(sisa)
+
+      if (sesiAktifId && daftar.includes(sesiAktifId)) {
+        batalRef.current?.abort()
+        setSesiAktifId(null)
+        setThread([])
+      }
+    },
+    [sesi, sesiAktifId],
+  )
+
+  const hapusSemuaSesi = useCallback(() => {
+    if (!sesi.length) return
+    setBatal({ sebelum: sesi, jumlah: sesi.length })
+    setSalin(null)
+    batalRef.current?.abort()
+    setSesi([])
+    setSesiAktifId(null)
+    setThread([])
+  }, [sesi])
+
+  const batalkanHapus = useCallback(() => {
+    setBatal((b) => {
+      if (b) setSesi(b.sebelum)
+      return null
+    })
+  }, [])
 
   return (
     <>
@@ -523,7 +608,7 @@ export default function App() {
           }}
           onBuka={(n) => {
             if (n.jenis === 'konten') navigate('beranda')
-            else if (n.jenis === 'riwayat') navigate('riwayat')
+            else if (n.jenis === 'sesi') navigate('riwayat')
           }}
           t={t}
           />
@@ -571,11 +656,14 @@ export default function App() {
                 />
                 <HealthTip tip={konten.tips} t={t} />
                 <ArticleGrid articles={konten.artikel} t={t} />
-                <RecentHistory
-                  items={history}
+                <DaftarObrolan
+                  sesi={sesi}
+                  aktifId={sesiAktifId}
+                  onBuka={bukaSesi}
                   onSeeAll={() => navigate('riwayat')}
-                  onKeTanya={keTanya}
+                  ringkas
                   t={t}
+                  kodeLokal={t('umum.kodeLokal')}
                 />
               </div>
             ) : null}
@@ -605,6 +693,11 @@ export default function App() {
                 onPindaiBuka={() => setPindaiTerbuka(true)}
                 onPindaiTutup={() => setPindaiTerbuka(false)}
                 onPindaiTeks={setInput}
+                judulSesi={sesiAktif?.judul ?? ''}
+                sesiAktif={Boolean(sesiAktif)}
+                onSesiBaru={sesiBaru}
+                onBagikan={() => bagikan([sesiAktif])}
+                onHapusSesi={() => hapusSesi([sesiAktifId])}
               />
             ) : null}
 
@@ -623,51 +716,35 @@ export default function App() {
             {active === 'riwayat' ? (
               <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
                 <SectionHeading
-                  eyebrow={t('riw.eyebrow')}
-                  title={t('riw.judul')}
-                  description={t('riw.sub')}
+                  eyebrow={t('sesi.eyebrow')}
+                  title={t('sesi.judul')}
+                  description={t('sesi.sub')}
                   ilustrasi="riwayat"
                   action={
-                    adaRiwayatSungguhan ? (
+                    sesi.length ? (
                       <button
                         type="button"
-                        onClick={hapusSemuaRiwayat}
+                        onClick={hapusSemuaSesi}
                         className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line-200 bg-white px-3 py-1.5 text-[0.8rem] font-semibold text-navy-600 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
                       >
                         <Trash2 className="size-3.5" aria-hidden="true" />
-                        {t('riw.hapusSemua')}
+                        {t('sesi.hapusSemua')}
                       </button>
                     ) : null
                   }
                 />
-                {/* Riwayat kosong tampil KOSONG — tidak ada contoh karangan
-                    yang mengisinya. Tombol hapus hanya diberikan saat ada
-                    riwayat sungguhan; kalau tidak ada, tombolnya tidak masuk akal. */}
-                {!adaRiwayatSungguhan ? (
-                  <EmptyState
-                    icon={History}
-                    title={t('riw.kosongJudul')}
-                    description={t('riw.kosongSub')}
-                    action={
-                      <button
-                        type="button"
-                        onClick={() => navigate('tanya')}
-                        className="mt-1 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
-                      >
-                        <ArrowLeft className="size-4" aria-hidden="true" />
-                        {t('riw.keTanya')}
-                      </button>
-                    }
-                  />
-                ) : (
-                  <RecentHistory
-                    items={history}
-                    max={history.length}
-                    onHapus={hapusRiwayat}
-                    onKeTanya={keTanya}
-                    t={t}
-                  />
-                )}
+                {/* Kosong ya tampil kosong — tidak ada contoh karangan yang
+                    mengisinya. Kotak centang dan tombol hapus hanya masuk akal
+                    kalau memang ada obrolan. */}
+                <DaftarObrolan
+                  sesi={sesi}
+                  aktifId={sesiAktifId}
+                  onBuka={bukaSesi}
+                  onHapus={hapusSesi}
+                  onBagikan={bagikan}
+                  t={t}
+                  kodeLokal={t('umum.kodeLokal')}
+                />
               </div>
             ) : null}
 
@@ -723,18 +800,34 @@ export default function App() {
       </div>
       </div>
 
-      {/* Notifikasi pembatalan penghapusan riwayat. Ditempatkan di luar
-          BatasGalat supaya tetap muncul walau bagian lain gagal render —
-          justru saat ada masalah, kemampuan membatalkan paling dibutuhkan. */}
+      {/* Notifikasi penghapusan (bisa dibatalkan) dan hasil salin. Ditempatkan
+          di luar BatasGalat supaya tetap muncul walau bagian lain gagal render
+          — justru saat ada masalah, kemampuan membatalkan paling dibutuhkan.
+          Keduanya tidak pernah tampil bersamaan: satu tempat, satu pesan. */}
       {batal ? (
         <ToastBatal
-          pesan={
-            batal.jenis === 'semua'
-              ? t('riw.terhapusSemua', { n: batal.sebelum.length })
-              : t('riw.terhapusSatu')
-          }
+          pesan={t('sesi.terhapus', { n: batal.jumlah ?? batal.sebelum.length })}
           onBatal={batalkanHapus}
           onTutup={() => setBatal(null)}
+          t={t}
+        />
+      ) : salin?.ok ? (
+        <ToastBatal
+          pesan={t('sesi.disalin', { n: salin.n })}
+          labelBatal={t('sesi.tutup')}
+          onBatal={() => setSalin(null)}
+          onTutup={() => setSalin(null)}
+          ikon="berhasil"
+          t={t}
+        />
+      ) : null}
+
+      {/* Jaring pengaman kalau papan klip diblokir peramban: teksnya
+          ditampilkan utuh dan langsung terpilih, jadi tetap bisa disalin. */}
+      {salinManual ? (
+        <PanelSalin
+          teks={salinManual.teks}
+          onTutup={() => setSalinManual(null)}
           t={t}
         />
       ) : null}
