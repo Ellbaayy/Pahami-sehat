@@ -2,8 +2,6 @@ import { useState } from 'react'
 import {
   MessagesSquare,
   Loader2,
-  Camera,
-  CameraOff,
   Wand2,
   SquarePen,
   Share2,
@@ -86,27 +84,6 @@ export default function ThreadPanel({
         title={t('tanya.judul')}
         description={t('tanya.sub')}
         ilustrasi="tanya"
-        action={
-          <button
-            type="button"
-            onClick={pindaiTerbuka ? onPindaiTutup : onPindaiBuka}
-            aria-pressed={pindaiTerbuka}
-            className={cn(
-              'inline-flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2 text-[0.85rem] font-semibold transition-colors',
-              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
-              pindaiTerbuka
-                ? 'border-brand-300 bg-brand-50 text-brand-700'
-                : 'border-line-200 bg-white text-navy-600 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700',
-            )}
-          >
-            {pindaiTerbuka ? (
-              <CameraOff className="size-4" aria-hidden="true" />
-            ) : (
-              <Camera className="size-4" aria-hidden="true" />
-            )}
-            {pindaiTerbuka ? t('tanya.tutupPindai') : t('tanya.pindaiTombol')}
-          </button>
-        }
       />
 
       {/* bilah sesi: judul obrolan yang sedang dibuka + tindakannya.
