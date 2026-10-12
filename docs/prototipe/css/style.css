@@ -602,30 +602,6 @@ textarea{resize:vertical;min-height:76px}
 }
 .q-by{color:#B9CDE6;font-size:.88rem;margin:0;position:relative;z-index:1}
 
-/* ---------- rubrik ---------- */
-.rubric-list{display:grid;gap:.9rem}
-.rubric-item{
-  display:flex;gap:1rem;background:#fff;border:1px solid var(--line);
-  border-radius:var(--radius);padding:1.15rem 1.3rem;box-shadow:var(--shadow-sm);
-  transition:transform .2s,box-shadow .2s;
-}
-.rubric-item:hover{transform:translateX(5px);box-shadow:var(--shadow)}
-.r-ic{
-  flex:none;width:46px;height:46px;border-radius:14px;background:var(--blue-soft);
-  display:grid;place-items:center;font-size:1.3rem;line-height:0;
-}
-.rubric-item:nth-child(2) .r-ic{background:var(--purple-soft)}
-.rubric-item:nth-child(3) .r-ic{background:#EDF3FB}
-.rubric-item:nth-child(4) .r-ic{background:var(--amber-soft)}
-.rubric-item:nth-child(5) .r-ic{background:var(--green-soft)}
-.r-body{flex:1;min-width:0}
-.r-top{display:flex;align-items:baseline;justify-content:space-between;gap:.8rem}
-.r-top h3{font-size:1rem;color:var(--navy);margin:0}
-.r-pct{font-size:1.15rem;font-weight:800;color:var(--blue);flex:none}
-.r-bar{height:8px;background:#E9EFF7;border-radius:999px;margin:.5rem 0 .55rem;overflow:hidden}
-.r-bar i{display:block;height:100%;width:var(--w);border-radius:999px;background:linear-gradient(90deg,var(--blue),var(--sky))}
-.rubric-item p{margin:0;font-size:.88rem;color:var(--ink-2)}
-
 /* ---------- footer ---------- */
 .footer{background:#0F2748;color:#C4D5EA;padding:clamp(2.5rem,6vw,4rem) 0 1.4rem;margin-top:0}
 .footer-grid{display:grid;gap:1.8rem}
@@ -645,8 +621,8 @@ textarea{resize:vertical;min-height:76px}
 /* ---------- misc ---------- */
 /* min-width:0 pada anak grid/flex — mencegah konten mockup
    mendorong layout melebihi lebar layar (overflow horizontal) */
-.hero-grid>*,.grid-2>*,.grid-4>*,.showcase>*,.quiz>*,.feature-grid>*,.footer-grid>*,.rubric-list>*,
-.laptop,.phone,.app,.app-side,.app-main,.hero-copy,.hero-visual,.r-body{min-width:0}
+.hero-grid>*,.grid-2>*,.grid-4>*,.showcase>*,.quiz>*,.feature-grid>*,.footer-grid>*,
+.laptop,.phone,.app,.app-side,.app-main,.hero-copy,.hero-visual{min-width:0}
 .app-nav{min-width:0;max-width:100%}
 .app-search{max-width:100%}
 .app-search input{min-width:0;width:100%}
@@ -716,7 +692,6 @@ input,select,textarea{max-width:100%}
   .hero-actions .btn{width:100%}
   .quiz-nav{flex-direction:column-reverse}
   .quiz-nav .btn{width:100%}
-  .rubric-item{flex-direction:column;gap:.7rem}
   .seg{width:100%;justify-content:flex-start;gap:2px}
   .seg-btn{flex:0 1 auto;padding:.42rem .56rem;font-size:.79rem}
   .demo-row .btn{width:100%}
