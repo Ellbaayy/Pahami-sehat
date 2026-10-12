@@ -43,7 +43,19 @@ export default class BatasGalat extends Component {
     const { galat } = this.state
     if (!galat) return this.props.children
 
-    const { judul, pesan } = this.props
+    const { judul, pesan, t } = this.props
+
+    // Teks cadangan di bawah ini sengaja tetap bahasa Indonesia dan tetap ada:
+    // panel ini HANYA muncul saat ada bagian aplikasi yang gagal render — dan
+    // kegagalan itu bisa saja berasal dari kamus bahasa itu sendiri. Kalau `t`
+    // ikut rusak, pesan galat harus tetap terbaca. Karena itu kamus dipakai
+    // kalau tersedia, dan teks tetap ini jadi jaring pengaman terakhir.
+    const teksJudul = judul ?? (t ? t('galat.judul') : 'Bagian ini gagal ditampilkan')
+    const teksPesan =
+      pesan ??
+      (t
+        ? t('galat.pesan')
+        : 'Terjadi kesalahan saat menampilkan bagian ini. Bagian aplikasi yang lain masih bisa dipakai.')
 
     return (
       <div
@@ -55,18 +67,13 @@ export default class BatasGalat extends Component {
             <AlertTriangle className="size-[18px]" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[0.98rem] font-bold text-rose-800">
-              {judul ?? 'Bagian ini gagal ditampilkan'}
-            </p>
-            <p className="mt-1 text-[0.86rem] leading-relaxed text-rose-700">
-              {pesan ??
-                'Terjadi kesalahan saat menampilkan bagian ini. Bagian aplikasi yang lain masih bisa dipakai.'}
-            </p>
+            <p className="text-[0.98rem] font-bold text-rose-800">{teksJudul}</p>
+            <p className="mt-1 text-[0.86rem] leading-relaxed text-rose-700">{teksPesan}</p>
 
             {/* rincian teknis dibuka hanya bila diminta — tidak menakut-nakuti pengguna biasa */}
             <details className="mt-2.5">
               <summary className="cursor-pointer text-[0.78rem] font-semibold text-rose-700">
-                Rincian teknis
+                {t ? t('galat.rincian') : 'Rincian teknis'}
               </summary>
               <p className="mt-1.5 rounded-lg bg-white/70 p-2.5 font-mono text-[0.72rem] break-words text-rose-800">
                 {String(galat?.message ?? galat)}
@@ -79,7 +86,7 @@ export default class BatasGalat extends Component {
               className="mt-3 inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-3.5 py-2 text-[0.84rem] font-semibold text-rose-700 transition-colors hover:bg-rose-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
             >
               <RotateCcw className="size-4" aria-hidden="true" />
-              Coba tampilkan lagi
+              {t ? t('galat.cobaLagi') : 'Coba tampilkan lagi'}
             </button>
           </div>
         </div>

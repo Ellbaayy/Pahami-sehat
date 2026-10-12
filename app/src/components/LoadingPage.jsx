@@ -13,7 +13,7 @@ import logo from '../assets/logo-mark.png'
 const DURASI = 1000 // 1 detik
 const FADE = 450 // waktu memudar setelah 1 detik
 
-export default function LoadingPage() {
+export default function LoadingPage({ t = (k) => k }) {
   const [fase, setFase] = useState('tampil') // tampil → keluar → lepas
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function LoadingPage() {
     <div
       role="status"
       aria-live="polite"
-      aria-label="Memuat Pahami Sehat"
+      aria-label={t('load.memuat')}
       className={`fixed inset-0 z-[70] flex flex-col items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#0f1e33_0%,#12324a_55%,#0d6a61_130%)] px-6 transition-opacity duration-[450ms] ${
         fase === 'keluar' ? 'pointer-events-none opacity-0' : 'opacity-100'
       }`}
@@ -55,7 +55,7 @@ export default function LoadingPage() {
           Pahami Sehat
         </strong>
         <span className="mt-1 text-sm font-medium text-brand-200">
-          Informasi Kesehatan untuk Semua
+          {t('nav.isiDrawer')}
         </span>
 
         {/* garis detak jantung — tergambar sekali selama 1 detik */}

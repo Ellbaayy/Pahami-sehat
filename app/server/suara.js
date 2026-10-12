@@ -44,14 +44,70 @@ const SUARA = {
   en: 'en-US-AriaNeural', // perempuan Inggris (untuk jawaban berbahasa Inggris)
 }
 
-/** Batas aman panjang teks yang dibacakan (menjaga waktu proses tetap wajar). */
+/**
+ * Batas aman panjang teks yang dibacakan.
+ *
+ * KENAPA 4000 DAN APA AKIBATNYA: teks yang lebih panjang dari ini DIPOTONG,
+ * bukan ditolak — sisa kalimatnya tidak dibacakan. Dulu komentar di sini
+ * mengklaim angkanya "menjaga waktu proses tetap wajar", padahal yang
+ * sebenarnya terjadi adalah isinya hilang diam-diam: diukur, masukan 9100
+ * karakter menghasilkan keluaran 4000 karakter, jadi 5100 karakter lenyap
+ * tanpa pemberitahuan.
+ *
+ * Sekarang angka ini SAMA dengan batas panjang /api/suara (lihat
+ * server/batasInput.js — MAKS_SUARA). Dengan begitu teks yang lolos ke sini
+ * tidak pernah lebih panjang dari batas ini, sehingga tidak ada lagi
+ * pemotongan diam-diam. Jangan naikkan angka ini tanpa menaikkan MAKS_SUARA
+ * juga.
+ */
 const MAKS_KARAKTER = 4000
 
 /** Berapa kalimat yang diproses serentak. */
 const SERENTAK = 4
 
 /**
+ * Batas waktu keseluruhan untuk membuat suara.
+ *
+ * KENAPA PERLU: pernah terjadi permintaan /api/suara menggantung sampai
+ * koneksi diputus platform (60 detik di Vercel) tanpa balasan apa pun. Yang
+ * bisa diukur dari kejadian itu:
+ *   - permintaan PERTAMA setelah server start butuh ~5,5 detik (cold start
+ *     WebSocket ke Microsoft); permintaan berikutnya 0,5–1,0 detik
+ *   - 3900 karakter dengan 130 kalimat butuh 15,5 detik
+ *   - 5687 karakter dengan 51 kalimat butuh 7,9 detik
+ * Penyebab pasti hang-nya tidak bisa direproduksi ulang, jadi daripada
+ * menebak-nebak penyebabnya, batas waktu ini memastikan kegagalan apa pun
+ * berubah jadi pesan yang bisa dibaca — bukan koneksi yang diam.
+ *
+ * Angkanya di bawah maxDuration Vercel (60 detik) dengan sisa ruang, supaya
+ * kita sendiri yang menyerah lebih dulu dan bisa mengirim pesan.
+ */
+const BATAS_WAKTU_MS = 45_000
+
+/**
+ * Bungkus janji dengan batas waktu.
+ * @template T
+ * @param {Promise<T>} janji
+ * @param {number} ms
+ * @returns {Promise<T>}
+ */
+function denganBatasWaktu(janji, ms) {
+  let timer
+  return Promise.race([
+    janji.finally(() => clearTimeout(timer)),
+    new Promise((_, tolak) => {
+      timer = setTimeout(() => tolak(new Error(`melebihi batas waktu ${ms / 1000} detik`)), ms)
+    }),
+  ])
+}
+
+/**
  * Pilih suara berdasarkan bahasa jawaban.
+ *
+ * CATATAN: fungsi ini HANYA menerima kode bahasa. Dulu ada pemanggil yang
+ * mengirim argumen kedua (teks), padahal parameternya cuma satu — argumen itu
+ * dibuang diam-diam. Sekarang hanya satu parameter supaya tidak ada yang
+ * mengira ada logika tambahan di sini.
  *
  * @param {'id'|'jv'|'su'|'en'|string} kode
  */
@@ -170,7 +226,7 @@ export async function buatSuara(teks, { bahasa = 'id' } = {}) {
   const kalimat = pecahKalimat(teks)
   if (!kalimat.length) throw new Error('Tidak ada teks untuk dibacakan.')
 
-  const suara = pilihSuara(bahasa, teks)
+  const suara = pilihSuara(bahasa)
   const hasil = new Array(kalimat.length)
 
   // Satu instance per pekerjaan: beberapa permintaan serentak pada satu
@@ -196,7 +252,10 @@ export async function buatSuara(teks, { bahasa = 'id' } = {}) {
       }
     }
   })
-  await Promise.all(pekerja)
+
+  // Batas waktu dipasang di SELURUH pekerjaan, bukan per kalimat: kalau satu
+  // kalimat menggantung, pekerja lainnya juga tidak akan pernah selesai.
+  await denganBatasWaktu(Promise.all(pekerja), BATAS_WAKTU_MS)
 
   const terisi = hasil.filter(Boolean)
   if (!terisi.length) throw new Error('Gagal membuat suara.')

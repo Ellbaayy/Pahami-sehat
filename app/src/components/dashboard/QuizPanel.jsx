@@ -4,8 +4,19 @@ import { Card, SectionHeading, Button, EmptyState } from '../ui/primitives'
 import { QUIZ_ITEMS, QUIZ_SCALE } from '../../data/dummy'
 import { cn } from '../../lib/cn'
 
-/** Kuesioner HLS-SF12 versi ringkas — dihitung lokal di peramban, tanpa kirim data. */
-export default function QuizPanel() {
+/**
+ * Kuesioner HLS-SF12 versi ringkas — dihitung lokal di peramban, tanpa kirim data.
+ *
+ * Seluruh teks diambil dari kamus lewat `t()` supaya ikut bahasa antarmuka.
+ * Sebelumnya semuanya ditulis tetap di sini, sehingga panel ini tetap
+ * berbahasa Indonesia walau antarmukanya sudah diset Inggris — padahal kunci
+ * kamusnya (kuis.*) sudah tersedia sejak awal dan tidak pernah dipakai.
+ *
+ * CATATAN: pernyataan kuesionernya sendiri (QUIZ_ITEMS) sengaja TIDAK
+ * diterjemahkan. Itu instrumen HLS-SF12 dengan kalimat baku; menerjemahkannya
+ * sendiri akan membuat skornya tidak bisa dibandingkan dengan rujukan aslinya.
+ */
+export default function QuizPanel({ t = (k) => k }) {
   const [answers, setAnswers] = useState({})
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
@@ -15,7 +26,7 @@ export default function QuizPanel() {
   const submit = (e) => {
     e.preventDefault()
     if (answered < QUIZ_ITEMS.length) {
-      setError(`Masih ada ${QUIZ_ITEMS.length - answered} pernyataan yang belum dijawab.`)
+      setError(t('kuis.belumDijawab', { n: QUIZ_ITEMS.length - answered }))
       return
     }
     setError('')
@@ -26,23 +37,20 @@ export default function QuizPanel() {
     const max = QUIZ_ITEMS.length * 3
     const pct = Math.round((total / max) * 100)
 
-    let category
-    let advice
+    let kategori
+    let saran
     if (pct >= 70) {
-      category = 'Baik'
-      advice =
-        'Kamu sudah nyaman mencari dan menilai informasi kesehatan. Pertahankan, dan bantu orang di sekitarmu yang masih kesulitan.'
+      kategori = t('kuis.baik')
+      saran = t('kuis.saranBaik')
     } else if (pct >= 45) {
-      category = 'Sedang'
-      advice =
-        'Sebagian besar sudah bisa, bagian menilai kebenaran informasi masih perlu diperkuat. Biasakan cek ke Kemenkes, WHO, atau BPOM sebelum percaya.'
+      kategori = t('kuis.sedang')
+      saran = t('kuis.saranSedang')
     } else {
-      category = 'Perlu dukungan'
-      advice =
-        'Aktifkan penyederhanaan ke tingkat anak-anak dan mode suara agar informasi lebih mudah dijangkau. Bawa hasil ini ke tenaga kesehatan terdekat.'
+      kategori = t('kuis.perluDukungan')
+      saran = t('kuis.saranPerlu')
     }
 
-    setResult({ pct, category, advice })
+    setResult({ pct, kategori, saran })
   }
 
   const reset = () => {
@@ -57,24 +65,21 @@ export default function QuizPanel() {
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
-        eyebrow="Alat ukur"
-        title="Kuesioner HLS-SF12"
-        description="Versi ringkas. Semua perhitungan dilakukan lokal di peramban — tidak ada jawaban yang dikirim ke mana pun."
+        eyebrow={t('kuis.eyebrow')}
+        title={t('kuis.judul')}
+        description={t('kuis.sub')}
         ilustrasi="kuesioner"
       />
 
       <form onSubmit={submit} noValidate>
         <fieldset className="space-y-3">
-          <legend className="sr-only">Pernyataan literasi kesehatan</legend>
+          <legend className="sr-only">{t('kuis.pernyataan')}</legend>
 
           {QUIZ_ITEMS.map((text, i) => {
             const legendId = `q-${i}`
             return (
               <Card key={text} className="p-[clamp(0.9rem,0.8rem+0.4vw,1.25rem)]">
-                <p
-                  id={legendId}
-                  className="mb-3 text-[0.95rem] font-semibold text-navy-900"
-                >
+                <p id={legendId} className="mb-3 text-[0.95rem] font-semibold text-navy-900">
                   <span className="mr-1.5 text-brand-600">{i + 1}.</span>
                   {text}
                 </p>
@@ -131,7 +136,7 @@ export default function QuizPanel() {
 
         <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
           <Button type="submit" size="lg" full className="sm:w-auto">
-            Lihat hasil
+            {t('kuis.lihat')}
           </Button>
           <Button
             type="button"
@@ -141,10 +146,10 @@ export default function QuizPanel() {
             full
             className="sm:w-auto"
           >
-            Ulangi
+            {t('kuis.ulangi')}
           </Button>
           <span className="self-center text-[0.82rem] text-muted-500 sm:ml-auto">
-            {answered} dari {QUIZ_ITEMS.length} terjawab
+            {t('kuis.terjawabDari', { a: answered, b: QUIZ_ITEMS.length })}
           </span>
         </div>
       </form>
@@ -175,21 +180,19 @@ export default function QuizPanel() {
               <span className="text-[1.1rem] font-bold text-navy-500">%</span>
             </p>
             <p className="mt-1 text-[clamp(1rem,0.96rem+0.25vw,1.18rem)] font-bold text-brand-700">
-              Literasi kesehatan: {result.category}
+              {t('kuis.hasil')}: {result.kategori}
             </p>
             <p className="mt-2 max-w-[60ch] text-[0.92rem] leading-relaxed text-navy-700">
-              {result.advice}
+              {result.saran}
             </p>
-            <p className="mt-3 text-[0.76rem] text-muted-500">
-              Hasil ini alat bantu belajar, bukan diagnosis medis.
-            </p>
+            <p className="mt-3 text-[0.76rem] text-muted-500">{t('kuis.catatan')}</p>
           </div>
         </Card>
       ) : answered === 0 ? (
         <EmptyState
           icon={ClipboardList}
-          title="Hasil akan tampil di sini"
-          description="Jawab kelima pernyataan di atas, lalu tekan Lihat hasil."
+          title={t('kuis.hasilTampil')}
+          description={t('kuis.hasilTampilSub')}
         />
       ) : null}
     </div>

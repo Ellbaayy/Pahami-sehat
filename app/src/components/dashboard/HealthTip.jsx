@@ -2,8 +2,14 @@ import { useState } from 'react'
 import { Lightbulb, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, Button } from '../ui/primitives'
 
-/** Tips Kesehatan Hari Ini — satu kartu featured, menonjol tanpa ramai. */
-export default function HealthTip({ tip }) {
+/**
+ * Tips Kesehatan Hari Ini — satu kartu featured, menonjol tanpa ramai.
+ *
+ * Label dan tombolnya diambil dari kamus lewat `t()` supaya ikut bahasa
+ * antarmuka. Judul dan isi tip tetap datang dari sumber (Kemenkes) dan memang
+ * berbahasa Indonesia — itu isi, bukan antarmuka.
+ */
+export default function HealthTip({ tip, t = (k) => k }) {
   const [open, setOpen] = useState(false)
   if (!tip) return null
 
@@ -22,7 +28,7 @@ export default function HealthTip({ tip }) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[0.72rem] font-bold tracking-[0.14em] uppercase text-brand-600">
-            {tip.label}
+            {t('tips.label')}
           </p>
           <h3 className="mt-1 text-[clamp(1.02rem,0.96rem+0.35vw,1.28rem)] font-extrabold tracking-tight text-navy-900">
             {tip.title}
@@ -58,11 +64,11 @@ export default function HealthTip({ tip }) {
                 rel="noopener noreferrer"
                 className="rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-brand-700 ring-1 ring-brand-100 underline decoration-dotted underline-offset-2 transition-colors hover:bg-brand-200"
               >
-                Sumber: {tip.source}
+                {t('tips.sumber')}: {tip.source}
               </a>
             ) : (
               <span className="rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-brand-700 ring-1 ring-brand-100">
-                Sumber: {tip.source}
+                {t('tips.sumber')}: {tip.source}
               </span>
             )}
             {lanjutan ? (
@@ -73,7 +79,7 @@ export default function HealthTip({ tip }) {
                 aria-expanded={open}
                 className="-ml-1"
               >
-                {open ? 'Tutup' : 'Baca selengkapnya'}
+                {open ? t('tips.tutup') : t('tips.selengkapnya')}
                 {open ? (
                   <ChevronUp className="size-4" aria-hidden="true" />
                 ) : (

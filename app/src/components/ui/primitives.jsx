@@ -144,12 +144,12 @@ export function EmptyState({ icon: Icon, title, description, action }) {
 
 /* ---------------- Source pills ---------------- */
 /** Terima array string ("WHO") atau objek ({judul, penerbit}) dari API. */
-export function SourcePills({ sources = [], negative = false, label = 'Sumber' }) {
+export function SourcePills({ sources = [], negative = false, label, t = (k) => k }) {
   if (!sources.length) return null
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-line-200 pt-3">
       <span className="text-[0.68rem] font-bold tracking-[0.12em] uppercase text-navy-500">
-        {label}
+        {label ?? t('umum.sumber')}
       </span>
       {sources.map((s, i) => {
         const teks = typeof s === 'string' ? s : [s.penerbit, s.judul].filter(Boolean).join(' — ')
@@ -194,7 +194,7 @@ export function SourcePills({ sources = [], negative = false, label = 'Sumber' }
 }
 
 /* ---------------- Poin kunci (bukti rubrik) ---------------- */
-export function PoinKunci({ items = [] }) {
+export function PoinKunci({ items = [], t = (k) => k }) {
   if (!items.length) return null
   return (
     <details className="group mt-3 rounded-xl border border-line-200 bg-white/70 px-3.5 py-2.5">
@@ -202,7 +202,7 @@ export function PoinKunci({ items = [] }) {
         <span className="text-brand-600 transition-transform group-open:rotate-90" aria-hidden="true">
           ▸
         </span>
-        Poin kunci yang dipertahankan ({items.length})
+        {t('umum.poinKunci')} ({items.length})
       </summary>
       <ul className="mt-2 space-y-1.5 pl-1">
         {items.map((p, i) => (
@@ -212,9 +212,7 @@ export function PoinKunci({ items = [] }) {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-[0.7rem] text-muted-500">
-        Daftar ini ditandai lebih dulu sebelum bahasa disederhanakan — bukti kelengkapan informasi terjaga.
-      </p>
+      <p className="mt-2 text-[0.7rem] text-muted-500">{t('umum.poinKunciCatatan')}</p>
     </details>
   )
 }
@@ -247,7 +245,7 @@ export function Peringatan({ pesan, code, aksi }) {
  * Daftar sumber jawaban AI, dengan URL lengkap yang bisa dibuka.
  * Tujuan: pengguna skeptis bisa memverifikasi sendiri, bukan sekadar percaya.
  */
-export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban' }) {
+export function SumberJawaban({ sumber = [], cari = [], label, t = (k) => k }) {
   // gabungkan: sumber yang dipakai model + hasil pencarian yang belum terpakai
   // cari dulu sumber mana yang lembaga resmi (Kemenkes/WHO/BPOM) dari hasil
   // pencarian — supaya sumber yang DIKUTIP model pun tetap dapat tanda resmi
@@ -275,17 +273,17 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
     >
       <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-[0.8rem] font-bold text-navy-800 marker:content-none">
         <Search className="size-3.5 text-brand-600" aria-hidden="true" />
-        {label} ({semua.length})
+        {label ?? t('sumber.judul')} ({semua.length})
         {adaResmi ? (
           <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[0.68rem] font-bold text-brand-700 ring-1 ring-brand-100">
-            termasuk sumber resmi
+            {t('sumber.adaResmi')}
           </span>
         ) : null}
       </summary>
 
       <p className="mt-2 text-[0.78rem] text-muted-600">
-        Silakan cek sendiri lewat tautan di bawah — jangan percaya begitu saja.
-        {!dipakai.length ? ' Model belum mengutip satu pun; daftar ini hasil pencarian mentah.' : ''}
+        {t('sumber.cekSendiri')}
+        {!dipakai.length ? ` ${t('sumber.belumDikutipCatatan')}` : ''}
       </p>
 
       <ul className="mt-2.5 space-y-2">
@@ -303,10 +301,14 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
                 <p className="text-[0.84rem] leading-snug font-semibold text-navy-800">
                   {s.judul}
                   {s.resmi ? (
-                    <span className="ml-1.5 text-[0.68rem] font-bold text-brand-600">SUMBER RESMI</span>
+                    <span className="ml-1.5 text-[0.68rem] font-bold text-brand-600">
+                      {t('sumber.resmi')}
+                    </span>
                   ) : null}
                   {!s.dipakai ? (
-                    <span className="ml-1.5 text-[0.68rem] font-normal text-muted-500">ditemukan, belum dikutip</span>
+                    <span className="ml-1.5 text-[0.68rem] font-normal text-muted-500">
+                      {t('sumber.belumDikutip')}
+                    </span>
                   ) : null}
                 </p>
                 {s.url ? (
@@ -316,12 +318,12 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
                     rel="noopener noreferrer"
                     className="mt-0.5 block truncate font-mono text-[0.72rem] text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-700"
                     title={s.url}
-                    aria-label={`Buka sumber: ${s.judul || s.url}`}
+                    aria-label={`${t('sumber.buka')}: ${s.judul || s.url}`}
                   >
                     {s.url}
                   </a>
                 ) : (
-                  <p className="mt-0.5 text-[0.72rem] text-muted-500">(tanpa tautan)</p>
+                  <p className="mt-0.5 text-[0.72rem] text-muted-500">{t('sumber.tanpaTautan')}</p>
                 )}
               </div>
             </div>
@@ -329,10 +331,7 @@ export function SumberJawaban({ sumber = [], cari = [], label = 'Sumber jawaban'
         ))}
       </ul>
 
-      <p className="mt-2.5 text-[0.7rem] text-muted-500">
-        Jawaban disusun dari hasil pencarian internet yang diambil saat pertanyaan diproses.
-        Tanda centang berarti sumber itu dipakai di jawaban; ikon gedung menandai lembaga resmi.
-      </p>
+      <p className="mt-2.5 text-[0.7rem] text-muted-500">{t('sumber.catatan')}</p>
     </details>
   )
 }

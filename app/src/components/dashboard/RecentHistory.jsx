@@ -1,20 +1,24 @@
 import { History, ArrowRight, MessageSquareText } from 'lucide-react'
 import { Card, SectionHeading, Button, EmptyState } from '../ui/primitives'
 
-/** Riwayat Terakhir — pertanyaan sebelumnya (contoh awal + sesi berjalan). */
-export default function RecentHistory({ items, onSeeAll, max = 4 }) {
+/**
+ * Riwayat Terakhir — pertanyaan sebelumnya (contoh awal + sesi berjalan).
+ *
+ * Teksnya diambil dari kamus lewat `t()` supaya ikut bahasa antarmuka.
+ */
+export default function RecentHistory({ items, onSeeAll, max = 4, t = (k) => k }) {
   const shown = items.slice(0, max)
 
   return (
     <section aria-labelledby="riwayat-title">
       <SectionHeading
         id="riwayat-title"
-        title="Riwayat Terakhir"
-        description="Pertanyaan yang baru saja kamu ajukan di perangkat ini."
+        title={t('riw.terakhir')}
+        description={t('riw.terakhirSub')}
         action={
           onSeeAll ? (
             <Button variant="ghost" size="sm" onClick={onSeeAll} className="shrink-0">
-              Lihat semua
+              {t('riw.lihatSemua')}
               <ArrowRight className="size-4" aria-hidden="true" />
             </Button>
           ) : null
@@ -24,8 +28,8 @@ export default function RecentHistory({ items, onSeeAll, max = 4 }) {
       {shown.length === 0 ? (
         <EmptyState
           icon={History}
-          title="Belum ada riwayat"
-          description="Mulai dengan mengetik pertanyaan pada kartu Tanya AI di atas."
+          title={t('riw.kosongJudul')}
+          description={t('riw.kosongSub')}
         />
       ) : (
         <Card className="divide-y divide-line-100 overflow-hidden">

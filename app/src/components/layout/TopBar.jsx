@@ -128,8 +128,8 @@ export default function TopBar({
             onClick={bukaTutup}
             aria-label={
               belumDibaca
-                ? `Pemberitahuan, ${jumlah} butir, ada yang belum dibaca`
-                : `Pemberitahuan, ${jumlah} butir`
+                ? t('notif.loncengBaru', { n: jumlah })
+                : t('notif.lonceng', { n: jumlah })
             }
             aria-expanded={buka ? 'true' : 'false'}
             aria-controls="panel-notifikasi"
@@ -149,18 +149,18 @@ export default function TopBar({
             <div
               id="panel-notifikasi"
               role="dialog"
-              aria-label="Pemberitahuan"
+              aria-label={t('notif.panel')}
               className="rise absolute top-12 right-0 z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-line-200 bg-white shadow-[0_12px_40px_-12px_rgba(15,30,51,0.28)]"
             >
               <div className="flex items-center justify-between border-b border-line-100 px-3.5 py-2.5">
                 <p className="text-[0.82rem] font-bold text-navy-900">
-                  Pemberitahuan
+                  {t('notif.judul')}
                   {jumlah ? <span className="ml-1 font-normal text-muted-500">({jumlah})</span> : null}
                 </p>
                 <button
                   type="button"
                   onClick={() => setBuka(false)}
-                  aria-label="Tutup pemberitahuan"
+                  aria-label={t('notif.tutup')}
                   className="grid size-7 place-items-center rounded-lg text-navy-500 transition-colors hover:bg-surface-100 hover:text-navy-800"
                 >
                   <X className="size-4" aria-hidden="true" />
@@ -169,7 +169,7 @@ export default function TopBar({
 
               {jumlah === 0 ? (
                 <p className="px-3.5 py-5 text-center text-[0.82rem] text-muted-500">
-                  Belum ada pemberitahuan.
+                  {t('notif.kosong')}
                 </p>
               ) : (
                 <ul className="max-h-[60vh] divide-y divide-line-100 overflow-y-auto">
@@ -217,12 +217,12 @@ export default function TopBar({
   )
 }
 
-export function DrawerCloseButton({ onClick }) {
+export function DrawerCloseButton({ onClick, t = (k) => k }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label="Tutup menu navigasi"
+      aria-label={t('nav.tutupMenu')}
       className="grid size-9 shrink-0 place-items-center rounded-lg text-navy-500 transition-colors hover:bg-surface-100 hover:text-navy-800"
     >
       <X className="size-5" aria-hidden="true" />

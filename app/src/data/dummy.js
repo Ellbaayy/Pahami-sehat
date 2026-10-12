@@ -99,33 +99,68 @@ export const HEALTH_TIP = {
 export const HISTORY = [
   {
     id: 'h1',
-    question: 'Apa arti hasil lab kolesterol saya?',
-    answer: 'Disederhanakan ke tingkat anak-anak, lengkap dengan rentang normal dan penjelasan istilahnya.',
+    kunci: 'riw.contoh1',
     time: '2 jam lalu',
     sources: ['Kemenkes RI'],
   },
   {
     id: 'h2',
-    question: 'Cek klaim: vaksin menyebabkan autisme',
-    answer: 'Verdict: tidak ditemukan di dokumen resmi manapun — diarahkan ke WHO dan Kemenkes.',
+    kunci: 'riw.contoh2',
     time: 'Kemarin',
     sources: ['WHO', 'Kemenkes RI'],
   },
   {
     id: 'h3',
-    question: 'Sederhanakan teks edukasi ini ke tingkat anak-anak',
-    answer: 'Paragraf disusun ulang dengan kalimat lebih pendek, poin kunci tetap dipertahankan.',
+    kunci: 'riw.contoh3',
     time: 'Kemarin',
     sources: ['Kemenkes RI'],
   },
   {
     id: 'h4',
-    question: 'Bagaimana cara membaca label gizi makanan kemasan?',
-    answer: 'Langkah demi langkah: lihat porsi dulu, baru bandingkan nilai per porsi dengan kebutuhan harian.',
+    kunci: 'riw.contoh4',
     time: '3 hari lalu',
     sources: ['BPOM'],
   },
 ]
+
+/**
+ * Isi contoh riwayat per bahasa.
+ *
+ * Teksnya dipisah dari daftar di atas karena ini teks ANTARMUKA (contoh
+ * tampilan), bukan data. Sebelumnya ditulis tetap dalam bahasa Indonesia di
+ * dalam daftar, sehingga contoh riwayat tetap Indonesia walau antarmukanya
+ * sudah diset Inggris.
+ *
+ * `time` dan nama lembaga sengaja TIDAK diterjemahkan: "Kemenkes RI" dan "WHO"
+ * adalah nama lembaga, dan waktu relatif ("2 jam lalu") adalah bagian dari
+ * data riwayat yang sesungguhnya juga tersimpan apa adanya.
+ */
+export const HISTORY_CONTOH = {
+  id: [
+    { question: 'Apa arti hasil lab kolesterol saya?', answer: 'Disederhanakan ke tingkat anak-anak, lengkap dengan rentang normal dan penjelasan istilahnya.' },
+    { question: 'Cek klaim: vaksin menyebabkan autisme', answer: 'Verdict: tidak ditemukan di dokumen resmi manapun — diarahkan ke WHO dan Kemenkes.' },
+    { question: 'Sederhanakan teks edukasi ini ke tingkat anak-anak', answer: 'Paragraf disusun ulang dengan kalimat lebih pendek, poin kunci tetap dipertahankan.' },
+    { question: 'Bagaimana cara membaca label gizi makanan kemasan?', answer: 'Langkah demi langkah: lihat porsi dulu, baru bandingkan nilai per porsi dengan kebutuhan harian.' },
+  ],
+  en: [
+    { question: 'What does my cholesterol lab result mean?', answer: 'Simplified to the children level, complete with the normal range and an explanation of the terms.' },
+    { question: 'Check the claim: vaccines cause autism', answer: 'Verdict: not found in any official document — pointed to WHO and Kemenkes.' },
+    { question: 'Simplify this educational text to the children level', answer: 'The paragraph was rewritten with shorter sentences; key points are preserved.' },
+    { question: 'How do I read the nutrition label on packaged food?', answer: 'Step by step: check the serving size first, then compare the per-serving values against your daily needs.' },
+  ],
+}
+
+/** Contoh riwayat dalam bahasa tertentu, sudah siap dipakai komponen. */
+export function contohRiwayat(bahasa = 'id') {
+  const daftar = HISTORY_CONTOH[bahasa] ?? HISTORY_CONTOH.id
+  return HISTORY.map((h, i) => ({
+    id: h.id,
+    time: h.time,
+    sources: h.sources,
+    question: daftar[i]?.question ?? '',
+    answer: daftar[i]?.answer ?? '',
+  }))
+}
 
 export const QUIZ_ITEMS = [
   'Saya kesulitan memahami informasi kesehatan yang saya baca.',

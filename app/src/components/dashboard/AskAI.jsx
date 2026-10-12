@@ -103,17 +103,13 @@ export default function AskAI({
             onClick={toggleMic}
             aria-pressed={suara.mendengar}
             disabled={!suara.didukung}
-            title={
-              suara.didukung
-                ? 'Rekam pertanyaan dengan suara'
-                : 'Peramban ini belum mendukung pengenalan suara — coba Chrome atau Edge'
-            }
+            title={suara.didukung ? t('suara.ariaMulai') : t('suara.tidakDidukung')}
             aria-label={
               !suara.didukung
-                ? 'Pengenalan suara tidak didukung peramban ini'
+                ? t('suara.ariaTidakDidukung')
                 : suara.mendengar
-                  ? 'Hentikan perekaman suara'
-                  : 'Rekam pertanyaan dengan suara'
+                  ? t('suara.ariaHentikan')
+                  : t('suara.ariaMulai')
             }
             className={cn(
               'grid size-10 shrink-0 place-items-center rounded-full transition-all duration-200',
@@ -164,7 +160,7 @@ export default function AskAI({
       </p>
 
       {suara.error ? <Peringatan pesan={suara.error} code="mikrofon" /> : null}
-      <SumberJawaban cari={sumberCari} sumber={result?.sumber || []} />
+      <SumberJawaban cari={sumberCari} sumber={result?.sumber || []} t={t} />
       {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
 
       {/* ---- hasil ---- */}
@@ -202,12 +198,13 @@ export default function AskAI({
             {result.jawaban}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <TombolDengar teks={result.jawaban} bahasa={bahasa} />
+            <TombolDengar teks={result.jawaban} bahasa={bahasa} t={t} />
           </div>
-          <PoinKunci items={result.poinKunci} />
+          <PoinKunci items={result.poinKunci} t={t} />
           <SourcePills
             sources={result.sumber}
             negative={result.verdict === 'tidak_didukung'}
+            t={t}
           />
           {result.catatan ? (
             <p className="mt-2 text-[0.78rem] text-muted-500">{result.catatan}</p>

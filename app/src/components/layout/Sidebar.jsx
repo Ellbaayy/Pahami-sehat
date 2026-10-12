@@ -46,7 +46,7 @@ export default function Sidebar({ active, onSelect, terbuka = true, t = (k) => k
               Pahami Sehat
             </strong>
             <small className="block text-[0.66rem] leading-tight font-medium text-navy-500">
-              Informasi Kesehatan untuk Semua
+              {t('nav.isiDrawer')}
             </small>
           </span>
         ) : null}

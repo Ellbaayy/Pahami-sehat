@@ -19,7 +19,7 @@ import { SectionHeading, EmptyState } from './components/ui/primitives'
 import BatasGalat from './components/ui/BatasGalat'
 import LoadingPage from './components/LoadingPage'
 import { History, ArrowLeft, PlugZap, Plug } from 'lucide-react'
-import { TOPICS, ARTICLES, HEALTH_TIP, HISTORY } from './data/dummy'
+import { TOPICS, ARTICLES, HEALTH_TIP, contohRiwayat } from './data/dummy'
 import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
 import { gunakanBahasa } from './lib/useBahasa'
@@ -27,6 +27,20 @@ import { tanyaStream, ambilKonten } from './lib/api'
 import { ttsBaca, ttsBerhenti } from './lib/tts'
 
 const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, kontras: false, tts: false, lang: 'id' }
+
+/**
+ * Terjemahkan pesan status yang dikirim server lewat SSE.
+ *
+ * Server mengirim teks status dalam bahasa Indonesia ("Mencari sumber
+ * terpercaya…"). Kalau teks itu ditampilkan apa adanya, antarmuka berbahasa
+ * Inggris akan menampilkan kalimat Indonesia di tengah proses — jadi teks yang
+ * dikenali dipetakan ke kunci kamus, dan yang tidak dikenali ditampilkan
+ * apa adanya (server boleh menambah status baru tanpa merusak tampilan).
+ */
+const STATUS_SERVER = {
+  'Menyiapkan jawaban…': 'tanya.menyiapkan',
+  'Mencari sumber terpercaya…': 'tanya.mencari',
+}
 
 /** Balasan API → bentuk yang dipakai komponen tampilan. */
 function kePesan(h) {
@@ -160,16 +174,43 @@ export default function App() {
   const [askedQuestion, setAskedQuestion] = useState('')
   const [selectedTopic, setSelectedTopic] = useState(null)
   const [thread, setThread] = useState([])
-  const [history, setHistory] = useState(() => bacaRiwayat() ?? HISTORY)
+
+  /**
+   * Riwayat yang ditampilkan.
+   *
+   * `null` berarti "belum ada riwayat sungguhan" — dan itu BUKAN sama dengan
+   * "kosong". Yang ditampilkan saat null adalah contoh (contohRiwayat), supaya
+   * halaman Beranda tidak pernah kosong saat pertama dibuka. Pemisahan ini
+   * penting: notifikasi jumlah pertanyaan dan keadaan kosong di panel Riwayat
+   * harus menghitung yang SUNGGUHAN, bukan contohnya. Sebelumnya keduanya
+   * memakai satu daftar, sehingga contoh ikut dihitung sebagai "4 pertanyaan
+   * tersimpan" padahal belum ada satu pun pertanyaan diajukan.
+   */
+  const [riwayat, setRiwayat] = useState(() => bacaRiwayat())
   const [settings, setSettings] = useState(() => bacaSetelan())
 
-  // simpan riwayat ke peramban setiap kali berubah
+  const { kode: kodeBahasa, t } = gunakanBahasa(settings.lang)
+
+  // Yang ditampilkan: riwayat sungguhan kalau ada, kalau belum pakai contoh.
+  // Contohnya ikut bahasa antarmuka (lihat data/dummy.js).
+  const history = riwayat?.length ? riwayat : contohRiwayat(kodeBahasa)
+  const adaRiwayatSungguhan = Boolean(riwayat?.length)
+
+  // simpan riwayat ke peramban setiap kali berubah — hanya yang sungguhan,
+  // supaya contoh tidak pernah ikut tersimpan sebagai data pengguna
   useEffect(() => {
-    simpanRiwayat(history)
-  }, [history])
+    if (riwayat) simpanRiwayat(riwayat)
+  }, [riwayat])
 
   const server = useServer()
-  const { kode: kodeBahasa, t } = gunakanBahasa(settings.lang)
+
+  // Pesan status dari server diterjemahkan lewat kamus supaya ikut bahasa
+  // antarmuka. Yang tidak dikenali ditampilkan apa adanya.
+  const terjemahkanStatus = useCallback(
+    (pesan) => (STATUS_SERVER[pesan] ? t(STATUS_SERVER[pesan]) : pesan),
+    [t],
+  )
+
   const labelTingkat = useCallback((kunci) => t(`tingkat.${kunci}`), [t])
   const batalRef = useRef(null)
 
@@ -223,29 +264,33 @@ export default function App() {
     notifikasi.push({
       id: 'konten',
       jenis: 'konten',
-      judul: 'Konten harian diperbarui',
-      isi: `Topik populer dan artikel sudah memakai terbitan terbaru.`,
-      waktu: new Date(konten.diperbarui).toLocaleDateString('id-ID', {
+      judul: t('notif.kontenJudul'),
+      isi: t('notif.kontenIsi'),
+      // tanggal mengikuti bahasa antarmuka, bukan selalu Indonesia
+      waktu: new Date(konten.diperbarui).toLocaleDateString(t('umum.kodeLokal'), {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
       }),
     })
   }
-  if (history.length) {
+  // Notifikasi ini menghitung riwayat SUNGGUHAN, bukan contohnya. Sebelumnya
+  // memakai daftar tampilan, sehingga contoh ikut dihitung dan pengguna baru
+  // langsung melihat "4 pertanyaan tersimpan" padahal belum bertanya sekali pun.
+  if (adaRiwayatSungguhan) {
     notifikasi.push({
       id: 'riwayat',
       jenis: 'riwayat',
-      judul: `${history.length} pertanyaan tersimpan`,
-      isi: 'Tersimpan di peramban ini saja — buka Riwayat untuk melihatnya lagi.',
+      judul: t('notif.riwayatJudul', { n: riwayat.length }),
+      isi: t('notif.riwayatIsi'),
     })
   }
   if (!server.memuat && !server.online) {
     notifikasi.push({
       id: 'server',
       jenis: 'server',
-      judul: 'Server tidak terhubung',
-      isi: 'Jawaban AI belum bisa dibuat. Periksa koneksi lalu muat ulang.',
+      judul: t('notif.serverJudul'),
+      isi: t('notif.serverIsi'),
     })
   }
 
@@ -279,7 +324,7 @@ export default function App() {
       setError(null)
       setStreamTeks('')
       setSumberCari([])
-      setStatusPesan('Menyiapkan jawaban…')
+      setStatusPesan(t('tanya.menyiapkan'))
       setAskedQuestion(text)
       setInput('')
 
@@ -290,7 +335,7 @@ export default function App() {
         { pertanyaan: text, tingkat: settings.level, bahasa: kodeBahasa },
         {
           signal: ac.signal,
-          onStatus: (p) => setStatusPesan(p),
+          onStatus: (p) => setStatusPesan(terjemahkanStatus(p)),
           onSumber: (h) => setSumberCari(h),
           onDelta: (t) => setStreamTeks((prev) => prev + t),
           onHasil: (h) => {
@@ -298,17 +343,17 @@ export default function App() {
             setThread((prev) => [...prev, { id: `a${Date.now()}`, role: 'ai', ...kePesan(h) }])
             // putar suara otomatis kalau diaktifkan di Pengaturan
             if (ttsAutoRef.current) ttsBaca(h.jawaban)
-            setHistory((prev) =>
+            setRiwayat((prev) =>
               [
                 {
                   id: `n${Date.now()}`,
                   question: text,
                   answer:
                     h.jawaban?.length > 96 ? `${h.jawaban.slice(0, 96).trimEnd()}…` : h.jawaban,
-                  time: 'Baru saja',
+                  time: t('riw.baruSaja'),
                   sources: (h.sumber ?? []).map((s) => s.penerbit || s.judul).filter(Boolean),
                 },
-                ...prev,
+                ...(prev ?? []),
               ].slice(0, MAKS_RIWAYAT),
             )
           },
@@ -324,7 +369,7 @@ export default function App() {
           setStatusPesan('')
         })
     },
-    [loading, settings.level],
+    [loading, settings.level, t, terjemahkanStatus],
   )
 
   const handleTopic = (id) => {
@@ -358,7 +403,7 @@ export default function App() {
 
   return (
     <>
-      <LoadingPage />
+      <LoadingPage t={t} />
       <div className="flex min-h-dvh w-full bg-bg">
       <a
         href="#konten"
@@ -371,8 +416,9 @@ export default function App() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <BatasGalat
-          judul="Bagian atas aplikasi gagal ditampilkan"
-          pesan="Navigasi dan tombol pemberitahuan tidak bisa ditampilkan. Isi halaman di bawahnya masih bisa dipakai."
+          judul={t('galat.atasJudul')}
+          pesan={t('galat.atasPesan')}
+          t={t}
         >
           <TopBar
           onOpenMenu={() => setDrawerOpen(true)}
@@ -411,8 +457,9 @@ export default function App() {
         />
 
         <BatasGalat
-          judul="Isi halaman gagal ditampilkan"
-          pesan="Terjadi kesalahan saat menampilkan bagian ini. Coba pindah ke menu lain lewat navigasi, atau muat ulang halaman."
+          judul={t('galat.isiJudul')}
+          pesan={t('galat.isiPesan')}
+          t={t}
         >
         <main
           id="konten"
@@ -421,7 +468,7 @@ export default function App() {
           <div className="mx-auto w-full max-w-[86rem]">
             {active === 'beranda' ? (
               <div className="space-y-[clamp(1.4rem,1.1rem+1.1vw,2.4rem)]">
-                <Greeting />
+                <Greeting t={t} />
 
                 <AskAI
                   t={t}
@@ -445,10 +492,11 @@ export default function App() {
                   onSelect={handleTopic}
                   diperbarui={konten.diperbarui}
                   diperiksa={konten.diperiksa}
+                  t={t}
                 />
-                <HealthTip tip={konten.tips} />
-                <ArticleGrid articles={konten.artikel} />
-                <RecentHistory items={history} onSeeAll={() => navigate('riwayat')} />
+                <HealthTip tip={konten.tips} t={t} />
+                <ArticleGrid articles={konten.artikel} t={t} />
+                <RecentHistory items={history} onSeeAll={() => navigate('riwayat')} t={t} />
               </div>
             ) : null}
 
@@ -496,7 +544,7 @@ export default function App() {
               />
             ) : null}
 
-            {active === 'suara' ? <VoicePanel onUse={useVoiceResult} /> : null}
+            {active === 'suara' ? <VoicePanel onUse={useVoiceResult} t={t} /> : null}
 
             {active === 'pindai' ? (
               <ScanPanel
@@ -510,30 +558,38 @@ export default function App() {
             {active === 'riwayat' ? (
               <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
                 <SectionHeading
-                  eyebrow="Arsip"
-                  title="Riwayat"
-                  description="Pertanyaan yang diajukan pada sesi ini. Tersimpan di memori peramban saja."
+                  eyebrow={t('riw.eyebrow')}
+                  title={t('riw.judul')}
+                  description={t('riw.sub')}
                   ilustrasi="riwayat"
                 />
-                {history.length === 0 ? (
-                  <EmptyState
-                    icon={History}
-                    title="Belum ada riwayat"
-                    description="Mulai dari Beranda untuk mengajukan pertanyaan pertama."
-                    action={
-                      <button
-                        type="button"
-                        onClick={() => navigate('beranda')}
-                        className="mt-1 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
-                      >
-                        <ArrowLeft className="size-4" aria-hidden="true" />
-                        Ke Beranda
-                      </button>
-                    }
-                  />
-                ) : (
-                  <RecentHistory items={history} max={history.length} />
-                )}
+                {/* Yang dinilai "kosong" adalah riwayat SUNGGUHAN. Kalau contoh
+                    masih ditampilkan, daftarnya tetap tampil — bukan pesan
+                    kosong, karena pesan "belum ada riwayat" di bawah contoh
+                    justru membingungkan. */}
+                {!adaRiwayatSungguhan ? (
+                  <>
+                    <EmptyState
+                      icon={History}
+                      title={t('riw.kosongJudul')}
+                      description={t('riw.kosongSub')}
+                      action={
+                        <button
+                          type="button"
+                          onClick={() => navigate('beranda')}
+                          className="mt-1 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+                        >
+                          <ArrowLeft className="size-4" aria-hidden="true" />
+                          {t('riw.keBeranda')}
+                        </button>
+                      }
+                    />
+                    <p className="text-[0.78rem] font-semibold tracking-[0.1em] uppercase text-muted-500">
+                      {t('riw.contohJudul')}
+                    </p>
+                  </>
+                ) : null}
+                <RecentHistory items={history} max={history.length} t={t} />
               </div>
             ) : null}
 
@@ -546,8 +602,9 @@ export default function App() {
         </BatasGalat>
 
         <BatasGalat
-          judul="Bagian bawah halaman gagal ditampilkan"
-          pesan="Keterangan kaki halaman tidak bisa ditampilkan. Isi halaman di atasnya masih bisa dipakai."
+          judul={t('galat.bawahJudul')}
+          pesan={t('galat.bawahPesan')}
+          t={t}
         >
         <footer className="border-t border-line-200 bg-white px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-5">
           <div className="mx-auto flex w-full max-w-[86rem] flex-wrap items-center justify-between gap-x-6 gap-y-2">

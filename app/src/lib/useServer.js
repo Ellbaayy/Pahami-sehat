@@ -1,6 +1,14 @@
 /**
- * Hook: status server + meta (model & daftar tingkat).
- * Dipakai untuk menampilkan badge "terhubung / belum jalan" di TopBar.
+ * Hook: status server (hidup/mati + model yang dipakai).
+ *
+ * CATATAN: namanya "useServer" karena itu yang ditampilkan — badge "terhubung /
+ * belum jalan" di TopBar dan footer. Komentar lama menyebut "status server +
+ * meta (model & daftar tingkat)", padahal daftar tingkat TIDAK diambil di sini
+ * (ada di src/data/tingkat.js). Yang diambil hanya /api/health.
+ *
+ * Pemeriksaan diulang tiap 30 detik. Server sendiri menyimpan hasilnya selama
+ * 15 detik (lihat server/batasInput.js), jadi pemeriksaan berkala tidak
+ * menghajar layanan Kenari.
  */
 
 import { useEffect, useState } from 'react'

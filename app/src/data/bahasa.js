@@ -46,6 +46,11 @@ const KAMUS = {
     'umum.tingkatBaca': 'Tingkat baca',
     'umum.sumber': 'Sumber',
     'umum.poinKunci': 'Poin kunci yang dipertahankan',
+    'umum.poinKunciCatatan': 'Daftar ini ditandai lebih dulu sebelum bahasa disederhanakan — bukti kelengkapan informasi terjaga.',
+    'umum.suaraGagal': 'Gagal memutar suara.',
+    'umum.tidakAdaTeks': 'Tidak ada teks untuk dibacakan.',
+    /** Dipakai untuk memilih format tanggal yang sesuai bahasa antarmuka. */
+    'umum.kodeLokal': 'id-ID',
 
     // beranda
     'beranda.sapa': 'Halo!',
@@ -53,6 +58,7 @@ const KAMUS = {
     'beranda.sub': 'Temukan informasi kesehatan yang mudah dipahami atau tanyakan apa saja seputar kesehatan.',
     'beranda.badge1': 'Bersumber resmi',
     'beranda.badge2': 'Mode suara tersedia',
+    'beranda.altIlustrasi': 'Ilustrasi dokter menyapa di halaman beranda',
 
     // tanya AI
     'tanya.judul': 'Tanya AI',
@@ -72,10 +78,13 @@ const KAMUS = {
     // sumber
     'sumber.judul': 'Sumber jawaban',
     'sumber.cekSendiri': 'Silakan cek sendiri lewat tautan di bawah — jangan percaya begitu saja.',
+    'sumber.adaResmi': 'termasuk sumber resmi',
     'sumber.resmi': 'SUMBER RESMI',
     'sumber.belumDikutip': 'ditemukan, belum dikutip',
+    'sumber.belumDikutipCatatan': 'Model belum mengutip satu pun; daftar ini hasil pencarian mentah.',
     'sumber.tanpaTautan': '(tanpa tautan)',
-    'sumber.catatan': 'Jawaban disusun dari hasil pencarian internet yang diambil saat pertanyaan diproses.',
+    'sumber.buka': 'Buka sumber',
+    'sumber.catatan': 'Jawaban disusun dari hasil pencarian internet yang diambil saat pertanyaan diproses. Tanda centang berarti sumber itu dipakai di jawaban; ikon gedung menandai lembaga resmi.',
 
     // sederhanakan
     'sed.judul': 'Sederhanakan teks medis',
@@ -97,15 +106,21 @@ const KAMUS = {
     'ver.tidakPasti': 'Belum bisa dipastikan',
 
     // suara
+    'suara.eyebrow': 'Mode suara',
     'suara.judul': 'Tanya dengan suara',
     'suara.sub': 'Cocok untuk yang lebih nyaman berbicara daripada mengetik. Hasil ucapannya langsung jadi teks, siap dikirim ke Tanya AI.',
     'suara.tekan': 'Tekan untuk bicara',
     'suara.mendengar': 'Mendengarkan… silakan bicara',
     'suara.dikenali': 'Ucapan dikenali',
-    'suara.tidakDidukung': 'Peramban ini belum mendukung pengenalan suara',
+    'suara.tidakDidukung': 'Peramban ini belum mendukung pengenalan suara — coba Chrome atau Edge',
     'suara.ulangi': 'Ulangi',
     'suara.gunakan': 'Gunakan hasil',
     'suara.placeholder': 'Teks hasil ucapan akan muncul di sini.',
+    'suara.ariaMulai': 'Mulai perekaman suara',
+    'suara.ariaHentikan': 'Hentikan perekaman',
+    'suara.ariaTidakDidukung': 'Pengenalan suara tidak didukung peramban ini',
+    'suara.dengarUlang': 'Dengar ulang ucapan',
+    'suara.catatan': 'Pengenalan suara memakai fitur bawaan peramban (Web Speech API). Chrome dan Edge mendukung; Brave memblokir layanan suara daring sehingga belum bisa, dan Firefox belum menyediakannya. Tidak ada rekaman yang dikirim ke server kami.',
 
     // pindai foto (OCR di peramban)
     'pindai.eyebrow': 'Fitur baru',
@@ -159,13 +174,93 @@ const KAMUS = {
     'kuis.sub': 'Versi ringkas. Semua perhitungan dilakukan lokal di peramban — tidak ada jawaban yang dikirim ke mana pun.',
     'kuis.lihat': 'Lihat hasil',
     'kuis.ulangi': 'Ulangi',
-    'kuis.terjawab': 'terjawab',
-    'kuis.belum': 'Belum ada riwayat',
     'kuis.hasil': 'Literasi kesehatan',
 
     // riwayat
+    'riw.eyebrow': 'Arsip',
     'riw.judul': 'Riwayat',
     'riw.sub': 'Pertanyaan yang diajukan pada sesi ini. Tersimpan di memori peramban saja.',
+    'riw.terakhir': 'Riwayat Terakhir',
+    'riw.terakhirSub': 'Pertanyaan yang baru saja kamu ajukan di perangkat ini.',
+    'riw.lihatSemua': 'Lihat semua',
+    'riw.kosongJudul': 'Belum ada riwayat',
+    'riw.kosongSub': 'Mulai dengan mengetik pertanyaan pada kartu Tanya AI di atas.',
+    'riw.keBeranda': 'Ke Beranda',
+    'riw.baruSaja': 'Baru saja',
+    'riw.contohJudul': 'Contoh riwayat',
+
+    // artikel & topik di Beranda
+    'art.judul': 'Artikel kesehatan',
+    'art.sub': 'Bacaan singkat dari kanal resmi Kemenkes RI.',
+    'art.baca': 'Baca',
+    'art.bacaAsli': 'Baca artikel aslinya',
+    'art.tutup': 'Tutup',
+    'art.sumber': 'Sumber',
+    'topik.judul': 'Topik populer',
+    'topik.sub': 'Ketuk salah satu untuk langsung bertanya.',
+    'topik.aria': 'Pilih topik kesehatan',
+    'topik.diperbaruiPada': 'Diperbarui {tanggal}',
+    'topik.dicekDiperbarui': 'Terakhir dicek {dicek} · diperbarui {diperbarui}',
+
+    // tips kesehatan
+    'tips.label': 'Tips Kesehatan Hari Ini',
+    'tips.selengkapnya': 'Baca selengkapnya',
+    'tips.tutup': 'Tutup',
+    'tips.sumber': 'Sumber',
+
+    // tanya AI (tambahan)
+
+    // kuesioner (tambahan)
+    'kuis.eyebrow': 'Alat ukur',
+    'kuis.pernyataan': 'Pernyataan literasi kesehatan',
+    'kuis.hasilTampil': 'Hasil akan tampil di sini',
+    'kuis.hasilTampilSub': 'Jawab kelima pernyataan di atas, lalu tekan Lihat hasil.',
+    'kuis.baik': 'Baik',
+    'kuis.sedang': 'Sedang',
+    'kuis.perluDukungan': 'Perlu dukungan',
+    'kuis.saranBaik': 'Kamu sudah nyaman mencari dan menilai informasi kesehatan. Pertahankan, dan bantu orang di sekitarmu yang masih kesulitan.',
+    'kuis.saranSedang': 'Sebagian besar sudah bisa, bagian menilai kebenaran informasi masih perlu diperkuat. Biasakan cek ke Kemenkes, WHO, atau BPOM sebelum percaya.',
+    'kuis.saranPerlu': 'Aktifkan penyederhanaan ke tingkat anak-anak dan mode suara agar informasi lebih mudah dijangkau. Bawa hasil ini ke tenaga kesehatan terdekat.',
+    'kuis.catatan': 'Hasil ini alat bantu belajar, bukan diagnosis medis.',
+    'kuis.belumDijawab': 'Masih ada {n} pernyataan yang belum dijawab.',
+    'kuis.terjawabDari': '{a} dari {b} terjawab',
+
+    // pengaturan (tambahan)
+
+    // pemberitahuan
+    'notif.judul': 'Pemberitahuan',
+    'notif.panel': 'Pemberitahuan',
+    'notif.tutup': 'Tutup pemberitahuan',
+    'notif.kosong': 'Belum ada pemberitahuan.',
+    'notif.lonceng': 'Pemberitahuan, {n} butir',
+    'notif.loncengBaru': 'Pemberitahuan, {n} butir, ada yang belum dibaca',
+    'notif.kontenJudul': 'Konten harian diperbarui',
+    'notif.kontenIsi': 'Topik populer dan artikel sudah memakai terbitan terbaru.',
+    'notif.serverJudul': 'Server tidak terhubung',
+    'notif.serverIsi': 'Jawaban AI belum bisa dibuat. Periksa koneksi lalu muat ulang.',
+    'notif.riwayatJudul': '{n} pertanyaan tersimpan',
+    'notif.riwayatIsi': 'Tersimpan di peramban ini saja — buka Riwayat untuk melihatnya lagi.',
+
+    // navigasi tambahan (drawer & sidebar)
+    'nav.tutupMenu': 'Tutup menu navigasi',
+    'nav.drawer': 'Menu navigasi',
+    'nav.drawerDashboard': 'Menu dashboard',
+    'nav.isiDrawer': 'Informasi Kesehatan untuk Semua',
+
+    // halaman pemuatan
+    'load.memuat': 'Memuat Pahami Sehat',
+
+    // panel galat
+    'galat.judul': 'Bagian ini gagal ditampilkan',
+    'galat.pesan': 'Terjadi kesalahan saat menampilkan bagian ini. Bagian aplikasi yang lain masih bisa dipakai.',
+    'galat.rincian': 'Rincian teknis',
+    'galat.cobaLagi': 'Coba tampilkan lagi',
+    'galat.atasJudul': 'Bagian atas aplikasi gagal ditampilkan',
+    'galat.atasPesan': 'Navigasi dan tombol pemberitahuan tidak bisa ditampilkan. Isi halaman di bawahnya masih bisa dipakai.',
+    'galat.isiJudul': 'Isi halaman gagal ditampilkan',
+    'galat.isiPesan': 'Terjadi kesalahan saat menampilkan bagian ini. Coba pindah ke menu lain lewat navigasi, atau muat ulang halaman.',
+    'galat.bawahJudul': 'Bagian bawah halaman gagal ditampilkan',
+    'galat.bawahPesan': 'Keterangan kaki halaman tidak bisa ditampilkan. Isi halaman di atasnya masih bisa dipakai.',
 
     // pengaturan
     'set.judul': 'Pengaturan',
@@ -215,12 +310,18 @@ const KAMUS = {
     'umum.tingkatBaca': 'Reading level',
     'umum.sumber': 'Sources',
     'umum.poinKunci': 'Key points preserved',
+    'umum.poinKunciCatatan': 'This list is marked first, before the language is simplified — proof that no information was lost.',
+    'umum.suaraGagal': 'Could not play the audio.',
+    'umum.tidakAdaTeks': 'There is no text to read aloud.',
+    /** Dipakai untuk memilih format tanggal yang sesuai bahasa antarmuka. */
+    'umum.kodeLokal': 'en-US',
 
     'beranda.sapa': 'Hello!',
     'beranda.tanya': 'How can we help?',
     'beranda.sub': 'Find easy-to-understand health information, or ask anything about health.',
     'beranda.badge1': 'From official sources',
     'beranda.badge2': 'Voice mode available',
+    'beranda.altIlustrasi': 'Illustration of a doctor waving on the home page',
 
     'tanya.judul': 'Ask AI',
     'tanya.sub': 'Simplified to your reading level, key points preserved, sources always included.',
@@ -238,10 +339,13 @@ const KAMUS = {
 
     'sumber.judul': 'Answer sources',
     'sumber.cekSendiri': 'Check them yourself via the links below — do not just take our word for it.',
+    'sumber.adaResmi': 'includes official sources',
     'sumber.resmi': 'OFFICIAL SOURCE',
     'sumber.belumDikutip': 'found, not cited',
+    'sumber.belumDikutipCatatan': 'The model did not cite any; this list is raw search output.',
     'sumber.tanpaTautan': '(no link)',
-    'sumber.catatan': 'The answer was composed from internet search results retrieved while processing the question.',
+    'sumber.buka': 'Open source',
+    'sumber.catatan': 'The answer was composed from internet search results retrieved while processing the question. A check mark means the source was used in the answer; a building icon marks an official institution.',
 
     'sed.judul': 'Simplify medical text',
     'sed.sub': 'Paste text from lab results, medicine labels, articles, or WhatsApp broadcasts. The model marks key points first, then simplifies the wording.',
@@ -260,15 +364,21 @@ const KAMUS = {
     'ver.tidakDidukung': 'Not supported by sources',
     'ver.tidakPasti': 'Cannot be determined',
 
+    'suara.eyebrow': 'Voice mode',
     'suara.judul': 'Ask by voice',
     'suara.sub': 'For those more comfortable speaking than typing. Your speech becomes text, ready to send to Ask AI.',
     'suara.tekan': 'Tap to speak',
     'suara.mendengar': 'Listening… please speak',
     'suara.dikenali': 'Speech recognised',
-    'suara.tidakDidukung': 'This browser does not support speech recognition yet',
+    'suara.tidakDidukung': 'This browser does not support speech recognition yet — try Chrome or Edge',
     'suara.ulangi': 'Retry',
     'suara.gunakan': 'Use result',
     'suara.placeholder': 'Your transcribed speech will appear here.',
+    'suara.ariaMulai': 'Start recording',
+    'suara.ariaHentikan': 'Stop recording',
+    'suara.ariaTidakDidukung': 'Speech recognition is not supported by this browser',
+    'suara.dengarUlang': 'Replay the speech',
+    'suara.catatan': 'Speech recognition uses a built-in browser feature (Web Speech API). Chrome and Edge support it; Brave blocks the online speech service so it cannot work, and Firefox does not provide it. No recording is sent to our server.',
 
     'pindai.eyebrow': 'New feature',
     'pindai.judul': 'Scan Photo',
@@ -320,12 +430,81 @@ const KAMUS = {
     'kuis.sub': 'Short version. All calculation happens locally in your browser — no answers are sent anywhere.',
     'kuis.lihat': 'See result',
     'kuis.ulangi': 'Retry',
-    'kuis.terjawab': 'answered',
-    'kuis.belum': 'No history yet',
     'kuis.hasil': 'Health literacy',
 
+    'riw.eyebrow': 'Archive',
     'riw.judul': 'History',
     'riw.sub': 'Questions asked in this session. Stored in browser memory only.',
+    'riw.terakhir': 'Recent History',
+    'riw.terakhirSub': 'Questions you just asked on this device.',
+    'riw.lihatSemua': 'See all',
+    'riw.kosongJudul': 'No history yet',
+    'riw.kosongSub': 'Start by typing a question in the Ask AI card above.',
+    'riw.keBeranda': 'Go to Home',
+    'riw.baruSaja': 'Just now',
+    'riw.contohJudul': 'Example history',
+
+    'art.judul': 'Health articles',
+    'art.sub': 'Short reads from the official channel of Indonesia\u2019s Ministry of Health.',
+    'art.baca': 'Read',
+    'art.bacaAsli': 'Read the original article',
+    'art.tutup': 'Close',
+    'art.sumber': 'Source',
+    'topik.judul': 'Popular topics',
+    'topik.sub': 'Tap one to ask about it right away.',
+    'topik.aria': 'Choose a health topic',
+    'topik.diperbaruiPada': 'Updated {tanggal}',
+    'topik.dicekDiperbarui': 'Last checked {dicek} · updated {diperbarui}',
+
+    'tips.label': 'Health Tip of the Day',
+    'tips.selengkapnya': 'Read more',
+    'tips.tutup': 'Close',
+    'tips.sumber': 'Source',
+
+    'kuis.eyebrow': 'Measuring tool',
+    'kuis.pernyataan': 'Health literacy statements',
+    'kuis.hasilTampil': 'Your result will appear here',
+    'kuis.hasilTampilSub': 'Answer all five statements above, then press See result.',
+    'kuis.baik': 'Good',
+    'kuis.sedang': 'Moderate',
+    'kuis.perluDukungan': 'Needs support',
+    'kuis.saranBaik': 'You are already comfortable finding and judging health information. Keep it up, and help those around you who still struggle.',
+    'kuis.saranSedang': 'Most of it is fine; judging whether information is true still needs work. Get used to checking Kemenkes, WHO, or BPOM before believing anything.',
+    'kuis.saranPerlu': 'Turn on simplification to the children level and voice mode so information is easier to reach. Bring this result to the nearest health worker.',
+    'kuis.catatan': 'This result is a learning aid, not a medical diagnosis.',
+    'kuis.belumDijawab': '{n} statements are still unanswered.',
+    'kuis.terjawabDari': '{a} of {b} answered',
+
+    'notif.judul': 'Notifications',
+    'notif.panel': 'Notifications',
+    'notif.tutup': 'Close notifications',
+    'notif.kosong': 'No notifications yet.',
+    'notif.lonceng': 'Notifications, {n} items',
+    'notif.loncengBaru': 'Notifications, {n} items, unread ones present',
+    'notif.kontenJudul': 'Daily content updated',
+    'notif.kontenIsi': 'Popular topics and articles now use the latest release.',
+    'notif.serverJudul': 'Server not connected',
+    'notif.serverIsi': 'AI answers cannot be produced yet. Check your connection and reload.',
+    'notif.riwayatJudul': '{n} questions saved',
+    'notif.riwayatIsi': 'Stored in this browser only — open History to see them again.',
+
+    'nav.tutupMenu': 'Close navigation menu',
+    'nav.drawer': 'Navigation menu',
+    'nav.drawerDashboard': 'Dashboard menu',
+    'nav.isiDrawer': 'Health Information for Everyone',
+
+    'load.memuat': 'Loading Pahami Sehat',
+
+    'galat.judul': 'This section failed to display',
+    'galat.pesan': 'Something went wrong while displaying this section. The rest of the app still works.',
+    'galat.rincian': 'Technical details',
+    'galat.cobaLagi': 'Try showing it again',
+    'galat.atasJudul': 'The top of the app failed to display',
+    'galat.atasPesan': 'Navigation and the notifications button cannot be shown. The page content below still works.',
+    'galat.isiJudul': 'The page content failed to display',
+    'galat.isiPesan': 'Something went wrong while displaying this section. Try another menu via the navigation, or reload the page.',
+    'galat.bawahJudul': 'The bottom of the page failed to display',
+    'galat.bawahPesan': 'The footer cannot be shown. The page content above still works.',
 
     'set.judul': 'Settings',
     'set.sub': 'Stored in this browser only. No account, no server.',
@@ -353,11 +532,23 @@ export function kamus(bahasa) {
 
 /**
  * Buat fungsi penerjemah.
+ *
  * Kunci yang belum diterjemahkan dikembalikan apa adanya supaya tidak
  * menampilkan teks kosong.
+ *
+ * Nilai bisa disisipkan lewat argumen kedua, mis. t('kuis.belumDijawab', { n: 3})
+ * dengan teks kamus "Masih ada {n} pernyataan yang belum dijawab."
+ * Ini dipakai supaya kalimat yang memuat angka tetap bisa diterjemahkan utuh —
+ * menyambung potongan kalimat di komponen membuat terjemahannya kaku.
  */
 export function buatT(bahasa) {
   const k = kamus(bahasa)
   const dasar = kamus(BAHASA_DEFAULT)
-  return (kunci) => k[kunci] ?? dasar[kunci] ?? kunci
+  return (kunci, nilai) => {
+    const teks = k[kunci] ?? dasar[kunci] ?? kunci
+    if (!nilai || typeof nilai !== 'object') return teks
+    return String(teks).replace(/\{(\w+)\}/g, (utuh, nama) =>
+      Object.prototype.hasOwnProperty.call(nilai, nama) ? String(nilai[nama]) : utuh,
+    )
+  }
 }

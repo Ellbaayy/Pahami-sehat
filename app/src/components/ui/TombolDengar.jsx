@@ -12,8 +12,19 @@ import { cn } from '../../lib/cn'
  * Web Speech API — yang lama menyembunyikannya, padahal suara server tetap bisa.
  *
  * `bahasa` menentukan suara: 'id', 'jv' (Jawa), atau 'su' (Sunda).
+ *
+ * Label tombolnya diambil dari kamus lewat `t()` supaya ikut bahasa antarmuka.
+ * Sebelumnya "Dengar" dan "Hentikan" ditulis tetap di sini, sehingga tombol ini
+ * tetap berbahasa Indonesia di seluruh aplikasi walau antarmukanya Inggris —
+ * padahal kunci kamusnya (umum.dengar, umum.hentikan) sudah ada sejak awal.
  */
-export default function TombolDengar({ teks, label = 'Dengar', bahasa = 'id', className }) {
+export default function TombolDengar({
+  teks,
+  label,
+  bahasa = 'id',
+  className,
+  t = (k) => k,
+}) {
   const [bicara, setBicara] = useState(false)
   const [error, setError] = useState(null)
 
@@ -35,10 +46,10 @@ export default function TombolDengar({ teks, label = 'Dengar', bahasa = 'id', cl
       onSelesai: () => setBicara(false),
       onError: (e) => {
         setBicara(false)
-        setError(typeof e === 'string' ? e : 'Gagal memutar suara.')
+        setError(typeof e === 'string' ? e : t('umum.suaraGagal'))
       },
     })
-    if (!jalan) setError('Tidak ada teks untuk dibacakan.')
+    if (!jalan) setError(t('umum.tidakAdaTeks'))
   }
 
   return (
@@ -61,11 +72,9 @@ export default function TombolDengar({ teks, label = 'Dengar', bahasa = 'id', cl
         ) : (
           <Volume2 className="size-3.5" aria-hidden="true" />
         )}
-        {bicara ? 'Hentikan' : label}
+        {bicara ? t('umum.hentikan') : (label ?? t('umum.dengar'))}
       </button>
-      {error ? (
-        <span className="ml-2 text-[0.76rem] text-rose-600">{error}</span>
-      ) : null}
+      {error ? <span className="ml-2 text-[0.76rem] text-rose-600">{error}</span> : null}
     </>
   )
 }
