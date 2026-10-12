@@ -121,7 +121,12 @@ export default function PemindaiFoto({
       if (e?.name === 'AbortError') {
         setError({ pesan: t('pindai.dibatalkan') })
       } else {
-        setError({ pesan: e?.message || t('pindai.gagal') })
+        // Pesan dari lib/ocr.js berupa KUNCI kamus (mis. 'ocr.galatBukanGambar').
+        // Yang bukan kunci ditampilkan apa adanya — bisa jadi pesan asli dari
+        // tempat lain, dan menyembunyikannya justru membuat sulit ditelusuri.
+        const pesanAsli = typeof e?.message === 'string' ? e.message : ''
+        const kunci = /^(ocr|pindai|umum)\./.test(pesanAsli) ? pesanAsli : null
+        setError({ pesan: kunci ? t(kunci, e?.nilai) : pesanAsli || t('pindai.gagal') })
       }
     } finally {
       batalRef.current = null
@@ -395,7 +400,7 @@ export default function PemindaiFoto({
                         <code className="rounded bg-white px-1.5 py-0.5 font-mono font-bold">
                           {a.teks}
                         </code>{' '}
-                        {a.alasan}
+                        {t(a.alasan)}
                       </li>
                     ))}
                   </ul>

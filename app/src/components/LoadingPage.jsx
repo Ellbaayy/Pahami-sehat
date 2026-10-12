@@ -76,7 +76,7 @@ export default function LoadingPage({ t = (k) => k }) {
         </svg>
 
         <p className="mt-4 text-xs font-semibold tracking-wide text-white/60">
-          Menyiapkan halaman…
+          {t('load.menyiapkan')}
         </p>
       </div>
 

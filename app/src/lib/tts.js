@@ -156,7 +156,7 @@ export function ttsBaca(teks, { bahasa = 'id', onMulai, onSelesai, onError } = {
         URL.revokeObjectURL(url)
         // MP3 dari server gagal diputar -> pakai suara bawaan
         if (!bacaDenganPeramban(isi, { onMulai, onSelesai, onError })) {
-          onError?.('Gagal memutar suara.')
+          onError?.('umum.suaraGagal')
         }
       }
       a.onplay = () => onMulai?.()
@@ -166,7 +166,7 @@ export function ttsBaca(teks, { bahasa = 'id', onMulai, onSelesai, onError } = {
       if (e?.name === 'AbortError') return
       // server tidak bisa dihubungi / tidak ada internet -> suara bawaan
       if (!bacaDenganPeramban(isi, { onMulai, onSelesai, onError })) {
-        onError?.(e)
+        onError?.(typeof e === 'string' ? e : 'umum.suaraGagal')
       }
     })
 

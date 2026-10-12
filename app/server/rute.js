@@ -255,7 +255,6 @@ rute.get('/api/meta', (_req, res) => {
       usia: t.usia,
     })),
     tingkatDefault: TINGKAT_DEFAULT,
-    batasKata: 220,
   })
 })
 

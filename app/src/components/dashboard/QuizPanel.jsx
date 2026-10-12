@@ -17,6 +17,45 @@ import { QUIZ_ITEMS } from '../../data/dummy'
 import { cn } from '../../lib/cn'
 
 /**
+ * Kunci penyimpanan jawaban kuesioner.
+ *
+ * KENAPA DISIMPAN: dulu jawaban hanya hidup di state komponen, jadi begitu
+ * pengguna pindah menu — atau menutup halaman — 12 jawabannya HILANG dan harus
+ * diisi ulang dari awal. Itu bertentangan dengan janji di kartu "Tips
+ * Mengisi": "jawaban Anda bersifat rahasia dan hanya untuk meningkatkan
+ * kualitas layanan". Menyimpannya di peramban sendiri juga menjaga janji
+ * "tidak ada jawaban yang dikirim ke mana pun".
+ */
+const KUNCI_JAWABAN = 'pahami-sehat:kuesioner'
+
+/** Baca jawaban tersimpan. Nilai yang tidak sah dibuang, bukan dipercaya. */
+function bacaJawaban() {
+  try {
+    const isi = JSON.parse(localStorage.getItem(KUNCI_JAWABAN) || '{}')
+    if (!isi || typeof isi !== 'object') return {}
+    const bersih = {}
+    for (const [k, v] of Object.entries(isi)) {
+      const i = Number(k)
+      const j = Number(v)
+      if (Number.isInteger(i) && i >= 0 && i < QUIZ_ITEMS.length && Number.isInteger(j) && j >= 0 && j <= 3) {
+        bersih[i] = String(j)
+      }
+    }
+    return bersih
+  } catch {
+    return {}
+  }
+}
+
+function simpanJawaban(jawaban) {
+  try {
+    localStorage.setItem(KUNCI_JAWABAN, JSON.stringify(jawaban))
+  } catch {
+    /* penyimpanan diblokir — jawaban tetap jalan untuk sesi ini */
+  }
+}
+
+/**
  * Kuesioner HLS-SF12 — 12 item asli, satu pertanyaan per langkah.
  *
  * Instrumennya diambil dari paper validasinya (Duong et al., 2019) beserta
@@ -59,7 +98,7 @@ const WARNA = {
 }
 
 export default function QuizPanel({ t = (k) => k }) {
-  const [answers, setAnswers] = useState({})
+  const [answers, setAnswers] = useState(bacaJawaban)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
   const /** Langkah yang sedang tampil, 0-based. */ [langkah, setLangkah] = useState(0)
@@ -71,7 +110,11 @@ export default function QuizPanel({ t = (k) => k }) {
   const terakhir = langkah >= TOTAL - 1
 
   const pilih = (j) => {
-    setAnswers((prev) => ({ ...prev, [langkah]: String(j) }))
+    setAnswers((prev) => {
+      const baru = { ...prev, [langkah]: String(j) }
+      simpanJawaban(baru)
+      return baru
+    })
     setError('')
   }
 
@@ -128,6 +171,9 @@ export default function QuizPanel({ t = (k) => k }) {
 
   const ulangi = () => {
     setAnswers({})
+    // hapus juga dari penyimpanan — kalau tidak, jawaban lama hidup lagi
+    // begitu halaman disegarkan (kesalahan yang sama seperti pada daftar obrolan)
+    simpanJawaban({})
     setResult(null)
     setError('')
     setLangkah(0)
@@ -137,6 +183,11 @@ export default function QuizPanel({ t = (k) => k }) {
   const opsi = OPSI(t)
   const R = 26
   const CIRC = 2 * Math.PI * R
+  /** Id judul pertanyaan yang sedang tampil — dipakai `aria-labelledby`.
+   * Sebelumnya di sini tertulis tetap "q-0", padahal elemen ber-id itu TIDAK
+   * PERNAH ada di halaman. Akibatnya grup radio tidak punya nama aksesibel:
+   * pembaca layar hanya membacakan keempat pilihan tanpa pertanyaannya. */
+  const idJudul = `q-soal-${langkah}`
 
   return (
     <div className="grid gap-[clamp(1rem,0.5rem+1.6vw,1.75rem)] lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
@@ -186,14 +237,17 @@ export default function QuizPanel({ t = (k) => k }) {
               <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-[0.95rem] font-extrabold text-brand-700 ring-1 ring-brand-100">
                 {langkah + 1}
               </span>
-              <p className="min-w-0 pt-1 text-[clamp(0.98rem,0.9rem+0.3vw,1.12rem)] leading-snug font-bold text-navy-900">
+              <p
+                id={idJudul}
+                className="min-w-0 pt-1 text-[clamp(0.98rem,0.9rem+0.3vw,1.12rem)] leading-snug font-bold text-navy-900"
+              >
                 {QUIZ_ITEMS[langkah]}
               </p>
             </div>
 
             <p className="mb-3 text-[0.82rem] text-muted-500">{t('kuis.instruksi')}</p>
 
-            <div role="radiogroup" aria-labelledby="q-0" className="space-y-2">
+            <div role="radiogroup" aria-labelledby={idJudul} className="space-y-2">
               {opsi.map((o, j) => {
                 const checked = jawaban === j
                 return (

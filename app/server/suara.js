@@ -36,6 +36,8 @@
 
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts'
 
+import { config } from './config.js'
+
 /** Suara per bahasa: jawaban dibacakan sesuai bahasanya. */
 const SUARA = {
   id: 'id-ID-GadisNeural', // perempuan Indonesia — suara utama
@@ -43,6 +45,26 @@ const SUARA = {
   su: 'su-ID-TutiNeural', // perempuan Sunda
   en: 'en-US-AriaNeural', // perempuan Inggris (untuk jawaban berbahasa Inggris)
 }
+
+/**
+ * Suara untuk jalur Kenari (`POST /audio/speech`).
+ *
+ * Nama-nama ini milik Gemini, dan daftar sahnya didapat dari pesan galat
+ * penyedia sendiri — ia menolak nama yang tidak dikenal lalu menyebutkan
+ * pilihan yang benar. Itu satu-satunya cara mengetahui daftarnya tanpa
+ * dokumentasi.
+ *
+ * JUJUR SOAL YANG BELUM DIUJI: mana yang paling enak didengar untuk bahasa
+ * Indonesia BELUM bisa dinilai, karena setiap percobaan ke /audio/speech
+ * ditolak dengan `insufficient_balance` (saldo akun Rp 0). Nama di bawah
+ * dipilih dari daftar yang sah, bukan dari hasil mendengarkan. Kalau nanti
+ * sudah ada saldo dan suaranya kurang cocok, gantinya lewat KENARI_TTS_VOICE
+ * — tidak perlu mengubah kode.
+ */
+const SUARA_KENARI = { id: 'Kore', en: 'Aoede', jv: 'Kore', su: 'Kore' }
+
+/** Batas waktu satu permintaan suara ke Kenari (di bawah maxDuration 60 detik). */
+const BATAS_KENARI_MS = 20_000
 
 /**
  * Batas aman panjang teks yang dibacakan.
@@ -216,7 +238,59 @@ async function buatBagian(tts, kalimat, opsi) {
 }
 
 /**
+ * Buat audio lewat Kenari (`POST /audio/speech`) — jalur yang dipakai di
+ * serverless.
+ *
+ * KENAPA PERLU JALUR KEDUA
+ * Jalur msedge-tts di bawah memakai WebSocket ke Microsoft. WebSocket tidak
+ * bisa hidup di fungsi serverless Vercel: diukur, /api/suara di produksi
+ * SELALU menjawab HTTP 502, sedangkan di komputer sendiri menjawab 200 dengan
+ * MP3 yang benar. Jadi bukan soal konfigurasi — memang tidak mungkin.
+ * Kenari dipanggil dengan HTTPS biasa, dan itu jalan di serverless. Karena
+ * akun Kenari sudah dipakai untuk model teks, tidak ada layanan baru yang
+ * perlu didaftarkan.
+ *
+ * Urutan pemakaian ada di `buatSuara`: kalau `KENARI_TTS` tidak dimatikan,
+ * jalur ini yang dicoba lebih dulu, dan msedge-tts dipakai sebagai cadangan
+ * saat Kenari tidak bisa (mis. saldo habis atau sedang gangguan).
+ *
+ * @param {string} teks
+ * @param {string} bahasa kode bahasa ('id' | 'en' | 'jv' | 'su')
+ * @returns {Promise<Buffer>}
+ */
+async function buatSuaraKenari(teks, bahasa) {
+  const suara =
+    process.env.KENARI_TTS_VOICE ||
+    SUARA_KENARI[bahasa] ||
+    SUARA_KENARI.id
+  const model = process.env.KENARI_TTS_MODEL || 'gemini-3-1-flash-tts'
+
+  const res = await fetch(`${config.baseUrl}/audio/speech`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ model, input: teks, voice: suara, response_format: 'mp3' }),
+    signal: AbortSignal.timeout(BATAS_KENARI_MS),
+  })
+
+  const isi = Buffer.from(await res.arrayBuffer())
+  if (!res.ok) {
+    // Pesan penyedia ikut dibawa supaya penyebabnya kelihatan di log server
+    // (mis. insufficient_balance) — tapi TIDAK dikirim ke klien, lihat rute.
+    throw new Error(`Kenari ${res.status}: ${isi.toString('utf8').slice(0, 200)}`)
+  }
+  if (!isi.length) throw new Error('Kenari mengembalikan audio kosong.')
+  return isi
+}
+
+/**
  * Hasilkan audio MP3 dari teks, dengan nada mengikuti isi tiap kalimat.
+ *
+ * Jalur utama mengikuti konfigurasi: Kenari (HTTPS, jalan di serverless) lalu
+ * msedge-tts (WebSocket, hanya jalan di server biasa). Keduanya menghasilkan
+ * MP3, jadi pemanggil tidak perlu tahu yang mana yang dipakai.
  *
  * @param {string} teks
  * @param {{ bahasa?: string }} opsi
@@ -225,6 +299,24 @@ async function buatBagian(tts, kalimat, opsi) {
 export async function buatSuara(teks, { bahasa = 'id' } = {}) {
   const kalimat = pecahKalimat(teks)
   if (!kalimat.length) throw new Error('Tidak ada teks untuk dibacakan.')
+
+  const cobaKenari = process.env.KENARI_TTS !== '0'
+  if (cobaKenari) {
+    try {
+      return await buatSuaraKenari(kalimat.join(' '), bahasa)
+    } catch (e) {
+      // Di serverless, msedge-tts TIDAK MUNGKIN jalan (WebSocket). Kalau tetap
+      // dicoba, pengguna menunggu sampai batas waktunya habis hanya untuk
+      // mendapat kegagalan yang sudah pasti — jadi di sana langsung menyerah
+      // dengan pesan yang jujur.
+      if (process.env.VERCEL) {
+        throw new Error(
+          `Suara tidak bisa dibuat di lingkungan ini (jalur Kenari gagal, jalur msedge-tts tidak mungkin di serverless): ${e?.message ?? e}`,
+        )
+      }
+      console.error('[suara] jalur Kenari gagal, pindah ke msedge-tts:', e?.message ?? e)
+    }
+  }
 
   const suara = pilihSuara(bahasa)
   const hasil = new Array(kalimat.length)
@@ -262,4 +354,6 @@ export async function buatSuara(teks, { bahasa = 'id' } = {}) {
   return Buffer.concat(terisi)
 }
 
+/** Daftar suara msedge-tts per bahasa — dipakai rute sebagai petunjuk cadangan
+ * saat suara natural gagal, jadi memang dipakai dari luar berkas ini. */
 export const DAFTAR_SUARA = SUARA

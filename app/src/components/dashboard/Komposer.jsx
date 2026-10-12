@@ -117,7 +117,7 @@ export default function Komposer({
                     type="button"
                     onClick={() => onTingkatChange?.(x.kunci)}
                     aria-pressed={tingkat === x.kunci}
-                    title={x.usia}
+                    title={t(`usia.${x.kunci}`)}
                     className={cn(
                       'h-11 whitespace-nowrap rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200',
                       'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
@@ -245,7 +245,7 @@ export default function Komposer({
             t('tanya.mendengar')
           )
         ) : suara.error ? (
-          <span className="text-rose-700">{suara.error}</span>
+          <span className="text-rose-700">{t(suara.error)}</span>
         ) : terlaluPanjang ? (
           <span className="text-amber-700">{t('tanya.terlaluPanjang')}</span>
         ) : sederhanakan ? (
