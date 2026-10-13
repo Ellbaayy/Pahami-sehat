@@ -98,6 +98,18 @@ const FRASA_KHUSUS = [
   'pemeriksaan penunjang',
   'pemeriksaan laboratorium',
   'pemeriksaan fisik',
+  'pertolongan pertama',
+  'perawatan di rumah',
+  'perawatan luka',
+  'pasca operasi',
+  'faktor risiko',
+  'luka bakar',
+  'serangan jantung',
+  'gagal ginjal',
+  'gagal jantung',
+  'batu ginjal',
+  'sirosis',
+  'kanker paru',
   'rontgen dada',
   'rontgen thorax',
   'usg transvaginal',
@@ -121,6 +133,14 @@ const FRASA_KHUSUS = [
   'spirometri',
   'ultrasonografi',
   'elektrokardiogram',
+  'kemoterapi',
+  'fisioterapi',
+  'rehabilitasi',
+  'demensia',
+  'alzheimer',
+  'obesitas',
+  'tersedak',
+  'dehidrasi',
   'capek',
   'pcr',
 ]
@@ -135,6 +155,100 @@ export const ISTILAH_CARI = [...new Set([...FRASA_KHUSUS, ...KATA_KESEHATAN])].s
 )
 
 /* ------------------------------------------------------ pemetaan pencarian -- */
+
+/**
+ * Kata TINDAKAN — bukan topik, tapi pertanyaan tentang topik.
+ *
+ * KENAPA INI ADA (diukur, bukan dugaan):
+ * `kataKunciPencarian()` memilih istilah kesehatan TERPANJANG yang muncul di
+ * pesan. Aturan itu benar untuk gejala ("demam berdarah" menang atas "demam"),
+ * tapi SALAH untuk kata tindakan — karena kata tindakan justru lebih panjang
+ * daripada nama penyakitnya:
+ *
+ *   "Apa penyebab anemia?"                        -> "penyebab" (bukan "anemia")
+ *   "Bagaimana cara merawat luka pasca operasi?"  -> "operasi"  (bukan "luka")
+ *   "Apa risiko saya terkena stroke?"             -> "stroke"   (kebetulan benar)
+ *
+ * Lalu penyaring relevansi menuntut kata kunci itu ada di JUDUL artikel.
+ * Wikipedia tidak punya artikel berjudul "Penyebab" atau "Operasi", jadi hasilnya
+ * 0 sumber — diukur di produksi: 4 dari 16 pertanyaan kesehatan mendapat 0 sumber,
+ * dan semuanya pola ini.
+ *
+ * Kata di sini TETAP dikenali sebagai topik kesehatan (masih ada di
+ * KATA_KESEHATAN), tapi TIDAK PERNAH dipilih sebagai bahan pencarian selama ada
+ * kata lain yang lebih khusus di pesan yang sama.
+ *
+ * 'operasi' sengaja ikut daftar ini: sebagai bahan pencarian ia berbahaya —
+ * pencarian Wikipedia untuk "operasi" memunculkan "Android (sistem operasi)".
+ */
+const KATA_TINDAKAN = new Set([
+  'penyebab', 'pengobatan', 'pencegahan', 'gejala', 'tanda', 'diagnosis',
+  'komplikasi', 'terapi', 'perawatan', 'operasi', 'pemeriksaan', 'kadar',
+  'dosis', 'resep', 'tensi', 'lab', 'pengidapan', 'risiko',
+])
+
+/**
+ * Kata GEJALA — tanda yang bisa menempel pada banyak penyakit.
+ *
+ * KENAPA PERLU (diukur, bukan dugaan):
+ * `ISTILAH_CARI` terurut dari yang TERPANJANG, dan aturan itu benar untuk frasa
+ * ("demam berdarah" menang atas "demam"). Tapi aturan itu SALAH ketika pesan
+ * memuat nama penyakit SINGKAT bersama kata gejala yang lebih panjang:
+ *
+ *   "Saya demam dan bintik merah, apa saya kena DBD?"
+ *     -> "bintik" (6 huruf) menang atas "dbd" (3 huruf)
+ *     -> Wikipedia menjawabnya dengan "Bintik Fordyce" (kelenjar minyak di kulit)
+ *     -> model terpaksa mengaku sumbernya tidak nyambung
+ *
+ * Nama penyakit selalu lebih khusus daripada kata gejalanya: pertanyaan tentang
+ * DBD bukan pertanyaan tentang "bintik". Jadi nama penyakit dipilih lebih dulu,
+ * dan kata gejala hanya dipakai kalau tidak ada nama penyakit sama sekali.
+ *
+ * Ini TIDAK melonggarkan penyaring relevansi — hanya memilih bahan pencarian
+ * yang lebih tepat, jadi penyaringnya tetap seketat sebelumnya.
+ */
+const KATA_GEJALA = new Set([
+  'sakit', 'nyeri', 'demam', 'panas', 'pusing', 'mual', 'muntah', 'batuk', 'pilek',
+  'flu', 'sesak', 'lemas', 'letih', 'lelah', 'gatal', 'bengkak', 'luka', 'patah',
+  'diare', 'sembelit', 'ruam', 'bintik', 'kram', 'pegal', 'insomnia',
+  'sulit tidur', 'tidak nafsu makan', 'nafsu makan', 'tersedak', 'dehidrasi',
+])
+
+/**
+ * Singkatan dan nama populer -> nama Indonesia lengkap yang ada di Wikipedia.
+ *
+ * KENAPA PERLU: `kataKunciPencarian()` mengembalikan kata yang muncul di pesan
+ * apa adanya kalau kata itu tidak ada di PETA_PENCARIAN. Untuk singkatan seperti
+ * "dbd" itu salah: pencarian Wikipedia untuk "dbd" tidak menemukan artikel
+ * penyakitnya, sedangkan "Demam berdarah dengue" ada.
+ *
+ * Setiap nilai di sisi kanan sudah diuji ke API Wikipedia Indonesia.
+ */
+export const PETA_SINGKATAN = {
+  dbd: 'Demam berdarah dengue',
+  tbc: 'Tuberkulosis',
+  hiv: 'HIV/AIDS',
+  aids: 'HIV/AIDS',
+  ispa: 'Infeksi saluran pernapasan akut',
+  ppok: 'Penyakit paru obstruktif kronik',
+  gerd: 'Penyakit refluks gastroesofageal',
+  tipes: 'Demam tifoid',
+  tifus: 'Demam tifoid',
+  bmi: 'Indeks massa tubuh',
+  asi: 'Air susu ibu',
+}
+
+/**
+ * Singkatan yang TIDAK boleh dikenali sebagai topik kesehatan sama sekali.
+ *
+ * 'hati' adalah kasus khusus: dalam bahasa Indonesia sehari-hari ia hampir
+ * selalu muncul sebagai "hati-hati", bukan sebagai organ hati. Diukur 13 Okt
+ * 2026 — mendaftarkan 'hati' sebagai kata kesehatan membuat "hati-hati ya di
+ * jalan" dianggap pertanyaan kesehatan dan MEMATIKAN deteksi obrolan biasa
+ * (`deteksiSantai` memeriksa kata kesehatan lebih dulu). Kata yang benar-benar
+ * menunjuk organnya tetap dikenali: 'liver' dan 'penyakit hati'.
+ */
+export const KATA_HOMONIM_BUKAN_SAKIT = new Set(['hati'])
 
 /**
  * Kata keluhan -> istilah pencarian yang benar.
@@ -155,6 +269,56 @@ export const PETA_PENCARIAN = {
   // cocok. Yang menangkapnya adalah kata dasarnya ('pegal', 'gatal') yang
   // sudah ada di KATA_KESEHATAN, dan hasilnya sama. Keduanya pernah tertulis
   // di sini sebagai entri mati; uji-sumber.mjs yang menemukannya.
+
+  /* --- Pengetahuan, penanganan, pengobatan, perawatan, dan risiko ----------
+   * Ditambahkan 13 Okt 2026 setelah pengukuran: aplikasi menjawab "aku tidak
+   * punya bahan bacaan" untuk pertanyaan wajar seperti "Apa penyebab anemia?"
+   * dan "Bagaimana cara merawat pasien stroke di rumah?".
+   *
+   * Setiap nilai di sisi KANAN sudah dicek satu per satu ke API Wikipedia
+   * Indonesia dan artikelnya benar-benar ada (bukan tebakan). Beberapa istilah
+   * populer TIDAK dipakai karena artikelnya tidak ada atau menyesatkan:
+   *   'operasi'          -> "Android (sistem operasi)"   -> dipakai 'Bedah'
+   *   'kanker paru-paru' -> hanya "Kanker"               -> tetap dipakai, ada
+   *   'perawatan luka'   -> tidak ada                    -> tidak dipetakan
+   *   'pencegahan'       -> tidak ada                    -> tidak dipetakan
+   *   'kesehatan mental' -> tidak ada                    -> tidak dipetakan
+   * Istilah yang tidak dipetakan tetap ditangani MedlinePlus (lihat
+   * PETA_MEDLINEPLUS) — jalur itu tidak bergantung judul artikel Wikipedia.
+   */
+  stroke: 'Strok',
+  strok: 'Strok',
+  anemia: 'Anemia',
+  'serangan jantung': 'Serangan jantung',
+  'gagal ginjal': 'Gagal ginjal',
+  'kanker paru': 'Kanker paru-paru',
+  tuberkulosis: 'Tuberkulosis',
+  kemoterapi: 'Kemoterapi',
+  antibiotik: 'Antibiotik',
+  demensia: 'Demensia',
+  alzheimer: 'Penyakit Alzheimer',
+  obesitas: 'Obesitas',
+  infeksi: 'Infeksi',
+  'pertolongan pertama': 'Pertolongan pertama',
+  tersedak: 'Tersedak',
+  'luka bakar': 'Luka bakar',
+  luka: 'Luka',
+  liver: 'Penyakit hati',
+  'penyakit hati': 'Penyakit hati',
+  'pasca operasi': 'Bedah',
+  operasi: 'Bedah',
+  rehabilitasi: 'Rehabilitasi',
+  fisioterapi: 'Fisioterapi',
+  'faktor risiko': 'Faktor risiko',
+  'perawatan di rumah': 'Perawatan di rumah',
+  gejala: 'Tanda dan gejala',
+  komplikasi: 'Komplikasi',
+  dehidrasi: 'Dehidrasi',
+  alergi: 'Alergi',
+  diabetes: 'Diabetes melitus',
+  'kencing manis': 'Diabetes melitus',
+  hipertensi: 'Tekanan darah tinggi',
+  'darah tinggi': 'Tekanan darah tinggi',
 
   /* --- Pemeriksaan penunjang ------------------------------------------------
    * Setiap pasangan di bawah ini diuji langsung ke API Wikipedia Indonesia.
@@ -245,10 +409,101 @@ export const PETA_MEDLINEPLUS = {
   'tes urin': 'urine test',
   anemia: 'anemia',
   diabetes: 'diabetes',
+  'kencing manis': 'diabetes',
   'gula darah': 'blood glucose',
   'tekanan darah': 'blood pressure',
   kolesterol: 'cholesterol',
   'demam berdarah': 'dengue',
+  hipertensi: 'blood pressure',
+  'darah tinggi': 'blood pressure',
+
+  /* --- Pengetahuan, penanganan, pengobatan, perawatan, dan risiko ----------
+   * Ditambahkan 13 Okt 2026. Semua 47 padanan di bawah ini diuji satu per satu
+   * ke API MedlinePlus dan SEMUANYA mengembalikan dokumen — tidak ada yang
+   * kosong. Inilah yang menutup lubang Wikipedia: untuk istilah yang artikel
+   * Indonesianya tidak ada (mis. "perawatan luka", "pencegahan", "kesehatan
+   * mental"), jalur ini tetap memberi bahan nyata.
+   *
+   * MedlinePlus berbahasa Inggris, jadi sisi kanan WAJIB bahasa Inggris.
+   * Ringkasan MedlinePlus sudah memuat bagian "Who is at risk", "What are the
+   * treatments", dan "rehabilitation" — itulah bahan untuk menjawab pertanyaan
+   * faktor risiko dan penanganan tanpa perlu menyimpulkan diagnosis.
+   */
+  stroke: 'stroke',
+  strok: 'stroke',
+  'serangan jantung': 'heart attack',
+  'gagal ginjal': 'kidney failure',
+  'kanker paru': 'lung cancer',
+  tuberkulosis: 'tuberculosis',
+  kemoterapi: 'chemotherapy',
+  antibiotik: 'antibiotics',
+  demensia: 'dementia',
+  alzheimer: 'dementia',
+  obesitas: 'obesity',
+  infeksi: 'infections',
+  'pertolongan pertama': 'first aid',
+  tersedak: 'choking',
+  'luka bakar': 'burns',
+  luka: 'wounds and injuries',
+  'pasca operasi': 'after surgery',
+  'perawatan luka': 'wound care',
+  'perawatan di rumah': 'home care',
+  rehabilitasi: 'rehabilitation',
+  fisioterapi: 'rehabilitation',
+  'faktor risiko': 'risk factors',
+  pengobatan: 'treatment',
+  pencegahan: 'prevention',
+  gejala: 'symptoms',
+  komplikasi: 'complications',
+  kesehatan: 'health',
+  'kesehatan mental': 'mental health',
+  nyeri: 'pain',
+  demam: 'fever',
+  batuk: 'cough',
+  diare: 'diarrhea',
+  asma: 'asthma',
+  kanker: 'cancer',
+  jantung: 'heart diseases',
+  ginjal: 'kidney diseases',
+  liver: 'liver diseases',
+  'penyakit hati': 'liver diseases',
+  merokok: 'smoking',
+  vaksin: 'vaccines',
+  imunisasi: 'vaccines',
+  kehamilan: 'pregnancy',
+  gizi: 'nutrition',
+  nutrisi: 'nutrition',
+  olahraga: 'exercise and physical fitness',
+  tidur: 'sleep',
+  dehidrasi: 'dehydration',
+  alergi: 'allergy',
+  patah: 'fractures',
+  'nyeri otot': 'muscle pain',
+  'sakit kepala': 'headache',
+  lemas: 'fatigue',
+  kelelahan: 'fatigue',
+  'sesak napas': 'breathing problems',
+  'radang tenggorokan': 'sore throat',
+  faringitis: 'sore throat',
+  influenza: 'flu',
+  'gatal': 'itching',
+  'sembelit': 'constipation',
+  'mual': 'nausea and vomiting',
+  'muntah': 'nausea and vomiting',
+  pusing: 'dizziness and vertigo',
+  'tekanan darah tinggi': 'high blood pressure',
+  'gagal jantung': 'heart failure',
+  'batu ginjal': 'kidney stones',
+  'sirosis': 'cirrhosis',
+  'hepatitis': 'hepatitis',
+  'tifus': 'typhoid fever',
+  'malaria': 'malaria',
+  'hiv': 'hiv',
+  'aids': 'hiv',
+  'covid': 'covid-19',
+  'depresi': 'depression',
+  'stres': 'stress',
+  'cemas': 'anxiety',
 }
 
 /* ------------------------------------------------------------- kata daerah -- */
@@ -341,6 +596,44 @@ export function kataPenting(teks) {
 }
 
 /**
+ * Istilah kesehatan yang DIPILIH dari pesan yang sudah dinormalkan.
+ *
+ * Aturannya: ISTILAH_CARI sudah terurut dari yang terpanjang, jadi istilah
+ * paling khusus biasanya menang ("demam berdarah" atas "demam"). TAPI kata
+ * tindakan dikecualikan — ia lebih panjang daripada nama penyakitnya dan bukan
+ * topik, melainkan pertanyaan TENTANG topik. Lihat KATA_TINDAKAN.
+ *
+ * Dipakai bersama oleh istilahKesehatan() dan kataKunciPencarian() supaya
+ * kedua jalur pencarian (Wikipedia dan MedlinePlus) memilih istilah yang SAMA.
+ * Kalau keduanya berbeda, satu jalur bisa mencari "anemia" sementara jalur lain
+ * mencari "penyebab" — dan hasilnya saling bertentangan.
+ *
+ * @param {string} norm - teks yang sudah lewat normalkan() + terjemahkanDaerah()
+ * @returns {string} istilah terpilih, atau '' kalau tidak ada
+ */
+function pilihIstilah(norm) {
+  if (!norm) return ''
+  const berbatas = ` ${norm} `
+  const semua = ISTILAH_CARI.filter((t) => berbatas.includes(` ${t} `))
+  if (!semua.length) return ''
+
+  // 1) Kata TINDAKAN selalu disingkirkan lebih dulu. Ia bukan topik, melainkan
+  //    pertanyaan TENTANG topik, dan justru lebih panjang daripada nama
+  //    penyakitnya ("penyebab" mengalahkan "anemia"). Kalau pesannya HANYA
+  //    berisi kata tindakan, kata itu tetap dipakai — lebih baik daripada kosong.
+  const bukanTindakan = semua.filter((t) => !KATA_TINDAKAN.has(t))
+  const kandidat = bukanTindakan.length ? bukanTindakan : semua
+
+  // 2) Nama penyakit menang atas kata gejala — "dbd" harus mengalahkan
+  //    "bintik", karena pertanyaan tentang DBD bukan pertanyaan tentang bintik.
+  const penyakit = kandidat.find((t) => !KATA_GEJALA.has(t))
+  if (penyakit) return penyakit
+
+  // 3) Tidak ada nama penyakit: kata gejala boleh dipakai ("demam", "gatal").
+  return kandidat[0]
+}
+
+/**
  * Istilah kesehatan yang muncul di pesan — SEBELUM dipetakan.
  *
  * Dipakai untuk mencari padanan MedlinePlus (lihat PETA_MEDLINEPLUS): peta itu
@@ -351,10 +644,7 @@ export function kataPenting(teks) {
  * @returns {string} istilah yang dikenali, atau '' kalau tidak ada
  */
 export function istilahKesehatan(teks) {
-  const norm = terjemahkanDaerah(normalkan(teks))
-  if (!norm) return ''
-  const berbatas = ` ${norm} `
-  return ISTILAH_CARI.find((t) => berbatas.includes(` ${t} `)) ?? ''
+  return pilihIstilah(terjemahkanDaerah(normalkan(teks)))
 }
 
 /**
@@ -366,12 +656,16 @@ export function istilahKesehatan(teks) {
 export function kataKunciPencarian(teks) {
   const norm = terjemahkanDaerah(normalkan(teks))
   if (!norm) return ''
-  const berbatas = ` ${norm} `
 
-  // 1) istilah kesehatan terpanjang yang muncul — paling khusus menang.
-  //    Batas kata dipakai supaya "asi" tidak cocok dengan "makasih".
-  const ketemu = ISTILAH_CARI.find((t) => berbatas.includes(` ${t} `))
-  if (ketemu) return PETA_PENCARIAN[ketemu] ?? ketemu
+  // 1) istilah kesehatan terpilih — kata tindakan sudah disingkirkan di dalam
+  //    pilihIstilah(). Batas kata dipakai supaya "asi" tidak cocok "makasih".
+  const ketemu = pilihIstilah(norm)
+  if (ketemu) {
+    // Singkatan dipetakan ke nama lengkap. 'dbd' apa adanya tidak menemukan
+    // artikel penyakitnya di Wikipedia; 'Demam berdarah dengue' menemukan.
+    if (PETA_SINGKATAN[ketemu]) return PETA_SINGKATAN[ketemu]
+    return PETA_PENCARIAN[ketemu] ?? ketemu
+  }
 
   // 2) tidak ada istilah kesehatan: pakai kata isi. Maksimal 3 kata —
   //    kalimat panjang terbukti menghasilkan artikel yang tidak nyambung.
@@ -383,7 +677,10 @@ export function kataKunciPencarian(teks) {
  * Dipakai untuk memutuskan perlu mencari sumber atau tidak.
  */
 export function menyentuhKesehatan(teks) {
-  const berbatas = ` ${normalkan(teks)} `
-  if (berbatas.trim() === '') return false
-  return ISTILAH_CARI.some((t) => berbatas.includes(` ${t} `))
+  const norm = normalkan(teks)
+  if (norm.trim() === '') return false
+  const berbatas = ` ${norm} `
+  return ISTILAH_CARI.some(
+    (t) => !KATA_HOMONIM_BUKAN_SAKIT.has(t) && berbatas.includes(` ${t} `),
+  )
 }

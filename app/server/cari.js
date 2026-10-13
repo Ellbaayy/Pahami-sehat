@@ -44,8 +44,28 @@ const RESMI = [
 
 const BATAS_ISI = 1500
 const BATAS_REF = 6
-/** Jumlah sumber MedlinePlus yang diambil — cukup untuk topik + rujukan. */
-const BATAS_MEDLINEPLUS = 3
+
+/**
+ * Berapa halaman MedlinePlus yang diambil, dan berapa banyak isinya dipakai.
+ *
+ * KENAPA 2600, BUKAN 900 (diukur 13 Okt 2026, pada halaman /stroke.html):
+ * ringkasan MedlinePlus untuk "stroke" panjangnya 7.711 karakter dan tersusun
+ * berurutan: "What is a stroke?" (0) -> "types" (576) -> "Who is at risk?" (1414)
+ * -> "symptoms" (2517) -> "treatments" (4276) -> "Prevention/rehabilitation" (4810).
+ *
+ * Batas 900 karakter memotong SEBELUM bagian yang paling sering ditanyakan:
+ * faktor risiko, pengobatan, dan rehabilitasi tidak pernah sampai ke model.
+ * Itu sebabnya pertanyaan "apa risiko saya stroke" dijawab "hasil pencarian
+ * tidak memuat informasinya" — padahal bahan itu ada, cuma dipotong.
+ *
+ * Halaman MedlinePlus lain jauh lebih pendek (anemia 1.414, after surgery 1.352,
+ * wound care 1.379), jadi 2600 berarti dokumen pendek masuk UTUH.
+ *
+ * Tidak ada permintaan jaringan tambahan: ringkasan ini sudah ikut di balasan
+ * pencarian. Yang bertambah hanya panjang prompt.
+ */
+const BATAS_MEDLINEPLUS = 4
+const BATAS_RINGKAS_MEDLINEPLUS = 2600
 
 /* --------------------------------------------------------------- simpanan -- */
 
@@ -463,7 +483,7 @@ async function cariMedlinePlus(istilah, maks = BATAS_MEDLINEPLUS) {
       .map((d) => ({
         judul: d.judul,
         url: d.url,
-        ringkas: d.ringkas.slice(0, 900),
+        ringkas: d.ringkas.slice(0, BATAS_RINGKAS_MEDLINEPLUS),
         resmi: true,
         jenis: 'medlineplus',
       }))
