@@ -32,7 +32,7 @@ import {
   promptVerifikasiDenganCari,
 } from './prompts.js'
 import { cariInternet } from './cari.js'
-import { kataKunciPencarian } from './kataKunci.js'
+import { kataKunciPencarian, istilahKesehatan, PETA_MEDLINEPLUS } from './kataKunci.js'
 import { batasi } from './batas.js'
 import {
   LAJU,
@@ -141,6 +141,14 @@ function ringkasHasilCari(hasil = []) {
  * yang dipilih tidak menemukan apa-apa, lebih baik mengembalikan kosong dan
  * membiarkan model berkata jujur bahwa sumbernya belum ditemukan.
  *
+ * DUA istilah yang dipakai, dan keduanya perlu:
+ *   - `kunci`  -> bahan pencarian Wikipedia Indonesia (istilah hasil pemetaan,
+ *                 mis. "rontgen" menjadi "Radiografi").
+ *   - `istilah` -> bahan pencarian MedlinePlus (istilah yang dikenali
+ *                 pengguna, mis. "rontgen" menjadi "x-ray"). Koleksi
+ *                 MedlinePlus berbahasa Inggris, jadi istilah Indonesia tidak
+ *                 pernah menemukan apa pun di sana — sudah diukur.
+ *
  * @param {string} teks - pertanyaan/teks pengguna apa adanya
  * @returns {Promise<{ hasil: Array, dipakaiKataKunci: string|null }>}
  */
@@ -148,7 +156,14 @@ async function cariDenganCadangan(teks) {
   const kunci = kataKunciPencarian(teks)
   if (!kunci) return { hasil: [], dipakaiKataKunci: null }
 
-  const { hasil } = await cariInternet(kunci)
+  // Padanan MedlinePlus diambil dari istilah yang DIKENALI pengguna, bukan dari
+  // `kunci` hasil pemetaan. PETA_MEDLINEPLUS berkunci 'rontgen'/'usg', sedangkan
+  // `kunci` sudah menjadi 'Radiografi'/'Ultrasonografi medis' — dan tidak ada
+  // satu pun padanannya di sana.
+  const istilah = istilahKesehatan(teks)
+  const istilahMedlinePlus = PETA_MEDLINEPLUS[istilah] ?? null
+
+  const { hasil } = await cariInternet(kunci, { istilahMedlinePlus })
   return { hasil, dipakaiKataKunci: hasil.length ? kunci : null }
 }
 

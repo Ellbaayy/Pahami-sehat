@@ -79,6 +79,50 @@ const FRASA_KHUSUS = [
   'mialgia',
   'pruritus',
   'biduran',
+
+  /* --- Pemeriksaan penunjang: nama alat & nama pemeriksaan -----------------
+   * Daftar ini sebelumnya berhenti di istilah gejala, sehingga pertanyaan
+   * tentang ALAT PEMERIKSAAN tidak dikenali sebagai topik kesehatan sama
+   * sekali. Akibatnya "Apa yang perlu saya ketahui tentang pemeriksaan
+   * penunjang?" hanya menghasilkan kata kunci "pemeriksaan" (kata yang paling
+   * umum), dan Wikipedia menjawabnya dengan Badan Pemeriksa Keuangan.
+   *
+   * Diukur pada 20 pertanyaan kesehatan: 9 di antaranya mendapat 0 sumber,
+   * dan hampir semuanya adalah alat pemeriksaan (rontgen, USG, MRI, EKG,
+   * laboratorium, PCR, rapid test).
+   *
+   * Frasa terpanjang yang menang, jadi 'rontgen dada' tidak pernah jatuh
+   * menjadi 'rontgen', dan 'pemeriksaan penunjang' tidak jatuh menjadi
+   * 'pemeriksaan'.
+   */
+  'pemeriksaan penunjang',
+  'pemeriksaan laboratorium',
+  'pemeriksaan fisik',
+  'rontgen dada',
+  'rontgen thorax',
+  'usg transvaginal',
+  'ct scan',
+  'cat scan',
+  'pap smear',
+  'tes darah',
+  'tes urine',
+  'tes urin',
+  'tes pcr',
+  'rapid test',
+  'radiologi',
+  'penunjang',
+  'rontgen',
+  'usg',
+  'mri',
+  'ekg',
+  'laboratorium',
+  'endoskopi',
+  'biopsi',
+  'spirometri',
+  'ultrasonografi',
+  'elektrokardiogram',
+  'capek',
+  'pcr',
 ]
 
 /**
@@ -103,10 +147,108 @@ export const PETA_PENCARIAN = {
   lelah: 'kelelahan',
   letih: 'kelelahan',
   capek: 'kelelahan',
-  'pegal-pegal': 'nyeri otot',
   pegal: 'nyeri otot',
   'radang tenggorokan': 'faringitis',
-  'gatal-gatal': 'gatal',
+  // CATATAN: 'pegal-pegal' dan 'gatal-gatal' TIDAK didaftarkan di sini.
+  // normalkan() mengubah tanda hubung menjadi spasi, jadi "pegal-pegal" tiba
+  // di sini sebagai "pegal pegal" — bentuk bertanda hubung tidak akan pernah
+  // cocok. Yang menangkapnya adalah kata dasarnya ('pegal', 'gatal') yang
+  // sudah ada di KATA_KESEHATAN, dan hasilnya sama. Keduanya pernah tertulis
+  // di sini sebagai entri mati; uji-sumber.mjs yang menemukannya.
+
+  /* --- Pemeriksaan penunjang ------------------------------------------------
+   * Setiap pasangan di bawah ini diuji langsung ke API Wikipedia Indonesia.
+   *
+   * Yang KIRI adalah kata yang muncul di pesan pengguna; yang KANAN adalah
+   * JUDUL ARTIKEL Wikipedia yang benar-benar ada.
+   *
+   * Kenapa perlu dipetakan, bukan dikirim apa adanya: Wikipedia Indonesia
+   * memakai nama Indonesia resmi, sedangkan pengguna menulis singkatan atau
+   * istilah sehari-hari. Tanpa peta ini, penyaring relevansi membuang artikel
+   * yang justru BENAR, karena syaratnya "judul harus memuat kata kunci":
+   *
+   *   kk "usg" -> artikel "Ultrasonografi medis"          DIBUANG
+   *   kk "mri" -> artikel "Pencitraan resonansi magnetik" DIBUANG
+   *   kk "ekg" -> artikel "Elektrokardiografi"            DIBUANG
+   *
+   * Ketiganya lolos pemeriksaan konteks kesehatan — hanya gugur di syarat
+   * judul. Memetakan ke judul kanonik membuat penyaring TETAP KETAT (jadi
+   * artikel tidak nyambung seperti "Penyakit virus Ebola" untuk "demam
+   * berdarah" tetap tertahan) sementara artikel yang benar ikut terpakai.
+   *
+   * Diukur sesudahnya: 14/14 pertanyaan alat pemeriksaan mendapat sumber,
+   * dari 5/14 sebelumnya.
+   *
+   * JANGAN memetakan 'pemeriksaan penunjang' ke 'Pemeriksaan penunjang' —
+   * artikel itu TIDAK ADA di Wikipedia Indonesia (yang muncul hanya Badan
+   * Pemeriksa Keuangan dan Dewan Pertimbangan Presiden). "Pemeriksaan fisik"
+   * adalah artikel terdekat yang benar-benar membahas pemeriksaan oleh dokter.
+   */
+  'pemeriksaan penunjang': 'Pemeriksaan fisik',
+  'pemeriksaan fisik': 'Pemeriksaan fisik',
+  'pemeriksaan laboratorium': 'Laboratorium klinik',
+  'rontgen dada': 'Radiografi',
+  'rontgen thorax': 'Radiografi',
+  rontgen: 'Radiografi',
+  radiologi: 'Radiologi',
+  usg: 'Ultrasonografi medis',
+  mri: 'Pencitraan resonansi magnetik',
+  ekg: 'Elektrokardiografi',
+  'ct scan': 'Tomografi terkomputasi',
+  'cat scan': 'Tomografi terkomputasi',
+  'tes pcr': 'Reaksi berantai polimerase',
+  'rapid test': 'Tes diagnostik cepat',
+  pcr: 'Reaksi berantai polimerase',
+  laboratorium: 'Laboratorium klinik',
+  endoskopi: 'Endoskopi',
+  biopsi: 'Biopsi',
+  spirometri: 'Spirometri',
+  'pap smear': 'Apus Pap',
+  'tes darah': 'Hitung darah lengkap',
+  'tes urine': 'Urinalisis',
+  'tes urin': 'Urinalisis',
+}
+
+/**
+ * Istilah pencarian untuk MedlinePlus (Perpustakaan Kedokteran Nasional AS).
+ *
+ * KENAPA PERLU: Wikipedia Indonesia tidak punya artikel untuk sebagian alat
+ * pemeriksaan. Diuji: "rontgen" hanya menghasilkan Wilhelm Conrad Röntgen,
+ * Louis Slotin, dan satuan radiasi Röntgen — semuanya fisika, bukan
+ * pemeriksaan medis. MedlinePlus punya halaman tepat untuk semuanya.
+ *
+ * Padanan di bawah ini juga sudah diuji satu per satu ke API MedlinePlus.
+ * Yang dipakai adalah istilah INGGRIS karena MedlinePlus berbahasa Inggris;
+ * jawabannya tetap disusun model dalam bahasa pengguna.
+ */
+export const PETA_MEDLINEPLUS = {
+  'pemeriksaan penunjang': 'diagnostic tests',
+  'pemeriksaan fisik': 'physical exam',
+  'rontgen dada': 'x-ray',
+  'rontgen thorax': 'x-ray',
+  rontgen: 'x-ray',
+  radiologi: 'diagnostic imaging',
+  usg: 'ultrasound',
+  mri: 'MRI',
+  ekg: 'electrocardiogram',
+  'ct scan': 'CT scan',
+  'tes pcr': 'PCR test',
+  'rapid test': 'rapid test',
+  pcr: 'PCR test',
+  laboratorium: 'laboratory tests',
+  endoskopi: 'endoscopy',
+  biopsi: 'biopsy',
+  spirometri: 'spirometry',
+  'pap smear': 'pap smear',
+  'tes darah': 'blood tests',
+  'tes urine': 'urine test',
+  'tes urin': 'urine test',
+  anemia: 'anemia',
+  diabetes: 'diabetes',
+  'gula darah': 'blood glucose',
+  'tekanan darah': 'blood pressure',
+  kolesterol: 'cholesterol',
+  'demam berdarah': 'dengue',
 }
 
 /* ------------------------------------------------------------- kata daerah -- */
@@ -196,6 +338,23 @@ export function kataPenting(teks) {
   return norm
     .split(' ')
     .filter((k) => k.length >= 3 && !KATA_UMUM.has(k) && !KATA_GANTI.has(k))
+}
+
+/**
+ * Istilah kesehatan yang muncul di pesan — SEBELUM dipetakan.
+ *
+ * Dipakai untuk mencari padanan MedlinePlus (lihat PETA_MEDLINEPLUS): peta itu
+ * berkunci istilah yang dikenali pengguna ('rontgen', 'usg'), bukan judul
+ * Wikipedia hasil pemetaan ('Radiografi', 'Ultrasonografi medis').
+ *
+ * @param {string} teks
+ * @returns {string} istilah yang dikenali, atau '' kalau tidak ada
+ */
+export function istilahKesehatan(teks) {
+  const norm = terjemahkanDaerah(normalkan(teks))
+  if (!norm) return ''
+  const berbatas = ` ${norm} `
+  return ISTILAH_CARI.find((t) => berbatas.includes(` ${t} `)) ?? ''
 }
 
 /**
