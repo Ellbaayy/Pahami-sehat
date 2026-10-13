@@ -533,9 +533,25 @@ async function isiMedlinePlus(url) {
  *   MedlinePlus (lihat PETA_MEDLINEPLUS di kataKunci.js). Kalau tidak diisi,
  *   MedlinePlus tidak dipanggil — jangan kirim istilah Indonesia apa adanya,
  *   karena koleksi itu berbahasa Inggris.
+ * @param {string} [opsi.istilahMedlinePlusBidang] - CADANGAN istilah yang lebih
+ *   umum untuk BIDANG topiknya (lihat PETA_MEDLINEPLUS_BIDANG di kataKunci.js).
+ *   Dipakai HANYA kalau istilah spesifik di atas menghasilkan nol dokumen.
+ *
+ *   KENAPA PERLU JENJANG (diukur 13 Okt 2026): pemetaan istilah satu per satu
+ *   tidak mungkin lengkap — ada ratusan topik kesehatan, dan pemetaan baru
+ *   ditambah kalau ada yang mengukur. Tanpa jenjang ini, satu istilah yang
+ *   belum terpetakan langsung berarti 0 bahan, walau Wikipedia-nya juga kosong.
+ *   Dengan jenjang, pertanyaannya turun satu tingkat ke istilah bidang
+ *   ('katarak' -> 'eye diseases'), dan bahannya tetap dari NIH.
+ *
+ *   URUTANNYA PENTING: spesifik DULU, bidang hanya kalau spesifik gagal. Kalau
+ *   dibalik, setiap pertanyaan soal katarak akan dijawab bahan umum soal mata.
  * @returns {Promise<{hasil: Array, ringkas: string, catatan: string}>}
  */
-export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2, istilahMedlinePlus = null } = {}) {
+export async function cariInternet(
+  q,
+  { maksArtikel = 3, ambilIsi = 2, istilahMedlinePlus = null, istilahMedlinePlusBidang = null } = {},
+) {
   const kata0 = String(q ?? '').trim().slice(0, 300)
   if (!kata0) return { hasil: [], ringkas: '', catatan: '' }
 
@@ -543,7 +559,7 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2, istilahMe
   // Kuncinya memuat istilah MedlinePlus juga: hasil pencarian sekarang
   // bergantung pada DUA istilah, jadi menyimpan hanya berdasarkan satu istilah
   // akan menyajikan hasil yang salah.
-  const kunciSimpan = `${kata0}|${istilahMedlinePlus ?? ''}`
+  const kunciSimpan = `${kata0}|${istilahMedlinePlus ?? ''}|${istilahMedlinePlusBidang ?? ''}`
   const tersimpan = ambilSimpanan(kunciSimpan)
   if (tersimpan) return tersimpan
 
@@ -606,8 +622,20 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2, istilahMe
    * berbahasa Indonesia, MedlinePlus memberi isi yang lebih dalam. Model
    * dilarang memakai apa pun di luar daftar ini, jadi menambah daftar berarti
    * menambah pengetahuan yang boleh dipakai — bukan menambah kebebasan.
+   *
+   * JENJANG (ditambahkan 13 Okt 2026): kalau istilah SPESIFIK tidak
+   * menghasilkan dokumen, coba istilah BIDANG-nya. Ini menutup lubang yang
+   * tidak mungkin ditutup dengan pemetaan satu per satu: setiap istilah
+   * kesehatan yang belum pernah dipetakan dulu langsung berarti 0 bahan.
+   * Urutannya tetap spesifik dulu — jangan dibalik, atau setiap pertanyaan
+   * soal katarak akan dijawab bahan umum soal mata.
    */
-  const medline = istilahMedlinePlus ? await cariMedlinePlus(istilahMedlinePlus) : []
+  let medline = istilahMedlinePlus ? await cariMedlinePlus(istilahMedlinePlus) : []
+  let medlineDariBidang = false
+  if (!medline.length && istilahMedlinePlusBidang) {
+    medline = await cariMedlinePlus(istilahMedlinePlusBidang)
+    medlineDariBidang = medline.length > 0
+  }
 
   // ambil isi halaman MedlinePlus supaya ada bahan nyata (bukan hanya judul)
   for (const h of medline.slice(0, 2)) {
@@ -635,7 +663,11 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2, istilahMe
     )
   }
   if (medline.length) {
-    bagianCatatan.push(`MedlinePlus (NIH) menyediakan ${medline.length} halaman untuk topik ini.`)
+    bagianCatatan.push(
+      medlineDariBidang
+        ? `MedlinePlus (NIH) menyediakan ${medline.length} halaman umum untuk bidang topik ini.`
+        : `MedlinePlus (NIH) menyediakan ${medline.length} halaman untuk topik ini.`,
+    )
   }
   const catatan = bagianCatatan.length
     ? bagianCatatan.join(' ')

@@ -32,7 +32,7 @@ import {
   promptVerifikasiDenganCari,
 } from './prompts.js'
 import { cariInternet } from './cari.js'
-import { kataKunciPencarian, istilahKesehatan, PETA_MEDLINEPLUS } from './kataKunci.js'
+import { kataKunciPencarian, istilahKesehatan, PETA_MEDLINEPLUS, PETA_MEDLINEPLUS_BIDANG } from './kataKunci.js'
 import { batasi } from './batas.js'
 import {
   LAJU,
@@ -163,7 +163,13 @@ async function cariDenganCadangan(teks) {
   const istilah = istilahKesehatan(teks)
   const istilahMedlinePlus = PETA_MEDLINEPLUS[istilah] ?? null
 
-  const { hasil } = await cariInternet(kunci, { istilahMedlinePlus })
+  // Cadangan yang lebih umum untuk BIDANG topiknya. Dipakai cariInternet()
+  // hanya kalau istilah spesifik di atas menghasilkan nol dokumen. Ini yang
+  // membuat pertanyaan tentang topik yang belum pernah dipetakan tetap punya
+  // bahan, bukan langsung "tidak ada sumber".
+  const istilahMedlinePlusBidang = PETA_MEDLINEPLUS_BIDANG[istilah] ?? null
+
+  const { hasil } = await cariInternet(kunci, { istilahMedlinePlus, istilahMedlinePlusBidang })
   return { hasil, dipakaiKataKunci: hasil.length ? kunci : null }
 }
 

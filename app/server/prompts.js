@@ -131,6 +131,23 @@ const POLA_SAPA = [
   // basa-basi
   /^(lagi\s+apa|sedang\s+apa|ngapain|lagi\s+ngapain|apa\s+kegiatanmu)\b/i,
   /^(selamat\s+kerja|semangat|semangat\s+ya|good\s*luck|sukses)\b/i,
+  // Ungkapan perhatian & doa — sering diucapkan, tidak meminta informasi apa pun.
+  //
+  // KENAPA PERLU (diukur 13 Okt 2026): "hati-hati ya di jalan" tidak cocok pola
+  // mana pun, tidak punya kata tanya, dan panjangnya 5 kata — jadi ia jatuh ke
+  // langkah terakhir `deteksiSantai()` yang berbunyi "ragu -> anggap pertanyaan
+  // kesehatan". Akibatnya kalimat itu IKUT DICARI ke Wikipedia dan mendapat
+  // artikel "Hati" (organ), lalu model terpaksa menjawab dengan sumber yang
+  // sama sekali tidak nyambung dengan maksud pengucapnya.
+  //
+  // Ditaruh SEBELUM langkah "menyentuh kesehatan", jadi ia tetap aman: kalau
+  // kalimatnya benar-benar membawa topik kesehatan (mis. "hati-hati, gejala
+  // penyakit hati itu apa?"), `!menyentuhKesehatan()` mengembalikan false dan
+  // pesannya tetap dijawab dengan sumber.
+  /^(hati|ati)\s*-?\s*hati\b/i,
+  /^(semoga|mudah\s*-?\s*mudahan)\b/i,
+  /^(jangan\s+lupa)\b/i,
+  /^(take\s+care|get\s+well|stay\s+safe|be\s+safe)\b/i,
   // menyapa identitas bot
   /(siapa\s+(kamu|kalian|anda)|kamu\s+(siapa|itu\s+siapa)|nama\s+kamu|namamu|kamu\s+bot|kamu\s+ai|kamu\s+robot)/i,
   /(kamu\s+bisa\s+apa|bisa\s+apa\s+aja|apa\s+saja\s+yang\s+bisa|fitur\s+apa|bisa\s+membantu\s+apa)/i,
@@ -159,6 +176,38 @@ function rapikan(teks) {
 const POLA_KESEHATAN = KATA_KESEHATAN.map(
   (k) => new RegExp(`(^|\\s)${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`, 'i'),
 )
+
+/**
+ * Tambahkan kosakata pengenalan topik SETELAH modul ini dimuat.
+ *
+ * KENAPA PERLU: daftar `KATA_KESEHATAN` di atas hanya berisi kata umum, tetapi
+ * `kataKunci.js` punya kamus yang jauh lebih luas — kunci PETA_PENCARIAN,
+ * PETA_MEDLINEPLUS, dan PETA_SINGKATAN (istilah spesifik seperti 'katarak',
+ * 'sinusitis', 'skizofrenia'). Dulu keduanya TERPISAH, dan akibatnya buruk
+ * dua arah:
+ *
+ *   - "Apa itu katarak?" tidak dikenali sebagai topik kesehatan sama sekali;
+ *   - dan kalau kata barunya hanya ditambahkan ke satu sisi, `deteksiSantai()`
+ *     bisa menganggap pesan kesehatan sebagai obrolan biasa — sehingga
+ *     pertanyaannya dijawab TANPA sumber sama sekali, tanpa galat apa pun.
+ *
+ * Dipanggil SEKALI dari kataKunci.js, setelah kamusnya lengkap. Ini sengaja
+ * satu arah (kataKunci.js -> prompts.js) supaya tidak ada impor melingkar.
+ *
+ * @param {string[]} daftar - istilah tambahan
+ */
+export function tambahKataKesehatan(daftar) {
+  const ada = new Set(KATA_KESEHATAN)
+  for (const k of daftar) {
+    const kata = String(k ?? '').trim().toLowerCase()
+    if (!kata || ada.has(kata)) continue
+    ada.add(kata)
+    KATA_KESEHATAN.push(kata)
+    POLA_KESEHATAN.push(
+      new RegExp(`(^|\\s)${kata.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`, 'i'),
+    )
+  }
+}
 
 function menyentuhKesehatan(bersih) {
   return POLA_KESEHATAN.some((re) => re.test(bersih))
