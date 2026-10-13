@@ -12,6 +12,8 @@
  *      Inilah kuncinya: artikel kesehatan Wikipedia hampir selalu memuat
  *      tautan ke lembaga resmi, dan itu sumber yang bisa dicek pengguna.
  *   3. Isi halaman resmi diambil bila bisa diakses.
+ *   4. MedlinePlus (Perpustakaan Kedokteran Nasional AS, bagian dari NIH) —
+ *      lihat catatan di cariMedlinePlus().
  *
  * Semua yang ditampilkan adalah URL nyata yang bisa dibuka pengguna.
  */
@@ -34,10 +36,16 @@ const RESMI = [
   'sehatnegeriku.kemkes.go.id',
   'ayosehat.kemkes.go.id',
   'p2p.kemkes.go.id',
+  // MedlinePlus — perpustakaan kedokteran nasional AS (bagian NIH).
+  // Sudah tercakup 'nih.gov', tapi ditulis eksplisit supaya jelas bahwa
+  // halaman MedlinePlus memang disengaja dipakai sebagai sumber.
+  'medlineplus.gov',
 ]
 
 const BATAS_ISI = 1500
 const BATAS_REF = 6
+/** Jumlah sumber MedlinePlus yang diambil — cukup untuk topik + rujukan. */
+const BATAS_MEDLINEPLUS = 3
 
 /* --------------------------------------------------------------- simpanan -- */
 
@@ -344,17 +352,179 @@ async function referensiResmi(judulArtikel) {
   }
 }
 
+/* ------------------------------------------------------- MedlinePlus (NIH) -- */
+
+/**
+ * MedlinePlus — sumber tambahan dari Perpustakaan Kedokteran Nasional AS (NIH).
+ *
+ * KENAPA PERLU: Wikipedia Indonesia tidak punya artikel untuk sebagian besar
+ * alat pemeriksaan penunjang. Diukur langsung ke API-nya:
+ *
+ *   "rontgen" -> Wilhelm Conrad Röntgen, Louis Slotin, satuan Röntgen,
+ *                Sinar-X  — semuanya fisika, bukan pemeriksaan medis.
+ *   "pemeriksaan penunjang" -> Badan Pemeriksa Keuangan, Dewan Pertimbangan
+ *                Presiden — sama sekali bukan topik kesehatan.
+ *
+ * Untuk istilah yang sama, MedlinePlus punya halaman yang tepat:
+ *   x-ray -> /xrays.html · ultrasound -> /ultrasound.html · MRI -> /mriscans.html
+ *   laboratory tests -> /laboratorytests.html · biopsy -> /biopsy.html
+ *
+ * Domain medlineplus.gov sudah termasuk NIH, jadi sumber ini sekelas dengan
+ * sumber resmi yang sudah dipakai aplikasi (lihat daftar RESMI).
+ *
+ * Dua tahap, dan keduanya diuji langsung:
+ *   1. Cari — API wsearch.nlm.nih.gov mengembalikan XML berisi dokumen
+ *      (judul + ringkasan + URL). Ringkasannya sudah cukup untuk menjawab.
+ *   2. Ambil isi — halaman diambil dan bagian #topic-summary dipakai. Ini
+ *      yang membuat model punya BAHAN NYATA, bukan hanya judul.
+ *
+ * CATATAN JUJUR: jalur ini diuji dari komputer pengembang dan berhasil (HTTP
+ * 200). DuckDuckGo/Mojeek dulu ditolak 403 dari Vercel, jadi jalur ini WAJIB
+ * diuji ulang di produksi setelah deploy — jangan dianggap pasti jalan.
+ */
+const MEDLINEPLUS_UA = UA
+
+/** Buka entitas XML/HTML. Urutannya penting: &amp; dibuka TERAKHIR. */
+function bukaEntitas(s) {
+  return String(s ?? '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+}
+
+/** XML/HTML -> teks bersih. Entitas dibuka DULU, baru tag dibuang. */
+function keTeksBersih(s) {
+  return bukaEntitas(s)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\s*\n\s*/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+/**
+ * Cari halaman MedlinePlus untuk sebuah istilah (bahasa Inggris).
+ *
+ * @param {string} istilah
+ * @param {number} maks
+ * @returns {Promise<Array<{judul,url,ringkas,resmi,jenis}>>}
+ */
+async function cariMedlinePlus(istilah, maks = BATAS_MEDLINEPLUS) {
+  const kata = String(istilah ?? '').trim()
+  if (!kata) return []
+  try {
+    const url =
+      'https://wsearch.nlm.nih.gov/ws/query?db=healthTopics&term=' +
+      encodeURIComponent(kata) +
+      `&retmax=${Math.max(maks, 6)}`
+    const res = await fetch(url, {
+      headers: { 'User-Agent': MEDLINEPLUS_UA, Accept: 'application/xml,text/xml' },
+      signal: AbortSignal.timeout(12000),
+    })
+    if (!res.ok) return []
+    const xml = await res.text()
+
+    const dokumen = [...xml.matchAll(/<document[^>]*url="([^"]+)"[^>]*>([\s\S]*?)<\/document>/g)].map((m) => {
+      const isi = m[2]
+      return {
+        url: m[1],
+        judul: keTeksBersih((isi.match(/<content name="title">([\s\S]*?)<\/content>/) ?? [])[1] ?? ''),
+        ringkas: keTeksBersih((isi.match(/<content name="FullSummary">([\s\S]*?)<\/content>/) ?? [])[1] ?? ''),
+      }
+    })
+
+    // Utamakan dokumen yang JUDULNYA cocok, diurutkan menurut JUMLAH kata yang
+    // cocok — bukan sekadar "semua kata cocok".
+    //
+    // Kenapa berjenjang: diukur langsung ke API-nya —
+    //   "ultrasound"  -> Prenatal Testing(0) ... /ultrasound.html sebenarnya ADA
+    //   "spirometry"  -> Asthma(0) ... /spirometry.html sebenarnya ADA
+    //   "diagnostic imaging" -> Diagnostic Imaging(2) menang atas Kidney Tests(1)
+    //   "x-ray"       -> X-Rays(1) menang atas Heart Health Tests(0)
+    // Syarat "semua kata cocok" pernah dipakai dan itu terlalu keras: untuk
+    // "ultrasound" tidak ada satu pun judul yang memuatnya, sehingga urutan
+    // asli dipakai dan halaman alatnya tidak pernah terpilih.
+    const bagianKata = kata.toLowerCase().split(/\s+/).filter((k) => k.length >= 3)
+    const dipakai = dokumen
+      .map((d, i) => ({
+        d,
+        i,
+        skor: bagianKata.filter((k) => d.judul.toLowerCase().includes(k)).length,
+      }))
+      .sort((a, b) => b.skor - a.skor || a.i - b.i)
+      .map((x) => x.d)
+
+    return dipakai
+      .filter((d) => d.url && d.judul)
+      .slice(0, maks)
+      .map((d) => ({
+        judul: d.judul,
+        url: d.url,
+        ringkas: d.ringkas.slice(0, 900),
+        resmi: true,
+        jenis: 'medlineplus',
+      }))
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Ambil isi halaman MedlinePlus — bagian #topic-summary saja.
+ *
+ * Halaman penuh berisi menu, footer, dan tautan navigasi (terukur: ~10.000
+ * karakter, sebagian besar bukan isi). Bagian #topic-summary adalah ringkasan
+ * artikelnya (terukur: ~1.870 karakter untuk /xrays.html) dan itulah yang
+ * berguna sebagai bahan jawaban.
+ *
+ * Dipotong pada penanda bagian berikutnya supaya menu "On this page" tidak ikut.
+ */
+async function isiMedlinePlus(url) {
+  try {
+    const html = await ambil(url, 12000)
+    const mulai = html.indexOf('id="topic-summary"')
+    if (mulai === -1) return ''
+    // batasi jendela supaya tidak menyeret seluruh halaman
+    const jendela = html.slice(mulai, mulai + 8000)
+    const teks = keTeksBersih(
+      jendela
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' '),
+    )
+    // buang baris pendek (menu, label) dan sisakan kalimat isi
+    const baris = teks
+      .split('\n')
+      .map((b) => b.trim())
+      .filter((b) => b.length > 60)
+    return baris.join('\n').slice(0, BATAS_ISI)
+  } catch {
+    return ''
+  }
+}
+
 /**
  * Cari sumber untuk sebuah pertanyaan.
  * @param {string} q
+ * @param {object} [opsi]
+ * @param {string} [opsi.istilahMedlinePlus] - istilah bahasa Inggris untuk
+ *   MedlinePlus (lihat PETA_MEDLINEPLUS di kataKunci.js). Kalau tidak diisi,
+ *   MedlinePlus tidak dipanggil — jangan kirim istilah Indonesia apa adanya,
+ *   karena koleksi itu berbahasa Inggris.
  * @returns {Promise<{hasil: Array, ringkas: string, catatan: string}>}
  */
-export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2 } = {}) {
+export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2, istilahMedlinePlus = null } = {}) {
   const kata0 = String(q ?? '').trim().slice(0, 300)
   if (!kata0) return { hasil: [], ringkas: '', catatan: '' }
 
-  // pakai simpanan kalau ada — supaya tidak menembak Wikipedia berkali-kali
-  const tersimpan = ambilSimpanan(kata0)
+  // pakai simpanan kalau ada — supaya tidak menembak Wikipedia berkali-kali.
+  // Kuncinya memuat istilah MedlinePlus juga: hasil pencarian sekarang
+  // bergantung pada DUA istilah, jadi menyimpan hanya berdasarkan satu istilah
+  // akan menyajikan hasil yang salah.
+  const kunciSimpan = `${kata0}|${istilahMedlinePlus ?? ''}`
+  const tersimpan = ambilSimpanan(kunciSimpan)
   if (tersimpan) return tersimpan
 
   // Yang dikirim ke Wikipedia adalah KATA KUNCI, bukan kalimat pengguna apa
@@ -405,7 +575,32 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2 } = {}) {
 
   const hasil = [...dipakai, ...ref]
 
-  const bagian = hasil
+  /* MedlinePlus — dijalankan SETELAH jalur Wikipedia.
+   *
+   * Kenapa tidak lebih dulu: MedlinePlus tidak punya mesin pencari teks bebas,
+   * jadi hanya dipanggil kalau ada padanan istilah Inggris yang pasti
+   * (PETA_MEDLINEPLUS). Mengirim istilah Indonesia apa adanya menghasilkan
+   * nol dokumen — sudah diukur.
+   *
+   * Kenapa hasilnya DIGABUNG, bukan menggantikan: Wikipedia memberi ringkasan
+   * berbahasa Indonesia, MedlinePlus memberi isi yang lebih dalam. Model
+   * dilarang memakai apa pun di luar daftar ini, jadi menambah daftar berarti
+   * menambah pengetahuan yang boleh dipakai — bukan menambah kebebasan.
+   */
+  const medline = istilahMedlinePlus ? await cariMedlinePlus(istilahMedlinePlus) : []
+
+  // ambil isi halaman MedlinePlus supaya ada bahan nyata (bukan hanya judul)
+  for (const h of medline.slice(0, 2)) {
+    if (!h.ringkas || h.ringkas.length < 200) {
+      const isi = await isiMedlinePlus(h.url)
+      if (isi.length > 150) h.isi = isi
+    }
+    await jeda(200)
+  }
+
+  const semua = [...hasil, ...medline]
+
+  const bagian = semua
     .map((h, i) => {
       const tanda = h.resmi ? ' [SUMBER RESMI]' : ''
       const isi = h.ringkas ? `\n   Ringkasan: ${h.ringkas}` : h.isi ? `\n   Isi: ${h.isi}` : ''
@@ -413,16 +608,25 @@ export async function cariInternet(q, { maksArtikel = 3, ambilIsi = 2 } = {}) {
     })
     .join('\n\n')
 
-  const catatan = ref.length
-    ? `Sumber resmi diambil dari daftar referensi artikel ensiklopedia — ${ref.length} dokumen lembaga resmi ditemukan.`
+  const bagianCatatan = []
+  if (ref.length) {
+    bagianCatatan.push(
+      `Sumber resmi diambil dari daftar referensi artikel ensiklopedia — ${ref.length} dokumen lembaga resmi ditemukan.`,
+    )
+  }
+  if (medline.length) {
+    bagianCatatan.push(`MedlinePlus (NIH) menyediakan ${medline.length} halaman untuk topik ini.`)
+  }
+  const catatan = bagianCatatan.length
+    ? bagianCatatan.join(' ')
     : 'Belum ada dokumen lembaga resmi yang ditemukan untuk pertanyaan ini.'
 
-  const keluaran = { hasil, ringkas: bagian, catatan }
+  const keluaran = { hasil: semua, ringkas: bagian, catatan }
 
   // Hanya simpan kalau memang ada hasil. Hasil kosong TIDAK disimpan, supaya
   // kegagalan sementara (mis. kena pembatasan Wikipedia) tidak ikut tersimpan
   // dan pertanyaan berikutnya masih dicoba lagi.
-  if (hasil.length) simpanHasil(kata0, keluaran)
+  if (semua.length) simpanHasil(kunciSimpan, keluaran)
 
   return keluaran
 }
