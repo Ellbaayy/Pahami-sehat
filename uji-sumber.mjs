@@ -35,6 +35,9 @@ import {
   menyentuhKesehatan,
   PETA_PENCARIAN,
   PETA_MEDLINEPLUS,
+  PETA_MEDLINEPLUS_BIDANG,
+  PETA_SINGKATAN,
+  PENGENALAN_TOPIK,
   ISTILAH_CARI,
 } from './app/server/kataKunci.js'
 import { cariInternet } from './app/server/cari.js'
@@ -188,11 +191,94 @@ console.log('\n--- tidak ada entri bertanda hubung (mati setelah normalisasi) --
 for (const [nama, peta] of [
   ['PETA_PENCARIAN', PETA_PENCARIAN],
   ['PETA_MEDLINEPLUS', PETA_MEDLINEPLUS],
+  ['PETA_MEDLINEPLUS_BIDANG', PETA_MEDLINEPLUS_BIDANG],
 ]) {
   const mati = Object.keys(peta).filter(
     (k) => k.replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim().toLowerCase() !== k.toLowerCase(),
   )
   cek(`${nama}: tidak ada entri bertanda hubung`, mati, [])
+}
+
+/* ==========================================================================
+   LUAS PENGETAHUAN — bukan hanya alat pemeriksaan penunjang
+   ==========================================================================
+   Diukur 13 Okt 2026: 47 dari 86 pertanyaan kesehatan lintas bidang (gigi,
+   mata, THT, saraf, kulit, jiwa, gizi, anak, lansia, tropis, kanker, gawat
+   darurat) TIDAK dikenali sebagai topik kesehatan, sehingga bahan pencariannya
+   menjadi kalimat utuh yang tidak cocok dengan judul artikel mana pun.
+
+   Penyebabnya: `PENGENALAN_TOPIK` (dulu `ISTILAH_CARI`) hanya berisi
+   FRASA_KHUSUS + KATA_KESEHATAN. Sebuah istilah bisa ADA di PETA_PENCARIAN
+   tetapi tidak dikenali, dan pemetaannya jadi mati total.
+
+   Uji di bawah ini menjaga invarian yang menutup cacat itu: SETIAP kunci peta
+   harus benar-benar dikenali. Kalau seseorang menambah entri ke peta tetapi
+   lupa menyambungkannya, uji ini yang menangkapnya — bukan pengguna.
+   ========================================================================== */
+console.log('\n--- setiap kunci peta benar-benar dikenali ---')
+for (const [nama, peta] of [
+  ['PETA_PENCARIAN', PETA_PENCARIAN],
+  ['PETA_MEDLINEPLUS', PETA_MEDLINEPLUS],
+  ['PETA_MEDLINEPLUS_BIDANG', PETA_MEDLINEPLUS_BIDANG],
+  ['PETA_SINGKATAN', PETA_SINGKATAN],
+]) {
+  const takDikenal = Object.keys(peta).filter((k) => !PENGENALAN_TOPIK.includes(k))
+  cek(`${nama}: semua kunci dikenali PENGENALAN_TOPIK`, takDikenal, [])
+}
+
+// Invarian yang lebih dalam: setiap kunci peta harus benar-benar MENGHASILKAN
+// istilah saat muncul di kalimat. Cek keanggotaan di atas tidak cukup — sebuah
+// kunci bisa ada di daftar tetapi tetap tidak terpilih karena kalah dari istilah
+// lain yang lebih panjang, dan pemetaannya tetap mati.
+console.log('\n--- setiap kunci peta benar-benar TERPILIH saat muncul di kalimat ---')
+{
+  const tidakTerpilih = []
+  for (const [nama, peta] of [
+    ['PETA_PENCARIAN', PETA_PENCARIAN],
+    ['PETA_MEDLINEPLUS', PETA_MEDLINEPLUS],
+    ['PETA_MEDLINEPLUS_BIDANG', PETA_MEDLINEPLUS_BIDANG],
+  ]) {
+    for (const k of Object.keys(peta)) {
+      const terpilih = istilahKesehatan(`apa itu ${k}`)
+      if (terpilih !== k) tidakTerpilih.push(`${nama}:${k}->${terpilih || '(kosong)'}`)
+    }
+  }
+  cek('semua kunci peta terpilih saat berdiri sendiri di kalimat', tidakTerpilih, [])
+}
+
+// Frasa yang terputus kata ganti TETAP harus dikenali. Diukur: "Mata saya
+// minus terus bertambah" gagal karena 'mata minus' tidak bersebelahan.
+console.log('\n--- frasa terputus kata ganti tetap dikenali ---')
+for (const [q, harap] of [
+  ['Mata saya minus terus bertambah, kenapa?', true],
+  ['Hidung saya mampet terus, apa penyebabnya?', true],
+  ['Telinga saya berdenging terus, apa itu?', true],
+  ['Bagaimana cara merawat gigi berlubang?', true],
+  ['Apa itu katarak?', true],
+  ['Apa itu epilepsi?', true],
+  ['Apa itu skizofrenia?', true],
+  ['Bagaimana cara mencegah jatuh pada lansia?', true],
+  ['Apa itu asam urat?', true],
+  ['Apa itu kanker serviks?', true],
+  ['Bagaimana pertolongan pertama pada luka bakar?', true],
+]) {
+  cek(`dikenali: "${q}"`, menyentuhKesehatan(q), harap)
+}
+
+// Obrolan biasa TIDAK BOLEH ikut terangkat oleh kosakata baru. Ini pengaman
+// yang paling mudah rusak: setiap penambahan kata berisiko membuat percakapan
+// sehari-hari dianggap pertanyaan kesehatan.
+console.log('\n--- kosakata baru tidak menelan obrolan biasa ---')
+for (const q of [
+  'hati-hati ya di jalan',
+  'aku hati hati banget',
+  'halo apa kabar',
+  'makasih banyak ya',
+  'tolong buatkan puisi tentang hujan',
+  'berapa harga tiket kereta ke bandung',
+  'lagu favoritku apa ya',
+]) {
+  cek(`BUKAN kesehatan: "${q}"`, menyentuhKesehatan(q), false)
 }
 
 // Kunci yang sama ditulis DUA KALI dalam satu blok objek JS membuat yang
