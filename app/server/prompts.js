@@ -64,18 +64,26 @@ export const KATA_KESEHATAN = [
   'sakit', 'nyeri', 'demam', 'panas', 'pusing', 'mual', 'muntah', 'batuk', 'pilek',
   'flu', 'sesak', 'lemas', 'letih', 'lelah', 'gatal', 'bengkak', 'luka', 'patah',
   'diare', 'sembelit', 'alergi', 'ruam', 'bintik', 'kram', 'pegal', 'insomnia',
-  'sulit tidur', 'tidak nafsu makan', 'nafsu makan',
+  'sulit tidur', 'tidak nafsu makan', 'nafsu makan', 'tersedak', 'dehidrasi',
   // penyakit & kondisi
   'penyakit', 'dbd', 'dengue', 'demam berdarah', 'malaria', 'tbc', 'tuberkulosis',
   'diabetes', 'kencing manis', 'hipertensi', 'darah tinggi', 'darah rendah',
-  'kolesterol', 'jantung', 'stroke', 'kanker', 'tumor', 'asma', 'pneumonia',
+  'kolesterol', 'jantung', 'stroke', 'strok', 'kanker', 'tumor', 'asma', 'pneumonia',
   'anemia', 'tifus', 'tipes', 'hepatitis', 'ginjal', 'lambung', 'maag', 'gerd',
   'covid', 'cacar', 'campak', 'polio', 'hiv', 'aids', 'kusta', 'rabies',
   'gangguan jiwa', 'depresi', 'stres', 'cemas', 'anxiety',
+  'obesitas', 'demensia', 'alzheimer', 'infeksi', 'komplikasi',
+  // 'hati' TIDAK didaftarkan sendiri: dalam bahasa Indonesia sehari-hari ia
+  // hampir selalu muncul sebagai "hati-hati" (bukan organ hati). Diukur 13 Okt
+  // 2026: mendaftarkan 'hati' membuat "hati-hati ya di jalan" dianggap topik
+  // kesehatan dan mematikan deteksi obrolan biasa. Kata yang benar-benar
+  // menunjuk organnya dipakai langsung: 'liver' dan 'penyakit hati'.
+  'liver', 'penyakit hati',
+  'serangan jantung', 'gagal ginjal', 'kanker paru', 'kanker paru-paru',
   // obat & pengobatan
   'obat', 'dosis', 'resep', 'tablet', 'kapsul', 'sirup', 'salep', 'injeksi',
   'vaksin', 'imunisasi', 'antibiotik', 'paracetamol', 'ibuprofen', 'amoxicillin',
-  'vitamin', 'suplemen', 'multivitamin', 'herbal', 'jamu',
+  'vitamin', 'suplemen', 'multivitamin', 'herbal', 'jamu', 'kemoterapi',
   'efek samping', 'kontraindikasi', 'kandungan',
   // tubuh & pemeriksaan
   'darah', 'tensi', 'tekanan darah', 'gula darah', 'kadar gula', 'berat badan',
@@ -83,6 +91,8 @@ export const KATA_KESEHATAN = [
   'pemeriksaan', 'diagnosis', 'gejala', 'tanda', 'penyebab', 'pencegahan',
   'pengobatan', 'terapi', 'operasi', 'rumah sakit', 'puskesmas', 'klinik',
   'dokter', 'perawat', 'apotek', 'bpjs', 'rujukan',
+  'faktor risiko', 'pertolongan pertama', 'pasca operasi', 'perawatan luka',
+  'perawatan di rumah', 'luka bakar', 'fisioterapi', 'rehabilitasi',
   // gizi & gaya hidup sehat
   'gizi', 'nutrisi', 'kalori', 'protein', 'karbohidrat', 'lemak', 'serat',
   'kalsium', 'zat besi', 'asam folat', 'menu sehat', 'makanan sehat', 'diet',
@@ -248,6 +258,21 @@ RUBRIK WAJIB (penuhi semuanya, dalam urutan ini):
    dipastikan.
 5. BATAS PERAN — Kamu bukan dokter. Jangan memberi diagnosis, resep, atau dosis
    obat tertentu. Selalu arahkan ke tenaga kesehatan untuk keluhan pribadi.
+6. FAKTOR RISIKO, BUKAN DIAGNOSIS — Kalau pengguna bertanya apakah DIRINYA
+   mengidap suatu penyakit, atau seberapa besar risikonya, jawab dengan cara ini:
+   a. Sebutkan faktor risiko yang benar-benar ada di sumber, sebagai FAKTA UMUM
+      tentang penyakitnya — bukan penilaian atas diri pengguna.
+   b. Sebutkan tanda/gejala yang membuat orang perlu memeriksakan diri.
+   c. Katakan terus terang bahwa kepastian hanya bisa didapat dari pemeriksaan
+      tenaga kesehatan, karena banyak penyakit tidak punya gejala khas.
+   JANGAN menyimpulkan bahwa pengguna kemungkinan besar mengidap atau tidak
+   mengidap sesuatu. JANGAN memberi persentase atau peluang yang tidak ada di
+   sumber. JANGAN menyusun daftar kemungkinan penyakit yang bersaing — itu
+   diagnosis, dan itu bukan tugasmu.
+7. PENANGANAN & PERAWATAN — Untuk pertanyaan cara menangani atau merawat,
+   utamakan langkah yang ada di sumber. Bedakan dengan jelas mana yang bisa
+   dilakukan sendiri di rumah dan mana yang WAJIB lewat tenaga kesehatan.
+   Selalu sebutkan tanda bahaya yang mengharuskan segera mencari bantuan medis.
 `.trim()
 
 const KELUARAN_JSON = `
@@ -432,6 +457,14 @@ CARA MEMAKAI HASIL PENCARIAN:
    informasi itu belum ditemukan — jangan menebak, jangan mengarang.
 5. Kalau angka berbeda antar sumber, sebutkan perbedaannya dan sebutkan sumbernya.
 6. Jangan mengarang URL. Hanya pakai URL yang benar-benar ada di daftar.
+7. PERIKSA SELURUH BAHAN SEBELUM MENYATAKAN TIDAK ADA. Dokumen resmi sering
+   memuat bagian "faktor risiko", "pengobatan", "penanganan", atau "perawatan"
+   di TENGAH dokumen, bukan di kalimat pertama. Baca sampai habis dulu. Jangan
+   menyimpulkan "sumber tidak memuat informasinya" hanya karena paragraf
+   pembukanya tidak membahas yang ditanyakan.
+8. Kalau yang ditanyakan hanya SEBAGIAN tersedia (mis. faktor risikonya ada tapi
+   angkanya tidak), jawab bagian yang ADA dan sebutkan bagian mana yang tidak
+   ada. Jangan membuang seluruh jawaban hanya karena satu bagian tidak lengkap.
 `.trim()
 
 function blokPencarian(konteks) {

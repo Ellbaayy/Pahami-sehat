@@ -32,6 +32,7 @@
 import {
   kataKunciPencarian,
   istilahKesehatan,
+  menyentuhKesehatan,
   PETA_PENCARIAN,
   PETA_MEDLINEPLUS,
   ISTILAH_CARI,
@@ -106,6 +107,109 @@ cek('rontgen dada -> frasa utuh, bukan "Radiografi"', istilahKesehatan('Apa itu 
 cek('usg -> "usg" (bukan Ultrasonografi medis)', istilahKesehatan('Apa itu USG?'), 'usg')
 cek('pemeriksaan penunjang tetap utuh', istilahKesehatan('pemeriksaan penunjang'), 'pemeriksaan penunjang')
 cek('teks tanpa istilah -> kosong', istilahKesehatan('bagaimana cara membuat kue bolu'), '')
+
+/* ==========================================================================
+   2b. KATA TINDAKAN — jangan mencuri kata penyakitnya
+   ==========================================================================
+   Diukur di produksi 13 Okt 2026: 4 dari 16 pertanyaan kesehatan mendapat 0
+   sumber, dan semuanya pola yang sama — kata tindakan ("penyebab", "operasi")
+   lebih panjang daripada nama penyakitnya, jadi ia yang terpilih sebagai bahan
+   pencarian. Penyaring relevansi menuntut kata kunci ada di JUDUL artikel, dan
+   Wikipedia tidak punya artikel berjudul "Penyebab" atau "Operasi".
+   ========================================================================== */
+
+console.log('\n--- kata tindakan: nama penyakit harus menang ---')
+cek('"Apa penyebab anemia?" -> Anemia', kataKunciPencarian('Apa penyebab anemia?'), 'Anemia')
+cek(
+  '"cara merawat luka pasca operasi" -> Bedah, bukan "operasi"',
+  kataKunciPencarian('Bagaimana cara merawat luka pasca operasi?'),
+  'Bedah',
+)
+cek(
+  '"merawat pasien stroke di rumah" -> Strok',
+  kataKunciPencarian('Bagaimana cara merawat pasien stroke di rumah?'),
+  'Strok',
+)
+cek('"risiko saya terkena stroke" -> Strok', kataKunciPencarian('Apa risiko saya terkena stroke?'), 'Strok')
+cek('"apakah saya mengidap diabetes" -> Diabetes melitus', kataKunciPencarian('Apakah saya mengidap diabetes?'), 'Diabetes melitus')
+cek('"pengobatan tuberkulosis" -> Tuberkulosis', kataKunciPencarian('apa pengobatan untuk tuberkulosis'), 'Tuberkulosis')
+cek('"kemoterapi" tetap dirinya sendiri', kataKunciPencarian('apa itu kemoterapi'), 'Kemoterapi')
+cek('"luka bakar" tetap utuh', kataKunciPencarian('bagaimana cara menangani luka bakar ringan'), 'Luka bakar')
+cek('"demensia" tetap dirinya sendiri', kataKunciPencarian('bagaimana cara merawat pasien demensia'), 'Demensia')
+
+// Kalau pesannya HANYA kata tindakan, kata itu tetap dipakai — lebih baik
+// daripada kosong. (Ini perilaku cadangan, bukan yang diharapkan.)
+cek('hanya kata tindakan -> tetap dipakai', kataKunciPencarian('apa penyebabnya'), 'penyebabnya')
+
+// Kedua jalur pencarian harus memilih istilah yang SAMA. Kalau berbeda, satu
+// jalur mencari "anemia" sementara yang lain mencari "penyebab".
+console.log('\n--- dua jalur memilih istilah yang konsisten ---')
+for (const q of [
+  'Apa penyebab anemia?',
+  'Bagaimana cara merawat pasien stroke di rumah?',
+  'apa pengobatan untuk tuberkulosis',
+  'bagaimana cara menangani luka bakar ringan',
+]) {
+  const ist = istilahKesehatan(q)
+  const kk = kataKunciPencarian(q)
+  cekBenar(`"${q}" -> istilah "${ist}" terpakai di Wikipedia`, PETA_PENCARIAN[ist] === kk || ist === kk, `kk="${kk}"`)
+}
+
+// Istilah bertanda hubung MATI setelah normalkan() mengubahnya jadi spasi.
+// Ini pernah terjadi pada 'pegal-pegal' dan 'kanker paru-paru'.
+console.log('\n--- nama penyakit menang atas kata gejala ---')
+// Diukur 13 Okt 2026: "Saya demam dan bintik merah, apa saya kena DBD?" memilih
+// "bintik" (6 huruf) karena lebih panjang daripada "dbd" (3 huruf), dan Wikipedia
+// menjawabnya dengan "Bintik Fordyce" — kelenjar minyak di kulit, bukan DBD.
+cek(
+  'DBD + bintik -> Demam berdarah dengue (bukan "bintik")',
+  kataKunciPencarian('Saya demam dan bintik merah, apa saya kena DBD?'),
+  'Demam berdarah dengue',
+)
+cek('singkatan "dbd" -> Demam berdarah dengue', kataKunciPencarian('apa itu dbd'), 'Demam berdarah dengue')
+cek('singkatan "tbc" -> Tuberkulosis', kataKunciPencarian('saya batuk sudah 3 minggu apakah tbc'), 'Tuberkulosis')
+// Tanpa nama penyakit, kata gejala tetap dipakai — ini perilaku yang benar.
+cek('hanya gejala -> tetap kata gejala', kataKunciPencarian('saya demam'), 'demam')
+cek('hanya gejala -> bintik tetap bintik', kataKunciPencarian('saya demam bintik merah'), 'bintik')
+cek('"demam berdarah" (frasa) tetap menang', kataKunciPencarian('apa gejala demam berdarah'), 'demam berdarah')
+
+console.log('\n--- kata homonim: "hati-hati" bukan topik kesehatan ---')
+// Diukur 13 Okt 2026: mendaftarkan 'hati' sebagai kata kesehatan membuat
+// "hati-hati ya di jalan" dianggap pertanyaan kesehatan, dan karena
+// deteksiSantai() memeriksa kata kesehatan LEBIH DULU, obrolan biasa ikut mati.
+cek('"hati-hati ya di jalan" BUKAN kesehatan', menyentuhKesehatan('hati-hati ya di jalan'), false)
+cek('"aku hati hati banget" BUKAN kesehatan', menyentuhKesehatan('aku hati hati banget'), false)
+cek('"halo apa kabar" tetap bukan kesehatan', menyentuhKesehatan('halo apa kabar'), false)
+// Kata yang benar-benar menunjuk organnya harus tetap dikenali.
+cek('"penyakit hati" = kesehatan', menyentuhKesehatan('gejala penyakit hati'), true)
+cek('"liver" -> Penyakit hati', kataKunciPencarian('apa itu liver'), 'Penyakit hati')
+
+console.log('\n--- tidak ada entri bertanda hubung (mati setelah normalisasi) ---')
+for (const [nama, peta] of [
+  ['PETA_PENCARIAN', PETA_PENCARIAN],
+  ['PETA_MEDLINEPLUS', PETA_MEDLINEPLUS],
+]) {
+  const mati = Object.keys(peta).filter(
+    (k) => k.replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim().toLowerCase() !== k.toLowerCase(),
+  )
+  cek(`${nama}: tidak ada entri bertanda hubung`, mati, [])
+}
+
+// Kunci yang sama ditulis DUA KALI dalam satu blok objek JS membuat yang
+// terakhir menang tanpa error dan tanpa gagal uji. Ini tidak tertangkap uji
+// mana pun di repo, jadi diperiksa langsung dari berkas sumbernya.
+console.log('\n--- tidak ada kunci dobel di dalam satu peta ---')
+{
+  const fs = await import('node:fs')
+  const src = fs.readFileSync(new URL('./app/server/kataKunci.js', import.meta.url), 'utf8')
+  for (const nama of ['PETA_PENCARIAN', 'PETA_MEDLINEPLUS']) {
+    const i = src.indexOf('export const ' + nama)
+    const j = src.indexOf('\n}', i)
+    const kunci = [...src.slice(i, j).matchAll(/^\s{2}'?([a-zA-Z0-9\-\s]+)'?:\s*'/gm)].map((m) => m[1])
+    const dobel = [...new Set(kunci.filter((k, idx) => kunci.indexOf(k) !== idx))]
+    cek(`${nama}: tidak ada kunci dobel (${kunci.length} kunci)`, dobel, [])
+  }
+}
 
 /* ==========================================================================
    3. PETA — kunci harus cocok satu sama lain
