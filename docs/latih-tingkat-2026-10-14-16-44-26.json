@@ -1,0 +1,819 @@
+{
+  "dibuat": "2026-10-14T16:44:26.804Z",
+  "base": "http://127.0.0.1:8787",
+  "sasaran": {
+    "anak": {
+      "aslMaks": 8,
+      "aswMaks": 2.33,
+      "sulitMaks": 29,
+      "kalimatTerpanjangMaks": 12,
+      "sangatPanjangMaks": 5
+    },
+    "lansia": {
+      "aslMaks": 9,
+      "aswMaks": 2.57,
+      "sulitMaks": 42,
+      "kalimatTerpanjangMaks": 13,
+      "sangatPanjangMaks": 13
+    },
+    "remaja": {
+      "aslMaks": 10,
+      "aswMaks": 2.46,
+      "sulitMaks": 37,
+      "kalimatTerpanjangMaks": 17,
+      "sangatPanjangMaks": 10
+    },
+    "dewasa": {
+      "aslMaks": 12,
+      "aswMaks": 2.59,
+      "sulitMaks": 46,
+      "kalimatTerpanjangMaks": 26,
+      "sangatPanjangMaks": 13
+    }
+  },
+  "ringkas": {
+    "anak": {
+      "n": 8,
+      "asl": 5.71,
+      "asw": 2.21,
+      "sulit": 27.21,
+      "kalimatTerpanjang": 9.13,
+      "kata": 99.38,
+      "sumber": 2.5,
+      "lolos": 8,
+      "detik": 9.46
+    },
+    "remaja": {
+      "n": 8,
+      "asl": 8.55,
+      "asw": 2.28,
+      "sulit": 32.1,
+      "kalimatTerpanjang": 14.13,
+      "kata": 145.38,
+      "sumber": 3.38,
+      "lolos": 6,
+      "detik": 6.25
+    },
+    "dewasa": {
+      "n": 8,
+      "asl": 10.04,
+      "asw": 2.4,
+      "sulit": 39.35,
+      "kalimatTerpanjang": 18.75,
+      "kata": 161.75,
+      "sumber": 3.63,
+      "lolos": 7,
+      "detik": 6.63
+    },
+    "lansia": {
+      "n": 8,
+      "asl": 6.7,
+      "asw": 2.42,
+      "sulit": 39.98,
+      "kalimatTerpanjang": 10.63,
+      "kata": 124.38,
+      "sumber": 2.5,
+      "lolos": 8,
+      "detik": 5.72
+    }
+  },
+  "isiPer": {
+    "anak": {
+      "poinKunci": 9.25,
+      "sumber": 2.5
+    },
+    "remaja": {
+      "poinKunci": 8.25,
+      "sumber": 3.38
+    },
+    "dewasa": {
+      "poinKunci": 7.75,
+      "sumber": 3.63
+    },
+    "lansia": {
+      "poinKunci": 8,
+      "sumber": 2.5
+    }
+  },
+  "baris": [
+    {
+      "pertanyaan": "Apa itu hipertensi?",
+      "perTingkat": {
+        "anak": {
+          "ukur": {
+            "kalimat": 19,
+            "kata": 96,
+            "sukuKata": 218,
+            "asl": 5.05,
+            "asw": 2.27,
+            "persenKataSulit": 31.3,
+            "persenKataSangatPanjang": 6.3,
+            "kalimatTerpanjang": 10
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=3 suku 31.3% > 29%",
+            "kata >=4 suku 6.3% > 5%"
+          ],
+          "kataJawaban": 98,
+          "poinKunci": 8,
+          "sumber": 3,
+          "detik": 10.2,
+          "jawaban": "Hipertensi artinya tekanan darah tinggi. Jantung memompa darah ke pipa bernama pembuluh. Kalau pembuluh sempit, darah sulit lewat. Tekanan darah jadi naik. Tekanan darah punya dua angka. Angka atas disebut sistolik. Angka bawah disebut diastolik. Contohnya 120/80 mmHg. Tekanan darah tinggi bila 140/90 mmHg atau lebih. Ini terjadi terus-menerus, bukan sekali saja. Hipertensi sering tidak bikin saki"
+        },
+        "remaja": {
+          "ukur": {
+            "kalimat": 15,
+            "kata": 130,
+            "sukuKata": 301,
+            "asl": 8.67,
+            "asw": 2.32,
+            "persenKataSulit": 33.8,
+            "persenKataSangatPanjang": 9.2,
+            "kalimatTerpanjang": 14
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 141,
+          "poinKunci": 10,
+          "sumber": 4,
+          "detik": 7.2,
+          "jawaban": "Hipertensi artinya tekanan darahmu lebih tinggi dari normal. Jantung jadi bekerja lebih keras untuk mengedarkan darah. Tekanan darah diukur dengan dua angka. Angka atas (sistolik) saat jantung berdenyut. Angka bawah (diastolik) saat jantung istirahat. Contohnya 120/80 mmHg. Tekanan darah normal saat istirahat sekitar 100–140 mmHg (atas) dan 60–90 mmHg (bawah). Kamu disebut hipertensi kalau tekanan"
+        },
+        "dewasa": {
+          "ukur": {
+            "kalimat": 16,
+            "kata": 163,
+            "sukuKata": 411,
+            "asl": 10.19,
+            "asw": 2.52,
+            "persenKataSulit": 46,
+            "persenKataSangatPanjang": 14.7,
+            "kalimatTerpanjang": 20
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=4 suku 14.7% > 13%"
+          ],
+          "kataJawaban": 167,
+          "poinKunci": 8,
+          "sumber": 5,
+          "detik": 8,
+          "jawaban": "Hipertensi adalah kondisi medis kronis ketika tekanan darah di arteri meningkat. Jantung jadi bekerja lebih keras untuk mengedarkan darah. Tekanan darah diukur dengan dua angka, yaitu sistolik dan diastolik. Sistolik adalah tekanan saat jantung berkontraksi. Diastolik adalah tekanan saat jantung berelaksasi di antara denyut. Tekanan darah normal saat istirahat berkisar 100–140 mmHg sistolik dan 60"
+        },
+        "lansia": {
+          "ukur": {
+            "kalimat": 16,
+            "kata": 100,
+            "sukuKata": 239,
+            "asl": 6.25,
+            "asw": 2.39,
+            "persenKataSulit": 39,
+            "persenKataSangatPanjang": 10,
+            "kalimatTerpanjang": 11
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 106,
+          "poinKunci": 6,
+          "sumber": 2,
+          "detik": 5.3,
+          "jawaban": "Hipertensi adalah tekanan darah tinggi. Jantung harus bekerja lebih keras dari biasanya. Darah mendorong dinding pembuluh darah dengan kuat. Tekanan darah diukur dengan dua angka. Angka atas disebut sistolik. Angka bawah disebut diastolik. Contoh pembacaan 120/80 mmHg. Tekanan darah normal saat istirahat sekitar 100 sampai 140 mmHg untuk angka atas. Angka bawah sekitar 60 sampai 90 mmHg. Seseorang"
+        }
+      }
+    },
+    {
+      "pertanyaan": "Bagaimana cara mencegah diabetes?",
+      "perTingkat": {
+        "anak": {
+          "ukur": {
+            "kalimat": 12,
+            "kata": 68,
+            "sukuKata": 150,
+            "asl": 5.67,
+            "asw": 2.21,
+            "persenKataSulit": 23.5,
+            "persenKataSangatPanjang": 4.4,
+            "kalimatTerpanjang": 10
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 69,
+          "poinKunci": 7,
+          "sumber": 3,
+          "detik": 8.9,
+          "jawaban": "Diabetes itu penyakit gula darah tinggi. Gula darah itu bahan bakar tubuh. Kita bisa mencegah diabetes tipe 2. Caranya dengan makan makanan sehat. Lalu rajin bergerak dan berolahraga. Jaga berat badan tetap normal. Jangan merokok juga. Kalau berat badan berlebih, kurangi pelan-pelan. Anak-anak juga bisa kena diabetes. Jadi biasakan hidup sehat dari sekarang. Kalau badan sering lemas atau haus, bil"
+        },
+        "remaja": {
+          "ukur": {
+            "kalimat": 11,
+            "kata": 132,
+            "sukuKata": 304,
+            "asl": 12,
+            "asw": 2.3,
+            "persenKataSulit": 34.1,
+            "persenKataSangatPanjang": 5.3,
+            "kalimatTerpanjang": 21
+          },
+          "lolos": false,
+          "pelanggaran": [
+            "kata/kalimat 12 > 10",
+            "kalimat terpanjang 21 kata > 17"
+          ],
+          "tren": [],
+          "kataJawaban": 136,
+          "poinKunci": 5,
+          "sumber": 2,
+          "detik": 5.5,
+          "jawaban": "Diabetes adalah kondisi gula darah terlalu tinggi terus-menerus. Tubuh tidak cukup membuat insulin atau tidak bisa memakai insulin dengan baik. Insulin adalah hormon yang memasukkan gula dari darah ke sel. Menurut WHO, cara mencegah atau menunda diabetes tipe 2 adalah: makan makanan sehat, rutin bergerak, menjaga berat badan normal, dan menghindari rokok. Untuk remaja, kebiasaan ini berguna mulai "
+        },
+        "dewasa": {
+          "ukur": {
+            "kalimat": 15,
+            "kata": 161,
+            "sukuKata": 369,
+            "asl": 10.73,
+            "asw": 2.29,
+            "persenKataSulit": 34.2,
+            "persenKataSangatPanjang": 6.2,
+            "kalimatTerpanjang": 22
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 167,
+          "poinKunci": 7,
+          "sumber": 3,
+          "detik": 6,
+          "jawaban": "Diabetes adalah penyakit kronis saat kadar gula darah terlalu tinggi. Tubuh tidak cukup memproduksi insulin, atau tidak bisa memakai insulin dengan baik. Pencegahan yang paling terbukti adalah untuk diabetes tipe 2. Menurut WHO, pola makan sehat, aktivitas fisik teratur, menjaga berat badan normal, dan tidak memakai tembakau bisa mencegah atau menunda diabetes tipe 2. Faktor risiko tipe 2 termasuk"
+        },
+        "lansia": {
+          "ukur": {
+            "kalimat": 13,
+            "kata": 76,
+            "sukuKata": 190,
+            "asl": 5.85,
+            "asw": 2.5,
+            "persenKataSulit": 50,
+            "persenKataSangatPanjang": 5.3,
+            "kalimatTerpanjang": 10
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=3 suku 50% > 42%"
+          ],
+          "kataJawaban": 77,
+          "poinKunci": 4,
+          "sumber": 2,
+          "detik": 3.6,
+          "jawaban": "Diabetes adalah penyakit jangka panjang. Gula darah menjadi terlalu tinggi. Ini terjadi karena tubuh kurang insulin. Insulin adalah zat yang mengatur gula darah. Cara mencegah diabetes tipe 2 adalah makan makanan sehat. Lakukan aktivitas fisik secara teratur. Jaga berat badan tetap normal. Hindari rokok. Cara ini dapat mencegah atau menunda diabetes. Diabetes bisa diobati. Akibat buruknya dapat di"
+        }
+      }
+    },
+    {
+      "pertanyaan": "Apa itu kanker serviks?",
+      "perTingkat": {
+        "anak": {
+          "ukur": {
+            "kalimat": 24,
+            "kata": 158,
+            "sukuKata": 337,
+            "asl": 6.58,
+            "asw": 2.13,
+            "persenKataSulit": 24.7,
+            "persenKataSangatPanjang": 3.8,
+            "kalimatTerpanjang": 10
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 160,
+          "poinKunci": 14,
+          "sumber": 4,
+          "detik": 11,
+          "jawaban": "Kanker serviks itu kanker di leher rahim. Leher rahim adalah pintu rahim. Rahim ada di perut bagian bawah wanita. Kanker ini tumbuh pelan sekali. Hampir semua kanker serviks disebabkan virus bernama HPV. HPV menular lewat sentuhan kulit. Biasanya lewat hubungan seksual. Banyak orang yang punya HPV tidak merasa sakit. Tubuh biasanya melawan virus ini sendiri. Kadang virus itu bertahan bertahun-tahu"
+        },
+        "remaja": {
+          "ukur": {
+            "kalimat": 17,
+            "kata": 132,
+            "sukuKata": 281,
+            "asl": 7.76,
+            "asw": 2.13,
+            "persenKataSulit": 24.2,
+            "persenKataSangatPanjang": 6.8,
+            "kalimatTerpanjang": 12
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 135,
+          "poinKunci": 11,
+          "sumber": 4,
+          "detik": 5.4,
+          "jawaban": "Kanker serviks adalah kanker yang mulai di sel leher rahim. Leher rahim itu ujung bawah rahim, yang terbuka ke vagina. Hampir semua kanker serviks disebabkan infeksi HPV jangka panjang. HPV itu virus yang menular lewat kontak kulit, biasanya saat hubungan seks. Banyak orang yang terinfeksi tidak punya gejala. Sistem imun biasanya bisa membersihkan HPV dalam 1–2 tahun. Kalau tidak, infeksi bisa ber"
+        },
+        "dewasa": {
+          "ukur": {
+            "kalimat": 18,
+            "kata": 166,
+            "sukuKata": 392,
+            "asl": 9.22,
+            "asw": 2.36,
+            "persenKataSulit": 39.2,
+            "persenKataSangatPanjang": 11.4,
+            "kalimatTerpanjang": 14
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 166,
+          "poinKunci": 8,
+          "sumber": 4,
+          "detik": 6.8,
+          "jawaban": "Kanker serviks adalah kanker yang mulai tumbuh di sel leher rahim. Leher rahim adalah bagian bawah rahim yang sempit, dan membuka ke vagina. Kanker ini biasanya berkembang lambat. Sebelum menjadi kanker, sel leher rahim berubah bentuk lebih dulu. Sel itu disebut prakanker. Bila tidak dihancurkan atau diangkat, sel itu bisa menjadi kanker. Kanker serviks hampir selalu disebabkan infeksi jangka panj"
+        },
+        "lansia": {
+          "ukur": {
+            "kalimat": 12,
+            "kata": 102,
+            "sukuKata": 240,
+            "asl": 8.5,
+            "asw": 2.35,
+            "persenKataSulit": 36.3,
+            "persenKataSangatPanjang": 12.7,
+            "kalimatTerpanjang": 11
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 104,
+          "poinKunci": 7,
+          "sumber": 4,
+          "detik": 5.4,
+          "jawaban": "Kanker serviks adalah kanker yang tumbuh di leher rahim. Leher rahim adalah bagian bawah rahim yang terbuka ke vagina. Hampir semua kanker serviks disebabkan infeksi virus bernama human papillomavirus (HPV). Virus ini menular lewat hubungan seksual. Pada awalnya, kanker serviks biasanya tidak menimbulkan gejala. Karena itu, banyak penderita baru terdeteksi saat sudah stadium lanjut. Pemeriksaan sk"
+        }
+      }
+    },
+    {
+      "pertanyaan": "Bagaimana cara mencuci tangan yang benar?",
+      "perTingkat": {
+        "anak": {
+          "ukur": {
+            "kalimat": 23,
+            "kata": 115,
+            "sukuKata": 248,
+            "asl": 5,
+            "asw": 2.16,
+            "persenKataSulit": 20.9,
+            "persenKataSangatPanjang": 1.7,
+            "kalimatTerpanjang": 8
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 117,
+          "poinKunci": 12,
+          "sumber": 3,
+          "detik": 10.1,
+          "jawaban": "Kuman itu sangat kecil. Kuman tidak terlihat oleh mata. Kuman bisa menempel di tangan kita. Kita bisa sakit karena kuman. Cuci tangan membuat tangan bersih. Basahi tangan dengan air mengalir. Pakai sabun secukupnya. Gosok kedua telapak tangan. Gosok punggung tangan bergantian. Gosok sela-sela jari. Gosok ujung jari dan kuku. Gosok ibu jari bergantian. Bilas dengan air bersih. Keringkan dengan hand"
+        },
+        "remaja": {
+          "ukur": {
+            "kalimat": 17,
+            "kata": 117,
+            "sukuKata": 238,
+            "asl": 6.88,
+            "asw": 2.03,
+            "persenKataSulit": 17.9,
+            "persenKataSangatPanjang": 1.7,
+            "kalimatTerpanjang": 13
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 119,
+          "poinKunci": 7,
+          "sumber": 3,
+          "detik": 6.2,
+          "jawaban": "Cuci tangan itu membuang kuman pakai air dan sabun. Kuman bisa bikin sakit perut sampai infeksi berat. Karena itu, tangan bersih penting buat kamu yang sering jajan dan main HP. Basahi tangan dengan air mengalir. Pakai sabun secukupnya, lalu gosok seluruh tangan. Gosok punggung tangan, sela jari, dan ujung kuku. Gosok minimal 20 detik. Bilas sampai sabun hilang. Keringkan dengan kain bersih atau t"
+        },
+        "dewasa": {
+          "ukur": {
+            "kalimat": 18,
+            "kata": 128,
+            "sukuKata": 298,
+            "asl": 7.11,
+            "asw": 2.33,
+            "persenKataSulit": 32.8,
+            "persenKataSangatPanjang": 7.8,
+            "kalimatTerpanjang": 12
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 130,
+          "poinKunci": 6,
+          "sumber": 3,
+          "detik": 6.8,
+          "jawaban": "Mencuci tangan adalah membersihkan tangan dan jari dengan air dan sabun. Tujuannya membunuh kuman penyebab penyakit. Basahi tangan dengan air bersih yang mengalir. Gunakan sabun secukupnya, lalu gosok kedua telapak tangan. Gosok punggung tangan, sela-sela jari, dan ujung jari. Jangan lupa ibu jari dan kuku. Gosok minimal 20 detik. Bilas sampai sabun hilang. Keringkan dengan handuk bersih atau tisu"
+        },
+        "lansia": {
+          "ukur": {
+            "kalimat": 25,
+            "kata": 156,
+            "sukuKata": 357,
+            "asl": 6.24,
+            "asw": 2.29,
+            "persenKataSulit": 34.6,
+            "persenKataSangatPanjang": 3.8,
+            "kalimatTerpanjang": 12
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 156,
+          "poinKunci": 7,
+          "sumber": 4,
+          "detik": 6.3,
+          "jawaban": "Mencuci tangan adalah kegiatan membersihkan tangan dengan air dan sabun. Tujuannya membunuh kuman penyebab penyakit. Basahi tangan dengan air bersih yang mengalir. Ambil sabun secukupnya. Gosok kedua telapak tangan sampai berbusa. Gosok punggung tangan dan sela-sela jari. Gosok ujung jari dan ibu jari. Gosok juga kuku-kuku jari. Lakukan selama paling sedikit dua puluh detik. Bilas tangan dengan ai"
+        }
+      }
+    },
+    {
+      "pertanyaan": "Bagaimana cara mencegah jatuh pada lansia?",
+      "perTingkat": {
+        "anak": {
+          "ukur": {
+            "kalimat": 13,
+            "kata": 81,
+            "sukuKata": 185,
+            "asl": 6.23,
+            "asw": 2.28,
+            "persenKataSulit": 29.6,
+            "persenKataSangatPanjang": 6.2,
+            "kalimatTerpanjang": 8
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=3 suku 29.6% > 29%",
+            "kata >=4 suku 6.2% > 5%"
+          ],
+          "kataJawaban": 81,
+          "poinKunci": 7,
+          "sumber": 2,
+          "detik": 8,
+          "jawaban": "Jatuh bisa dicegah dengan beberapa cara. Latih keseimbangan tubuh secara rutin. Contohnya berdiri satu kaki sambil berpegangan. Latih juga kekuatan otot. Angkat beban ringan atau pakai karet elastis. Lakukan latihan kelenturan supaya badan lentur. Makan makanan bergizi setiap hari. Minum air yang cukup agar tidak lemas. Jalan kaki atau berenang juga bagus. Tanyakan ke dokter olahraga apa yang aman"
+        },
+        "remaja": {
+          "ukur": {
+            "kalimat": 19,
+            "kata": 151,
+            "sukuKata": 357,
+            "asl": 7.95,
+            "asw": 2.36,
+            "persenKataSulit": 35.8,
+            "persenKataSangatPanjang": 7.9,
+            "kalimatTerpanjang": 11
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 151,
+          "poinKunci": 8,
+          "sumber": 3,
+          "detik": 6,
+          "jawaban": "Jatuh pada lansia artinya kehilangan keseimbangan lalu terjatuh. Ini sering terjadi karena otot dan keseimbangan melemah seiring usia. Latihan keseimbangan membantu mencegah jatuh. Latihan ini melatih tubuh tetap stabil saat berdiri atau berjalan. Contohnya berdiri dengan satu kaki atau berjalan lurus. Latihan kekuatan juga penting. Otot kaki yang kuat membuat tubuh lebih stabil. Bisa dilakukan de"
+        },
+        "dewasa": {
+          "ukur": {
+            "kalimat": 16,
+            "kata": 156,
+            "sukuKata": 386,
+            "asl": 9.75,
+            "asw": 2.47,
+            "persenKataSulit": 43.6,
+            "persenKataSangatPanjang": 12.8,
+            "kalimatTerpanjang": 15
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 156,
+          "poinKunci": 7,
+          "sumber": 3,
+          "detik": 6.3,
+          "jawaban": "Jatuh pada lansia bisa dicegah dengan latihan keseimbangan dan penguatan otot. Latihan ini membantu lansia tetap stabil saat berdiri atau berjalan. Aktivitas lain yang dianjurkan adalah latihan daya tahan, kekuatan, keseimbangan, dan kelenturan. Ringkasan 'Exercise for Older Adults' menyebut empat jenis latihan utama. Semuanya berbeda dan bila dilakukan bersama memberi manfaat lebih besar. Latihan"
+        },
+        "lansia": {
+          "ukur": {
+            "kalimat": 16,
+            "kata": 101,
+            "sukuKata": 252,
+            "asl": 6.31,
+            "asw": 2.5,
+            "persenKataSulit": 41.6,
+            "persenKataSangatPanjang": 15.8,
+            "kalimatTerpanjang": 8
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=4 suku 15.8% > 13%"
+          ],
+          "kataJawaban": 101,
+          "poinKunci": 8,
+          "sumber": 3,
+          "detik": 5.7,
+          "jawaban": "Jatuh bisa dicegah dengan beberapa cara sederhana. Latihan keseimbangan membantu tubuh tetap stabil. Latihan ini juga mengurangi risiko jatuh. Olahraga ketahanan seperti jalan cepat baik untuk jantung. Latihan kekuatan menguatkan otot kaki dan tangan. Latihan kelenturan menjaga tubuh tetap lentur. Lakukan olahraga sesuai kemampuan dan kondisi tubuh. Tanyakan dulu ke dokter olahraga apa yang cocok."
+        }
+      }
+    },
+    {
+      "pertanyaan": "Apa yang harus dilakukan saat patah tulang?",
+      "perTingkat": {
+        "anak": {
+          "ukur": {
+            "kalimat": 14,
+            "kata": 85,
+            "sukuKata": 195,
+            "asl": 6.07,
+            "asw": 2.29,
+            "persenKataSulit": 29.4,
+            "persenKataSangatPanjang": 9.4,
+            "kalimatTerpanjang": 8
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=3 suku 29.4% > 29%",
+            "kata >=4 suku 9.4% > 5%"
+          ],
+          "kataJawaban": 85,
+          "poinKunci": 9,
+          "sumber": 1,
+          "detik": 7.7,
+          "jawaban": "Patah tulang artinya tulang kita retak atau pecah. Ini biasanya karena jatuh, kecelakaan, atau olahraga. Kalau kamu atau temanmu jatuh, jangan dipegang-pegang. Bagian yang sakit jangan digerakkan dulu. Lalu bilang ke orang tua atau guru. Mereka akan membawa ke dokter. Dokter memeriksa dengan foto tulang. Tulang yang patah dibungkus dengan gips. Kadang perlu operasi untuk memasang penjepit. Gips bi"
+        },
+        "remaja": {
+          "ukur": {
+            "kalimat": 20,
+            "kata": 142,
+            "sukuKata": 347,
+            "asl": 7.1,
+            "asw": 2.44,
+            "persenKataSulit": 40.1,
+            "persenKataSangatPanjang": 14.1,
+            "kalimatTerpanjang": 11
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=3 suku 40.1% > 37%",
+            "kata >=4 suku 14.1% > 10%"
+          ],
+          "kataJawaban": 142,
+          "poinKunci": 9,
+          "sumber": 1,
+          "detik": 5.9,
+          "jawaban": "Patah tulang artinya tulangmu retak atau putus. Ini biasanya terjadi karena kecelakaan, jatuh, atau cedera olahraga. Tulang yang lemah (osteoporosis) juga membuat patah lebih mudah. Gejalanya bisa nyeri hebat, bengkak, memar, atau bentuk anggota badan berubah. Terkadang bagian yang cedera sulit digerakkan. Kalau kamu menduga tulangmu patah, segera cari bantuan medis. Dokter akan memeriksa dan kemu"
+        },
+        "dewasa": {
+          "ukur": {
+            "kalimat": 13,
+            "kata": 154,
+            "sukuKata": 370,
+            "asl": 11.85,
+            "asw": 2.4,
+            "persenKataSulit": 37,
+            "persenKataSangatPanjang": 13,
+            "kalimatTerpanjang": 20
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 154,
+          "poinKunci": 8,
+          "sumber": 1,
+          "detik": 5.7,
+          "jawaban": "Patah tulang adalah kondisi tulang yang retak atau putus. Menurut MedlinePlus, penyebab umum adalah kecelakaan mobil, jatuh, atau cedera olahraga. Gerakan berulang juga bisa menyebabkan patah tulang akibat penggunaan berlebihan. Tulang yang lemah karena osteoporosis lebih mudah patah. Gejala yang mungkin muncul antara lain nyeri hebat, bentuk anggota tubuh berubah, bengkak, memar, dan sulit mengge"
+        },
+        "lansia": {
+          "ukur": {
+            "kalimat": 22,
+            "kata": 162,
+            "sukuKata": 393,
+            "asl": 7.36,
+            "asw": 2.43,
+            "persenKataSulit": 38.9,
+            "persenKataSangatPanjang": 10.5,
+            "kalimatTerpanjang": 11
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 162,
+          "poinKunci": 14,
+          "sumber": 1,
+          "detik": 7,
+          "jawaban": "Patah tulang adalah tulang yang retak atau putus. Ini biasanya terjadi karena kecelakaan, terjatuh, atau cedera olahraga. Tulang yang lemah karena keropos membuat patah tulang lebih mudah terjadi. Gejalanya bisa berupa nyeri hebat. Bagian tubuh bisa terlihat berubah bentuk. Bisa juga bengkak, memar, atau nyeri saat disentuh. Bagian yang cedera sulit digerakkan. Kalau Anda menduga ada patah tulang,"
+        }
+      }
+    },
+    {
+      "pertanyaan": "Apa penyebab anemia?",
+      "perTingkat": {
+        "anak": {
+          "ukur": {
+            "kalimat": 17,
+            "kata": 104,
+            "sukuKata": 228,
+            "asl": 6.12,
+            "asw": 2.19,
+            "persenKataSulit": 27.9,
+            "persenKataSangatPanjang": 6.7,
+            "kalimatTerpanjang": 10
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=4 suku 6.7% > 5%"
+          ],
+          "kataJawaban": 104,
+          "poinKunci": 9,
+          "sumber": 1,
+          "detik": 11.2,
+          "jawaban": "Anemia artinya darah kurang membawa oksigen. Darah butuh zat besi untuk membuat hemoglobin. Hemoglobin itu pengangkut oksigen. Kalau zat besi kurang, anemia bisa muncul. Anemia punya tiga penyebab utama. Pertama, darah keluar dari tubuh. Kedua, tubuh kurang membuat sel darah merah. Ketiga, sel darah merah pecah terlalu cepat. Beberapa hal bisa membuat anemia. Contohnya haid yang banyak. Juga keham"
+        },
+        "remaja": {
+          "ukur": {
+            "kalimat": 15,
+            "kata": 160,
+            "sukuKata": 366,
+            "asl": 10.67,
+            "asw": 2.29,
+            "persenKataSulit": 31.9,
+            "persenKataSangatPanjang": 11.9,
+            "kalimatTerpanjang": 19
+          },
+          "lolos": false,
+          "pelanggaran": [
+            "kata/kalimat 10.67 > 10",
+            "kalimat terpanjang 19 kata > 17"
+          ],
+          "tren": [
+            "kata >=4 suku 11.9% > 10%"
+          ],
+          "kataJawaban": 160,
+          "poinKunci": 9,
+          "sumber": 5,
+          "detik": 6.1,
+          "jawaban": "Anemia artinya darahmu tidak membawa cukup oksigen ke seluruh tubuh. Ini terjadi karena jumlah sel darah merah atau hemoglobin kurang. Hemoglobin itu protein pembawa oksigen di sel darah merah. Penyebab utamanya ada tiga: kehilangan darah, tubuh kurang membuat sel darah merah, atau sel darah merah banyak yang rusak. Kurang zat besi adalah penyebab paling sering. Zat besi dibutuhkan tubuh untuk mem"
+        },
+        "dewasa": {
+          "ukur": {
+            "kalimat": 18,
+            "kata": 190,
+            "sukuKata": 447,
+            "asl": 10.56,
+            "asw": 2.35,
+            "persenKataSulit": 36.3,
+            "persenKataSangatPanjang": 12.1,
+            "kalimatTerpanjang": 31
+          },
+          "lolos": false,
+          "pelanggaran": [
+            "kalimat terpanjang 31 kata > 26"
+          ],
+          "tren": [],
+          "kataJawaban": 190,
+          "poinKunci": 9,
+          "sumber": 5,
+          "detik": 7.1,
+          "jawaban": "Anemia adalah kondisi saat darah tidak membawa cukup oksigen ke seluruh tubuh. Salah satu penyebab tersering adalah kekurangan zat besi. Zat besi dibutuhkan tubuh untuk membentuk hemoglobin. Hemoglobin adalah protein kaya zat besi yang memberi warna merah pada darah. Hemoglobin mengangkut oksigen dari paru-paru ke seluruh tubuh. Secara umum, anemia punya tiga penyebab utama. Pertama, kehilangan da"
+        },
+        "lansia": {
+          "ukur": {
+            "kalimat": 19,
+            "kata": 125,
+            "sukuKata": 300,
+            "asl": 6.58,
+            "asw": 2.4,
+            "persenKataSulit": 36.8,
+            "persenKataSangatPanjang": 15.2,
+            "kalimatTerpanjang": 12
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=4 suku 15.2% > 13%"
+          ],
+          "kataJawaban": 125,
+          "poinKunci": 9,
+          "sumber": 1,
+          "detik": 5.1,
+          "jawaban": "Anemia berarti darah tidak membawa cukup oksigen ke seluruh tubuh. Penyebab tersering adalah kurang zat besi. Zat besi dibutuhkan untuk membuat hemoglobin. Hemoglobin adalah protein yang membawa oksigen. Ada tiga penyebab utama anemia. Pertama, kehilangan darah. Kedua, tubuh kurang membuat sel darah merah. Ketiga, sel darah merah cepat rusak. Beberapa keadaan bisa menyebabkan anemia. Misalnya haid"
+        }
+      }
+    },
+    {
+      "pertanyaan": "Bagaimana cara merawat pasien stroke di rumah?",
+      "perTingkat": {
+        "anak": {
+          "ukur": {
+            "kalimat": 16,
+            "kata": 79,
+            "sukuKata": 173,
+            "asl": 4.94,
+            "asw": 2.19,
+            "persenKataSulit": 30.4,
+            "persenKataSangatPanjang": 3.8,
+            "kalimatTerpanjang": 9
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=3 suku 30.4% > 29%"
+          ],
+          "kataJawaban": 81,
+          "poinKunci": 8,
+          "sumber": 3,
+          "detik": 8.6,
+          "jawaban": "Strok membuat otak kekurangan darah. Sel otak bisa mati. Ini keadaan darurat. Panggil ambulans segera. Jangan mengantar sendiri. Di rumah, banyak hal bisa dilatih lagi. Ada latihan bicara dan menelan. Ada latihan gerak dan kekuatan. Ada latihan makan dan mandi. Ada latihan ingat dan berpikir. Latihan mulai di rumah sakit. Biasanya dalam 24 sampai 48 jam. Lebih cepat mulai, lebih baik hasilnya. Ban"
+        },
+        "remaja": {
+          "ukur": {
+            "kalimat": 24,
+            "kata": 177,
+            "sukuKata": 424,
+            "asl": 7.38,
+            "asw": 2.4,
+            "persenKataSulit": 39,
+            "persenKataSangatPanjang": 8.5,
+            "kalimatTerpanjang": 12
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=3 suku 39% > 37%"
+          ],
+          "kataJawaban": 179,
+          "poinKunci": 7,
+          "sumber": 5,
+          "detik": 7.7,
+          "jawaban": "Merawat pasien stroke di rumah bukan cuma soal sabar. Ada beberapa hal yang bisa kamu lakukan. Pertama, rehabilitasi atau latihan pemulihan. Ini program untuk melatih kembali kemampuan yang hilang. Latihan sebaiknya mulai secepat mungkin. Menurut sumber, latihan bisa dimulai dalam 24 sampai 48 jam setelah stroke. Latihan ini biasanya dilakukan di rumah sakit dulu. Setelah pulang, kamu bisa bantu p"
+        },
+        "dewasa": {
+          "ukur": {
+            "kalimat": 15,
+            "kata": 164,
+            "sukuKata": 409,
+            "asl": 10.93,
+            "asw": 2.49,
+            "persenKataSulit": 45.7,
+            "persenKataSangatPanjang": 11,
+            "kalimatTerpanjang": 16
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [],
+          "kataJawaban": 164,
+          "poinKunci": 9,
+          "sumber": 5,
+          "detik": 6.3,
+          "jawaban": "Strok terjadi saat aliran darah ke otak terganggu, sehingga sel otak mati dalam beberapa menit. Perawatan di rumah paling efektif bila dimulai sejak dini, bahkan saat pasien masih di rumah sakit. Rehabilitasi strok bertujuan membantu pasien melatih kembali kemampuan yang hilang. Program ini bisa mencakup terapi wicara, terapi fisik, terapi okupasi, dan terapi kognitif. Terapi wicara membantu bicar"
+        },
+        "lansia": {
+          "ukur": {
+            "kalimat": 25,
+            "kata": 162,
+            "sukuKata": 405,
+            "asl": 6.48,
+            "asw": 2.5,
+            "persenKataSulit": 42.6,
+            "persenKataSangatPanjang": 13.6,
+            "kalimatTerpanjang": 10
+          },
+          "lolos": true,
+          "pelanggaran": [],
+          "tren": [
+            "kata >=3 suku 42.6% > 42%",
+            "kata >=4 suku 13.6% > 13%"
+          ],
+          "kataJawaban": 164,
+          "poinKunci": 9,
+          "sumber": 3,
+          "detik": 7.4,
+          "jawaban": "Strok terjadi saat aliran darah ke otak terganggu. Sel otak bisa mati dalam beberapa menit. Ini bisa menyebabkan kerusakan otak menetap. Bisa juga menimbulkan cacat jangka panjang. Bahkan bisa menyebabkan kematian. Karena itu, strok termasuk keadaan darurat medis. Perawatan di rumah berupa latihan pemulihan. Namanya rehabilitasi strok. Rehabilitasi membantu pasien mempelajari kembali keterampilan "
+        }
+      }
+    }
+  ]
+}

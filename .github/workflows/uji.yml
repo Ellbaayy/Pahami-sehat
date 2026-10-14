@@ -75,6 +75,14 @@ jobs:
       - name: Uji kesehatan kamus id/en
         run: node uji-bahasa.mjs
 
+      - name: Uji alat ukur keterbacaan
+        # Alat ukur yang salah menghasilkan kesimpulan yang salah dengan sangat
+        # meyakinkan. Uji ini memakai kata yang jumlah suku katanya bisa
+        # dihitung manusia, dan memastikan daftar berbutir TIDAK dihitung
+        # sebagai satu kalimat raksasa (pernah terjadi: satu jawaban dilaporkan
+        # 56 kata per kalimat padahal itu daftar langkah).
+        run: node uji-keterbacaan.mjs
+
       - name: Uji lapis sumber (tanpa jaringan)
         run: node uji-sumber.mjs
 
