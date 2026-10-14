@@ -27,21 +27,29 @@ export function Card({ className, children, as: Tag = 'div', ...rest }) {
  * tiap fitur punya ciri visual sendiri. Sengaja tidak selalu diisi —
  * Pengaturan dibiarkan bersih, dan Panel lain diisi secukupnya saja.
  */
-export function SectionHeading({ eyebrow, title, description, action, id, ilustrasi }) {
+export function SectionHeading({ eyebrow, title, description, action, id, ilustrasi, as: Judul = 'h2' }) {
   return (
     <div className="mb-[clamp(0.85rem,1.4vw,1.35rem)] flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
       <div className="min-w-0">
         {eyebrow ? (
-          <p className="mb-1 text-[0.72rem] font-bold tracking-[0.14em] uppercase text-brand-600">
+          <p className="mb-1 text-[0.72rem] font-bold tracking-[0.14em] uppercase text-brand-700">
             {eyebrow}
           </p>
         ) : null}
-        <h2
+        {/*
+          `as` menentukan tingkat judul, dan bawaannya `h2`.
+          Judul HALAMAN (Tanya AI, Cek Klaim, Riwayat, Kuesioner, Pengaturan)
+          memakai `as="h1"` supaya setiap halaman punya satu judul utama — dulu
+          hanya Beranda yang punya, sehingga pengguna pembaca layar tidak punya
+          penanda halaman. Judul BAGIAN di dalam satu halaman tetap `h2`.
+          Tampilannya sengaja tidak diubah: yang berpindah hanya semantiknya.
+        */}
+        <Judul
           id={id}
           className="text-[clamp(1.05rem,0.95rem+0.45vw,1.35rem)] font-bold tracking-tight text-navy-900"
         >
           {title}
-        </h2>
+        </Judul>
         {description ? (
           <p className="mt-1 max-w-[62ch] text-[clamp(0.85rem,0.8rem+0.15vw,0.95rem)] text-navy-500">
             {description}
@@ -69,8 +77,15 @@ export function SectionHeading({ eyebrow, title, description, action, id, ilustr
 
 /* ---------------- Button ---------------- */
 const BTN_VARIANTS = {
+  /*
+   * LATAR TOMBOL UTAMA = brand-600, bukan brand-500.
+   * Teks putih di atas brand-500 hanya mencapai rasio kontras 3,12 — di bawah
+   * ambang WCAG AA 4,5 untuk teks normal (diukur). Di atas brand-600 rasionya
+   * 4,58. Hover/active memakai brand-700 supaya perubahannya tetap terlihat;
+   * kalau memakai brand-600 juga, hover jadi tidak kelihatan sama sekali.
+   */
   primary:
-    'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-600 shadow-[0_6px_16px_-8px_rgba(13,132,120,0.7)]',
+    'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-700 shadow-[0_6px_16px_-8px_rgba(13,132,120,0.7)]',
   soft: 'bg-brand-50 text-brand-700 hover:bg-brand-200 border border-brand-100',
   neutral: 'bg-white text-navy-700 border border-line-200 hover:border-line-300 hover:bg-surface-50',
   ghost: 'text-navy-500 hover:text-navy-800 hover:bg-surface-100',
@@ -129,7 +144,7 @@ export function EmptyState({ icon: Icon, title, description, action }) {
         className="mb-1 w-[clamp(7.5rem,22vw,11rem)]"
       />
       {Icon ? (
-        <span className="grid size-11 place-items-center rounded-full bg-white text-brand-600 shadow-sm">
+        <span className="grid size-11 place-items-center rounded-full bg-white text-brand-700 shadow-sm">
           <Icon className="size-5" aria-hidden="true" />
         </span>
       ) : null}
@@ -199,7 +214,7 @@ export function PoinKunci({ items = [], t = (k) => k }) {
   return (
     <details className="group mt-3 rounded-xl border border-line-200 bg-white/70 px-3.5 py-2.5">
       <summary className="flex cursor-pointer items-center gap-2 text-[0.78rem] font-bold text-navy-700 marker:content-none">
-        <span className="text-brand-600 transition-transform group-open:rotate-90" aria-hidden="true">
+        <span className="text-brand-700 transition-transform group-open:rotate-90" aria-hidden="true">
           ▸
         </span>
         {t('umum.poinKunci')} ({items.length})
@@ -207,7 +222,7 @@ export function PoinKunci({ items = [], t = (k) => k }) {
       <ul className="mt-2 space-y-1.5 pl-1">
         {items.map((p, i) => (
           <li key={i} className="flex gap-2 text-[0.84rem] leading-snug text-navy-700">
-            <span className="text-brand-600" aria-hidden="true">•</span>
+            <span className="text-brand-700" aria-hidden="true">•</span>
             <span>{p}</span>
           </li>
         ))}
@@ -272,7 +287,7 @@ export function SumberJawaban({ sumber = [], cari = [], label, t = (k) => k }) {
       className="mt-3 rounded-xl border border-line-200 bg-white px-3.5 py-3"
     >
       <summary className="flex cursor-pointer flex-wrap items-center gap-2 text-[0.8rem] font-bold text-navy-800 marker:content-none">
-        <Search className="size-3.5 text-brand-600" aria-hidden="true" />
+        <Search className="size-3.5 text-brand-700" aria-hidden="true" />
         {label ?? t('sumber.judul')} ({semua.length})
         {adaResmi ? (
           <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[0.68rem] font-bold text-brand-700 ring-1 ring-brand-100">
@@ -291,9 +306,9 @@ export function SumberJawaban({ sumber = [], cari = [], label, t = (k) => k }) {
           <li key={`${s.url}-${i}`} className="rounded-lg border border-line-100 bg-surface-50/60 p-2.5">
             <div className="flex items-start gap-2">
               {s.resmi ? (
-                <Landmark className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden="true" />
+                <Landmark className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden="true" />
               ) : s.dipakai ? (
-                <Check className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden="true" />
+                <Check className="mt-0.5 size-4 shrink-0 text-brand-700" aria-hidden="true" />
               ) : (
                 <Link className="mt-0.5 size-4 shrink-0 text-muted-500" aria-hidden="true" />
               )}
@@ -301,7 +316,7 @@ export function SumberJawaban({ sumber = [], cari = [], label, t = (k) => k }) {
                 <p className="text-[0.84rem] leading-snug font-semibold text-navy-800">
                   {s.judul}
                   {s.resmi ? (
-                    <span className="ml-1.5 text-[0.68rem] font-bold text-brand-600">
+                    <span className="ml-1.5 text-[0.68rem] font-bold text-brand-700">
                       {t('sumber.resmi')}
                     </span>
                   ) : null}

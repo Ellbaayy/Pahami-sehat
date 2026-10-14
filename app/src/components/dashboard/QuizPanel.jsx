@@ -193,13 +193,14 @@ export default function QuizPanel({ t = (k) => k }) {
     <div className="grid gap-[clamp(1rem,0.5rem+1.6vw,1.75rem)] lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
       <div className="space-y-[clamp(1rem,1.6vw,1.75rem)] min-w-0">
         <SectionHeading
+          as="h1"
           eyebrow={t('kuis.eyebrow')}
           title={t('kuis.judul')}
           description={t('kuis.sub')}
           ilustrasi="kuesioner"
           action={
             <span className="inline-flex items-center gap-1.5 rounded-full border border-line-200 bg-white px-3 py-1.5 text-[0.78rem] font-semibold text-navy-600">
-              <Clock className="size-3.5 text-brand-600" aria-hidden="true" />
+              <Clock className="size-3.5 text-brand-700" aria-hidden="true" />
               {t('kuis.waktu')}
             </span>
           }
@@ -421,8 +422,8 @@ export default function QuizPanel({ t = (k) => k }) {
 
         <Card className="p-4">
           <div className="flex items-center gap-2">
-            <Info className="size-4 shrink-0 text-brand-600" aria-hidden="true" />
-            <h3 className="text-[0.92rem] font-bold text-navy-900">{t('kuis.tentang')}</h3>
+            <Info className="size-4 shrink-0 text-brand-700" aria-hidden="true" />
+            <h2 className="text-[0.92rem] font-bold text-navy-900">{t('kuis.tentang')}</h2>
           </div>
           <p className="mt-2 text-[0.82rem] leading-relaxed text-navy-600">{t('kuis.tentangIsi')}</p>
         </Card>
@@ -430,12 +431,12 @@ export default function QuizPanel({ t = (k) => k }) {
         <Card className="p-4">
           <div className="flex items-center gap-2">
             <Lightbulb className="size-4 shrink-0 text-amber-500" aria-hidden="true" />
-            <h3 className="text-[0.92rem] font-bold text-navy-900">{t('kuis.tips')}</h3>
+            <h2 className="text-[0.92rem] font-bold text-navy-900">{t('kuis.tips')}</h2>
           </div>
           <ul className="mt-2.5 space-y-2">
             {[t('kuis.tip1'), t('kuis.tip2'), t('kuis.tip3')].map((tip) => (
               <li key={tip} className="flex gap-2 text-[0.8rem] leading-snug text-navy-600">
-                <Check className="mt-0.5 size-3.5 shrink-0 text-brand-600" aria-hidden="true" />
+                <Check className="mt-0.5 size-3.5 shrink-0 text-brand-700" aria-hidden="true" />
                 <span>{tip}</span>
               </li>
             ))}

@@ -24,7 +24,7 @@ export default function AskAI({
   return (
     <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
       <div className="mb-3 flex items-center gap-2.5">
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-100">
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100">
           <Sparkles className="size-[18px]" aria-hidden="true" />
         </span>
         <div className="min-w-0">

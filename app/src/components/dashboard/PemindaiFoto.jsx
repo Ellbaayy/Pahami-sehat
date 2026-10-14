@@ -165,7 +165,7 @@ export default function PemindaiFoto({
   return (
     <div className="mt-3 rounded-2xl border border-line-200 bg-surface-50/60 p-[clamp(0.9rem,0.75rem+0.6vw,1.35rem)]">
       <div className="mb-3 flex items-start gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-brand-600 ring-1 ring-brand-100">
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-brand-700 ring-1 ring-brand-100">
           <ScanText className="size-[18px]" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -220,7 +220,7 @@ export default function PemindaiFoto({
               </>
             ) : (
               <>
-                <span className="grid size-12 place-items-center rounded-full bg-white text-brand-600 shadow-sm">
+                <span className="grid size-12 place-items-center rounded-full bg-white text-brand-700 shadow-sm">
                   <ImageUp className="size-6" aria-hidden="true" />
                 </span>
                 <p className="text-[0.9rem] font-semibold text-navy-800">{t('pindai.tarik')}</p>
@@ -274,7 +274,7 @@ export default function PemindaiFoto({
           <ul className="mt-3 space-y-1.5">
             {CONTOH_BANTUAN.map((kunci) => (
               <li key={kunci} className="flex gap-2 text-[0.76rem] leading-snug text-muted-600">
-                <span className="text-brand-600" aria-hidden="true">
+                <span className="text-brand-700" aria-hidden="true">
                   •
                 </span>
                 {t(kunci)}
@@ -434,7 +434,7 @@ export default function PemindaiFoto({
             <ul className="mt-1.5 space-y-1.5">
               {[t('pindai.privasi1'), t('pindai.privasi2'), t('pindai.privasi3')].map((b) => (
                 <li key={b} className="flex gap-2 text-[0.78rem] leading-snug text-navy-600">
-                  <span className="text-brand-600" aria-hidden="true">
+                  <span className="text-brand-700" aria-hidden="true">
                     •
                   </span>
                   {b}

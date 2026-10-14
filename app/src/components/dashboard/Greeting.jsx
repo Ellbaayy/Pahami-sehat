@@ -20,7 +20,7 @@ export default function Greeting({ t = (k) => k }) {
       className="flex items-center gap-[clamp(1rem,3vw,2.75rem)]"
     >
       <div className="min-w-0 flex-1">
-        <p className="mb-2 text-[0.72rem] font-bold tracking-[0.14em] uppercase text-brand-600">
+        <p className="mb-2 text-[0.72rem] font-bold tracking-[0.14em] uppercase text-brand-700">
           {t('nav.beranda')}
         </p>
         <h1
@@ -33,7 +33,7 @@ export default function Greeting({ t = (k) => k }) {
             aria-hidden="true"
           />
         </h1>
-        <p className="mt-2 text-[clamp(1.05rem,0.95rem+0.6vw,1.5rem)] font-semibold text-brand-600">
+        <p className="mt-2 text-[clamp(1.05rem,0.95rem+0.6vw,1.5rem)] font-semibold text-brand-700">
           {t('beranda.tanya')}
         </p>
         <p className="mt-2 max-w-[54ch] text-[clamp(0.88rem,0.84rem+0.2vw,1rem)] text-navy-500">
@@ -42,7 +42,7 @@ export default function Greeting({ t = (k) => k }) {
 
         <div className="mt-4 flex flex-wrap gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.76rem] font-semibold text-navy-700 ring-1 ring-line-200">
-            <ShieldCheck className="size-3.5 text-brand-600" aria-hidden="true" />
+            <ShieldCheck className="size-3.5 text-brand-700" aria-hidden="true" />
             {t('beranda.badge1')}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.76rem] font-semibold text-navy-700 ring-1 ring-line-200">

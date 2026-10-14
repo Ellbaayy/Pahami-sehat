@@ -80,6 +80,7 @@ export default function ThreadPanel({
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
+        as="h1"
         eyebrow={t('tanya.eyebrow')}
         title={t('tanya.judul')}
         description={t('tanya.sub')}
@@ -90,7 +91,7 @@ export default function ThreadPanel({
           Tombolnya sengaja tidak muncul saat belum ada isi — "Bagikan" dan
           "Hapus" pada obrolan kosong tidak ada artinya. */}
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line-200 bg-white px-3.5 py-2.5">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
           <MessagesSquare className="size-4" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -201,14 +202,14 @@ export default function ThreadPanel({
               className={cn(
                 'rise max-w-[min(100%,46rem)] rounded-2xl border p-4',
                 m.role === 'user'
-                  ? 'ml-auto border-brand-500 bg-brand-500 text-white'
+                  ? 'ml-auto border-brand-500 bg-brand-600 text-white'
                   : 'border-line-200 bg-white',
               )}
             >
               <p
                 className={cn(
                   'flex flex-wrap items-center gap-2 text-[0.7rem] font-bold tracking-[0.12em] uppercase',
-                  m.role === 'user' ? 'text-brand-100' : 'text-brand-600',
+                  m.role === 'user' ? 'text-brand-100' : 'text-brand-700',
                 )}
               >
                 {m.role === 'user' ? t('tanya.kamu') : 'Pahami Sehat'}
@@ -249,7 +250,7 @@ export default function ThreadPanel({
             <li className="max-w-[min(100%,46rem)] rounded-2xl border border-line-200 bg-white p-4">
               {streaming ? (
                 <>
-                  <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-600">
+                  <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-700">
                     {t('tanya.sedangMenyusun')}
                   </p>
                   <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-navy-700">
@@ -259,7 +260,7 @@ export default function ThreadPanel({
                 </>
               ) : (
                 <>
-                  <p className="mb-2 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-brand-600">
+                  <p className="mb-2 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-brand-700">
                     <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
                     {statusPesan || t('umum.proses')}
                   </p>

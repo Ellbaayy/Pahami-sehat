@@ -82,7 +82,7 @@ export default function Sidebar({ active, onSelect, terbuka = true, t = (k) => k
               <Icon
                 className={cn(
                   'size-[19px] shrink-0 transition-transform duration-200',
-                  isActive ? 'text-brand-600' : 'text-navy-500 group-hover:scale-105',
+                  isActive ? 'text-brand-700' : 'text-navy-500 group-hover:scale-105',
                 )}
                 aria-hidden="true"
               />
@@ -102,7 +102,7 @@ export default function Sidebar({ active, onSelect, terbuka = true, t = (k) => k
       <div className={cn(terbuka ? 'p-3.5' : 'p-2.5')}>
         {terbuka ? (
           <div className="rounded-xl bg-brand-50 p-3.5 ring-1 ring-brand-100">
-            <span className="mb-1.5 inline-flex size-7 items-center justify-center rounded-full bg-white text-brand-600 shadow-sm">
+            <span className="mb-1.5 inline-flex size-7 items-center justify-center rounded-full bg-white text-brand-700 shadow-sm">
               <Activity className="size-4" aria-hidden="true" />
             </span>
             <p className="text-[0.8rem] leading-snug font-medium text-navy-700">

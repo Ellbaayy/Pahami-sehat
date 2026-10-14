@@ -77,7 +77,7 @@ export default function TopicChips({
                 'transition-all duration-200 ease-out',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                 isActive
-                  ? 'bg-brand-500 text-white shadow-[0_6px_16px_-8px_rgba(13,132,120,0.8)]'
+                  ? 'bg-brand-600 text-white shadow-[0_6px_16px_-8px_rgba(13,132,120,0.8)]'
                   : 'border border-line-200 bg-white text-navy-700 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 active:translate-y-0',
               )}
             >
