@@ -44,11 +44,27 @@
  * ukuran berkas: hasil /api/suara teks panjang terbaca kembali sebagai teks
  * aslinya dengan keyakinan bahasa 1,00. Jadi ini bukan audio kosong.
  *
- * BATAS YANG TETAP ADA: layanan ini membalas HTTP 429 kalau dipanggil terlalu
- * sering dalam waktu singkat (terjadi saat puluhan uji dijalankan beruntun).
- * Itu batas laju sementara, bukan kerusakan — setelah jeda ~20 detik normal
- * lagi. Karena Kenari TTS sedang 503, SEMUA permintaan jatuh ke jalur ini,
- * jadi jangan menguji suara beruntun tanpa jeda lalu menyimpulkan "rusak".
+ * BATAS YANG TETAP ADA — DAN SEKARANG DITANGANI: layanan Microsoft membalas
+ * HTTP `429` (terlalu sering) kalau dipanggil beruntun. Diukur 14 Okt 2026
+ * dengan jeda 3 detik antar permintaan: hanya 4 dari 8 yang lolos, sisanya
+ * `429`. Karena satu permintaan /api/suara bisa memuat puluhan kalimat (satu
+ * permintaan per kalimat), satu saja yang kena 429 membuat SELURUH jawaban
+ * gagal — pengguna tidak dapat suara sama sekali padahal 7 kalimat lain
+ * berhasil. Sekarang tiap kalimat diulang sampai `COBA_ULANG` kali dengan jeda
+ * bertingkat, dan koneksi yang sudah rusak disambung ulang. Jangan hapus
+ * percobaan ulang ini; mengukur sekali lalu menyimpulkan "rusak" juga salah —
+ * 429 itu sementara dan pulih dalam ~1 detik.
+ *
+ * KEPUTUSAN JAGI (14 Okt 2026) — HANYA JALUR MICROSOFT.
+ * Dulu ada jalur kedua lewat Kenari (`POST /audio/speech`) yang dicoba LEBIH
+ * DULU di server biasa. Jalur itu dibuang karena selalu merugikan:
+ *   - saldo akun Kenari Rp 0, jadi setiap permintaan ditolak `402
+ *     insufficient_balance` (atau menggantung sampai batas waktu 20 detik)
+ *     SEBELUM akhirnya pindah ke Microsoft;
+ *   - penantian itu murni pemborosan: /api/suara jadi 20 detik lebih lambat
+ *     untuk setiap kalimat tanpa pernah menghasilkan audio.
+ * Jadi sekarang Microsoft adalah satu-satunya jalur di server biasa. Jangan
+ * hidupkan kembali jalur Kenari tanpa perintah jagi.
  *
  * CATATAN LISENSI: suara ini milik Microsoft dan diakses lewat layanan
  * Read Aloud, yang izin komersialnya belum dinyatakan tertulis. Aman untuk
@@ -58,8 +74,6 @@
 
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts'
 
-import { config } from './config.js'
-
 /** Suara per bahasa: jawaban dibacakan sesuai bahasanya. */
 const SUARA = {
   id: 'id-ID-GadisNeural', // perempuan Indonesia — suara utama
@@ -67,26 +81,6 @@ const SUARA = {
   su: 'su-ID-TutiNeural', // perempuan Sunda
   en: 'en-US-AriaNeural', // perempuan Inggris (untuk jawaban berbahasa Inggris)
 }
-
-/**
- * Suara untuk jalur Kenari (`POST /audio/speech`).
- *
- * Nama-nama ini milik Gemini, dan daftar sahnya didapat dari pesan galat
- * penyedia sendiri — ia menolak nama yang tidak dikenal lalu menyebutkan
- * pilihan yang benar. Itu satu-satunya cara mengetahui daftarnya tanpa
- * dokumentasi.
- *
- * JUJUR SOAL YANG BELUM DIUJI: mana yang paling enak didengar untuk bahasa
- * Indonesia BELUM bisa dinilai, karena setiap percobaan ke /audio/speech
- * ditolak dengan `insufficient_balance` (saldo akun Rp 0). Nama di bawah
- * dipilih dari daftar yang sah, bukan dari hasil mendengarkan. Kalau nanti
- * sudah ada saldo dan suaranya kurang cocok, gantinya lewat KENARI_TTS_VOICE
- * — tidak perlu mengubah kode.
- */
-const SUARA_KENARI = { id: 'Kore', en: 'Aoede', jv: 'Kore', su: 'Kore' }
-
-/** Batas waktu satu permintaan suara ke Kenari (di bawah maxDuration 60 detik). */
-const BATAS_KENARI_MS = 20_000
 
 /**
  * Batas aman panjang teks yang dibacakan.
@@ -259,60 +253,97 @@ async function buatBagian(tts, kalimat, opsi) {
   return Buffer.concat(potongan)
 }
 
+/* ---------------------------------------------------- ulang saat kena 429 --- */
+
 /**
- * Buat audio lewat Kenari (`POST /audio/speech`) — jalur yang dipakai di
- * serverless.
+ * Berapa kali satu kalimat dicoba ulang, dan berapa lama menunggu di antaranya.
  *
- * KENAPA PERLU JALUR KEDUA
- * Jalur msedge-tts di bawah memakai WebSocket ke Microsoft. WebSocket tidak
- * bisa hidup di fungsi serverless Vercel: diukur, /api/suara di produksi
- * SELALU menjawab HTTP 502, sedangkan di komputer sendiri menjawab 200 dengan
- * MP3 yang benar. Jadi bukan soal konfigurasi — memang tidak mungkin.
- * Kenari dipanggil dengan HTTPS biasa, dan itu jalan di serverless. Karena
- * akun Kenari sudah dipakai untuk model teks, tidak ada layanan baru yang
- * perlu didaftarkan.
+ * KENAPA PERLU: diukur 14 Okt 2026 dengan jeda 3 detik antar permintaan, hanya
+ * 4 dari 8 permintaan yang lolos — sisanya `429`. Satu permintaan /api/suara
+ * membuat SATU permintaan per kalimat, jadi jawaban 13 kalimat bisa memicu
+ * puluhan permintaan beruntun; satu kalimat yang gagal membuat seluruh
+ * jawaban gagal. 429 ini pulih cepat (~1 detik), jadi menunggu lalu mengulang
+ * jauh lebih baik daripada menyerah.
  *
- * Urutan pemakaian ada di `buatSuara`: kalau `KENARI_TTS` tidak dimatikan,
- * jalur ini yang dicoba lebih dulu, dan msedge-tts dipakai sebagai cadangan
- * saat Kenari tidak bisa (mis. saldo habis atau sedang gangguan).
- *
- * @param {string} teks
- * @param {string} bahasa kode bahasa ('id' | 'en' | 'jv' | 'su')
- * @returns {Promise<Buffer>}
+ * Jeda dinaikkan bertingkat (0,5 → 1,0 → 1,5 detik, total 3 detik) supaya tidak
+ * menghajar layanan yang sedang membatasi kita — 429 di sini pulih dalam ~1 detik.
  */
-async function buatSuaraKenari(teks, bahasa) {
-  const suara =
-    process.env.KENARI_TTS_VOICE ||
-    SUARA_KENARI[bahasa] ||
-    SUARA_KENARI.id
-  const model = process.env.KENARI_TTS_MODEL || 'gemini-3-1-flash-tts'
+const COBA_ULANG = 4
+const JEDA_ULANG_MS = 500
 
-  const res = await fetch(`${config.baseUrl}/audio/speech`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ model, input: teks, voice: suara, response_format: 'mp3' }),
-    signal: AbortSignal.timeout(BATAS_KENARI_MS),
-  })
-
-  const isi = Buffer.from(await res.arrayBuffer())
-  if (!res.ok) {
-    // Pesan penyedia ikut dibawa supaya penyebabnya kelihatan di log server
-    // (mis. insufficient_balance) — tapi TIDAK dikirim ke klien, lihat rute.
-    throw new Error(`Kenari ${res.status}: ${isi.toString('utf8').slice(0, 200)}`)
-  }
-  if (!isi.length) throw new Error('Kenari mengembalikan audio kosong.')
-  return isi
+/** Sebuah galat layar suara yang layak dicoba ulang? (429 / koneksi putus) */
+function layakDiulang(e) {
+  const p = String(e?.message ?? e)
+  return /429|too many requests|connection closed|ECONNRESET|socket hang up|ETIMEDOUT/i.test(p)
 }
+
+/** Format keluaran yang dipakai untuk semua suara (MP3 24 kHz mono). */
+const FORMAT_MP3 = OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3
+
+/**
+ * Buka (atau buka ULANG) koneksi WebSocket ke Microsoft, dengan percobaan ulang.
+ *
+ * KENAPA PERLU DIULANG JUGA: 429 bisa datang saat MEMBUKA koneksi, bukan cuma
+ * saat mengirim kalimat. Diukur 14 Okt 2026: satu permintaan gagal setelah 0,57
+ * detik — secepat itu mustahil kalau percobaan ulang sempat jalan, artinya
+ * galatnya datang dari `setMetadata` yang ada di luar pembungkus. Jadi
+ * pembukaan koneksi WAJIB ikut diulang.
+ *
+ * @param {{tts: import('msedge-tts').MsEdgeTTS, bahasa: string}} e
+ */
+async function sambung(e) {
+  let terakhir
+  for (let ke = 1; ke <= COBA_ULANG; ke++) {
+    try {
+      await e.tts.setMetadata(pilihSuara(e.bahasa), FORMAT_MP3)
+      return
+    } catch (err) {
+      terakhir = err
+      if (ke === COBA_ULANG || !layakDiulang(err)) throw err
+      await new Promise((r) => setTimeout(r, JEDA_ULANG_MS * ke))
+    }
+  }
+  throw terakhir
+}
+
+/**
+ * Buat satu bagian audio, dengan percobaan ulang saat kena batas laju.
+ *
+ * KENAPA KONEKSI DISAMBUNG ULANG: setelah kena 429, WebSocket milik instance
+ * itu sudah ditutup pustakanya (`_closeSocket`). Memakai instance yang soketnya
+ * sudah mati akan gagal terus, jadi sebelum mencoba lagi koneksinya dibuka
+ * ulang lewat `sambung()`.
+ *
+ * @param {{tts: import('msedge-tts').MsEdgeTTS, bahasa: string}} e
+ * @param {string} kalimat
+ * @param {{pitch: string, rate: string}} opsi
+ */
+async function buatBagianTahan(e, kalimat, opsi) {
+  let terakhir
+  for (let ke = 1; ke <= COBA_ULANG; ke++) {
+    try {
+      return await buatBagian(e.tts, kalimat, opsi)
+    } catch (err) {
+      terakhir = err
+      if (ke === COBA_ULANG || !layakDiulang(err)) throw err
+      await new Promise((r) => setTimeout(r, JEDA_ULANG_MS * ke))
+      await sambung(e).catch(() => {
+        /* dibiarkan — percobaan berikutnya akan melaporkan galatnya sendiri */
+      })
+    }
+  }
+  throw terakhir
+}
+
 
 /**
  * Hasilkan audio MP3 dari teks, dengan nada mengikuti isi tiap kalimat.
  *
- * Jalur utama mengikuti konfigurasi: Kenari (HTTPS, jalan di serverless) lalu
- * msedge-tts (WebSocket, hanya jalan di server biasa). Keduanya menghasilkan
- * MP3, jadi pemanggil tidak perlu tahu yang mana yang dipakai.
+ * Memakai suara neural Microsoft (`msedge-tts`, WebSocket) — satu-satunya
+ * jalur yang dipakai sekarang, lihat "KEPUTUSAN JAGI" di kepala berkas.
+ *
+ * Di serverless (Vercel) WebSocket tidak bisa hidup, jadi fungsi ini menyerah
+ * lebih awal dengan pesan yang jujur daripada menunggu batas waktu habis.
  *
  * @param {string} teks
  * @param {{ bahasa?: string }} opsi
@@ -322,25 +353,15 @@ export async function buatSuara(teks, { bahasa = 'id' } = {}) {
   const kalimat = pecahKalimat(teks)
   if (!kalimat.length) throw new Error('Tidak ada teks untuk dibacakan.')
 
-  const cobaKenari = process.env.KENARI_TTS !== '0'
-  if (cobaKenari) {
-    try {
-      return await buatSuaraKenari(kalimat.join(' '), bahasa)
-    } catch (e) {
-      // Di serverless, msedge-tts TIDAK MUNGKIN jalan (WebSocket). Kalau tetap
-      // dicoba, pengguna menunggu sampai batas waktunya habis hanya untuk
-      // mendapat kegagalan yang sudah pasti — jadi di sana langsung menyerah
-      // dengan pesan yang jujur.
-      if (process.env.VERCEL) {
-        throw new Error(
-          `Suara tidak bisa dibuat di lingkungan ini (jalur Kenari gagal, jalur msedge-tts tidak mungkin di serverless): ${e?.message ?? e}`,
-        )
-      }
-      console.error('[suara] jalur Kenari gagal, pindah ke msedge-tts:', e?.message ?? e)
-    }
+  // msedge-tts memakai WebSocket ke Microsoft, dan itu TIDAK MUNGKIN di fungsi
+  // serverless. Jangan dicoba sama sekali: pengguna akan menunggu sampai batas
+  // waktu habis hanya untuk mendapat kegagalan yang sudah pasti.
+  if (process.env.VERCEL) {
+    throw new Error(
+      'Suara natural Microsoft tidak bisa dibuat di lingkungan ini (WebSocket tidak jalan di serverless). Di laptop/komputer sendiri jalur ini bekerja.',
+    )
   }
 
-  const suara = pilihSuara(bahasa)
   const hasil = new Array(kalimat.length)
 
   // Satu instance per pekerjaan: beberapa permintaan serentak pada satu
@@ -348,7 +369,10 @@ export async function buatSuara(teks, { bahasa = 'id' } = {}) {
   let i = 0
   const pekerja = Array.from({ length: Math.min(SERENTAK, kalimat.length) }, async () => {
     const tts = new MsEdgeTTS()
-    await tts.setMetadata(suara, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3)
+    const e = { tts, bahasa }
+    // Pembukaan koneksi ikut diulang: 429 bisa datang di sini, bukan cuma saat
+    // mengirim kalimat (lihat sambung()).
+    await sambung(e)
     try {
       while (i < kalimat.length) {
         const idx = i++
@@ -356,7 +380,8 @@ export async function buatSuara(teks, { bahasa = 'id' } = {}) {
           pertama: idx === 0,
           terakhir: idx === kalimat.length - 1,
         })
-        hasil[idx] = await buatBagian(tts, kalimat[idx], opsi)
+        // buatBagianTahan: ulangi saat kena 429, sambung ulang koneksinya.
+        hasil[idx] = await buatBagianTahan(e, kalimat[idx], opsi)
       }
     } finally {
       try {
