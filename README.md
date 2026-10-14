@@ -360,11 +360,18 @@ node uji-kata-kunci.mjs   # pencocokan kata kunci topik
 node uji-teks.mjs         # perapian teks & pemotongan kalimat
 node uji-ocr.mjs          # 36 pemeriksaan: perapian teks & penandaan angka
 node uji-bahasa.mjs       # 25 pemeriksaan: kesehatan kamus id/en
+node uji-keterbacaan.mjs  # 32 pemeriksaan: alat ukur keterbacaan itu sendiri
 ```
 
 `uji-bahasa.mjs` menjaga tiga cacat kamus sekaligus: kunci yang dipakai tapi
 tidak ada, kunci yang hanya ada di satu bahasa, dan kunci yang menganggur
 (tidak dipakai siapa pun). Ketiganya pernah terjadi di proyek ini.
+
+`uji-keterbacaan.mjs` menguji **alat ukurnya**, bukan jawabannya. Alat ukur yang
+salah menghasilkan kesimpulan yang salah dengan sangat meyakinkan, jadi
+penghitung suku katanya diuji dengan kata yang jumlahnya bisa dihitung manusia
+("hipertensi" = 4, "pantai" = 2 karena diftong), dan daftar berbutir dipastikan
+TIDAK dihitung sebagai satu kalimat raksasa.
 
 `uji-sumber.mjs` juga berjalan tanpa jaringan (99 pemeriksaan). Versi
 `--jaringan` menambahkan pemeriksaan bahwa setiap judul artikel Wikipedia yang
@@ -397,6 +404,70 @@ batas dari pengukuran, bukan untuk rutin:
 node ukur-konten.mjs      # berapa permintaan jaringan saat cache konten kosong
 node ukur-suara.mjs       # berapa lama TTS benar-benar butuh (ini asal MAKS_SUARA)
 ```
+
+### Mengukur & melatih tingkat pembaca
+
+Tingkat baca (anak / remaja / dewasa / lansia) punya alat ukurnya sendiri.
+"Latih" di sini **bukan fine-tuning** — Kenari tidak punya endpoint
+fine-tuning (diperiksa: `/fine_tuning/jobs`, `/fine-tunes`, `/finetuning/jobs`,
+`/models/train`, `/training/jobs` semuanya 404, dan tidak ada model berbau
+training dari 105 yang tersedia). Latih = memperdalam prompt di
+`app/server/prompts.js`, lalu **mengukur hasilnya dengan angka**:
+
+```bash
+node ukur-tingkat.mjs                 # 8 pertanyaan x 4 tingkat, butuh server lokal
+node ukur-tingkat.mjs --cepat         # 3 pertanyaan saja
+node ukur-kalibrasi.mjs docs/latih-tingkat-<cap>.json [--tulis]
+```
+
+`app/src/lib/keterbacaan.js` mengukur rata-rata kata/kalimat, suku kata/kata,
+persentase kata sulit, dan kalimat terpanjang. **Bahasa Indonesia tidak punya
+rumus keterbacaan resmi**, jadi modul itu tidak mengklaim "kelas baca" baku —
+angkanya dipakai untuk membandingkan tingkat satu dengan lainnya.
+
+`SASARAN` di modul itu adalah hasil **kalibrasi dari pengukuran nyata**, bukan
+angka yang dikarang: `ukur-kalibrasi.mjs` menghitungnya dari hasil ukur +
+kelonggaran, lalu memeriksa bahwa urutan antar tingkat tetap benar. Ambang
+pertama yang ditulis dari perkiraan membuat 0 dari 8 jawaban lolos di semua
+tingkat — ambang yang tidak bisa dicapai tidak berguna.
+
+Yang diukur 14 Okt 2026 — rata-rata kata/kalimat dari 7 putaran pengukuran
+(makin kecil makin mudah diikuti):
+
+| | anak | lansia | remaja | dewasa |
+|---|---|---|---|---|
+| sebelum | 6,34 | 10,66 | 17,80 | 18,72 |
+| sesudah | **6,01** | **6,68** | **7,34** | **10,37** |
+
+Yang diuji bukan "apakah tangganya naik", melainkan **apakah jawaban tiap
+tingkat lebih mudah daripada jawaban untuk DEWASA** — itu janji aplikasinya.
+Diukur 8 putaran sebelum vs 7 putaran sesudah:
+
+| hubungan wajib | kata/kalimat | kalimat terpanjang |
+|---|---|---|
+| anak < dewasa | 98,4% → **100,0%** | 95,2% → 96,4% |
+| lansia < dewasa | 100,0% → 98,2% | 95,2% → 96,4% |
+| remaja < dewasa | 82,0% → **94,6%** | 72,1% → **94,6%** |
+
+Rantai penuh `anak <= lansia <= remaja <= dewasa` **sengaja tidak dipakai
+sebagai syarat**: anak 9 tahun dan lansia 80 tahun sama-sama butuh bahasa
+sederhana, dan "mana yang lebih sederhana" di antara keduanya tidak punya arti
+bagi pengguna. Angkanya tetap dilaporkan.
+
+Yang paling penting bukan angkanya, melainkan **isi tidak berkurang**: poin
+kunci rata-rata anak 7,77 · lansia 7,34 · remaja 7,39 · dewasa 7,09. Sebelum
+diperiksa, jawaban lansia justru punya poin kunci paling sedikit — batas kata
+per kalimat dibaca model sebagai batas seluruh jawaban.
+
+**Panjang kata tidak dipakai sebagai penilaian.** Kata yang paling sering dicap
+"sulit" ternyata kata sehari-hari (adalah, karena, latihan, tekanan), dan
+lantai normal prosa Indonesia adalah 31–46% kata ≥3 suku kata. Yang dipakai
+sebagai gerbang hanya panjang kalimat. Alasan lengkapnya ada di
+`app/src/lib/keterbacaan.js`.
+
+**Satu putaran bukan bukti.** Dengan prompt yang sama, satu putaran memberi
+`remaja < dewasa` 8/8 dan putaran berikutnya 5/8. Karena itu kesimpulan hanya
+diambil dari agregasi beberapa putaran.
 
 Yang **tidak** bisa diuji dari terminal — karena butuh peramban sungguhan —
 diuji manual di `/app/`: mesin OCR, pengenalan suara, pemutaran suara, dan

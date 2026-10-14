@@ -1,0 +1,30 @@
+{
+  "anak": {
+    "aslMaks": 7,
+    "aswMaks": 2.29,
+    "sulitMaks": 28,
+    "kalimatTerpanjangMaks": 11,
+    "sangatPanjangMaks": 5
+  },
+  "lansia": {
+    "aslMaks": 8,
+    "aswMaks": 2.54,
+    "sulitMaks": 43,
+    "kalimatTerpanjangMaks": 12,
+    "sangatPanjangMaks": 10
+  },
+  "remaja": {
+    "aslMaks": 9,
+    "aswMaks": 2.47,
+    "sulitMaks": 39,
+    "kalimatTerpanjangMaks": 14,
+    "sangatPanjangMaks": 10
+  },
+  "dewasa": {
+    "aslMaks": 12,
+    "aswMaks": 2.59,
+    "sulitMaks": 46,
+    "kalimatTerpanjangMaks": 23,
+    "sangatPanjangMaks": 13
+  }
+}

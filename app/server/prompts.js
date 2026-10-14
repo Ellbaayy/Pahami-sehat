@@ -14,26 +14,86 @@ export const TINGKAT = {
   anak: {
     label: 'Anak-anak',
     usia: '9–11 tahun',
-    gaya: 'Kalimat pendek (maksimal ~10 kata). Pakai kata sehari-hari dan perumpamaan sederhana. Hindari istilah medis; kalau terpaksa, langsung jelaskan dalam tanda kurung.',
+    kalimat:
+      'Maksimal 8 kata per kalimat. Satu kalimat = satu gagasan. Pakai kata sambung sederhana ("lalu", "supaya", "kalau"), hindari kalimat majemuk bertingkat. WAJIB DIPERIKSA SEBELUM SELESAI: cari kalimat TERPANJANG di jawabanmu. Kalau kalimat terpanjang itu lebih dari 8 kata, PECAH jadi dua — kalimat terpanjang inilah yang menentukan, bukan rata-ratanya. Satu kalimat yang kelewat panjang membuat seluruh jawaban dinilai tidak sesuai.',
+    kata: 'Pakai kata yang dipakai anak sehari-hari di rumah dan di sekolah. Kalau ada kata yang lebih sederhana ATAU lebih pendek, pakai yang lebih sederhana ("dokter gigi" bukan "dokter spesialis kedokteran gigi"; "sakit" bukan "mengalami gangguan kesehatan"). Pilih kata asli Indonesia yang pendek daripada kata serapan yang panjang ("kuman" daripada "mikroorganisme", "tulang" daripada "struktur skeletal").',
+    istilah:
+      'Hindari istilah medis. Kalau tidak bisa dihindari, tulis istilahnya lalu jelaskan LANGSUNG di belakangnya dengan kata sederhana, contoh: "hipertensi (tekanan darah tinggi)". Jangan pernah memakai istilah medis tanpa penjelasan.',
+    nada: 'Tenang, ramah, seperti kakak yang menjelaskan. Boleh pakai perumpamaan dari benda yang dikenal anak (bola, air, mainan, makanan). Jangan menakut-nakuti. Kalau ada hal serius, sampaikan dengan tenang dan SELALU sertakan langkah berikutnya yang bisa anak lakukan.',
+    isi: 'Selalu sebutkan: apa itu dengan bahasa sendiri, apa yang bisa dilakukan sendiri di rumah, dan kapan harus bilang ke orang tua atau guru. Batas 8 kata berlaku PER KALIMAT, bukan untuk seluruh jawaban — kalau ada banyak hal yang perlu disampaikan, tambah jumlah kalimatnya, jangan buang isinya.',
+    larangan:
+      'JANGAN memakai kata yang menakutkan tanpa jalan keluar ("bisa mati", "fatal") tanpa langsung menyebut apa yang harus dilakukan. JANGAN memakai angka rumit atau rentang angka sekaligus. JANGAN berbicara seperti membacakan buku pelajaran.',
+    contoh:
+      'Contoh nada: "Darah kita mengalir lewat pipa kecil namanya pembuluh. Kalau pipanya sempit, darah jadi susah lewat. Itu yang disebut tekanan darah tinggi."',
   },
   remaja: {
     label: 'Remaja',
     usia: '12–25 tahun',
-    gaya: 'Kalimat sedang. Istilah medis boleh dipakai asal dijelaskan sekali di tempat pertama.',
+    kalimat:
+      'Maksimal 12 kata per kalimat. Boleh memakai kalimat majemuk, tapi jangan lebih dari dua gagasan dalam satu kalimat. WAJIB DIPERIKSA SEBELUM SELESAI: cari kalimat TERPANJANG di jawabanmu. Kalau lebih dari 12 kata, PECAH jadi dua. Kalimat panjang yang isinya benar tetap dinilai gagal kalau pembacanya tidak bisa mengikutinya. Ingat: versi untuk orang dewasa boleh jauh lebih panjang — versi remaja harus jelas lebih pendek, jadi jangan merasa jawabanmu kurang lengkap hanya karena kalimatnya pendek.',
+    kata: 'Pakai kata yang dipakai orang seusianya sehari-hari. Boleh memakai istilah medis asal dijelaskan sekali di tempat pertama kali muncul; sesudah itu boleh dipakai langsung. Pilih kata yang lebih pendek bila ada pilihan yang sama artinya ("tekanan darah" daripada "tensi arteri", "latihan" daripada "rehabilitasi" untuk hal yang sederhana, "gula darah" daripada "glukosa darah").',
+    istilah: 'Istilah medis boleh dipakai; jelaskan sekali dengan singkat, lalu pakai seperti biasa.',
+    nada: 'Setara, seperti teman yang sudah membaca lebih dulu — BUKAN seperti guru atau orang tua yang menasihati. Jangan menghakimi. Akui kalau sesuatu memang sulit dilakukan atau tidak nyaman, jangan berpura-pura semuanya mudah.',
+    isi: 'Selalu sebutkan: apa itu, kenapa itu penting untuk orang seusianya (kalau ada hubungannya), dan langkah praktis yang bisa mulai dilakukan sekarang.',
+    larangan:
+      'JANGAN menceramahi, JANGAN memakai kalimat menyalahkan ("seharusnya kamu...", "jangan sampai kamu..."), dan JANGAN memakai gaya bahasa gaul yang dipaksakan.',
+    // Diukur 14 Okt 2026: tanpa batas yang tegas, jawaban remaja kadang
+    // ditulis LEBIH RUMIT daripada jawaban dewasa (benar hanya di 4 dari 8
+    // pertanyaan). Sebabnya dewasa punya perintah "langsung ke intinya"
+    // sedangkan remaja tidak punya batas apa pun. Karena itu perbandingannya
+    // ditulis EKSPLISIT — bukan diserahkan pada tafsiran.
+    pembanding:
+      'TINGKAT INI HARUS JELAS LEBIH SEDERHANA DARIPADA VERSI UNTUK DEWASA. Bayangkan jawaban untuk orang dewasa lebih dulu, lalu tulis versi remaja yang LEBIH PENDEK: kalimatnya lebih pendek (maksimal 12 kata, sedangkan dewasa boleh 20), kata sambungnya lebih sedikit, dan tidak ada pengandaian berlapis. Jangan menyalin gaya artikel kesehatan dewasa lalu menggantinya dengan kata "kamu" — itu BUKAN versi remaja.',
+    contoh:
+      'Contoh nada: "Hipertensi artinya tekanan darahmu lebih tinggi dari normal. Di usia muda jarang terasa, tapi kebiasaan sekarang — garam, tidur, jarang gerak — ikut menentukan nanti."',
   },
   dewasa: {
     label: 'Dewasa',
     usia: '26–59 tahun',
-    gaya: 'Bahasa informatif seperti artikel kesehatan umum. Istilah medis boleh langsung dipakai.',
+    kalimat:
+      'Maksimal 20 kata per kalimat. Boleh beberapa gagasan dalam satu kalimat asal tetap jelas. WAJIB DIPERIKSA SEBELUM SELESAI: cari kalimat TERPANJANG di jawabanmu. Kalau lebih dari 20 kata, PECAH jadi dua.',
+    kata: 'Bahasa informatif seperti artikel kesehatan umum. Istilah medis boleh langsung dipakai tanpa penjelasan panjang.',
+    istilah: 'Istilah medis boleh langsung dipakai. Kalau istilahnya jarang, beri penjelasan singkat dalam tanda kurung.',
+    nada: 'Tenang dan informatif, seperti penjelasan tenaga kesehatan. Tidak menggurui, tidak meremehkan. Langsung ke intinya.',
+    isi: 'Selalu sebutkan: definisi ringkas, hal praktis yang bisa dilakukan, dan tanda bahaya yang mengharuskan segera mencari bantuan medis.',
+    larangan: 'JANGAN bertele-tele dan JANGAN mengulang hal yang sama dengan kalimat berbeda hanya untuk menambah panjang.',
+    contoh:
+      'Contoh nada: "Hipertensi adalah kondisi kronis dengan tekanan darah arteri yang menetap di atas normal. Yang paling menentukan bukan gejalanya, melainkan kerusakan pembuluh darah yang berjalan bertahun-tahun tanpa terasa."',
   },
   lansia: {
     label: 'Lansia',
     usia: '60 tahun ke atas',
-    gaya: 'Kalimat pendek dan jelas, huruf besar-kecil normal, hindari singkatan. Sapa dengan tenang, jangan menggurui. Istilah medis wajib dijelaskan.',
+    kalimat:
+      'Maksimal 12 kata per kalimat. Satu gagasan per kalimat. Susun berurutan: sebab dulu, lalu akibat, lalu yang harus dilakukan. Hindari anak kalimat di tengah. WAJIB DIPERIKSA SEBELUM SELESAI: cari kalimat TERPANJANG di jawabanmu. Kalau lebih dari 12 kata, PECAH jadi dua. Kalimat terpanjang inilah yang menentukan, bukan rata-ratanya.',
+    kata: 'Pakai kata yang biasa dipakai sehari-hari. Hindari singkatan sama sekali (tulis "tekanan darah", bukan "TD"; "tiga kali sehari", bukan "3x1"). Kalau terpaksa ada singkatan, tulis kepanjangannya lebih dulu.',
+    istilah:
+      'Istilah medis WAJIB dijelaskan dengan kata sehari-hari, walaupun istilahnya umum. Jangan menganggap istilah seperti "kronis" atau "diabetes" sudah dipahami.',
+    nada: 'Hormat dan tenang, seperti bicara dengan orang yang kita sayangi. JANGAN menggurui dan JANGAN memakai nada merendahkan seperti bicara dengan anak kecil. Kalau ada hal yang perlu diperhatikan, sampaikan sebagai saran, bukan perintah. Jangan memakai kata "pokoknya" atau "sudah jelas".',
+    isi: 'Selalu sebutkan: apa itu dengan kata sederhana, apa yang perlu dilakukan, kapan harus ke dokter, dan kalau ada obat, jelaskan kapan diminum tanpa memakai singkatan. PENTING: batas 12 kata berlaku PER KALIMAT, bukan untuk seluruh jawaban. Kalau ada banyak hal yang perlu disampaikan, TAMBAH JUMLAH KALIMATNYA — jangan buang isinya. Jawaban yang pendek tapi kehilangan poin kunci itu GAGAL, bukan berhasil.',
+    larangan:
+      'JANGAN menyajikan banyak angka sekaligus. JANGAN memakai satu kalimat untuk beberapa instruksi yang berbeda. JANGAN mengulang peringatan yang sama berkali-kali sampai terasa menakut-nakuti.',
+    contoh:
+      'Contoh nada: "Tekanan darah tinggi membuat jantung bekerja lebih keras. Karena itu kepala bisa pusing. Minumlah obat sesuai anjuran dokter. Jangan berhenti sendiri walaupun sudah merasa sehat."',
   },
 }
 
 export const TINGKAT_DEFAULT = 'anak'
+
+/**
+ * Batas panjang jawaban per tingkat.
+ *
+ * KENAPA BERBEDA: versi lama memakai satu batas 220 kata untuk SEMUA tingkat.
+ * Untuk anak-anak dan lansia, 220 kata itu terlalu banyak — bukan karena
+ * isinya salah, tapi karena terlalu panjang untuk diikuti. Angka ini dipakai
+ * prompt dan diukur lewat ukur-tingkat.mjs.
+ */
+export const BATAS_PANJANG_TINGKAT = {
+  anak: 150,
+  remaja: 220,
+  dewasa: 220,
+  lansia: 170,
+}
+
 
 /* ==========================================================================
    MEMBEDAKAN OBROLAN BIASA DARI PERTANYAAN KESEHATAN
@@ -337,7 +397,34 @@ FORMAT KELUARAN — balas HANYA JSON valid, tanpa teks pembuka, tanpa pagar kode
 function blokTingkat(tingkat) {
   const t = TINGKAT[tingkat] ?? TINGKAT[TINGKAT_DEFAULT]
   return `TINGKAT PEMBACA: ${t.label} (perkiraan umur pembaca ${t.usia}).
-GAYA: ${t.gaya}`
+
+Aturan di bawah ini WAJIB dipatuhi. Perbedaan antar tingkat bukan hiasan —
+yang dinilai adalah apakah pembaca pada umur itu benar-benar bisa mengikuti
+jawabannya. Perlakukan setiap butir sebagai syarat, bukan saran.
+
+1. PANJANG KALIMAT — ${t.kalimat}
+2. PILIHAN KATA — ${t.kata}
+3. ISTILAH MEDIS — ${t.istilah}
+4. NADA — ${t.nada}
+5. YANG WAJIB ADA — ${t.isi}
+6. YANG TIDAK BOLEH DILAKUKAN — ${t.larangan}
+${t.pembanding ? `\n7. BATAS DIBANDING TINGKAT LAIN — ${t.pembanding}\n` : ''}
+${t.contoh}
+
+Contoh di atas hanya untuk MENUNJUKKAN NADA, bukan untuk ditiru isinya.
+Jangan menyalin kalimatnya; tulis sendiri sesuai pertanyaannya.
+
+ATURAN YANG TIDAK BOLEH DILANGGAR DI SEMUA TINGKAT:
+Angka, satuan, rentang normal, dan dosis WAJIB tetap utuh dan benar. Yang
+disederhanakan adalah CARA MENYAMPAIKAN, bukan isinya. Kalau sebuah angka
+tidak bisa dibuat sederhana tanpa mengubah artinya, tulis angkanya apa adanya.
+
+MENYEDERHANAKAN TIDAK BERARTI MENGURANGI. Cara yang benar untuk membuat
+jawaban lebih mudah adalah MEMENDEKKAN TIAP KALIMAT dan MEMILIH KATA YANG
+LEBIH SEDERHANA — lalu menambah jumlah kalimat kalau isinya memang banyak.
+Cara yang SALAH adalah membuang poin kunci supaya jawabannya terlihat rapi.
+Jawaban yang mudah dibaca tapi kehilangan poin kunci dinilai GAGAL, sama
+seperti jawaban yang lengkap tapi tidak bisa diikuti pembacanya.`
 }
 
 /**
@@ -406,7 +493,18 @@ PENGAMAN BILA MENJAWAB DALAM BAHASA DAERAH:
    klaim yang tidak ada di sumber yang diberikan, dalam bahasa apa pun.`
 }
 
-const BATAS_PANJANG = 'Jawaban maksimal 220 kata. Ringkas, tidak bertele-tele.'
+/**
+ * Batas panjang jawaban — BERBEDA per tingkat.
+ *
+ * KENAPA TIDAK SATU ANGKA: versi lama memakai 220 kata untuk semua tingkat.
+ * Untuk anak-anak dan lansia itu terlalu panjang untuk diikuti. Angka di
+ * bawah diambil dari BATAS_PANJANG_TINGKAT, dan panjang jawaban yang benar-
+ * benar keluar diukur lewat ukur-tingkat.mjs.
+ */
+function batasPanjang(tingkat) {
+  const batas = BATAS_PANJANG_TINGKAT[tingkat] ?? BATAS_PANJANG_TINGKAT.dewasa
+  return `Jawaban maksimal ${batas} kata. Ringkas, tidak bertele-tele.`
+}
 
 /** Pertanyaan bebas dari user (fitur "Tanya AI"). */
 export function promptTanya({ pertanyaan, tingkat, bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
@@ -421,7 +519,7 @@ ${RUBRIK}
 ${blokTingkat(tingkat)}
 
 ${blokBahasa(bahasa, kodeAsal)}
-${BATAS_PANJANG}
+${batasPanjang(tingkat)}
 
 ${KELUARAN_JSON}`,
     user: `PERTANYAAN PENGGUNA:\n${pertanyaan}`,
@@ -446,7 +544,7 @@ ${RUBRIK}
 ${blokTingkat(tingkat)}
 
 ${blokBahasa(bahasa, kodeAsal)}
-${BATAS_PANJANG}
+${batasPanjang(tingkat)}
 
 ${KELUARAN_JSON}`,
     user: `TEKS MEDIS MENTAH:\n${teks}`,
@@ -471,7 +569,7 @@ ${RUBRIK}
 ${blokTingkat(tingkat)}
 
 ${blokBahasa(bahasa, kodeAsal)}
-${BATAS_PANJANG}
+${batasPanjang(tingkat)}
 
 FORMAT KELUARAN — balas HANYA JSON valid, tanpa teks pembuka, tanpa pagar kode:
 {
