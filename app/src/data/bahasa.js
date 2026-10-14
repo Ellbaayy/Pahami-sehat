@@ -359,6 +359,10 @@ const KAMUS = {
     'set.bahasa': 'Bahasa antarmuka',
     'set.bahasaSub': 'Mengubah seluruh tampilan dan bahasa jawaban AI.',
     'set.catatan': 'Semua preferensi tersimpan di peramban, bukan di server.',
+    'set.privasiJudul': 'Ke mana datamu pergi',
+    'set.privasi1': 'Tidak ada akun dan tidak ada basis data. Riwayat obrolan dan jawaban kuesioner tersimpan di peramban ini saja, dan bisa kamu hapus sendiri.',
+    'set.privasi2': 'Foto yang dipindai dibaca di peramban dan tidak pernah dikirim ke server. Menutup halaman ini menghapusnya.',
+    'set.privasi3': 'Hanya teks pertanyaan yang dikirim ke layanan AI. Sebaiknya jangan menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah.',
 
 
     // label tingkat baca
@@ -694,6 +698,10 @@ const KAMUS = {
     'set.bahasa': 'Interface language',
     'set.bahasaSub': 'Changes the whole interface and the language of AI answers.',
     'set.catatan': 'All preferences are stored in the browser, not on the server.',
+    'set.privasiJudul': 'Where your data goes',
+    'set.privasi1': 'There is no account and no database. Chat history and questionnaire answers are stored in this browser only, and you can delete them yourself.',
+    'set.privasi2': 'A scanned photo is read in the browser and never sent to the server. Closing this page erases it.',
+    'set.privasi3': 'Only the text of your question is sent to the AI service. Please avoid writing your full name, national ID number, medical record number, or home address.',
 
     'tingkat.anak': 'Children',
     'tingkat.remaja': 'Teens',
