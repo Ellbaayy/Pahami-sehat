@@ -943,3 +943,62 @@ input,select,textarea{max-width:100%}
   .splash-logo{animation:none}
   .splash-bar i{animation:none;transform:scaleX(1)}
 }
+
+/* ---------- penanda "perlu rujukan" ---------- */
+/* Dipakai di bagian Masalah untuk angka yang belum ditemukan dokumen aslinya.
+   Sengaja ditulis terbuka, bukan disembunyikan: mengklaim lebih kuat daripada
+   buktinya lebih berbahaya daripada mengaku belum punya sumbernya. */
+.rujuk{
+  display:inline-block;
+  margin-left:.35rem;
+  padding:.1rem .5rem;
+  border-radius:999px;
+  border:1px dashed var(--amber);
+  background:var(--amber-soft);
+  color:#7A4B00;
+  font-size:.72rem;
+  font-weight:700;
+  letter-spacing:.02em;
+  vertical-align:.08em;
+  white-space:nowrap;
+}
+
+/* ---------- daftar rujukan ---------- */
+.sumber-list{
+  list-style:none;
+  counter-reset:rujuk;
+  padding:0;
+  margin:.9rem 0 1rem;
+  display:grid;
+  gap:.75rem;
+}
+.sumber-list li{
+  position:relative;
+  counter-increment:rujuk;
+  padding-left:2rem;
+  font-size:.84rem;
+  line-height:1.55;
+  color:var(--ink-2);
+}
+.sumber-list li::before{
+  content:counter(rujuk);
+  position:absolute;
+  left:0;
+  top:.05rem;
+  width:1.4rem;
+  height:1.4rem;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:var(--blue-soft);
+  color:var(--blue);
+  font-size:.7rem;
+  font-weight:800;
+}
+.sumber-list a{
+  color:var(--blue);
+  text-decoration:underline;
+  text-underline-offset:2px;
+  word-break:break-word;
+}
+.sumber-list a:hover{color:var(--navy)}
