@@ -908,8 +908,15 @@ input,select,textarea{max-width:100%}
 
 /* ---------- halaman muat (splash) — tampil 1 detik lalu menghilang ---------- */
 .splash{
-  position:fixed;inset:0;z-index:400;
+  /* dvh, bukan inset:0 — di peramban HP address bar membuat 100vh lebih tinggi
+     dari layar yang benar-benar terlihat, dan isi splash jadi tidak di tengah. */
+  position:fixed;left:0;right:0;top:0;
+  height:100vh;      /* cadangan untuk peramban yang belum mengenal dvh */
+  height:100dvh;
+  z-index:400;
   display:flex;align-items:center;justify-content:center;
+  padding:1.25rem;
+  overflow:hidden;                 /* blob tidak boleh menambah lebar halaman */
   background:linear-gradient(160deg,#F7FCFD 0%,#EAF4FB 45%,#E7F5EF 100%);
   transition:opacity .4s ease,visibility .4s ease;
 }
@@ -919,14 +926,15 @@ input,select,textarea{max-width:100%}
 .splash-blob-green{width:300px;height:300px;background:#A9E7CB;bottom:-80px;right:-60px}
 .splash-inner{
   position:relative;display:flex;flex-direction:column;align-items:center;
-  text-align:center;padding:1.5rem;
+  width:100%;max-width:22rem;
+  text-align:center;padding:1rem;
   animation:splashIn .5s ease both;
 }
 .splash-logo{width:86px;height:auto;animation:splashBreath .9s ease-in-out infinite alternate}
-.splash-name{font-size:1.7rem;color:var(--navy);letter-spacing:-.02em;margin-top:.9rem}
-.splash-tag{font-size:.9rem;color:var(--ink-2);font-weight:500}
+.splash-name{font-size:1.7rem;color:var(--navy);letter-spacing:-.02em;margin-top:1.1rem;line-height:1.15}
+.splash-tag{font-size:.9rem;color:var(--ink-2);font-weight:500;margin-top:.45rem;text-wrap:balance}
 .splash-bar{
-  width:190px;height:6px;border-radius:999px;margin-top:1.2rem;
+  width:190px;max-width:100%;height:6px;border-radius:999px;margin-top:1.6rem;
   background:rgba(29,78,166,.14);overflow:hidden;
 }
 .splash-bar i{
@@ -960,7 +968,15 @@ input,select,textarea{max-width:100%}
   font-weight:700;
   letter-spacing:.02em;
   vertical-align:.08em;
-  white-space:nowrap;
+  /* Label ini bisa panjang ("bukti internasional & studi lokal, bukan survei
+     Indonesia 2013–14"). Dengan nowrap ia melebar sampai 387px dan mendorong
+     seluruh halaman melebihi lebar layar HP — dan karena .splash itu
+     position:fixed, splash ikut melebar dan isinya bergeser dari pusat layar.
+     Jadi label WAJIB boleh membungkus, dan tidak boleh lebih lebar dari
+     induknya. */
+  white-space:normal;
+  overflow-wrap:anywhere;
+  max-width:100%;
 }
 
 /* ---------- catatan koreksi kecil (netral, bukan peringatan) ---------- */
