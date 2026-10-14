@@ -65,6 +65,7 @@ export default function VerifikasiPanel({
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
+        as="h1"
         eyebrow={t('ver.eyebrow')}
         title={t('ver.judul')}
         description={t('ver.sub')}
@@ -90,7 +91,7 @@ export default function VerifikasiPanel({
                   'h-11 whitespace-nowrap rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200 ' +
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ' +
                   (tingkat === lv.kunci
-                    ? 'bg-brand-500 text-white'
+                    ? 'bg-brand-600 text-white'
                     : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800')
                 }
               >
@@ -105,7 +106,7 @@ export default function VerifikasiPanel({
               setHasil(null)
               setError(null)
             }}
-            className="ml-auto text-[0.8rem] font-semibold text-brand-600 hover:text-brand-700"
+            className="ml-auto text-[0.8rem] font-semibold text-brand-700 hover:text-brand-700"
           >
             {t('umum.pakaiContoh')}
           </button>
@@ -146,7 +147,7 @@ export default function VerifikasiPanel({
 
       {loading ? (
         <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
-          <p className="inline-flex items-center gap-2 text-[0.88rem] font-semibold text-brand-600">
+          <p className="inline-flex items-center gap-2 text-[0.88rem] font-semibold text-brand-700">
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
             {t('ver.proses')}
           </p>

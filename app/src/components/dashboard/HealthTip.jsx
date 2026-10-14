@@ -27,7 +27,7 @@ export default function HealthTip({ tip, t = (k) => k }) {
           <Lightbulb className="size-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[0.72rem] font-bold tracking-[0.14em] uppercase text-brand-600">
+          <p className="text-[0.72rem] font-bold tracking-[0.14em] uppercase text-brand-700">
             {t('tips.label')}
           </p>
           <h3 className="mt-1 text-[clamp(1.02rem,0.96rem+0.35vw,1.28rem)] font-extrabold tracking-tight text-navy-900">
@@ -49,7 +49,7 @@ export default function HealthTip({ tip, t = (k) => k }) {
                 key={b}
                 className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.78rem] font-semibold text-navy-700 ring-1 ring-brand-100"
               >
-                <Check className="size-3.5 text-brand-600" aria-hidden="true" />
+                <Check className="size-3.5 text-brand-700" aria-hidden="true" />
                 {b}
               </li>
             ))}

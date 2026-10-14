@@ -4,7 +4,7 @@ import { Card, SectionHeading, Button } from '../ui/primitives'
 import { cn } from '../../lib/cn'
 
 const TINTS = {
-  brand: { wrap: 'bg-brand-50 text-brand-600', tag: 'bg-white/80 text-brand-700 ring-brand-100' },
+  brand: { wrap: 'bg-brand-50 text-brand-700', tag: 'bg-white/80 text-brand-700 ring-brand-100' },
   sky: { wrap: 'bg-sky-100 text-sky-700', tag: 'bg-white/80 text-sky-700 ring-sky-100' },
   amber: { wrap: 'bg-amber-50 text-amber-600', tag: 'bg-white/80 text-amber-700 ring-amber-100' },
   rose: { wrap: 'bg-rose-50 text-rose-600', tag: 'bg-white/80 text-rose-700 ring-rose-100' },

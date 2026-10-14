@@ -46,6 +46,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
   return (
     <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
+        as="h1"
         eyebrow={t('set.eyebrow')}
         title={t('set.judul')}
         description={t('set.sub')}
@@ -72,7 +73,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
                     'h-11 min-w-[3.25rem] whitespace-nowrap rounded-lg px-3 text-[0.85rem] font-bold transition-colors duration-200',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                     settings.level === lv.kunci
-                      ? 'bg-brand-500 text-white'
+                      ? 'bg-brand-600 text-white'
                       : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800',
                   )}
                 >
@@ -86,7 +87,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
         <Row
           title={
             <span className="inline-flex items-center gap-2">
-              <Contrast className="size-4 text-brand-600" aria-hidden="true" />
+              <Contrast className="size-4 text-brand-700" aria-hidden="true" />
               {t('set.kontras')}
             </span>
           }
@@ -120,7 +121,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
         <Row
           title={
             <span className="inline-flex items-center gap-2">
-              <Languages className="size-4 text-brand-600" aria-hidden="true" />
+              <Languages className="size-4 text-brand-700" aria-hidden="true" />
               {t('set.bahasa')}
             </span>
           }
@@ -144,7 +145,7 @@ export default function SettingsPanel({ settings, onChange, t = (k) => k, labelT
 
       <Card className="border-brand-100 bg-brand-50/60 p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
         <p className="flex items-center gap-2 text-[0.92rem] font-bold text-navy-800">
-          <ShieldCheck className="size-4 text-brand-600" aria-hidden="true" />
+          <ShieldCheck className="size-4 text-brand-700" aria-hidden="true" />
           {t('set.privasiJudul')}
         </p>
         <ul className="mt-2.5 space-y-1.5 text-[0.84rem] leading-snug text-navy-600">

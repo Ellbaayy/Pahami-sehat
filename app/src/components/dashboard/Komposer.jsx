@@ -91,7 +91,7 @@ export default function Komposer({
                   'inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-[0.85rem] font-bold transition-colors duration-200',
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                   mode === kunci
-                    ? 'bg-brand-500 text-white'
+                    ? 'bg-brand-600 text-white'
                     : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800',
                 )}
               >
@@ -122,7 +122,7 @@ export default function Komposer({
                       'h-11 whitespace-nowrap rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200',
                       'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                       tingkat === x.kunci
-                        ? 'bg-brand-500 text-white'
+                        ? 'bg-brand-600 text-white'
                         : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800',
                     )}
                   >
@@ -134,7 +134,7 @@ export default function Komposer({
                 <button
                   type="button"
                   onClick={onContohSederhanakan}
-                  className="ml-auto text-[0.8rem] font-semibold text-brand-600 hover:text-brand-700"
+                  className="ml-auto text-[0.8rem] font-semibold text-brand-700 hover:text-brand-700"
                 >
                   {t('umum.pakaiContoh')}
                 </button>
@@ -190,8 +190,8 @@ export default function Komposer({
                 'grid size-10 shrink-0 place-items-center rounded-full transition-all duration-200',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                 pindaiTerbuka
-                  ? 'bg-brand-500 text-white'
-                  : 'bg-surface-100 text-navy-500 hover:bg-brand-50 hover:text-brand-600',
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-surface-100 text-navy-500 hover:bg-brand-50 hover:text-brand-700',
               )}
             >
               <Camera className="size-[17px]" aria-hidden="true" />
@@ -217,7 +217,7 @@ export default function Komposer({
               'disabled:cursor-not-allowed disabled:opacity-45',
               suara.mendengar
                 ? 'bg-rose-500 text-white animate-pulse'
-                : 'bg-surface-100 text-navy-500 hover:bg-brand-50 hover:text-brand-600',
+                : 'bg-surface-100 text-navy-500 hover:bg-brand-50 hover:text-brand-700',
             )}
           >
             <Mic className="size-[17px]" aria-hidden="true" />
@@ -240,7 +240,7 @@ export default function Komposer({
       <p className="mt-2 text-[0.8rem] text-muted-500">
         {suara.mendengar ? (
           suara.sementara ? (
-            <span className="text-brand-600">“{suara.sementara}”</span>
+            <span className="text-brand-700">“{suara.sementara}”</span>
           ) : (
             t('tanya.mendengar')
           )

@@ -110,7 +110,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
                 )}
               >
                 <Icon
-                  className={cn('size-5 shrink-0', isActive ? 'text-brand-600' : 'text-navy-500')}
+                  className={cn('size-5 shrink-0', isActive ? 'text-brand-700' : 'text-navy-500')}
                   aria-hidden="true"
                 />
                 {teks}
@@ -121,7 +121,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
 
         <div className="border-t border-line-100 p-3.5">
           <div className="rounded-xl bg-brand-50 p-3.5 ring-1 ring-brand-100">
-            <span className="mb-1.5 inline-flex size-7 items-center justify-center rounded-full bg-white text-brand-600 shadow-sm">
+            <span className="mb-1.5 inline-flex size-7 items-center justify-center rounded-full bg-white text-brand-700 shadow-sm">
               <Activity className="size-4" aria-hidden="true" />
             </span>
             <p className="text-[0.82rem] leading-snug font-medium text-navy-700">

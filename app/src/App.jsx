@@ -730,6 +730,7 @@ export default function App() {
             {active === 'riwayat' ? (
               <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
                 <SectionHeading
+                  as="h1"
                   eyebrow={t('sesi.eyebrow')}
                   title={t('sesi.judul')}
                   description={t('sesi.sub')}
@@ -787,7 +788,7 @@ export default function App() {
                 </>
               ) : server.online ? (
                 <>
-                  <PlugZap className="size-3.5 text-brand-600" aria-hidden="true" />
+                  <PlugZap className="size-3.5 text-brand-700" aria-hidden="true" />
                   {t('umum.terhubung')}
                 </>
               ) : (

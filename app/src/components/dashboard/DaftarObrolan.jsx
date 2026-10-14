@@ -76,6 +76,10 @@ export default function DaftarObrolan({
 
   const kepala = ringkas ? (
     <SectionHeading
+      /* SENGAJA TANPA as="h1": bentuk `ringkas` hanya dipakai di Beranda,
+         dan Beranda sudah punya judul utama sendiri (`Greeting`). Memberi h1
+         di sini membuat Beranda punya DUA h1. Di halaman Riwayat, `kepala`
+         bernilai null dan h1-nya datang dari App.jsx. */
       id="obrolan-title"
       title={t('sesi.terakhir')}
       description={t('sesi.terakhirSub')}
@@ -182,14 +186,14 @@ export default function DaftarObrolan({
                   className="mt-0.5 grid size-11 shrink-0 place-items-center rounded-lg text-navy-500 transition-colors hover:bg-surface-100 hover:text-navy-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
                 >
                   {dipilih ? (
-                    <CheckSquare className="size-[18px] text-brand-600" aria-hidden="true" />
+                    <CheckSquare className="size-[18px] text-brand-700" aria-hidden="true" />
                   ) : (
                     <Square className="size-[18px]" aria-hidden="true" />
                   )}
                 </button>
               ) : null}
 
-              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
                 <MessageSquareText className="size-4" aria-hidden="true" />
               </span>
 
@@ -232,7 +236,7 @@ export default function DaftarObrolan({
                     title={t('sesi.bagikan')}
                     className={cn(
                       'grid size-11 shrink-0 place-items-center rounded-lg text-muted-500 transition-colors',
-                      'hover:bg-brand-50 hover:text-brand-600',
+                      'hover:bg-brand-50 hover:text-brand-700',
                       'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                       'md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100',
                     )}
