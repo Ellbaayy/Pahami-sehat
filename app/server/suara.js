@@ -28,6 +28,28 @@
  *   - Sekitar 4 permintaan serentak adalah titik tercepat yang berguna
  *     (13 kalimat: 12 detik berurutan -> 4 detik serentak, isi tetap sama).
  *
+ * DIPERBAIKI 14 Okt 2026 — SUARA NATURAL SUDAH BERJALAN.
+ * Sebelumnya jalur ini SELALU gagal 403 di komputer sendiri, dan seluruh fitur
+ * suara dikira mustahil. Penyebabnya sepele: `msedge-tts` yang terpasang masih
+ * 2.0.9, sedangkan 2.1.0 dirilis 13 Okt 2026 dan MEMPERBAIKI handshake-nya.
+ * Setelah dinaikkan ke ^2.1.0, kelima suara berhasil. Diukur di mesin ini:
+ *
+ *   /api/suara  teks 1 kalimat  -> 200, audio/mpeg, 26.064 byte
+ *   /api/suara  teks 8 kalimat  -> 200, audio/mpeg, 237.744 byte, 39,62 detik
+ *   lima suara (id lk/pr, jv, su, en) -> kelimanya berhasil, 0,4–0,7 detik
+ *   8 kalimat dengan 4 pekerja serentak -> 8/8 berhasil, 1,8 detik
+ *   8 permintaan berturut-turut tanpa jeda -> 8/8 berhasil
+ *
+ * Isinya DIBUKTIKAN dengan transkripsi (faster-whisper), bukan hanya dari
+ * ukuran berkas: hasil /api/suara teks panjang terbaca kembali sebagai teks
+ * aslinya dengan keyakinan bahasa 1,00. Jadi ini bukan audio kosong.
+ *
+ * BATAS YANG TETAP ADA: layanan ini membalas HTTP 429 kalau dipanggil terlalu
+ * sering dalam waktu singkat (terjadi saat puluhan uji dijalankan beruntun).
+ * Itu batas laju sementara, bukan kerusakan — setelah jeda ~20 detik normal
+ * lagi. Karena Kenari TTS sedang 503, SEMUA permintaan jatuh ke jalur ini,
+ * jadi jangan menguji suara beruntun tanpa jeda lalu menyimpulkan "rusak".
+ *
  * CATATAN LISENSI: suara ini milik Microsoft dan diakses lewat layanan
  * Read Aloud, yang izin komersialnya belum dinyatakan tertulis. Aman untuk
  * pemakaian lomba/pribadi; untuk produk komersial sebaiknya pindah ke

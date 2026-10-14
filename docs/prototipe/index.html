@@ -399,7 +399,7 @@
           <li><strong>Masukan:</strong> pertanyaan diucapkan, bukan diketik — hasilnya langsung jadi teks lewat pengenalan suara peramban.</li>
           <li><strong>Keluaran:</strong> jawaban dibacakan dengan text-to-speech, dan bisa dihentikan kapan saja.</li>
           <li><strong>Untuk siapa:</strong> lansia dan pengguna dengan literasi rendah — yang lebih nyaman mendengar daripada membaca.</li>
-          <li><strong>Catatan peramban:</strong> pengenalan suara (mikrofon) didukung Chrome dan Edge; Brave dan Firefox belum. Pembacaan suara bergantung pada mesin suara yang terpasang di perangkat — dan pada mesin uji, cabang cadangan itu belum menghasilkan suara sama sekali (lihat status di bawah).</li>
+          <li><strong>Catatan peramban:</strong> pengenalan suara (mikrofon) didukung Chrome dan Edge; Brave dan Firefox belum. Pembacaan suara memakai suara neural Microsoft saat aplikasi dijalankan di komputer sendiri (lihat status di bawah), dan punya cabang cadangan suara bawaan peramban.</li>
         </ul>
 
         <div class="demo">
@@ -424,15 +424,16 @@
 
           <div class="demo-row">
             <span class="demo-label">Suara:</span>
-            <span class="pill pill-blue">Suara bawaan peramban</span>
+            <span class="pill pill-blue">Suara neural Microsoft (di komputer sendiri)</span>
           </div>
         </div>
 
-        <p class="note-box"><svg class="ic-svg lucide-audiolines " xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-audio-lines" aria-hidden="true"><path d="M2 10v3"></path><path d="M6 6v11"></path><path d="M10 3v18"></path><path d="M14 8v7"></path><path d="M18 5v13"></path><path d="M22 10v3"></path></svg> <strong>Status — apa adanya, dan ini bagian yang paling belum selesai.</strong> Pembacaan suara <strong>belum berjalan seperti yang dirancang</strong>. Yang dirancang: suara neural dengan nada mengikuti isi kalimat. Yang terjadi saat diukur (14 Oktober 2026):
-        <br>· Jalur suara neural lewat penyedia model menjawab <code>503 all_providers_failed</code>.
-        <br>· Jalur Microsoft Edge ditolak <code>403</code>.
-        <br>· Kalau keduanya gagal, aplikasi berniat memakai suara bawaan peramban. <strong>Di mesin uji, itu pun tidak menghasilkan suara apa pun</strong> — menekan "Dengar" memunculkan pesan <em>"Gagal memutar suara."</em>
-        <br>Di komputer yang punya mesin suara Indonesia terpasang (mis. <code>espeak-ng</code> dengan suara <code>id</code>), cabang cadangan itu semestinya berbunyi — tetapi <strong>belum pernah kami dengar sendiri</strong>, jadi tidak kami klaim. Mesin suara neuralnya sudah ditulis dan siap; yang belum ada adalah jalur yang benar-benar menghasilkan suara di semua perangkat.
+        <p class="note-box"><svg class="ic-svg lucide-audiolines " xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-audio-lines" aria-hidden="true"><path d="M2 10v3"></path><path d="M6 6v11"></path><path d="M10 3v18"></path><path d="M14 8v7"></path><path d="M18 5v13"></path><path d="M22 10v3"></path></svg> <strong>Status — apa adanya.</strong> Pembacaan suara <strong>sudah berjalan di versi yang dijalankan di komputer sendiri</strong> (yang dipakai saat penjurian), dan <strong>belum berjalan di versi daring</strong>. Yang dirancang: suara neural dengan nada mengikuti isi kalimat. Yang diukur 14 Oktober 2026:
+        <br>· <strong>Di komputer sendiri: BERHASIL.</strong> Kelima suara neural terdengar — <code>id-ID-GadisNeural</code> dan <code>id-ID-ArdiNeural</code> (Indonesia), <code>jv-ID-SitiNeural</code> (Jawa), <code>su-ID-TutiNeural</code> (Sunda), <code>en-US-AriaNeural</code> (Inggris). Permintaan ke <code>/api/suara</code> menjawab <code>200</code> berisi MP3 24 kHz; teks delapan kalimat menghasilkan audio 39,6 detik. Isinya diperiksa dengan transkripsi balik, bukan sekadar ukuran berkas.
+        <br>· <strong>Di versi daring (Vercel): belum.</strong> Fungsi serverless tidak bisa mempertahankan koneksi WebSocket yang dipakai layanan suara Microsoft, jadi di sana <code>/api/suara</code> menjawab <code>502</code>. Ini batas platform, bukan bug yang tersisa — di komputer sendiri jalur yang sama terbukti berbunyi.
+        <br>· Jalur suara lewat penyedia model masih menjawab <code>503 all_providers_failed</code> (saldo/masalah penyedia), jadi saat ini suara dibuat lewat layanan Microsoft Edge.
+        <br>· Kalau kedua jalur gagal, aplikasi memakai suara bawaan peramban sebagai cadangan.
+        <br>· Perbaikan yang menentukan: pustaka <code>msedge-tts</code> dinaikkan dari 2.0.9 ke 2.1.0 (dirilis 13 Oktober 2026). Sebelumnya jalur ini <strong>selalu</strong> ditolak <code>403</code>; setelah dinaikkan, kelimanya berbunyi.
         <br>Pengenalan suara (STT) aktif di Chrome dan Edge; di Brave belum, karena Brave memblokir layanan suara daring.</p>
       </article>
 
@@ -537,7 +538,7 @@
         <p class="finding-lead">Ditulis apa adanya, supaya tidak ada klaim yang berlebihan.</p>
         <ul class="f-list" style="margin-top:.9rem">
           <li><strong>Sudah jalan:</strong> Tanya AI (streaming), <strong>pencarian internet + sumber yang bisa dibuka</strong>, Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, kuesioner HLS-SF12, riwayat sesi, <strong>tanya dengan suara (STT)</strong>, <strong>pindai foto jadi teks</strong>, <strong>mode kontras tinggi</strong>, dan <strong>antarmuka dua bahasa</strong> (Indonesia / Inggris).</li>
-          <li><strong>Jalan tapi belum seperti rancangan:</strong> <strong>baca otomatis (TTS)</strong>. Rancangannya suara neural dengan nada mengikuti isi kalimat. Saat diukur 14 Oktober 2026, kedua jalur suara alami gagal (penyedia model <code>503</code>, Microsoft Edge <code>403</code>), dan cadangan suara bawaan peramban pun tidak menghasilkan suara di mesin uji. Rinciannya di kartu Mode Suara di atas — <strong>jangan dipamerkan sebagai suara neural</strong> sebelum benar-benar terdengar.</li>
+          <li><strong>Baca otomatis (TTS): berjalan di komputer sendiri, belum di versi daring.</strong> Rancangannya suara neural dengan nada mengikuti isi kalimat — dan itu <strong>sudah terbukti berbunyi</strong> saat aplikasi dijalankan di komputer sendiri (yang dipakai saat penjurian): lima suara neural, MP3 24 kHz, diperiksa sampai isinya lewat transkripsi balik. Di versi daring (Vercel) belum, karena fungsi serverless tidak bisa mempertahankan koneksi WebSocket yang dipakai layanan suara Microsoft. Rinciannya di kartu Mode Suara di atas.</li>
           <li><strong>Semua pengaturan berfungsi:</strong> tingkat baca, mode kontras tinggi, putar suara otomatis, dan bahasa antarmuka — tidak ada yang hanya jadi hiasan.</li>
           <li><strong>Pindai foto berjalan di perangkat, bukan di server.</strong> Mesin pembacanya (WebAssembly) disajikan dari situs ini sendiri, bukan dari CDN — jadi saat memindai <strong>tidak ada satu pun permintaan yang keluar</strong> dari peramban. Foto tidak pernah dikirim ke mana pun, dan fitur ini tetap bekerja walau server AI mati. <em>Batasnya jujur disebut di aplikasi: ini alat bantu baca, angka hasil lab tetap wajib dicek ke kertas aslinya.</em></li>
           <li><strong>Belum ada:</strong> terjemahan ke bahasa daerah (baru pilihan bahasanya) dan pengenalan tulisan tangan pada resep.</li>
