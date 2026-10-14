@@ -43,6 +43,7 @@
       <a href="#fitur">Fitur</a>
       <a href="#produk">Produk</a>
       <a href="#kuesioner">Kuesioner</a>
+      <a href="#etika">Etika</a>
       <a href="/app/" class="btn btn-primary btn-sm nav-cta">Coba Aplikasinya</a>
     </nav>
 
@@ -677,6 +678,81 @@
   </div>
 </section>
 
+<!-- ======================= PRIVASI · ETIKA AI · GREEN IT ======================= -->
+<section class="section section-alt" id="etika">
+  <div class="container">
+    <div class="section-head reveal has-illus"><div class="sh-text">
+      <span class="eyebrow">Tanggung Jawab</span>
+      <h2>Privasi, Etika AI, dan Jejaknya</h2>
+      <p>Tiga hal ini sering ditulis sebagai janji. Di sini ditulis sebagai <strong>keadaan yang bisa diperiksa</strong> — termasuk bagian yang belum selesai.</p>
+    </div>
+    <div class="sh-art"><img class="illus" src="assets/ilustrasi/tenang.png" alt="Ilustrasi orang duduk tenang" width="420" height="420" loading="lazy" decoding="async">
+    </div>
+    </div>
+
+    <div class="grid-2">
+      <article class="card reveal">
+        <h3>1 · Privasi — data apa yang keluar dari perangkat</h3>
+        <p style="margin-top:.6rem">Aplikasi ini tidak punya akun, tidak punya basis data, dan tidak menyimpan percakapan di server. Yang perlu diketahui pengguna adalah <strong>data mana yang pergi ke mana</strong>:</p>
+        <ul class="f-list" style="margin-top:.9rem">
+          <li><strong>Foto yang dipindai</strong> — dibaca di peramban memakai mesin WebAssembly yang disajikan situs ini sendiri, bukan dari CDN. Tidak ada permintaan keluar sama sekali.</li>
+          <li><strong>Jawaban kuesioner</strong> — dihitung di peramban. Tidak pernah dikirim ke server, karena aplikasi ini tidak punya tempat menyimpannya.</li>
+          <li><strong>Riwayat obrolan</strong> — tersimpan di <code>localStorage</code> peramban sendiri, dan bisa dihapus satu per satu atau sekaligus.</li>
+          <li><strong>Teks yang benar-benar ditanyakan</strong> — hanya ini yang dikirim ke server, karena AI-nya memang perlu membacanya.</li>
+        </ul>
+        <p class="note-box">Batas yang jujur disebut: teks pertanyaan <strong>diproses oleh layanan model AI pihak ketiga</strong>. Jadi pengguna sebaiknya tidak menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah di dalam pertanyaan. Peringatan ini juga tampil di dalam aplikasi.</p>
+      </article>
+
+      <article class="card reveal">
+        <h3>2 · Etika AI — apa yang sengaja TIDAK dilakukan</h3>
+        <p style="margin-top:.6rem">Bahaya terbesar asisten kesehatan bukan jawaban yang salah, tapi jawaban yang <strong>terdengar pasti</strong>. Karena itu ada empat pagar yang ditanam di prompt, bukan sekadar di panduan:</p>
+        <ul class="f-list" style="margin-top:.9rem">
+          <li><strong>Tidak mendiagnosis.</strong> Model bukan dokter dan dilarang menyimpulkan pengguna mengidap sesuatu.</li>
+          <li><strong>Tidak memberi persentase.</strong> Pertanyaan seperti “berapa persen kemungkinan saya kena kanker” dijawab dengan faktor risiko, bukan angka peluang.</li>
+          <li><strong>Tidak mengarang sitasi.</strong> Kalau sumber tidak tersedia, model diwajibkan mengatakan sumbernya tidak ada — bukan menyebut jurnal yang tidak pernah ada.</li>
+          <li><strong>Tidak menjawab dari ingatan.</strong> Jawaban wajib berdasarkan hasil pencarian yang ditampilkan ke pengguna, supaya bisa diperiksa sendiri.</li>
+        </ul>
+        <p class="note-box">Konsekuensinya diterima terbuka: kalau pencarian tidak menemukan bahan, aplikasi ini akan <strong>mengaku tidak tahu</strong>, bukan menebak. Itu disengaja.</p>
+      </article>
+    </div>
+
+    <div class="grid-2" style="margin-top:1.2rem">
+      <article class="card reveal">
+        <h3>3 · Transparansi — pengguna bisa memeriksa, bukan diminta percaya</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Sumber yang dikutip ditampilkan</strong> bersama jawabannya, dan bisa dibuka pengguna.</li>
+          <li><strong>“Dipakai” dibedakan dari “cuma ditemukan”.</strong> Sumber yang ditemukan tapi tidak dikutip model dilabeli berbeda — supaya tidak ada kesan mengutip lebih banyak daripada kenyataan.</li>
+          <li><strong>Jawaban bisa dibacakan dan disalin</strong> (termasuk poin kunci dan sumbernya), jadi tidak terkunci di dalam aplikasi.</li>
+          <li><strong>Kesalahan angka pada pemindaian foto ditandai</strong>, tidak dibetulkan sendiri. Menebak angka medis lebih berbahaya daripada mengaku ragu.</li>
+        </ul>
+      </article>
+
+      <article class="card reveal">
+        <h3>4 · Green IT — jejak sumber daya, dan apa yang belum selesai</h3>
+        <p style="margin-top:.6rem">Prinsip yang dipakai: <strong>jangan panggil jaringan kalau hasilnya bisa dipakai ulang</strong>. Yang sudah terpasang dan bisa diperiksa di kode:</p>
+        <ul class="f-list" style="margin-top:.9rem">
+          <li><strong>Konten kesehatan disimpan 24 jam.</strong> Satu tarikan per hari, bukan satu tarikan per kunjungan.</li>
+          <li><strong>Pengambilan dibatasi 8 artikel</strong>, padahal tampilan hanya memakai 5 topik, 4 artikel, dan 1 tips. Tanpa batas ini, satu tarikan bisa jadi 40 permintaan ke situs Kemenkes.</li>
+          <li><strong>Pembatas laju 20 permintaan/menit per alamat IP</strong>, plus batas total per instance. Ini menahan penyalahgunaan sekaligus menjaga biaya model tetap terukur.</li>
+          <li><strong>Pemindaian foto tidak menyentuh server sama sekali.</strong> Beban berat dikerjakan perangkat pengguna, dan hasilnya tetap jalan tanpa internet.</li>
+          <li><strong>Aset di-cache sesuai sifatnya.</strong> Berkas ber-nama-hash di-cache setahun; berkas yang namanya tetap hanya sehari, supaya pengguna lama tidak terjebak versi lama.</li>
+        </ul>
+        <p class="note-box"><strong>Yang belum selesai, disebut apa adanya:</strong> pembatas lajunya disimpan di memori proses, jadi di lingkungan serverless batas itu berlaku <strong>per-instance, bukan global</strong>. Untuk batas yang benar-benar global diperlukan penyimpanan bersama (mis. Redis), dan itu belum dipasang. Aplikasi ini juga belum mengukur emisi karbonnya sendiri — jadi tidak ada angka jejak karbon yang diklaim di halaman ini.</p>
+      </article>
+    </div>
+
+    <div class="note-box" style="margin-top:1.4rem">
+      <strong>Kepatuhan UU PDP No. 27/2022 dalam praktik:</strong>
+      <ul class="f-list" style="margin-top:.6rem">
+        <li><strong>Minimalisasi data</strong> — yang diambil hanya teks pertanyaan. Tidak ada nama, akun, atau identitas yang diminta.</li>
+        <li><strong>Kendali di tangan pengguna</strong> — riwayat dan jawaban kuesioner disimpan di perangkat sendiri, dan bisa dihapus pengguna kapan saja.</li>
+        <li><strong>Keterbukaan</strong> — perpindahan data dijelaskan sebelum pengguna memakainya, bukan disembunyikan di dokumen terpisah.</li>
+        <li><strong>Belum ada</strong> — halaman kebijakan privasi tersendiri dan alamat kontak resmi untuk permintaan penghapusan data. Dua hal itu masih perlu ditambahkan sebelum dipakai publik secara luas.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 <!-- ======================= QUOTE ======================= -->
 <section class="quote-band">
   <div class="container reveal">
@@ -711,6 +787,7 @@
       <a href="#alur">Alur Pemakaian</a>
       <a href="#fitur">Fitur Utama</a>
       <a href="#produk">Gambaran Produk</a>
+      <a href="#etika">Privasi &amp; Etika AI</a>
     </nav>
 
     <nav class="footer-col" aria-label="Navigasi footer kedua">
