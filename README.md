@@ -34,6 +34,26 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 |---|---|
 | [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
+| [`docs/verifikasi-*.md`](docs) | **Berkas pendukung.** Laporan verifikasi setiap angka di bagian "Masalah" — memastikan klaimnya berasal dari dokumen yang bisa dibuka, bukan dari ingatan. Ringkasannya tampil di halaman penjelasan, bagian **Sumber Data**. |
+
+### Sumber data di halaman penjelasan
+
+Setiap angka di bagian **Latar Belakang & Masalah** diusahakan punya rujukan yang
+bisa dibuka. Empat angka kunci ("Kunci Temuan") sudah dilacak sampai **PDF
+dokumen primernya** — diunduh dan teks penuhnya diekstrak, bukan dari abstrak
+pihak ketiga. Tiga angka yang belum ditemukan sumbernya **ditandai terbuka** di
+halaman dengan label `perlu rujukan`, bukan dihapus diam-diam dan bukan
+diklaim seolah ada sumbernya.
+
+Verifikasi itu juga menemukan **dua kekeliruan** yang sudah dibetulkan:
+
+| Dulu tertulis | Yang benar |
+|---|---|
+| Cakupan imunisasi "turun 95% → 80%" | 93,7% (2019) → 84,5% (2021). Angka 95% adalah **target** kekebalan kelompok, bukan capaian |
+| Remaja 15–18 tahun "72% literasi rendah" | Dari responden yang berliterasi rendah, kelompok 15–18 tahun adalah **proporsi terbesar (72%)** — bukan 72% remaja berliterasi rendah |
+
+Laporan lengkapnya ada di `docs/verifikasi-klaim-kesehatan.md` dan
+`docs/verifikasi-studi-literasi-kesehatan.md`.
 
 ### Alamat di situs
 
