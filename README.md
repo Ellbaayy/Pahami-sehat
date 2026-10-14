@@ -17,10 +17,10 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Tanya AI + sumber | berjalan. Pencarian memakai kata kunci terpilih, bukan kalimat pengguna apa adanya |
 > | Sederhanakan teks | berjalan (4 tingkat baca) |
 > | Cek klaim | berjalan (verdict + sumber) |
-> | Suara dibacakan | berjalan — suara neural, nada mengikuti isi kalimat |
+> | Suara dibacakan | **JALAN, tapi BUKAN suara neural — dan di sebagian perangkat tidak berbunyi sama sekali.** Diukur 14 Okt 2026: jalur Kenari `503 all_providers_failed` (`gemini-3-1-flash-tts`), jalur msedge-tts `403` dari Microsoft. Cadangan suara bawaan peramban juga **tidak menghasilkan suara** di mesin uji (menekan "Dengar" memunculkan "Gagal memutar suara"). Mesin suara neural + nada-per-kalimat sudah ditulis dan siap, tapi belum pernah benar-benar terdengar. **Jangan dipamerkan sebagai suara neural** sebelum dibuktikan. Rincian: `app/server/suara.js` |
 > | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya |
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
-> | Riwayat pertanyaan | berjalan. Tersimpan di peramban saja (bukan server), maksimal 12 entri. Bisa **dihapus satu per satu atau sekaligus**, dan setiap penghapusan **bisa dibatalkan** |
+> | Riwayat pertanyaan | berjalan. Tersimpan di peramban saja (bukan server), maksimal **20 obrolan** (lihat `MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan setiap penghapusan **bisa dibatalkan** |
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
 > 20 permintaan/menit per alamat IP (lihat `app/server/batas.js`).
