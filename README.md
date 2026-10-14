@@ -45,15 +45,26 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 
 ```
 pahami-sehat/
+├── .github/workflows/uji.yml ← integrasi berkelanjutan (uji + build)
+├── LICENSE                   ← MIT
+├── README.md
+├── uji-*.mjs                 ← uji tanpa jaringan (lihat "Menjalankan uji")
+├── verifikasi-judul.mjs      ← buktikan judul artikel Wikipedia benar-benar ada
+├── periksa-istilah.mjs       ← periksa calon istilah baru sebelum masuk peta
+├── ukur-*.mjs                ← pengukuran untuk memilih angka batas
+├── mermaid-diagram.png       ← sumber alur daur konten harian (dipakai konten.js)
 ├── app/                      ← PRODUK UTAMA (React + Express + Tailwind)
 │   ├── .env                  API key Kenari (JANGAN di-commit)
 │   ├── public/ocr/           mesin OCR: worker, core WASM, data bahasa
 │   ├── server/               backend Express: route, klien Kenari, prompt, rubrik
 │   ├── src/                  frontend React: App.jsx, lib/, data/, components/
+│   ├── api/index.js          pintu masuk serverless Vercel
 │   ├── index.html
 │   ├── package.json
+│   ├── vercel.json
 │   └── vite.config.js
 └── docs/
+    ├── sumber-hls-sf12.txt   ← instrumen HLS-SF12 asli + teks Indonesia tervalidasi
     └── prototipe/            ← halaman penjelasan (statis, tanpa build)
         ├── index.html
         ├── css/
@@ -64,6 +75,93 @@ pahami-sehat/
 Dua bagian ini saling menaut: sidebar di `app/` punya tombol **"Kembali ke situs"**
 ke halaman penjelasan, dan navbar `docs/prototipe/` punya tombol **"Coba Demo"**
 ke aplikasi.
+
+---
+
+## Arsitektur
+
+```mermaid
+flowchart TB
+  subgraph Peramban["Peramban — React 19 + Vite 8 + Tailwind 4"]
+    UI["Antarmuka<br/>Beranda · Tanya AI · Cek Klaim · Riwayat · Kuesioner · Pengaturan"]
+    OCR["Mesin OCR<br/>tesseract.js / WebAssembly"]
+    LS[("localStorage<br/>sesi · kuesioner · setelan")]
+  end
+
+  subgraph Server["Express 5 — lokal; Vercel Serverless saat produksi"]
+    B["Pembatas laju<br/>20 permintaan/menit per IP + batas total per instance"]
+    R["Rute /api/*"]
+  end
+
+  subgraph Luar["Layanan luar"]
+    K["Kenari.id<br/>deepseek-v4-1-flash"]
+    W["Wikipedia bahasa Indonesia"]
+    M["MedlinePlus<br/>wsearch.nlm.nih.gov"]
+  end
+
+  UI --> B --> R
+  UI <--> LS
+  UI --> OCR
+  OCR -.->|"tidak pernah keluar<br/>dari perangkat"| OCR
+
+  R -->|"kata kunci terpilih"| W
+  R -->|"istilah Inggris"| M
+  R -->|"sumber + pertanyaan"| K
+  K -->|"jawaban + sumber yang dikutip"| R
+  R -->|"jawaban"| UI
+
+  classDef store fill:#eef,stroke:#446,color:#113
+  class LS store
+```
+
+### Alur satu pertanyaan
+
+1. **Peramban** mengirim pertanyaan ke `POST /api/tanya` (atau `/api/tanya/stream`
+   untuk jawaban yang muncul bertahap).
+2. **Pembatas laju** memeriksa jumlah permintaan dari alamat IP itu.
+3. **Lapis pencarian** memilih **satu istilah** dari pertanyaan
+   (`pilihIstilah()` di `app/server/kataKunci.js`). Nama penyakit selalu menang
+   atas kata gejala; kata tindakan seperti `penyebab` atau `operasi` tidak pernah
+   dipilih selama ada istilah yang lebih khusus.
+4. Istilah itu dipetakan ke **dua bentuk berbeda**, karena dua mesin pencari
+   memakai kosakata yang berbeda:
+   - Wikipedia ID memakai **judul artikel kanonik** (`PETA_PENCARIAN`),
+     mis. `stunting` → `Hambatan pertumbuhan`.
+   - MedlinePlus memakai **istilah Inggris** (`PETA_MEDLINEPLUS`),
+     mis. `rontgen` → `xrays`.
+5. **Model AI** menerima pertanyaan + hasil pencarian, lalu menjawab **hanya**
+   dari bahan itu. Prompt melarang menambah fakta dari ingatan.
+6. Jawaban kembali bersama **sumber yang benar-benar dikutip**, dan panel
+   `SumberJawaban` membedakan sumber yang **dipakai** dari yang cuma **ditemukan**.
+
+### Di mana datanya disimpan
+
+| Data | Tempat | Bertahan setelah halaman ditutup? |
+|---|---|---|
+| Sesi obrolan | `localStorage` (`pahami-sehat:sesi`) | ya, sampai dihapus pengguna |
+| Jawaban kuesioner | `localStorage` (`pahami-sehat:kuesioner`) | ya |
+| Setelan bahasa / tingkat baca / kontras | `localStorage` (`pahami-sehat:setelan`) | ya |
+| Foto yang dipindai | **tidak disimpan ke mana pun** — dibaca di memori peramban | tidak |
+| Pertanyaan & jawaban di server | **tidak disimpan** | tidak |
+
+**Tidak ada basis data.** Server ini tidak punya tabel, tidak punya akun
+pengguna, dan tidak menulis isi percakapan ke mana pun. Yang ditulis ke disk
+hanya **cache konten kesehatan** (`.cache-konten.json`, berlaku 24 jam) — isinya
+artikel publik dari Kemenkes, bukan data pengguna.
+
+### Tiga hal yang dijaga di sisi server
+
+- **`app/server/kataKunci.js`** — pengenalan topik kesehatan. Satu daftar
+  istilah dipakai bersama oleh `PENGENALAN_TOPIK`, `KATA_KESEHATAN`, dan kedua
+  peta pencarian, supaya tidak ada istilah yang dikenali di satu jalur tapi mati
+  di jalur lain.
+- **`app/server/prompts.js`** — rubrik 7 butir. Butir 4 melarang mengarang
+  sitasi, butir 5 dan 6 melarang memberi diagnosis/resep/dosis dan melarang
+  menyimpulkan pengguna mengidap sesuatu.
+- **`app/server/batas.js`** — pembatas laju. Penyimpanannya di memori proses,
+  jadi di serverless batas ini **per-instance, bukan global** — cukup untuk
+  menahan penyalahgunaan kasar, bukan jaminan global. Batasnya disebut apa
+  adanya di komentar berkasnya.
 
 ---
 
@@ -248,6 +346,30 @@ node uji-bahasa.mjs       # 25 pemeriksaan: kesehatan kamus id/en
 tidak ada, kunci yang hanya ada di satu bahasa, dan kunci yang menganggur
 (tidak dipakai siapa pun). Ketiganya pernah terjadi di proyek ini.
 
+`uji-sumber.mjs` juga berjalan tanpa jaringan (99 pemeriksaan). Versi
+`--jaringan` menambahkan pemeriksaan bahwa setiap judul artikel Wikipedia yang
+dipetakan benar-benar ada.
+
+### Integrasi berkelanjutan
+
+`.github/workflows/uji.yml` menjalankan seluruh uji di atas ditambah
+`node --check` dan `npm run build` pada setiap push dan pull request ke `main`.
+
+Dua hal yang **tidak** dijalankan di CI, dan alasannya disebut apa adanya:
+`uji-jawaban.mjs` butuh `KENARI_API_KEY` (rahasia tidak boleh jadi penentu pada
+pull request orang lain), dan uji berjaringan (`--jaringan`, `ukur-*`,
+`verifikasi-judul.mjs`) bisa merah karena Wikipedia berubah, bukan karena kode
+kita salah. Keduanya dijalankan manual sebelum deploy.
+
+> **Catatan pemasangan di CI:** langkahnya memakai `npm ci --include=dev
+> --ignore-scripts`. Flag `--ignore-scripts` wajib: `msedge-tts` memasang
+> `preinstall: npx only-allow pnpm`, yang keluar dengan kode 1 bila dijalankan
+> npm (diukur: exit 1 di bawah npm, exit 0 hanya di bawah pnpm). npm 11
+> melewatkan install script secara bawaan sehingga ini tidak terasa di komputer
+> pengembang, tetapi runner GitHub memakai npm 10 dan menjalankannya.
+> Urutan langkah juga penting — dependensi dipasang lebih dulu, karena
+> `uji-ocr.mjs` mengimpor `tesseract.js` lewat `app/src/lib/ocr.js`.
+
 Dua skrip di bawah **butuh jaringan** dan hanya dipakai untuk memilih angka
 batas dari pengukuran, bukan untuk rutin:
 
@@ -259,6 +381,86 @@ node ukur-suara.mjs       # berapa lama TTS benar-benar butuh (ini asal MAKS_SUA
 Yang **tidak** bisa diuji dari terminal — karena butuh peramban sungguhan —
 diuji manual di `/app/`: mesin OCR, pengenalan suara, pemutaran suara, dan
 tampilan mode Inggris.
+
+---
+
+## Etika, Privasi & Green IT
+
+Tiga hal ini adalah **10% dari indikator penilaian LOGICODIX**, dan semuanya
+adalah keadaan yang bisa diperiksa di kode — bukan janji di dokumen. Versi yang
+ditulis untuk pembaca umum ada di halaman penjelasan, bagian **Privasi, Etika AI,
+dan Jejaknya** (`docs/prototipe/index.html`, `id="etika"`).
+
+### Privasi — apa yang keluar dari perangkat
+
+| Data | Perjalanan |
+|---|---|
+| Foto yang dipindai | Dibaca di peramban (tesseract.js/WebAssembly dari `app/public/ocr/`, **bukan CDN**). Tidak ada permintaan keluar. |
+| Jawaban kuesioner | Dihitung di peramban, disimpan di `localStorage`. Tidak pernah dikirim ke server. |
+| Riwayat obrolan | `localStorage` peramban. Bisa dihapus satu per satu atau sekaligus. |
+| Teks pertanyaan | **Hanya ini** yang dikirim ke server, karena model AI memang perlu membacanya. |
+
+Batas yang jujur disebut: teks pertanyaan diproses oleh **layanan model AI pihak
+ketiga** (Kenari.id). Karena itu aplikasi memperingatkan pengguna agar tidak
+menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah — peringatan
+itu tampil di panel **Pengaturan** (`set.privasi1..3` di `app/src/data/bahasa.js`).
+
+**Tidak ada akun dan tidak ada basis data.** Tidak ada tabel, tidak ada
+autentikasi, dan isi percakapan tidak ditulis ke mana pun. Yang ditulis ke disk
+hanya `.cache-konten.json` (artikel publik Kemenkes, berlaku 24 jam).
+
+### Etika AI — pagar yang ditanam di prompt
+
+Lima larangan ini ada di `app/server/prompts.js` (`RUBRIK`, butir 4–6) dan
+diuji oleh `uji-jawaban.mjs`, bukan sekadar dijanjikan di README:
+
+1. **Tidak mendiagnosis** — butir 5: model bukan dokter, dilarang memberi
+   diagnosis, resep, atau dosis.
+2. **Tidak menyimpulkan pengguna mengidap sesuatu** — butir 6: pertanyaan
+   "apakah saya kena X" dijawab faktor risiko sebagai fakta umum, bukan penilaian
+   atas diri pengguna, dan dilarang menyusun daftar kemungkinan penyakit yang
+   bersaing.
+3. **Tidak memberi persentase** yang tidak ada di sumber.
+4. **Tidak mengarang sitasi** — butir 4: kalau sumber tidak tersedia, model
+   wajib menyatakan sumbernya belum bisa dipastikan.
+5. **Tidak menjawab dari ingatan** — prompt berbunyi *"Jawab HANYA berdasarkan
+   hasil pencarian di atas. Jangan menambah fakta dari ingatanmu."*
+
+Konsekuensinya diterima terbuka: kalau pencarian tidak menemukan bahan, aplikasi
+akan **mengaku tidak tahu**. Itu disengaja — aplikasi kesehatan yang menebak
+lebih berbahaya daripada yang mengaku tidak tahu.
+
+### Green IT — jejak sumber daya
+
+Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
+
+| Kendali | Di mana | Angka |
+|---|---|---|
+| Cache konten kesehatan | `app/server/konten.js` (`BERLAKU_MS`) | 24 jam sekali sehari |
+| Batas pengambilan artikel | `app/server/konten.js` (`MAKS_DETAIL`) | 8, dari yang tadinya bisa sampai 40 |
+| Pembatas laju per IP | `app/server/batas.js` | 20 permintaan/menit |
+| Cache aset ber-hash | `app/vercel.json` | 1 tahun, `immutable` |
+| Cache berkas ber-nama-tetap | `app/vercel.json` (`/app/ocr/`) | 1 hari + `stale-while-revalidate` |
+| Pemindaian foto | `app/src/lib/ocr.js` | 0 permintaan server |
+
+**Yang belum selesai, disebut apa adanya:**
+
+- Pembatas laju disimpan di **memori proses**, jadi di lingkungan serverless
+  batasnya berlaku **per-instance, bukan global**. Untuk batas yang benar-benar
+  global diperlukan penyimpanan bersama (mis. Redis/Upstash) — belum dipasang.
+- Aplikasi ini **belum mengukur emisi karbonnya sendiri**, jadi tidak ada angka
+  jejak karbon yang diklaim di mana pun.
+- Belum ada halaman kebijakan privasi tersendiri dan alamat kontak resmi untuk
+  permintaan penghapusan data.
+
+### Kepatuhan UU PDP No. 27/2022 dalam praktik
+
+| Prinsip | Keadaan |
+|---|---|
+| Minimalisasi data | Yang diambil hanya teks pertanyaan. Tidak ada nama, akun, atau identitas yang diminta. |
+| Kendali di tangan subjek data | Riwayat dan jawaban kuesioner disimpan di perangkat pengguna dan bisa dihapus pengguna kapan saja. |
+| Keterbukaan | Perpindahan data dijelaskan sebelum pengguna memakainya (panel Pengaturan), bukan disembunyikan. |
+| Hak penghapusan | Terpenuhi secara teknis (tombol hapus riwayat), **belum** terpenuhi secara prosedural (belum ada kanal kontak resmi). |
 
 ---
 
