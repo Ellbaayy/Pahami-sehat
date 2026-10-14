@@ -963,6 +963,20 @@ input,select,textarea{max-width:100%}
   white-space:nowrap;
 }
 
+/* ---------- catatan koreksi kecil (netral, bukan peringatan) ---------- */
+.catatan{
+  display:inline-block;
+  margin-left:.3rem;
+  padding:.05rem .45rem;
+  border-radius:999px;
+  background:var(--blue-soft);
+  color:var(--blue);
+  font-size:.7rem;
+  font-weight:700;
+  vertical-align:.08em;
+  white-space:nowrap;
+}
+
 /* ---------- daftar rujukan ---------- */
 .sumber-list{
   list-style:none;
