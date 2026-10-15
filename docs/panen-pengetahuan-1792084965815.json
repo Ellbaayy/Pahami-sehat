@@ -1,0 +1,1518 @@
+{
+  "dibuat": "2026-10-15T17:14:54.497Z",
+  "berlakuHari": 90,
+  "topik": [
+    {
+      "istilah": "pemeriksaan laboratorium",
+      "resmi": false
+    },
+    {
+      "istilah": "anemia defisiensi besi",
+      "resmi": true
+    },
+    {
+      "istilah": "pemeriksaan penunjang",
+      "resmi": true
+    },
+    {
+      "istilah": "infeksi saluran kemih",
+      "resmi": true
+    },
+    {
+      "istilah": "tekanan darah tinggi",
+      "resmi": true
+    },
+    {
+      "istilah": "kesehatan reproduksi",
+      "resmi": false
+    },
+    {
+      "istilah": "komplikasi kehamilan",
+      "resmi": true
+    },
+    {
+      "istilah": "pertolongan pertama",
+      "resmi": true
+    },
+    {
+      "istilah": "kekurangan zat besi",
+      "resmi": true
+    },
+    {
+      "istilah": "radang tenggorokan",
+      "resmi": true
+    },
+    {
+      "istilah": "perawatan di rumah",
+      "resmi": true
+    },
+    {
+      "istilah": "telinga berdenging",
+      "resmi": true
+    },
+    {
+      "istilah": "sklerosis multipel",
+      "resmi": true
+    },
+    {
+      "istilah": "gangguan kecemasan",
+      "resmi": true
+    },
+    {
+      "istilah": "kanker leher rahim",
+      "resmi": true
+    },
+    {
+      "istilah": "kebersihan makanan",
+      "resmi": true
+    },
+    {
+      "istilah": "pemeriksaan fisik",
+      "resmi": true
+    },
+    {
+      "istilah": "elektrokardiogram",
+      "resmi": false
+    },
+    {
+      "istilah": "tidak nafsu makan",
+      "resmi": false
+    },
+    {
+      "istilah": "kanker usus besar",
+      "resmi": true
+    },
+    {
+      "istilah": "kematian maternal",
+      "resmi": true
+    },
+    {
+      "istilah": "sakit tenggorokan",
+      "resmi": false
+    },
+    {
+      "istilah": "kadar gula darah",
+      "resmi": false
+    },
+    {
+      "istilah": "serangan jantung",
+      "resmi": true
+    },
+    {
+      "istilah": "usg transvaginal",
+      "resmi": false
+    },
+    {
+      "istilah": "kanker paru-paru",
+      "resmi": false
+    },
+    {
+      "istilah": "kesehatan mental",
+      "resmi": true
+    },
+    {
+      "istilah": "gangguan bipolar",
+      "resmi": true
+    },
+    {
+      "istilah": "imunisasi dasar",
+      "resmi": true
+    },
+    {
+      "istilah": "infeksi telinga",
+      "resmi": true
+    },
+    {
+      "istilah": "herpes simpleks",
+      "resmi": true
+    },
+    {
+      "istilah": "bayi baru lahir",
+      "resmi": true
+    },
+    {
+      "istilah": "penyakit kuning",
+      "resmi": true
+    },
+    {
+      "istilah": "kanker payudara",
+      "resmi": true
+    },
+    {
+      "istilah": "kesehatan kerja",
+      "resmi": true
+    },
+    {
+      "istilah": "keamanan pangan",
+      "resmi": true
+    },
+    {
+      "istilah": "gangguan tidur",
+      "resmi": false
+    },
+    {
+      "istilah": "perawatan luka",
+      "resmi": true
+    },
+    {
+      "istilah": "rontgen thorax",
+      "resmi": true
+    },
+    {
+      "istilah": "ultrasonografi",
+      "resmi": false
+    },
+    {
+      "istilah": "demam berdarah",
+      "resmi": true
+    },
+    {
+      "istilah": "kontraindikasi",
+      "resmi": false
+    },
+    {
+      "istilah": "tumbuh kembang",
+      "resmi": false
+    },
+    {
+      "istilah": "gigi berlubang",
+      "resmi": true
+    },
+    {
+      "istilah": "konjungtivitis",
+      "resmi": true
+    },
+    {
+      "istilah": "radang amandel",
+      "resmi": true
+    },
+    {
+      "istilah": "gangguan makan",
+      "resmi": true
+    },
+    {
+      "istilah": "kesehatan jiwa",
+      "resmi": true
+    },
+    {
+      "istilah": "kanker serviks",
+      "resmi": true
+    },
+    {
+      "istilah": "kanker prostat",
+      "resmi": true
+    },
+    {
+      "istilah": "mencuci tangan",
+      "resmi": false
+    },
+    {
+      "istilah": "interaksi obat",
+      "resmi": true
+    },
+    {
+      "istilah": "pasca operasi",
+      "resmi": true
+    },
+    {
+      "istilah": "faktor risiko",
+      "resmi": true
+    },
+    {
+      "istilah": "gagal jantung",
+      "resmi": true
+    },
+    {
+      "istilah": "kencing manis",
+      "resmi": true
+    },
+    {
+      "istilah": "gangguan jiwa",
+      "resmi": false
+    },
+    {
+      "istilah": "penyakit hati",
+      "resmi": true
+    },
+    {
+      "istilah": "tekanan darah",
+      "resmi": true
+    },
+    {
+      "istilah": "makanan sehat",
+      "resmi": false
+    },
+    {
+      "istilah": "gusi berdarah",
+      "resmi": true
+    },
+    {
+      "istilah": "gizi seimbang",
+      "resmi": true
+    },
+    {
+      "istilah": "asi eksklusif",
+      "resmi": true
+    },
+    {
+      "istilah": "pre eklampsia",
+      "resmi": true
+    },
+    {
+      "istilah": "inkontinensia",
+      "resmi": true
+    },
+    {
+      "istilah": "leptospirosis",
+      "resmi": false
+    },
+    {
+      "istilah": "henti jantung",
+      "resmi": true
+    },
+    {
+      "istilah": "hidung mampet",
+      "resmi": true
+    },
+    {
+      "istilah": "sarang nyamuk",
+      "resmi": true
+    },
+    {
+      "istilah": "acetaminophen",
+      "resmi": true
+    },
+    {
+      "istilah": "sakit kepala",
+      "resmi": true
+    },
+    {
+      "istilah": "gagal ginjal",
+      "resmi": true
+    },
+    {
+      "istilah": "rontgen dada",
+      "resmi": true
+    },
+    {
+      "istilah": "laboratorium",
+      "resmi": true
+    },
+    {
+      "istilah": "rehabilitasi",
+      "resmi": true
+    },
+    {
+      "istilah": "tuberkulosis",
+      "resmi": true
+    },
+    {
+      "istilah": "darah tinggi",
+      "resmi": true
+    },
+    {
+      "istilah": "darah rendah",
+      "resmi": false
+    },
+    {
+      "istilah": "multivitamin",
+      "resmi": true
+    },
+    {
+      "istilah": "efek samping",
+      "resmi": true
+    },
+    {
+      "istilah": "polip hidung",
+      "resmi": true
+    },
+    {
+      "istilah": "osteoporosis",
+      "resmi": true
+    },
+    {
+      "istilah": "jatuh lansia",
+      "resmi": true
+    },
+    {
+      "istilah": "demam tifoid",
+      "resmi": true
+    },
+    {
+      "istilah": "cacar monyet",
+      "resmi": true
+    },
+    {
+      "istilah": "asam lambung",
+      "resmi": true
+    },
+    {
+      "istilah": "patah tulang",
+      "resmi": true
+    },
+    {
+      "istilah": "gigitan ular",
+      "resmi": true
+    },
+    {
+      "istilah": "kematian ibu",
+      "resmi": true
+    },
+    {
+      "istilah": "resep dokter",
+      "resmi": true
+    },
+    {
+      "istilah": "sesak napas",
+      "resmi": true
+    },
+    {
+      "istilah": "batu ginjal",
+      "resmi": true
+    },
+    {
+      "istilah": "kanker paru",
+      "resmi": true
+    },
+    {
+      "istilah": "fisioterapi",
+      "resmi": true
+    },
+    {
+      "istilah": "sulit tidur",
+      "resmi": false
+    },
+    {
+      "istilah": "nafsu makan",
+      "resmi": false
+    },
+    {
+      "istilah": "paracetamol",
+      "resmi": true
+    },
+    {
+      "istilah": "amoxicillin",
+      "resmi": true
+    },
+    {
+      "istilah": "berat badan",
+      "resmi": false
+    },
+    {
+      "istilah": "pemeriksaan",
+      "resmi": false
+    },
+    {
+      "istilah": "rumah sakit",
+      "resmi": false
+    },
+    {
+      "istilah": "karbohidrat",
+      "resmi": false
+    },
+    {
+      "istilah": "cuci tangan",
+      "resmi": false
+    },
+    {
+      "istilah": "radang gusi",
+      "resmi": true
+    },
+    {
+      "istilah": "karang gigi",
+      "resmi": true
+    },
+    {
+      "istilah": "gigi bungsu",
+      "resmi": true
+    },
+    {
+      "istilah": "rabun dekat",
+      "resmi": true
+    },
+    {
+      "istilah": "mata kering",
+      "resmi": false
+    },
+    {
+      "istilah": "skizofrenia",
+      "resmi": true
+    },
+    {
+      "istilah": "kwashiorkor",
+      "resmi": true
+    },
+    {
+      "istilah": "preeklamsia",
+      "resmi": true
+    },
+    {
+      "istilah": "chikungunya",
+      "resmi": true
+    },
+    {
+      "istilah": "hepatitis b",
+      "resmi": true
+    },
+    {
+      "istilah": "hepatitis c",
+      "resmi": true
+    },
+    {
+      "istilah": "hipertiroid",
+      "resmi": true
+    },
+    {
+      "istilah": "batu empedu",
+      "resmi": true
+    },
+    {
+      "istilah": "anafilaksis",
+      "resmi": true
+    },
+    {
+      "istilah": "amoksisilin",
+      "resmi": true
+    },
+    {
+      "istilah": "nyeri otot",
+      "resmi": true
+    },
+    {
+      "istilah": "faringitis",
+      "resmi": true
+    },
+    {
+      "istilah": "luka bakar",
+      "resmi": true
+    },
+    {
+      "istilah": "rapid test",
+      "resmi": true
+    },
+    {
+      "istilah": "spirometri",
+      "resmi": true
+    },
+    {
+      "istilah": "kemoterapi",
+      "resmi": true
+    },
+    {
+      "istilah": "hipertensi",
+      "resmi": true
+    },
+    {
+      "istilah": "kolesterol",
+      "resmi": true
+    },
+    {
+      "istilah": "komplikasi",
+      "resmi": true
+    },
+    {
+      "istilah": "antibiotik",
+      "resmi": true
+    },
+    {
+      "istilah": "gula darah",
+      "resmi": true
+    },
+    {
+      "istilah": "kadar gula",
+      "resmi": false
+    },
+    {
+      "istilah": "pencegahan",
+      "resmi": false
+    },
+    {
+      "istilah": "pengobatan",
+      "resmi": true
+    },
+    {
+      "istilah": "asam folat",
+      "resmi": false
+    },
+    {
+      "istilah": "menu sehat",
+      "resmi": false
+    },
+    {
+      "istilah": "kebersihan",
+      "resmi": false
+    },
+    {
+      "istilah": "melahirkan",
+      "resmi": false
+    },
+    {
+      "istilah": "menstruasi",
+      "resmi": false
+    },
+    {
+      "istilah": "gingivitis",
+      "resmi": true
+    },
+    {
+      "istilah": "abses gigi",
+      "resmi": true
+    },
+    {
+      "istilah": "sakit gigi",
+      "resmi": true
+    },
+    {
+      "istilah": "rabun jauh",
+      "resmi": true
+    },
+    {
+      "istilah": "buta warna",
+      "resmi": true
+    },
+    {
+      "istilah": "tonsilitis",
+      "resmi": true
+    },
+    {
+      "istilah": "bell palsy",
+      "resmi": true
+    },
+    {
+      "istilah": "bunuh diri",
+      "resmi": true
+    },
+    {
+      "istilah": "malnutrisi",
+      "resmi": true
+    },
+    {
+      "istilah": "gizi buruk",
+      "resmi": true
+    },
+    {
+      "istilah": "sarkopenia",
+      "resmi": true
+    },
+    {
+      "istilah": "filariasis",
+      "resmi": true
+    },
+    {
+      "istilah": "hipotiroid",
+      "resmi": true
+    },
+    {
+      "istilah": "perdarahan",
+      "resmi": true
+    },
+    {
+      "istilah": "berdenging",
+      "resmi": true
+    },
+    {
+      "istilah": "mata minus",
+      "resmi": true
+    },
+    {
+      "istilah": "obat bebas",
+      "resmi": true
+    },
+    {
+      "istilah": "influenza",
+      "resmi": true
+    },
+    {
+      "istilah": "kelelahan",
+      "resmi": true
+    },
+    {
+      "istilah": "pap smear",
+      "resmi": true
+    },
+    {
+      "istilah": "tes darah",
+      "resmi": true
+    },
+    {
+      "istilah": "tes urine",
+      "resmi": true
+    },
+    {
+      "istilah": "radiologi",
+      "resmi": true
+    },
+    {
+      "istilah": "penunjang",
+      "resmi": false
+    },
+    {
+      "istilah": "endoskopi",
+      "resmi": true
+    },
+    {
+      "istilah": "alzheimer",
+      "resmi": true
+    },
+    {
+      "istilah": "dehidrasi",
+      "resmi": true
+    },
+    {
+      "istilah": "pneumonia",
+      "resmi": true
+    },
+    {
+      "istilah": "hepatitis",
+      "resmi": true
+    },
+    {
+      "istilah": "imunisasi",
+      "resmi": true
+    },
+    {
+      "istilah": "ibuprofen",
+      "resmi": true
+    },
+    {
+      "istilah": "kandungan",
+      "resmi": false
+    },
+    {
+      "istilah": "diagnosis",
+      "resmi": true
+    },
+    {
+      "istilah": "puskesmas",
+      "resmi": false
+    },
+    {
+      "istilah": "istirahat",
+      "resmi": false
+    },
+    {
+      "istilah": "kehamilan",
+      "resmi": true
+    },
+    {
+      "istilah": "kesehatan",
+      "resmi": true
+    },
+    {
+      "istilah": "bau mulut",
+      "resmi": true
+    },
+    {
+      "istilah": "halitosis",
+      "resmi": true
+    },
+    {
+      "istilah": "plak gigi",
+      "resmi": true
+    },
+    {
+      "istilah": "presbiopi",
+      "resmi": true
+    },
+    {
+      "istilah": "sinusitis",
+      "resmi": true
+    },
+    {
+      "istilah": "neuropati",
+      "resmi": true
+    },
+    {
+      "istilah": "kesemutan",
+      "resmi": false
+    },
+    {
+      "istilah": "parkinson",
+      "resmi": true
+    },
+    {
+      "istilah": "neuralgia",
+      "resmi": true
+    },
+    {
+      "istilah": "psoriasis",
+      "resmi": true
+    },
+    {
+      "istilah": "urtikaria",
+      "resmi": true
+    },
+    {
+      "istilah": "cacar air",
+      "resmi": true
+    },
+    {
+      "istilah": "kecemasan",
+      "resmi": true
+    },
+    {
+      "istilah": "anoreksia",
+      "resmi": true
+    },
+    {
+      "istilah": "asam urat",
+      "resmi": true
+    },
+    {
+      "istilah": "tenggelam",
+      "resmi": true
+    },
+    {
+      "istilah": "keracunan",
+      "resmi": true
+    },
+    {
+      "istilah": "air minum",
+      "resmi": true
+    },
+    {
+      "istilah": "overdosis",
+      "resmi": true
+    },
+    {
+      "istilah": "pruritus",
+      "resmi": false
+    },
+    {
+      "istilah": "cat scan",
+      "resmi": true
+    },
+    {
+      "istilah": "tes urin",
+      "resmi": true
+    },
+    {
+      "istilah": "demensia",
+      "resmi": true
+    },
+    {
+      "istilah": "obesitas",
+      "resmi": true
+    },
+    {
+      "istilah": "tersedak",
+      "resmi": true
+    },
+    {
+      "istilah": "sembelit",
+      "resmi": true
+    },
+    {
+      "istilah": "insomnia",
+      "resmi": true
+    },
+    {
+      "istilah": "penyakit",
+      "resmi": false
+    },
+    {
+      "istilah": "diabetes",
+      "resmi": true
+    },
+    {
+      "istilah": "suplemen",
+      "resmi": false
+    },
+    {
+      "istilah": "penyebab",
+      "resmi": false
+    },
+    {
+      "istilah": "zat besi",
+      "resmi": false
+    },
+    {
+      "istilah": "olahraga",
+      "resmi": true
+    },
+    {
+      "istilah": "sanitasi",
+      "resmi": false
+    },
+    {
+      "istilah": "menyusui",
+      "resmi": true
+    },
+    {
+      "istilah": "sariawan",
+      "resmi": true
+    },
+    {
+      "istilah": "glaukoma",
+      "resmi": true
+    },
+    {
+      "istilah": "epilepsi",
+      "resmi": true
+    },
+    {
+      "istilah": "vitiligo",
+      "resmi": true
+    },
+    {
+      "istilah": "stunting",
+      "resmi": true
+    },
+    {
+      "istilah": "eklamsia",
+      "resmi": true
+    },
+    {
+      "istilah": "cacingan",
+      "resmi": true
+    },
+    {
+      "istilah": "hemoroid",
+      "resmi": true
+    },
+    {
+      "istilah": "leukemia",
+      "resmi": true
+    },
+    {
+      "istilah": "mialgia",
+      "resmi": false
+    },
+    {
+      "istilah": "biduran",
+      "resmi": false
+    },
+    {
+      "istilah": "sirosis",
+      "resmi": true
+    },
+    {
+      "istilah": "ct scan",
+      "resmi": true
+    },
+    {
+      "istilah": "tes pcr",
+      "resmi": true
+    },
+    {
+      "istilah": "rontgen",
+      "resmi": true
+    },
+    {
+      "istilah": "bengkak",
+      "resmi": false
+    },
+    {
+      "istilah": "malaria",
+      "resmi": true
+    },
+    {
+      "istilah": "jantung",
+      "resmi": true
+    },
+    {
+      "istilah": "lambung",
+      "resmi": false
+    },
+    {
+      "istilah": "depresi",
+      "resmi": true
+    },
+    {
+      "istilah": "anxiety",
+      "resmi": true
+    },
+    {
+      "istilah": "infeksi",
+      "resmi": true
+    },
+    {
+      "istilah": "injeksi",
+      "resmi": false
+    },
+    {
+      "istilah": "vitamin",
+      "resmi": true
+    },
+    {
+      "istilah": "operasi",
+      "resmi": false
+    },
+    {
+      "istilah": "perawat",
+      "resmi": false
+    },
+    {
+      "istilah": "rujukan",
+      "resmi": false
+    },
+    {
+      "istilah": "nutrisi",
+      "resmi": true
+    },
+    {
+      "istilah": "protein",
+      "resmi": true
+    },
+    {
+      "istilah": "kalsium",
+      "resmi": false
+    },
+    {
+      "istilah": "merokok",
+      "resmi": true
+    },
+    {
+      "istilah": "alkohol",
+      "resmi": false
+    },
+    {
+      "istilah": "narkoba",
+      "resmi": false
+    },
+    {
+      "istilah": "katarak",
+      "resmi": true
+    },
+    {
+      "istilah": "belekan",
+      "resmi": true
+    },
+    {
+      "istilah": "amandel",
+      "resmi": true
+    },
+    {
+      "istilah": "tinitus",
+      "resmi": true
+    },
+    {
+      "istilah": "mimisan",
+      "resmi": true
+    },
+    {
+      "istilah": "vertigo",
+      "resmi": true
+    },
+    {
+      "istilah": "migrain",
+      "resmi": true
+    },
+    {
+      "istilah": "jerawat",
+      "resmi": true
+    },
+    {
+      "istilah": "skabies",
+      "resmi": true
+    },
+    {
+      "istilah": "bipolar",
+      "resmi": true
+    },
+    {
+      "istilah": "autisme",
+      "resmi": true
+    },
+    {
+      "istilah": "tengkes",
+      "resmi": true
+    },
+    {
+      "istilah": "ikterus",
+      "resmi": true
+    },
+    {
+      "istilah": "ambeien",
+      "resmi": true
+    },
+    {
+      "istilah": "limfoma",
+      "resmi": true
+    },
+    {
+      "istilah": "higiene",
+      "resmi": false
+    },
+    {
+      "istilah": "biopsi",
+      "resmi": true
+    },
+    {
+      "istilah": "pusing",
+      "resmi": true
+    },
+    {
+      "istilah": "muntah",
+      "resmi": true
+    },
+    {
+      "istilah": "alergi",
+      "resmi": true
+    },
+    {
+      "istilah": "bintik",
+      "resmi": false
+    },
+    {
+      "istilah": "dengue",
+      "resmi": true
+    },
+    {
+      "istilah": "stroke",
+      "resmi": true
+    },
+    {
+      "istilah": "kanker",
+      "resmi": true
+    },
+    {
+      "istilah": "anemia",
+      "resmi": true
+    },
+    {
+      "istilah": "ginjal",
+      "resmi": true
+    },
+    {
+      "istilah": "campak",
+      "resmi": false
+    },
+    {
+      "istilah": "rabies",
+      "resmi": true
+    },
+    {
+      "istilah": "tablet",
+      "resmi": true
+    },
+    {
+      "istilah": "kapsul",
+      "resmi": false
+    },
+    {
+      "istilah": "vaksin",
+      "resmi": true
+    },
+    {
+      "istilah": "herbal",
+      "resmi": true
+    },
+    {
+      "istilah": "gejala",
+      "resmi": true
+    },
+    {
+      "istilah": "terapi",
+      "resmi": false
+    },
+    {
+      "istilah": "klinik",
+      "resmi": false
+    },
+    {
+      "istilah": "dokter",
+      "resmi": false
+    },
+    {
+      "istilah": "apotek",
+      "resmi": false
+    },
+    {
+      "istilah": "kalori",
+      "resmi": false
+    },
+    {
+      "istilah": "balita",
+      "resmi": false
+    },
+    {
+      "istilah": "karies",
+      "resmi": true
+    },
+    {
+      "istilah": "miopia",
+      "resmi": true
+    },
+    {
+      "istilah": "otitis",
+      "resmi": true
+    },
+    {
+      "istilah": "herpes",
+      "resmi": true
+    },
+    {
+      "istilah": "tifoid",
+      "resmi": true
+    },
+    {
+      "istilah": "tiroid",
+      "resmi": true
+    },
+    {
+      "istilah": "lansia",
+      "resmi": true
+    },
+    {
+      "istilah": "cedera",
+      "resmi": false
+    },
+    {
+      "istilah": "capek",
+      "resmi": false
+    },
+    {
+      "istilah": "sakit",
+      "resmi": false
+    },
+    {
+      "istilah": "nyeri",
+      "resmi": true
+    },
+    {
+      "istilah": "demam",
+      "resmi": true
+    },
+    {
+      "istilah": "panas",
+      "resmi": false
+    },
+    {
+      "istilah": "batuk",
+      "resmi": true
+    },
+    {
+      "istilah": "pilek",
+      "resmi": false
+    },
+    {
+      "istilah": "sesak",
+      "resmi": false
+    },
+    {
+      "istilah": "lemas",
+      "resmi": true
+    },
+    {
+      "istilah": "letih",
+      "resmi": false
+    },
+    {
+      "istilah": "lelah",
+      "resmi": false
+    },
+    {
+      "istilah": "gatal",
+      "resmi": true
+    },
+    {
+      "istilah": "patah",
+      "resmi": true
+    },
+    {
+      "istilah": "diare",
+      "resmi": true
+    },
+    {
+      "istilah": "pegal",
+      "resmi": false
+    },
+    {
+      "istilah": "strok",
+      "resmi": true
+    },
+    {
+      "istilah": "tumor",
+      "resmi": true
+    },
+    {
+      "istilah": "tifus",
+      "resmi": true
+    },
+    {
+      "istilah": "tipes",
+      "resmi": false
+    },
+    {
+      "istilah": "covid",
+      "resmi": true
+    },
+    {
+      "istilah": "cacar",
+      "resmi": false
+    },
+    {
+      "istilah": "polio",
+      "resmi": true
+    },
+    {
+      "istilah": "kusta",
+      "resmi": false
+    },
+    {
+      "istilah": "stres",
+      "resmi": true
+    },
+    {
+      "istilah": "cemas",
+      "resmi": true
+    },
+    {
+      "istilah": "liver",
+      "resmi": true
+    },
+    {
+      "istilah": "dosis",
+      "resmi": false
+    },
+    {
+      "istilah": "resep",
+      "resmi": false
+    },
+    {
+      "istilah": "sirup",
+      "resmi": false
+    },
+    {
+      "istilah": "salep",
+      "resmi": false
+    },
+    {
+      "istilah": "darah",
+      "resmi": false
+    },
+    {
+      "istilah": "tensi",
+      "resmi": false
+    },
+    {
+      "istilah": "kadar",
+      "resmi": false
+    },
+    {
+      "istilah": "tanda",
+      "resmi": false
+    },
+    {
+      "istilah": "lemak",
+      "resmi": false
+    },
+    {
+      "istilah": "serat",
+      "resmi": false
+    },
+    {
+      "istilah": "senam",
+      "resmi": false
+    },
+    {
+      "istilah": "tidur",
+      "resmi": true
+    },
+    {
+      "istilah": "rokok",
+      "resmi": false
+    },
+    {
+      "istilah": "hamil",
+      "resmi": false
+    },
+    {
+      "istilah": "eksim",
+      "resmi": true
+    },
+    {
+      "istilah": "kudis",
+      "resmi": true
+    },
+    {
+      "istilah": "kurap",
+      "resmi": true
+    },
+    {
+      "istilah": "bisul",
+      "resmi": false
+    },
+    {
+      "istilah": "kutil",
+      "resmi": true
+    },
+    {
+      "istilah": "wasir",
+      "resmi": true
+    },
+    {
+      "istilah": "mual",
+      "resmi": true
+    },
+    {
+      "istilah": "luka",
+      "resmi": false
+    },
+    {
+      "istilah": "ruam",
+      "resmi": false
+    },
+    {
+      "istilah": "kram",
+      "resmi": false
+    },
+    {
+      "istilah": "asma",
+      "resmi": true
+    },
+    {
+      "istilah": "maag",
+      "resmi": false
+    },
+    {
+      "istilah": "gerd",
+      "resmi": true
+    },
+    {
+      "istilah": "aids",
+      "resmi": true
+    },
+    {
+      "istilah": "obat",
+      "resmi": false
+    },
+    {
+      "istilah": "jamu",
+      "resmi": false
+    },
+    {
+      "istilah": "bpjs",
+      "resmi": false
+    },
+    {
+      "istilah": "gizi",
+      "resmi": true
+    },
+    {
+      "istilah": "diet",
+      "resmi": true
+    },
+    {
+      "istilah": "yoga",
+      "resmi": false
+    },
+    {
+      "istilah": "bayi",
+      "resmi": false
+    },
+    {
+      "istilah": "haid",
+      "resmi": false
+    },
+    {
+      "istilah": "ispa",
+      "resmi": true
+    },
+    {
+      "istilah": "ppok",
+      "resmi": true
+    },
+    {
+      "istilah": "ayan",
+      "resmi": true
+    },
+    {
+      "istilah": "panu",
+      "resmi": true
+    },
+    {
+      "istilah": "ptsd",
+      "resmi": true
+    },
+    {
+      "istilah": "adhd",
+      "resmi": true
+    },
+    {
+      "istilah": "gout",
+      "resmi": true
+    },
+    {
+      "istilah": "syok",
+      "resmi": true
+    },
+    {
+      "istilah": "gusi",
+      "resmi": false
+    },
+    {
+      "istilah": "usg",
+      "resmi": false
+    },
+    {
+      "istilah": "mri",
+      "resmi": true
+    },
+    {
+      "istilah": "ekg",
+      "resmi": true
+    },
+    {
+      "istilah": "pcr",
+      "resmi": true
+    },
+    {
+      "istilah": "flu",
+      "resmi": true
+    },
+    {
+      "istilah": "dbd",
+      "resmi": false
+    },
+    {
+      "istilah": "tbc",
+      "resmi": false
+    },
+    {
+      "istilah": "hiv",
+      "resmi": true
+    },
+    {
+      "istilah": "bmi",
+      "resmi": true
+    },
+    {
+      "istilah": "lab",
+      "resmi": true
+    },
+    {
+      "istilah": "asi",
+      "resmi": false
+    },
+    {
+      "istilah": "ptb",
+      "resmi": false
+    },
+    {
+      "istilah": "rjp",
+      "resmi": true
+    },
+    {
+      "istilah": "isk",
+      "resmi": true
+    },
+    {
+      "istilah": "cpr",
+      "resmi": true
+    },
+    {
+      "istilah": "kb",
+      "resmi": false
+    },
+    {
+      "istilah": "k3",
+      "resmi": true
+    }
+  ],
+  "masuk": 331,
+  "gagal": 46,
+  "resmi": 270,
+  "pelengkap": 61
+}
