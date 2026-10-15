@@ -87,17 +87,54 @@ if ! curl -sf -o /dev/null "http://127.0.0.1:$PORT/api/health"; then
 fi
 echo "Server siap."
 
+# --- Pilih cara membuka terowongan -------------------------------------------
+#
+# NAMED TUNNEL (alamat TETAP) dipakai kalau domain sendiri sudah disiapkan —
+# lihat ~/.cloudflared/config.yml. Kalau belum ada, jatuh ke quick tunnel
+# (alamat acak yang berubah tiap dijalankan).
+#
+# KENAPA DIBEDAKAN: named tunnel punya alamat tetap dan TIDAK punya batas 200
+# permintaan bersamaan seperti quick tunnel. Saat penjurian, alamat tetap berarti
+# juri membuka URL yang sama tanpa perlu dikirim ulang.
+CONFIG_CLOUDFLARED="${CLOUDFLARED_CONFIG:-$HOME/.cloudflared/config.yml}"
+
 echo "Membuka terowongan Cloudflare…"
 LOG_TUNNEL="$(mktemp)"
-"$CLOUDFLARED" tunnel --url "http://127.0.0.1:$PORT" --no-autoupdate > "$LOG_TUNNEL" 2>&1 &
-PID_TUNNEL=$!
-
 ALAMAT=""
-for i in $(seq 1 60); do
-  ALAMAT="$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$LOG_TUNNEL" 2>/dev/null | head -1 || true)"
-  [ -n "$ALAMAT" ] && break
-  sleep 1
-done
+
+if [ -f "$CONFIG_CLOUDFLARED" ]; then
+  # Ambil hostname pertama dari config.yml supaya alamatnya bisa dicetak.
+  HOSTNAME_TETAP="$(grep -oE 'hostname:[[:space:]]*[A-Za-z0-9.-]+' "$CONFIG_CLOUDFLARED" | head -1 | awk '{print $2}')"
+  if [ -n "$HOSTNAME_TETAP" ]; then
+    echo "  memakai named tunnel: $HOSTNAME_TETAP"
+    "$CLOUDFLARED" tunnel --config "$CONFIG_CLOUDFLARED" run > "$LOG_TUNNEL" 2>&1 &
+    PID_TUNNEL=$!
+    # Named tunnel tidak selalu mencetak alamatnya; pakai hostname dari config.
+    for i in $(seq 1 30); do
+      if grep -qiE "Registered tunnel connection|Connection .* registered" "$LOG_TUNNEL" 2>/dev/null; then break; fi
+      if ! kill -0 "$PID_TUNNEL" 2>/dev/null; then
+        echo "Named tunnel berhenti. Log:" >&2
+        tail -20 "$LOG_TUNNEL" >&2
+        exit 1
+      fi
+      sleep 1
+    done
+    ALAMAT="https://$HOSTNAME_TETAP"
+  else
+    echo "  config.yml ada tetapi tidak memuat 'hostname' — beralih ke quick tunnel." >&2
+  fi
+fi
+
+if [ -z "$ALAMAT" ]; then
+  "$CLOUDFLARED" tunnel --url "http://127.0.0.1:$PORT" --no-autoupdate > "$LOG_TUNNEL" 2>&1 &
+  PID_TUNNEL=$!
+
+  for i in $(seq 1 60); do
+    ALAMAT="$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$LOG_TUNNEL" 2>/dev/null | head -1 || true)"
+    [ -n "$ALAMAT" ] && break
+    sleep 1
+  done
+fi
 
 if [ -z "$ALAMAT" ]; then
   echo "Alamat terowongan tidak muncul. Log:" >&2
