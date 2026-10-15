@@ -55,6 +55,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { potongKalimat, butirDari } from './teks.js'
+import { simpanKonten } from './db.js'
 
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
@@ -418,6 +419,24 @@ async function simpanKeDisk(data) {
   }
 }
 
+/**
+ * Salin artikel konten ke database — OPSIONAL, tidak pernah melempar.
+ *
+ * Dipisah jadi satu fungsi karena ada TIGA jalur keluar di `kontenHarian`,
+ * dan database harus ikut terisi di ketiganya. Sebelumnya hanya satu jalur
+ * yang menyinkron, sehingga database hampir selalu kosong walaupun kontennya
+ * ada — persis kesalahan yang sempat terjadi.
+ */
+async function sinkronKeDb(data) {
+  try {
+    const artikel = Array.isArray(data?.artikel) ? data.artikel : []
+    if (!artikel.length) return
+    await simpanKonten(artikel)
+  } catch {
+    /* database opsional — kegagalan di sini tidak boleh mengganggu konten */
+  }
+}
+
 /* ----------------------------------------------------------------- utama -- */
 
 /**
@@ -433,7 +452,13 @@ export async function kontenHarian({ paksa = false } = {}) {
   if (!diMemori) diMemori = await bacaDariDisk()
 
   // 1) Waktunya Pencarian Berikutnya? -> Tidak: pakai yang sudah ada
-  if (!paksa && diMemori && !waktunyaCek(diMemori)) return diMemori
+  if (!paksa && diMemori && !waktunyaCek(diMemori)) {
+    // Sinkronkan ke database di sini juga. Ini JALUR YANG PALING SERING DILEWATI
+    // (cache masih segar), jadi tanpa sinkronisasi di titik ini database hampir
+    // tidak pernah terisi — sudah pernah terjadi dan sempat membingungkan.
+    await sinkronKeDb(diMemori)
+    return diMemori
+  }
 
   // kalau ada pengambilan lain sedang jalan, ikut menunggu hasil yang sama
   if (sedangMengambil) return sedangMengambil
@@ -451,6 +476,11 @@ export async function kontenHarian({ paksa = false } = {}) {
         const sesudah = { ...diMemori, diperiksa: sekarangISO(), berikutnya: besokISO() }
         diMemori = sesudah
         await simpanKeDisk(sesudah)
+        // Sinkronkan juga ke database pada jalur "tidak ada yang berubah".
+        // Tanpa ini, database hanya terisi pada hari ketika kontennya BERUBAH —
+        // jadi database baru terisi sesekali, padahal maksudnya jadi cerminan
+        // dari apa yang sedang dipakai. `slug` UNIQUE membuat ini aman diulang.
+        await sinkronKeDb(sesudah)
         return sesudah
       }
 
@@ -485,6 +515,10 @@ export async function kontenHarian({ paksa = false } = {}) {
       }
       diMemori = hasil
       await simpanKeDisk(hasil)
+      // Simpan juga ke database — OPSIONAL. Kalau MariaDB mati, hasilnya null
+      // dan berkas JSON di atas tetap jadi sumber kebenarannya. Tidak pernah
+      // melempar, jadi jalur konten tidak bisa rusak karena database.
+      await sinkronKeDb(hasil)
       return hasil
     } catch (e) {
       // sumber sedang bermasalah: pakai simpanan lama kalau ada, dan JANGAN

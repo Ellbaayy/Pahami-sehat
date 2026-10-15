@@ -41,6 +41,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { simpanBerita } from './db.js'
 
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
@@ -477,6 +478,10 @@ export async function ringkasanBerita() {
       }
       ringkasDiMemori = hasil
       await simpanRingkasKeDisk(hasil)
+      // Simpan juga ke database — OPSIONAL. Kalau MariaDB mati, hasilnya null
+      // dan berkas JSON di atas tetap jadi sumber kebenarannya. Tidak pernah
+      // melempar, jadi jalur berita tidak bisa rusak karena database.
+      await simpanBerita(daftar).catch(() => null)
       return hasil
     } catch {
       const lama = ringkasDiMemori ?? (await bacaRingkasDariDisk())

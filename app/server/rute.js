@@ -46,6 +46,7 @@ import {
   SIMPANAN_HEALTH_MS,
 } from './batasInput.js'
 import { kontenHarianLengkap } from './konten.js'
+import { keteranganDb, ambilBerita, hitungBeritaSegar, ambilKonten } from './db.js'
 import { bahasaJawaban } from './bahasa.js'
 
 /* ---------------------------------------------------------------- util ---- */
@@ -289,6 +290,32 @@ function tolakKalauPanjang(res, nilai, maks, nama) {
  */
 let simpananHealth = null
 
+/**
+ * Isi database — untuk membuktikan sambungannya benar-benar bekerja.
+ *
+ * Sengaja menampilkan HITUNGAN dan contoh baris, bukan seluruh isi tabel.
+ * Kalau database mati, endpoint ini menjawab `aktif: false` dengan alasan —
+ * bukan error, karena database memang opsional.
+ */
+rute.get('/api/db', batasHealth, bungkus(async (_req, res) => {
+  const ket = await keteranganDb()
+  if (!ket.aktif) return res.json({ ok: true, db: ket, tersambung: false })
+
+  const [berita, segar, konten] = await Promise.all([
+    ambilBerita(5),
+    hitungBeritaSegar(1),
+    ambilKonten(5),
+  ])
+
+  res.json({
+    ok: true,
+    db: ket,
+    tersambung: true,
+    berita: { contoh: berita ?? [], segarHariIni: segar },
+    konten: { contoh: konten ?? [] },
+  })
+}))
+
 rute.get('/api/health', batasHealth, bungkus(async (_req, res) => {
   const sekarang = Date.now()
   if (simpananHealth && sekarang - simpananHealth.waktu < SIMPANAN_HEALTH_MS) {
@@ -296,7 +323,7 @@ rute.get('/api/health', batasHealth, bungkus(async (_req, res) => {
     return res.json(simpananHealth.isi)
   }
   const sehat = await cekSehat()
-  const isi = { server: 'ok', kenari: sehat, ...safeInfo() }
+  const isi = { server: 'ok', kenari: sehat, db: await keteranganDb(), ...safeInfo() }
   simpananHealth = { waktu: sekarang, isi }
   res.set('X-Health-Cache', 'miss')
   res.json(isi)
