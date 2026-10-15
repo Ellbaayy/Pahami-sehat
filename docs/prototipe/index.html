@@ -337,7 +337,7 @@
         <div class="start-choices">
           <div class="start-choice">
             <strong>1. Terjemahkan Teks Medis</strong>
-            <small>Input: tempel teks / foto / rekam suara</small>
+            <small>Input: tempel teks / foto / ucapan suara</small>
           </div>
           <div class="start-choice">
             <strong>2. Cek Klaim Mencurigakan</strong>
@@ -373,7 +373,7 @@
         <div class="f-head"><span class="f-num">1</span><h3>Penerjemah Bahasa Medis <em>(AI)</em></h3></div>
         <p class="f-value">Masalah yang dipecahkan: orang sering tidak mengerti isi hasil lab atau label obat, dan kesalahan membaca bisa berbahaya. Fitur ini mengubah bahasa medis jadi bahasa sehari-hari tanpa membuang informasi penting.</p>
         <ul class="f-list">
-          <li><strong>Masukan:</strong> tempel teks (hasil lab, label obat, artikel, chat WA), <strong>pindai foto</strong>, atau rekam suara.</li>
+          <li><strong>Masukan:</strong> tempel teks (hasil lab, label obat, artikel, chat WA), <strong>pindai foto</strong>, atau ucapkan pertanyaan dengan suara.</li>
           <li><strong>Pilihan tingkat baca:</strong> Anak-anak / Remaja / Dewasa / Lansia.</li>
           <li><strong>Proses:</strong> AI menandai dulu semua poin kunci — angka, satuan, rentang normal, peringatan — baru menyederhanakan bahasanya.</li>
           <li><strong>Keluaran:</strong> versi sederhana + daftar poin kunci yang dipertahankan + sumber + tombol <strong>Dengar</strong> yang benar-benar membacakan hasilnya.</li>
@@ -544,7 +544,7 @@
           <li><strong>Yang selalu disebutkan:</strong> nama medianya dan umur beritanya (hari ini / berapa hari lalu) — supaya pengguna tahu seberapa baru kabarnya.</li>
           <li><strong>Kejujuran:</strong> kalau memang belum ada kabar segar, itu dikatakan apa adanya. Kalau sumber berita sedang tidak bisa diakses, dikatakan juga — bukan dikarang.</li>
           <li><strong>Batasnya:</strong> ini <strong>berita</strong>, bukan penjelasan medis. Untuk memahami topiknya, pengguna diarahkan bertanya “apa itu X” supaya dijawab dari sumber medis.</li>
-          <li><strong>Lonceng pemberitahuan:</strong> kalau ada berita segar, lonceng di aplikasi menyala. Pemeriksaannya <strong>maksimal sekali sehari</strong> — menembak RSS di setiap buka aplikasi hanya membebani server media tanpa manfaat.</li>
+          <li><strong>Lonceng pemberitahuan:</strong> kalau ada berita segar, lonceng di aplikasi menyala. Ringkasannya diambil sekali saat aplikasi dibuka, lalu disegarkan tiap 30 menit — server sendiri meng-cache RSS sehari sekali, jadi lebih sering dari itu tidak ada gunanya.</li>
         </ul>
 
         <div class="demo">
