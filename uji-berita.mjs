@@ -36,6 +36,18 @@ for (const t of [
   'latest health news today',
   'any news about the flu vaccine?',
   'health news this week',
+  // TANPA kata "kesehatan" — di dalam aplikasi kesehatan, maksudnya sudah jelas.
+  // Diuji 15 Okt 2026: jagi menulis persis "berita terbaru hari ini" dan
+  // jawabannya berbunyi "saya tidak bisa menyebutkan berita terbaru" — karena
+  // (a) tidak dikenali sebagai permintaan berita, lalu (b) dicari ke Wikipedia
+  // dan mendapat artikel "Berita" (definisi), bukan berita.
+  'berita terbaru hari ini',
+  'berita hari ini',
+  'berita terbaru',
+  'kabar terbaru',
+  'ada berita baru?',
+  'latest news today',
+  'news today',
 ]) cek(`deteksi: "${t}"`, menanyakanBerita(t) === true)
 
 console.log('== menanyakanBerita — JANGAN deteksi (salah jalur = cacat):')
@@ -45,6 +57,9 @@ for (const [t, alasan] of [
   ['kesehatan itu apa?', 'kesehatan tanpa kata berita'],
   ['bagaimana cara menjaga kesehatan?', 'anjuran'],
   ['halo, apa kabar?', 'sapaan'],
+  ['apa kabar hari ini', 'sapaan + penanda waktu — dulu salah masuk jalur berita'],
+  ['apa kabar', 'sapaan polos'],
+  ['how are you today?', 'sapaan Inggris + penanda waktu'],
   ['update aplikasi kesehatan', 'update tentang aplikasi, bukan kabar kesehatan'],
   ['dokter hari ini buka?', 'pertanyaan praktis — "hari ini" bukan penanda berita'],
   ['info obat untuk flu apa?', 'info tanpa penanda waktu'],
@@ -55,6 +70,12 @@ for (const [t, alasan] of [
   ['what is the current treatment for diabetes?', 'pertanyaan medis, bukan berita'],
   ['what is diabetes?', 'pertanyaan medis Inggris'],
   ['is the doctor open today?', 'pertanyaan praktis Inggris'],
+  // topik yang JELAS bukan kesehatan — aplikasi ini aplikasi kesehatan, jadi
+  // menjawabnya dengan berita kesehatan akan menyesatkan (15 Okt 2026)
+  ['berita politik terbaru', 'topik bukan kesehatan'],
+  ['berita bola hari ini', 'topik bukan kesehatan'],
+  ['kabar terkini soal pemilu', 'topik bukan kesehatan'],
+  ['what is the latest news about the economy?', 'topik bukan kesehatan, Inggris'],
 ]) cek(`tolak: "${t}" (${alasan})`, menanyakanBerita(t) === false)
 
 console.log('== menanyakanBerita — masukan jahat / tak wajar:')

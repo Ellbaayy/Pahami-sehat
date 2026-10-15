@@ -201,10 +201,74 @@ for (const [q, harusAdaSumber] of TANYA) {
   console.log()
 }
 
+console.log('=== UJI JALUR BERITA (pertanyaan berita harus dijawab dari RSS) ===')
+/*
+ * KENAPA DI SINI, bukan di uji-berita.mjs: bagian ini butuh server lokal dan
+ * model sungguhan. uji-berita.mjs dipakai di CI dan tidak boleh bergantung
+ * pada jaringan atau server.
+ *
+ * Ditaruh 15 Okt 2026 setelah jagi menemukan "berita terbaru hari ini" dijawab
+ * "saya tidak bisa menyebutkan berita terbaru": pertanyaannya TIDAK dikenali
+ * sebagai permintaan berita (tidak memuat kata "kesehatan"), lalu dicari ke
+ * Wikipedia dan mendapat artikel "Berita" yang isinya cuma definisi.
+ *
+ * Dua hal yang diperiksa:
+ *   1. jalurnya benar (`berita: true`) — bukan mode santai, bukan jalur cari
+ *   2. jawabannya benar-benar menyebut berita dari daftar RSS, dan TIDAK
+ *      menolak ("tidak bisa menyebutkan berita") selama daftarnya ada
+ */
+const TANYA_BERITA = [
+  'berita terbaru hari ini',
+  'berita kesehatan terbaru hari ini',
+  'latest health news today',
+]
+
+let gagalBerita = 0
+for (const q of TANYA_BERITA) {
+  let d
+  try {
+    const r = await fetch(`${BASE}/api/tanya`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pertanyaan: q, tingkat: 'dewasa', bahasa: 'id' }),
+      signal: AbortSignal.timeout(180000),
+    })
+    d = await r.json()
+    if (!r.ok) {
+      console.log(`GALAT HTTP ${r.status} | ${q}`)
+      gagalBerita++
+      continue
+    }
+  } catch (e) {
+    console.log(`GALAT jaringan: ${e.message} | ${q}`)
+    gagalBerita++
+    continue
+  }
+
+  const jawaban = String(d?.jawaban ?? '')
+  const berita = Array.isArray(d?.hasilCari) ? d.hasilCari : []
+  const teks = jawaban.toLowerCase()
+  const menolak = FRASA_MENOLAK.some((f) => teks.includes(f))
+
+  const masalah = []
+  if (!d?.berita) masalah.push('BUKAN jalur berita')
+  if (!berita.length) masalah.push('0 berita dari RSS')
+  if (berita.length && menolak) masalah.push('MENOLAK padahal berita ada')
+
+  if (masalah.length) gagalBerita++
+  console.log(`${masalah.length ? 'GAGAL ' : 'OK    '} ${String(berita.length).padStart(2)} berita | ${q}`)
+  if (masalah.length) console.log(`        -> ${masalah.join('; ')}`)
+  console.log(`        "${jawaban.replace(/\s+/g, ' ').slice(0, 200)}"`)
+  if (berita.length) console.log(`        berita: ${berita.map((b) => b.judul).slice(0, 3).join(' · ')}`)
+  console.log()
+}
+
 console.log('=== RINGKASAN ===')
 console.log(`pertanyaan            : ${TANYA.length}`)
 console.log(`gagal                 : ${gagal}`)
 console.log(`0 sumber              : ${tanpaSumber}`)
 console.log(`menolak padahal ada   : ${menolakPadahalAda}`)
 console.log(`mendiagnosis          : ${mendiagnosis}`)
-process.exit(gagal === 0 ? 0 : 1)
+console.log(`pertanyaan berita     : ${TANYA_BERITA.length}`)
+console.log(`gagal jalur berita    : ${gagalBerita}`)
+process.exit(gagal === 0 && gagalBerita === 0 ? 0 : 1)

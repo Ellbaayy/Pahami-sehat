@@ -15,6 +15,26 @@
  * Ketiga sumber digabungkan, diurutkan dari yang terbaru, dan dikembalikan
  * sebagai daftar berita yang bisa dibuka pengguna. Ini BUKAN pengganti
  * sumber medis — berita tetap harus dicek ke sumber resminya.
+ *
+ * DETEKSI PERTANYAAN BERITA (diperbaiki 15 Okt 2026)
+ * --------------------------------------------------
+ * Aplikasi ini aplikasi kesehatan, jadi pertanyaan berita di dalamnya hampir
+ * selalu berarti berita KESEHATAN — termasuk kalau kata "kesehatan" tidak
+ * disebut. Tiga cacat yang ditemukan lewat `uji-jawaban.mjs` dan sudah dibetulkan:
+ *
+ *   1. "berita terbaru hari ini" TIDAK dikenali (tidak ada kata "kesehatan"),
+ *      lalu dicari ke Wikipedia dan mendapat artikel "Berita" — definisi, bukan
+ *      berita. Model pun menjawab "saya tidak bisa menyebutkan berita terbaru".
+ *      Sekarang kata berita/kabar/news + penanda waktu sudah cukup.
+ *   2. Di rute, jalur berita diperiksa SESUDAH `deteksiSantai()`. Pesan 3 kata
+ *      tanpa kata tanya dianggap sapaan, jadi jalur berita tidak pernah tercapai.
+ *      Sekarang jalur berita diperiksa LEBIH DULU.
+ *   3. "apa kabar hari ini" (sapaan) ikut tertangkap aturan berita baru. Sekarang
+ *      ada daftar penolakan SAPAAN_KABAR — kecuali kalau ada topik kesehatan.
+ *
+ * Topik yang JELAS bukan kesehatan (politik, bola, ekonomi) tetap ditolak: lebih
+ * baik mode santai menjawab jujur bahwa itu bukan bidangnya daripada menyodorkan
+ * berita kesehatan untuk pertanyaan yang tidak menanyakannya.
  */
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
@@ -219,22 +239,113 @@ export async function ambilBeritaKesehatan({ maks = 8 } = {}) {
  * jalur ini dibuat.
  *
  * Sinyalnya berjenjang supaya pertanyaan medis biasa tidak salah jalur:
- *   1. kata berita/kabar/news + topik kesehatan     -> berita
- *   2. kata terbaru/terkini/latest + topik          -> berita
- *   3. kata lemah (info/update/informasi) hanya kalau ADA penanda waktu
- *      (hari ini, kemarin, baru, dst.)              -> berita
+ *   1. kata berita/kabar/news + (topik kesehatan ATAU penanda waktu) -> berita
+ *   2. kata terbaru/terkini/latest + topik kesehatan                 -> berita
+ *   3. kata lemah (info/update/informasi) + topik kesehatan + waktu  -> berita
+ *
+ * TOPIK KESEHATAN TIDAK WAJIB kalau kata beritanya sudah tegas. "berita
+ * terbaru hari ini" tidak menyebut kata "kesehatan" sama sekali, tetapi di
+ * dalam aplikasi kesehatan maksudnya jelas — dan dulu pertanyaan persis itu
+ * dijawab dari artikel Wikipedia "Berita" lalu model terpaksa menolak.
+ *
+ * Yang tetap ditolak: pertanyaan berita tentang topik yang JELAS bukan
+ * kesehatan (politik, bola, ekonomi), dan sapaan yang kebetulan memuat kata
+ * "kabar" tanpa penanda waktu ("halo, apa kabar?").
+ *
+ * "hari ini" SENDIRI tidak pernah memicu — "dokter hari ini buka?" adalah
+ * pertanyaan praktis, bukan permintaan berita. "terakhir" SENGAJA tidak
+ * dipakai: "obat flu terakhir yang saya minum" bukan permintaan berita.
+ */
+
+/** Topik kesehatan — dipakai untuk memastikan sebuah pertanyaan berita memang soal kesehatan. */
+const TOPIK_KESEHATAN =
+  /\b(kesehatan|sakit|penyakit|obat|vaksin|virus|wabah|rs|rumah sakit|dokter|perawat|puskesmas|klinik|gizi|imunisasi|pasien|medis|health|disease|medicine|vaccine|outbreak|hospital|doctor|nurse|clinic|patient)\b/
+
+/**
+ * Topik yang JELAS bukan kesehatan.
+ *
+ * KENAPA PERLU (15 Okt 2026): aplikasi ini aplikasi kesehatan, jadi pertanyaan
+ * berita di dalamnya hampir selalu berarti berita KESEHATAN. Tetapi permintaan
+ * berita tentang topik lain (politik, bola, ekonomi) bukan urusan aplikasi ini —
+ * menjawabnya dengan berita kesehatan justru menyesatkan pengguna.
+ *
+ * 'bola' memakai lookahead negatif: "bola mata" adalah topik kesehatan yang
+ * sah, sedangkan "berita bola" jelas soal olahraga.
+ *
+ * Kata topik di sini TIDAK langsung menolak — ia hanya menolak kalau TIDAK ada
+ * kata kesehatan sama sekali. "berita harga obat terbaru" tetap masuk jalur
+ * berita karena ada 'obat'.
+ */
+const TOPIK_BUKAN_KESEHATAN =
+  /\b(politik|pemilu|pilpres|pilkada|partai|menteri|ekonomi|saham|bisnis|keuangan|inflasi|harga|olahraga|sepak bola|sepakbola|bola(?! mata)|liga|piala|pertandingan|klub|juara|hiburan|selebriti|artis|film|musik|teknologi|gadget|aplikasi|game|otomotif|motor|mobil|wisata|kriminal|hukum|pendidikan|sekolah|kampus|politics|election|economy|sports|business|entertainment|celebrity|stock market)\b/
+
+/** Penanda waktu/kekinian — bagian yang membuat sebuah pertanyaan jadi soal KABAR. */
+const PENANDA_WAKTU =
+  /\b(hari ini|kemarin|minggu ini|pekan ini|bulan ini|baru|terbaru|terkini|tadi|sekarang|today|yesterday|this week|now|latest|recent)\b/
+
+/**
+ * Ungkapan sapaan yang memuat kata "kabar".
+ *
+ * KENAPA PERLU (15 Okt 2026): "apa kabar hari ini" memuat kata 'kabar' DAN
+ * penanda waktu 'hari ini', jadi aturan berita menangkapnya — padahal itu
+ * sapaan. Uji `uji-jawaban.mjs` menangkapnya sebagai "obrolan biasa malah
+ * mencari sumber". Sapaan hanya ditolak kalau TIDAK ada topik kesehatan sama
+ * sekali, supaya "apa kabar kesehatan hari ini?" tetap dijawab dengan sumber.
+ */
+const SAPAAN_KABAR = /\b(apa|gimana|bagaimana)\s+kabar\b|\bkabar\s+baik\b|\bhow\s+are\s+you\b/
+
+/**
+ * Apakah sebuah pertanyaan menanyakan berita/kabar kesehatan terkini?
+ * Dipakai oleh rute untuk memilih jalur berita, bukan Wikipedia.
+ *
+ * Mendeteksi DUA bahasa — antarmuka aplikasi ini dwibahasa, jadi pertanyaan
+ * berbahasa Inggris ("latest health news today") punya hak yang sama untuk
+ * masuk jalur berita. Diuji: tanpa sinyal Inggris, pertanyaan itu dijawab
+ * dari artikel Wikipedia "Hello Health" — cacat yang sama yang dulu membuat
+ * jalur ini dibuat.
+ *
+ * Sinyalnya berjenjang supaya pertanyaan medis biasa tidak salah jalur:
+ *   1. kata berita/kabar/news + (topik kesehatan ATAU penanda waktu) -> berita
+ *   2. kata terbaru/terkini/latest + topik kesehatan                 -> berita
+ *   3. kata lemah (info/update/informasi) + topik kesehatan + waktu  -> berita
+ *
+ * TOPIK KESEHATAN TIDAK WAJIB kalau kata beritanya sudah tegas. "berita
+ * terbaru hari ini" tidak menyebut kata "kesehatan" sama sekali, tetapi di
+ * dalam aplikasi kesehatan maksudnya jelas — dan dulu pertanyaan persis itu
+ * dijawab dari artikel Wikipedia "Berita" lalu model terpaksa menolak.
+ *
+ * Yang tetap ditolak: pertanyaan berita tentang topik yang JELAS bukan
+ * kesehatan (politik, bola, ekonomi), dan sapaan yang kebetulan memuat kata
+ * "kabar" tanpa penanda waktu ("halo, apa kabar?").
+ *
  * "hari ini" SENDIRI tidak pernah memicu — "dokter hari ini buka?" adalah
  * pertanyaan praktis, bukan permintaan berita. "terakhir" SENGAJA tidak
  * dipakai: "obat flu terakhir yang saya minum" bukan permintaan berita.
  */
 export function menanyakanBerita(teks) {
   const t = String(teks ?? '').toLowerCase()
-  const topik = /\b(kesehatan|sakit|penyakit|obat|vaksin|virus|wabah|rs|rumah sakit|dokter|health|disease|medicine|vaccine|virus outbreak|hospital|doctor)\b/
-  if (!topik.test(t)) return false
-  if (/\b(berita|kabar|news)\b/.test(t)) return true
-  if (/\b(terbaru|terkini|latest)\b/.test(t)) return true
-  return /\b(update|info|informasi)\b/.test(t) &&
-    /\b(hari ini|kemarin|minggu ini|baru|tadi|sekarang|terbaru|terkini|today|yesterday|this week|now)\b/.test(t)
+  const adaKesehatan = TOPIK_KESEHATAN.test(t)
+  const adaTopikLain = TOPIK_BUKAN_KESEHATAN.test(t)
+  const adaWaktu = PENANDA_WAKTU.test(t)
+
+  // "apa kabar hari ini" = sapaan, bukan permintaan berita. Ditolak hanya kalau
+  // tidak ada topik kesehatan sama sekali ("apa kabar kesehatan hari ini?" tetap
+  // dianggap permintaan berita).
+  if (SAPAAN_KABAR.test(t) && !adaKesehatan) return false
+
+  if (/\b(berita|kabar|news)\b/.test(t)) {
+    if (adaTopikLain && !adaKesehatan) return false
+    return adaKesehatan || adaWaktu
+  }
+
+  if (/\b(terbaru|terkini|latest)\b/.test(t)) return adaKesehatan && !adaTopikLain
+
+  return (
+    adaKesehatan &&
+    !adaTopikLain &&
+    adaWaktu &&
+    /\b(update|info|informasi)\b/.test(t)
+  )
 }
 
 /* ================================================== ringkasan harian + lonceng ==
