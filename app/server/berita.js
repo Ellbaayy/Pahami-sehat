@@ -17,6 +17,11 @@
  * sumber medis — berita tetap harus dicek ke sumber resminya.
  */
 
+import { readFile, writeFile, mkdir } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
 
@@ -230,4 +235,116 @@ export function menanyakanBerita(teks) {
   if (/\b(terbaru|terkini|latest)\b/.test(t)) return true
   return /\b(update|info|informasi)\b/.test(t) &&
     /\b(hari ini|kemarin|minggu ini|baru|tadi|sekarang|terbaru|terkini|today|yesterday|this week|now)\b/.test(t)
+}
+
+/* ================================================== ringkasan harian + lonceng ==
+ *
+ * Jagi meminta (15 Okt 2026): berita WAJIB diperbarui minimal sehari sekali,
+ * dan kalau ada yang baru, lonceng pemberitahuan di aplikasi harus berbunyi.
+ *
+ * Cara kerjanya — pola yang sama seperti konten.js:
+ *   1. `ringkasanBerita()` mengambil RSS ringan (maks 3, hanya judul+tanggal
+ *      yang dipakai) MAKSIMAL sekali sehari per proses. Hasilnya disimpan ke
+ *      memori + berkas `.cache-berita.json` (gitignore, seperti konten).
+ *   2. Endpoint `GET /api/berita/ringkas` mengembalikan: jumlah berita SEGAR
+ *      (umur <= 1 hari), 3 judul teratas, tanggal `diperbarui`, dan `sidik`
+ *      (sidik jari judul — berubah kalau daftarnya berubah).
+ *   3. Aplikasi membandingkan `sidik` dengan yang terakhir dibaca; kalau beda
+ *      dan ada berita segar -> butir lonceng jenis 'berita' muncul + titik merah.
+ *
+ * Kenapa tidak fetch tiap permintaan: RSS Detik 100 item — menembaknya di
+ * setiap buka aplikasi hanya untuk lonceng adalah pemborosan dan berisiko
+ * membuat IP kita dibatasi. Lonceng tidak butuh detik-akurat; sehari sekali
+ * sesuai permintaan jagi.
+ * ========================================================================== */
+
+const __dirnameBerita = dirname(fileURLToPath(import.meta.url))
+
+/** Berkas cache ringkasan — gitignore, seperti .cache-konten.json. */
+const BERKAS_RINGKAS = process.env.CACHE_BERITA || join(__dirnameBerita, '..', '.cache-berita.json')
+
+const BERLAKU_RINGKAS_MS = 24 * 60 * 60 * 1000 // sekali sehari
+/** Berita dianggap "segar" (layak membunyikan lonceng) kalau umurnya <= N hari. */
+const SEGAR_HARI = 1
+
+let ringkasDiMemori = null
+let ringkasBerjalan = null
+let ringkasBisaTulis = null
+
+/** Sidik jari FNV-1a dari judul — berubah kalau daftar beritanya berubah. */
+export function buatSidikBerita(daftar = []) {
+  const isi = daftar.map((d) => d.judul ?? d).sort().join('|')
+  let h = 2166136261
+  for (let i = 0; i < isi.length; i++) {
+    h ^= isi.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return (h >>> 0).toString(16)
+}
+
+function ringkasWaktunyaCek(data) {
+  if (!data?.berikutnya) return true
+  return Date.now() >= new Date(data.berikutnya).getTime()
+}
+
+async function bacaRingkasDariDisk() {
+  try {
+    if (!existsSync(BERKAS_RINGKAS)) return null
+    const isi = JSON.parse(await readFile(BERKAS_RINGKAS, 'utf8'))
+    return Array.isArray(isi?.judul) ? isi : null
+  } catch {
+    return null
+  }
+}
+
+async function simpanRingkasKeDisk(data) {
+  if (ringkasBisaTulis === false) return
+  try {
+    await mkdir(dirname(BERKAS_RINGKAS), { recursive: true })
+    await writeFile(BERKAS_RINGKAS, JSON.stringify(data), 'utf8')
+    ringkasBisaTulis = true
+  } catch (e) {
+    // lingkungan serverless (read-only): berhenti mencoba, pakai memori saja
+    if (e?.code === 'EROFS' || e?.code === 'EACCES' || e?.code === 'EPERM') {
+      ringkasBisaTulis = false
+    }
+  }
+}
+
+/**
+ * Ambil ringkasan berita harian (cache sekali sehari).
+ * Tidak pernah melempar kalau ada simpanan lama — kembalikan yang lama.
+ * @returns {Promise<{judul: Array<{judul, sumber}>, segar: number, sidik, diperbarui, berikutnya}>}
+ */
+export async function ringkasanBerita() {
+  if (!ringkasDiMemori) ringkasDiMemori = await bacaRingkasDariDisk()
+  if (ringkasDiMemori && !ringkasWaktunyaCek(ringkasDiMemori)) return ringkasDiMemori
+  if (ringkasBerjalan) return ringkasBerjalan
+
+  ringkasBerjalan = (async () => {
+    try {
+      const daftar = await ambilBeritaKesehatan({ maks: 3 })
+      if (!daftar.length) throw new Error('berita kosong')
+      const hasil = {
+        judul: daftar.map((b) => ({ judul: b.judul, sumber: b.sumber })),
+        segar: daftar.filter((b) => b.umurHari !== null && b.umurHari <= SEGAR_HARI).length,
+        sidik: buatSidikBerita(daftar),
+        diperbarui: new Date().toISOString(),
+        berikutnya: new Date(Date.now() + BERLAKU_RINGKAS_MS).toISOString(),
+      }
+      ringkasDiMemori = hasil
+      await simpanRingkasKeDisk(hasil)
+      return hasil
+    } catch {
+      const lama = ringkasDiMemori ?? (await bacaRingkasDariDisk())
+      if (lama) return lama
+      // belum pernah berhasil sama sekali — kembalikan bentuk kosong yang sah,
+      // bukan melempar; lonceng cukup tidak muncul
+      return { judul: [], segar: 0, sidik: 'kosong', diperbarui: null, berikutnya: null }
+    } finally {
+      ringkasBerjalan = null
+    }
+  })()
+
+  return ringkasBerjalan
 }

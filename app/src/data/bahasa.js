@@ -323,6 +323,9 @@ const KAMUS = {
     'notif.serverIsi': 'Jawaban AI belum bisa dibuat. Periksa koneksi lalu muat ulang.',
     'notif.obrolanJudul': '{n} obrolan tersimpan',
     'notif.obrolanIsi': 'Tersimpan di peramban ini saja — buka Riwayat Obrolan untuk melanjutkannya.',
+    'notif.beritaJudul': '{n} berita kesehatan baru',
+    'notif.beritaIsi': 'Ketuk untuk membaca ringkasannya di Tanya AI.',
+    'notif.beritaTanya': 'berita kesehatan terbaru hari ini',
 
     // navigasi tambahan (drawer & sidebar)
     'nav.tutupMenu': 'Tutup menu navigasi',
@@ -666,6 +669,9 @@ const KAMUS = {
     'notif.serverIsi': 'AI answers cannot be produced yet. Check your connection and reload.',
     'notif.obrolanJudul': '{n} conversations saved',
     'notif.obrolanIsi': 'Stored in this browser only — open Conversation History to continue them.',
+    'notif.beritaJudul': '{n} new health news',
+    'notif.beritaIsi': 'Tap to read the summary in Ask AI.',
+    'notif.beritaTanya': 'latest health news today',
 
     'nav.tutupMenu': 'Close navigation menu',
     'nav.drawer': 'Navigation menu',

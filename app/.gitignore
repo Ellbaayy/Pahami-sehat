@@ -14,3 +14,6 @@ public/prototipe
 # Simpanan konten harian (dibuat ulang otomatis oleh server/konten.js)
 .cache-konten.json
 
+# Simpanan ringkasan berita harian (dibuat ulang otomatis oleh server/berita.js)
+.cache-berita.json
+
