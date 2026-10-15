@@ -3,7 +3,7 @@ import { ShieldCheck, ShieldAlert, ShieldQuestion, Loader2 } from 'lucide-react'
 import { Button, Card, SectionHeading, SourcePills, PoinKunci, Peringatan } from '../ui/primitives'
 import TombolDengar from '../ui/TombolDengar'
 import { TINGKAT } from '../../data/tingkat'
-import { verifikasi } from '../../lib/api'
+import { verifikasi, KUNCI_GALAT_KLIEN } from '../../lib/api'
 
 const VERDICT = {
   didukung: {
@@ -53,7 +53,8 @@ export default function VerifikasiPanel({
       const d = await verifikasi({ klaim: isi, tingkat, bahasa })
       setHasil(d)
     } catch (e) {
-      setError({ pesan: e.message, code: e.code })
+      const kunci = KUNCI_GALAT_KLIEN[e?.code]
+      setError({ pesan: kunci ? t(kunci) : e.message, code: e.code })
     } finally {
       setLoading(false)
     }
@@ -143,7 +144,7 @@ export default function VerifikasiPanel({
         ) : null}
       </Card>
 
-      {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
+      {error ? <Peringatan pesan={error.pesan} code={error.code} t={t} /> : null}
 
       {loading ? (
         <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">

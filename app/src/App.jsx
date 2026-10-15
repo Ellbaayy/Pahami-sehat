@@ -23,7 +23,7 @@ import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
 import { useBerita } from './lib/useBerita'
 import { gunakanBahasa } from './lib/useBahasa'
-import { tanyaStream, sederhanakan, ambilKonten } from './lib/api'
+import { tanyaStream, sederhanakan, ambilKonten, KUNCI_GALAT_KLIEN } from './lib/api'
 import { ttsBaca } from './lib/tts'
 import {
   bacaSesi,
@@ -51,6 +51,7 @@ const STATUS_SERVER = {
   // Jalur berita (RSS) punya statusnya sendiri. Tanpa pemetaan ini, mode Inggris
   // menampilkan kalimat Indonesia mentah di baris status.
   'Mengambil berita kesehatan terbaru…': 'tanya.mengambilBerita',
+  'Menyusun ulang jawaban…': 'tanya.menyusunUlang',
 }
 
 /** Balasan API → bentuk yang dipakai komponen tampilan. */
@@ -64,6 +65,13 @@ function kePesan(h) {
     verdict: h.verdict === 'tidak_didukung' ? 'negative' : 'ok',
   }
 }
+
+/**
+ * Kode galat yang LAHIR DI KLIEN (bukan dari server), mis. server tidak jalan.
+ * Pesannya diambil dari KAMUS (lihat `KUNCI_GALAT_KLIEN`) — kalau tidak, mode
+ * Inggris menampilkan kalimat Indonesia mentah. Galat DARI SERVER tetap dipakai
+ * apa adanya karena pesannya sudah spesifik (mis. soal saldo atau model).
+ */
 
 /** Contoh teks medis untuk mode Sederhanakan. */
 const CONTOH_SEDERHANAKAN =
@@ -440,12 +448,24 @@ export default function App() {
         )
       }
 
-      /** Tambahkan jawaban AI ke utas + sesi. Dipakai kedua mode. */
+      /**
+       * Tambahkan jawaban AI ke utas + sesi. Dipakai kedua mode.
+       *
+       * JANGAN PERNAH menampilkan gelembung kosong. Server bisa mengembalikan
+       * `ok:false` dengan `jawaban` kosong (mis. balasan model tak terbaca) —
+       * kejadian nyata 15 Okt 2026: pengguna melihat gelembung hampa dan tidak
+       * tahu apa yang terjadi. Kalau jawabannya kosong, pakai kalimat pengganti
+       * yang mengarahkan pengguna mencoba lagi.
+       */
       const catatHasil = (h) => {
         const pesanAi = { id: `a${Date.now()}`, role: 'ai', ...kePesan(h) }
+        if (!pesanAi.text) {
+          pesanAi.text = t(h.code === 'unparsed' ? 'galat.jawabanTakTerbaca' : 'galat.jawabanKosong')
+          pesanAi.gagal = true
+        }
         setThread((prev) => [...prev, pesanAi])
         // putar suara otomatis kalau diaktifkan di Pengaturan
-        if (ttsAutoRef.current) ttsBaca(h.jawaban)
+        if (ttsAutoRef.current && h.jawaban) ttsBaca(h.jawaban)
         const waktu = Date.now()
         setSesi((prev) =>
           (prev ?? []).map((s) =>
@@ -483,7 +503,8 @@ export default function App() {
       Promise.resolve(jalan)
         .catch((e) => {
           if (e?.name === 'AbortError') return
-          setError({ pesan: e.message, code: e.code })
+          const kunci = KUNCI_GALAT_KLIEN[e?.code]
+          setError({ pesan: kunci ? t(kunci) : e.message, code: e.code })
         })
         .finally(() => {
           setLoading(false)

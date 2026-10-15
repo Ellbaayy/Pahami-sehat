@@ -358,7 +358,7 @@
   <div class="container">
     <div class="section-head reveal has-illus"><div class="sh-text">
       <span class="eyebrow">Fitur Utama</span>
-      <h2>Empat cara informasi jadi lebih dekat</h2>
+      <h2>Lima cara informasi jadi lebih dekat</h2>
       <p>Penjelasan tiap fitur: apa masukannya, apa yang dikerjakan AI, dan apa keluarannya.</p>
     </div>
     <div class="sh-art"><img class="illus" src="assets/ilustrasi/fitur.png" alt="Ilustrasi resep dan obat" width="420" height="420" loading="lazy" decoding="async">
@@ -529,6 +529,37 @@
 
         <p class="note-box"><svg class="ic-svg lucide-shieldcheck " xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg> Mendukung transparansi penggunaan AI dan melawan hoaks kesehatan.</p>
       </article>
+
+      <!-- 5. Berita kesehatan harian -->
+      <article class="feature-card f-green reveal">
+        <div class="f-head"><span class="f-num">5</span><h3>Berita Kesehatan Harian <em>(AI)</em></h3></div>
+        <ul class="f-list">
+          <li><strong>Masukan:</strong> pertanyaan biasa seperti “berita terbaru hari ini” — tidak perlu menyebut kata “kesehatan”, karena ini memang aplikasi kesehatan.</li>
+          <li><strong>Cara kerja:</strong> pertanyaan seperti itu <strong>tidak</strong> dijawab dari ensiklopedia, karena ensiklopedia tidak punya berita harian. Sumbernya adalah <strong>RSS berita kesehatan</strong> (Detik Health, WHO, Google News) yang diambil langsung oleh server.</li>
+          <li><strong>Yang selalu disebutkan:</strong> nama medianya dan umur beritanya (hari ini / berapa hari lalu) — supaya pengguna tahu seberapa baru kabarnya.</li>
+          <li><strong>Kejujuran:</strong> kalau memang belum ada kabar segar, itu dikatakan apa adanya. Kalau sumber berita sedang tidak bisa diakses, dikatakan juga — bukan dikarang.</li>
+          <li><strong>Batasnya:</strong> ini <strong>berita</strong>, bukan penjelasan medis. Untuk memahami topiknya, pengguna diarahkan bertanya “apa itu X” supaya dijawab dari sumber medis.</li>
+          <li><strong>Lonceng pemberitahuan:</strong> kalau ada berita segar, lonceng di aplikasi menyala. Pemeriksaannya <strong>maksimal sekali sehari</strong> — menembak RSS di setiap buka aplikasi hanya membebani server media tanpa manfaat.</li>
+        </ul>
+
+        <div class="demo">
+          <p class="demo-label">Contoh pertanyaan:</p>
+          <p class="note-box" style="margin-top:.4rem">“berita terbaru hari ini”</p>
+
+          <p class="demo-label" style="margin-top:1rem">Yang dilakukan sistem:</p>
+          <ul class="check-list" style="margin-top:.4rem">
+            <li>Kenali bahwa ini permintaan berita, bukan pertanyaan medis</li>
+            <li>Ambil judul terbaru dari RSS kesehatan (Detik Health, WHO, Google News)</li>
+            <li>Sebutkan tiap berita beserta media dan umurnya</li>
+            <li>Tegaskan bahwa ini berita, bukan penjelasan medis</li>
+          </ul>
+
+          <p class="demo-label" style="margin-top:1rem">Contoh jawaban:</p>
+          <p class="note-box" style="margin-top:.4rem">“Ini berita kesehatan terbaru hari ini. Kabut asap membuat banyak orang sakit ISPA — 277 ribu kasus, dan pemerintah membagikan 5,3 juta masker. (Detik Health, hari ini)”</p>
+        </div>
+
+        <p class="note-box"><svg class="ic-svg lucide-newspaper" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-newspaper" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg> Berita tetap harus dicek ke sumber aslinya — setiap berita disertai tautan ke artikel medianya.</p>
+      </article>
     </div>
 
     <!-- Status fitur -->
@@ -537,7 +568,7 @@
         <h3><svg class="ic-svg lucide-clipboardlist " xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-list" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg> Status tiap fitur — apa yang sudah jalan, apa yang masih rencana</h3>
         <p class="finding-lead">Ditulis apa adanya, supaya tidak ada klaim yang berlebihan.</p>
         <ul class="f-list" style="margin-top:.9rem">
-          <li><strong>Sudah jalan:</strong> Tanya AI (streaming), <strong>pencarian internet + sumber yang bisa dibuka</strong>, Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, kuesioner HLS-SF12, riwayat sesi, <strong>tanya dengan suara (STT)</strong>, <strong>pindai foto jadi teks</strong>, <strong>mode kontras tinggi</strong>, dan <strong>antarmuka dua bahasa</strong> (Indonesia / Inggris).</li>
+          <li><strong>Sudah jalan:</strong> Tanya AI (streaming), <strong>pencarian internet + sumber yang bisa dibuka</strong>, Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, <strong>berita kesehatan harian dari RSS + lonceng pemberitahuan</strong>, kuesioner HLS-SF12, riwayat sesi, <strong>tanya dengan suara (STT)</strong>, <strong>pindai foto jadi teks</strong>, <strong>mode kontras tinggi</strong>, dan <strong>antarmuka dua bahasa</strong> (Indonesia / Inggris).</li>
           <li><strong>Baca otomatis (TTS): berjalan di komputer sendiri, belum di versi daring.</strong> Rancangannya suara neural dengan nada mengikuti isi kalimat — dan itu <strong>sudah terbukti berbunyi</strong> saat aplikasi dijalankan di komputer sendiri (yang dipakai saat penjurian): lima suara neural, MP3 24 kHz, diperiksa sampai isinya lewat transkripsi balik. Di versi daring (Vercel) belum, karena fungsi serverless tidak bisa mempertahankan koneksi WebSocket yang dipakai layanan suara Microsoft. Rinciannya di kartu Mode Suara di atas.</li>
           <li><strong>Semua pengaturan berfungsi:</strong> tingkat baca, mode kontras tinggi, putar suara otomatis, dan bahasa antarmuka — tidak ada yang hanya jadi hiasan.</li>
           <li><strong>Pindai foto berjalan di perangkat, bukan di server.</strong> Mesin pembacanya (WebAssembly) disajikan dari situs ini sendiri, bukan dari CDN — jadi saat memindai <strong>tidak ada satu pun permintaan yang keluar</strong> dari peramban. Foto tidak pernah dikirim ke mana pun, dan fitur ini tetap bekerja walau server AI mati. <em>Batasnya jujur disebut di aplikasi: ini alat bantu baca, angka hasil lab tetap wajib dicek ke kertas aslinya.</em></li>

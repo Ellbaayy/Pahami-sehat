@@ -19,6 +19,19 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Kode galat yang LAHIR DI KLIEN (bukan dari server) → kunci kamus.
+ *
+ * Pesan di dalam berkas ini sengaja berupa kalimat Indonesia karena dipakai
+ * sebagai cadangan DI LUAR antarmuka (log, uji). Untuk yang TAMPIL di layar,
+ * komponen memakai kunci kamus di bawah supaya mode Inggris tidak menampilkan
+ * kalimat Indonesia mentah.
+ */
+export const KUNCI_GALAT_KLIEN = {
+  server_mati: 'galat.serverMati',
+  stream_putus: 'galat.streamPutus',
+}
+
 async function minta(path, { method = 'GET', body, signal } = {}) {
   let res
   try {

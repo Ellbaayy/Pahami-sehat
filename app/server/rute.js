@@ -32,7 +32,7 @@ import {
   promptSederhanakanDenganCari,
   promptVerifikasiDenganCari,
 } from './prompts.js'
-import { ambilBeritaKesehatan, menanyakanBerita, ringkasanBerita } from './berita.js'
+import { ambilBeritaKesehatan, menanyakanBerita, ringkasanBerita, jawabanBeritaDarurat } from './berita.js'
 import { cariInternet } from './cari.js'
 import { kataKunciPencarian, istilahKesehatan, PETA_MEDLINEPLUS, PETA_MEDLINEPLUS_BIDANG } from './kataKunci.js'
 import { batasi } from './batas.js'
@@ -41,6 +41,7 @@ import {
   MAKS_SEDERHANAKAN,
   MAKS_SUARA,
   MAKS_TANYA,
+  MAKS_TOKEN,
   MAKS_VERIFIKASI,
   SIMPANAN_HEALTH_MS,
 } from './batasInput.js'
@@ -111,6 +112,47 @@ function bentukHasil(mentah, tingkat, { verdictKey = null } = {}) {
 function rapikanBahasa(v) {
   return String(v ?? '').toLowerCase().startsWith('en') ? 'en' : 'id'
 }
+
+/**
+ * Minta jawaban JSON dari model, ULANGI SEKALI kalau balasannya tak terbaca.
+ *
+ * KENAPA PERLU: `bentukHasil(null)` mengembalikan `ok:false` dengan `jawaban`
+ * KOSONG — pengguna melihat gelembung hampa tanpa penjelasan. Satu percobaan
+ * ulang jauh lebih murah daripada satu jawaban kosong.
+ *
+ * @returns {Promise<{json: object|null, usage: object|null, mentah: string}>}
+ */
+async function mintaJson({ messages, maxTokens, coba = 2 }) {
+  let usage = null
+  let mentah = ''
+  for (let i = 0; i < coba; i++) {
+    const h = await chat({
+      messages:
+        i === 0
+          ? messages
+          : [
+              ...messages,
+              {
+                role: 'system',
+                content:
+                  'Balasan sebelumnya tidak bisa dibaca sebagai JSON. Balas ULANG sekarang: ' +
+                  'HANYA satu objek JSON valid, tanpa rencana, tanpa penjelasan, tanpa pagar kode.',
+              },
+            ],
+      ...(maxTokens ? { maxTokens } : {}),
+    })
+    usage = h.usage ?? usage
+    mentah = h.text
+    const json = ambilJson(h.text)
+    if (json) return { json, usage, mentah: h.text }
+  }
+  return { json: null, usage, mentah }
+}
+
+/**
+ * Jawaban berita DARURAT ada di `berita.js` (`jawabanBeritaDarurat`) supaya
+ * bisa diuji tanpa server — lihat `uji-berita.mjs`.
+ */
 
 /**
  * Bahasa jawaban: ikuti bahasa pesan pengguna; kalau pesannya terlalu
@@ -383,37 +425,71 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
   if (menanyakanBerita(pertanyaan)) {
     const berita = await ambilBeritaKesehatan({ maks: 8 })
     const p = promptBerita({ pertanyaan, tingkat, berita, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
-    const hasil = await chat({ messages: [
-      { role: 'system', content: p.system },
-      { role: 'user', content: p.user },
-    ] })
-    const out = bentukHasil(ambilJson(hasil.text), tingkat)
-    return res.json({ ...out, berita: true, hasilCari: ringkasBerita(berita), usage: hasil.usage })
+    const { json, usage } = await mintaJson({
+      messages: [
+        { role: 'system', content: p.system },
+        { role: 'user', content: p.user },
+      ],
+      maxTokens: MAKS_TOKEN.berita,
+    })
+
+    // Model gagal dua kali? Tetap jawab dari daftar RSS — jangan kirim
+    // gelembung kosong ke pengguna.
+    if (!json) {
+      const darurat = jawabanBeritaDarurat(berita, bhs.kode)
+      if (darurat) {
+        const out = bentukHasil({ jawaban: darurat, poin_kunci: [], sumber: [] }, tingkat)
+        return res.json({
+          ...out,
+          berita: true,
+          ringkasDarurat: true,
+          hasilCari: ringkasBerita(berita),
+          usage,
+        })
+      }
+      // Tidak ada berita SAMA SEKALI dan model juga gagal: katakan apa adanya,
+      // jangan kirim jawaban kosong.
+      const kosong =
+        bhs.kode === 'en'
+          ? 'The health news source could not be reached right now, and no summary could be written. Please try again in a moment.'
+          : 'Sumber berita kesehatan sedang tidak bisa diakses, dan ringkasannya juga tidak bisa dibuat. Coba lagi sebentar lagi, ya.'
+      const out = bentukHasil({ jawaban: kosong, poin_kunci: [], sumber: [] }, tingkat)
+      return res.status(200).json({ ...out, berita: true, hasilCari: [], usage })
+    }
+
+    const out = bentukHasil(json, tingkat)
+    return res.json({ ...out, berita: true, hasilCari: ringkasBerita(berita), usage })
   }
 
   // Obrolan biasa (sapaan / basa-basi) tidak perlu dicari di internet dan
   // tidak perlu menampilkan daftar sumber — tidak ada yang diverifikasi.
   if (deteksiSantai(pertanyaan)) {
     const ps = promptSantai({ pertanyaan, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
-    const h = await chat({ messages: [
-      { role: 'system', content: ps.system },
-      { role: 'user', content: ps.user },
-    ] })
-    const santai = bentukHasil(ambilJson(h.text), tingkat)
-    return res.json({ ...santai, santai: true, hasilCari: [], usage: h.usage })
+    const { json, usage } = await mintaJson({
+      messages: [
+        { role: 'system', content: ps.system },
+        { role: 'user', content: ps.user },
+      ],
+      maxTokens: MAKS_TOKEN.tanya,
+    })
+    const santai = bentukHasil(json, tingkat)
+    return res.json({ ...santai, santai: true, hasilCari: [], usage })
   }
 
   // cari di internet dulu supaya jawabannya berbasis sumber nyata
   const { hasil: hasilCari } = await cariDenganCadangan(pertanyaan)
 
   const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
-  const hasil = await chat({ messages: [
-    { role: 'system', content: p.system },
-    { role: 'user', content: p.user },
-  ] })
+  const { json, usage } = await mintaJson({
+    messages: [
+      { role: 'system', content: p.system },
+      { role: 'user', content: p.user },
+    ],
+    maxTokens: MAKS_TOKEN.tanya,
+  })
 
-  const out = bentukHasil(ambilJson(hasil.text), tingkat)
-  res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage: hasil.usage })
+  const out = bentukHasil(json, tingkat)
+  res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage })
 }))
 
 rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
@@ -431,13 +507,16 @@ rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
   const { hasil: hasilCari } = await cariDenganCadangan(teks.slice(0, 120))
 
   const p = promptSederhanakanDenganCari({ teks, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
-  const hasil = await chat({ messages: [
-    { role: 'system', content: p.system },
-    { role: 'user', content: p.user },
-  ] })
+  const { json, usage } = await mintaJson({
+    messages: [
+      { role: 'system', content: p.system },
+      { role: 'user', content: p.user },
+    ],
+    maxTokens: MAKS_TOKEN.sederhanakan,
+  })
 
-  const out = bentukHasil(ambilJson(hasil.text), tingkat)
-  res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage: hasil.usage })
+  const out = bentukHasil(json, tingkat)
+  res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage })
 }))
 
 rute.post('/api/verifikasi', batasVerifikasi, bungkus(async (req, res) => {
@@ -451,15 +530,18 @@ rute.post('/api/verifikasi', batasVerifikasi, bungkus(async (req, res) => {
   const { hasil: hasilCari } = await cariDenganCadangan(klaim)
 
   const p = promptVerifikasiDenganCari({ klaim, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
-  const hasil = await chat({ messages: [
-    { role: 'system', content: p.system },
-    { role: 'user', content: p.user },
-  ] })
+  const { json, usage } = await mintaJson({
+    messages: [
+      { role: 'system', content: p.system },
+      { role: 'user', content: p.user },
+    ],
+    maxTokens: MAKS_TOKEN.verifikasi,
+  })
 
   res.json({
-    ...bentukHasil(ambilJson(hasil.text), tingkat, { verdictKey: 'verdict' }),
+    ...bentukHasil(json, tingkat, { verdictKey: 'verdict' }),
     hasilCari: ringkasHasilCari(hasilCari),
-    usage: hasil.usage,
+    usage,
   })
 }))
 
@@ -527,6 +609,7 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
           { role: 'system', content: p.system },
           { role: 'user', content: p.user },
         ],
+        maxTokens: MAKS_TOKEN.berita,
         signal: ac.signal,
         onDelta: (t) => {
           const bersih = ekstrakBerita.dorong(t)
@@ -534,8 +617,36 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
         },
       })
 
-      const finalBerita = bentukHasil(ambilJson(hasilBerita.text), tingkat)
-      kirim('hasil', { ...finalBerita, berita: true, hasilCari: ringkasBerita(berita), usage: hasilBerita.usage })
+      let finalBerita = bentukHasil(ambilJson(hasilBerita.text), tingkat)
+      let usageBerita = hasilBerita.usage
+
+      // Balasan terpotong / bukan JSON -> coba sekali lagi (non-stream),
+      // lalu jawab dari daftar RSS kalau masih gagal. Tanpa ini pengguna
+      // melihat gelembung KOSONG — kejadian nyata 15 Okt 2026.
+      if (!finalBerita.ok) {
+        kirim('status', { pesan: 'Menyusun ulang jawaban…' })
+        const ulang = await mintaJson({
+          messages: [
+            { role: 'system', content: p.system },
+            { role: 'user', content: p.user },
+          ],
+          maxTokens: MAKS_TOKEN.berita,
+        })
+        usageBerita = ulang.usage ?? usageBerita
+        if (ulang.json) {
+          finalBerita = bentukHasil(ulang.json, tingkat)
+        } else {
+          const darurat = jawabanBeritaDarurat(berita, bhs.kode)
+          if (darurat) {
+            finalBerita = {
+              ...bentukHasil({ jawaban: darurat, poin_kunci: [], sumber: [] }, tingkat),
+              ringkasDarurat: true,
+            }
+          }
+        }
+      }
+
+      kirim('hasil', { ...finalBerita, berita: true, hasilCari: ringkasBerita(berita), usage: usageBerita })
       res.write('event: selesai\ndata: {}\n\n')
       return
     }
@@ -559,7 +670,21 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
       })
 
       const santai = bentukHasil(ambilJson(h.text), tingkat)
-      kirim('hasil', { ...santai, santai: true, hasilCari: [], usage: h.usage })
+      const santaiFinal = santai.ok
+        ? santai
+        : bentukHasil(
+            (
+              await mintaJson({
+                messages: [
+                  { role: 'system', content: ps.system },
+                  { role: 'user', content: ps.user },
+                ],
+                maxTokens: MAKS_TOKEN.tanya,
+              })
+            ).json,
+            tingkat,
+          )
+      kirim('hasil', { ...santaiFinal, santai: true, hasilCari: [], usage: h.usage })
       res.write('event: selesai\ndata: {}\n\n')
       return
     }
@@ -588,8 +713,25 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
       },
     })
 
-    const final = bentukHasil(ambilJson(hasil.text), tingkat)
-    kirim('hasil', { ...final, hasilCari: ringkasHasilCari(hasilCari), usage: hasil.usage })
+    let final = bentukHasil(ambilJson(hasil.text), tingkat)
+    let usageFinal = hasil.usage
+
+    // Sama seperti jalur berita: balasan terpotong / bukan JSON tidak boleh
+    // berakhir sebagai gelembung kosong. Ulangi sekali, non-stream.
+    if (!final.ok) {
+      kirim('status', { pesan: 'Menyusun ulang jawaban…' })
+      const ulang = await mintaJson({
+        messages: [
+          { role: 'system', content: p.system },
+          { role: 'user', content: p.user },
+        ],
+        maxTokens: MAKS_TOKEN.tanya,
+      })
+      usageFinal = ulang.usage ?? usageFinal
+      if (ulang.json) final = bentukHasil(ulang.json, tingkat)
+    }
+
+    kirim('hasil', { ...final, hasilCari: ringkasHasilCari(hasilCari), usage: usageFinal })
     res.write('event: selesai\ndata: {}\n\n')
   } catch (e) {
     if (!ac.signal.aborted) {

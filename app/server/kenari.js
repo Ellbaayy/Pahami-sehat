@@ -55,6 +55,10 @@ export async function chat({ messages, maxTokens, temperature }) {
       messages,
       max_tokens: maxTokens ?? config.maxTokens,
       temperature: temperature ?? config.temperature,
+      // Mematikan token penalaran — lihat catatan panjang di config.js.
+      // Tanpa ini, model habiskan jatah max_tokens untuk "berpikir" dan JSON
+      // jawabannya terpotong (pengguna menerima jawaban KOSONG).
+      reasoning_effort: config.reasoningEffort,
       stream: false,
     }),
     signal: AbortSignal.timeout(config.requestTimeoutMs),
@@ -105,6 +109,8 @@ export async function chatStream({ messages, maxTokens, temperature, onDelta, si
       messages,
       max_tokens: maxTokens ?? config.maxTokens,
       temperature: temperature ?? config.temperature,
+      // Mematikan token penalaran — lihat catatan panjang di config.js.
+      reasoning_effort: config.reasoningEffort,
       stream: true,
     }),
     signal: batas,

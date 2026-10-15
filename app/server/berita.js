@@ -348,6 +348,38 @@ export function menanyakanBerita(teks) {
   )
 }
 
+/**
+ * Jawaban berita DARURAT — disusun dari daftar RSS, bukan dari model.
+ *
+ * Dipakai rute kalau model benar-benar tidak bisa dimintai JSON yang utuh
+ * setelah diulang. Daftar beritanya NYATA (judul + media + umur), jadi jawaban
+ * ini tidak mengarang apa pun — jauh lebih baik daripada gelembung KOSONG yang
+ * pernah benar-benar terjadi (15 Okt 2026: balasan model terpotong di tengah
+ * rencana berpikirmya, `usage.completion_tokens` tepat menyentuh batas).
+ *
+ * Ditaruh di sini, bukan di rute, supaya bisa diuji tanpa server (`uji-berita.mjs`).
+ */
+export function jawabanBeritaDarurat(berita = [], kode = 'id') {
+  if (!berita.length) return null
+  const inggris = kode === 'en'
+  const baris = berita.map((b) => {
+    const umur =
+      b.umurHari === null || b.umurHari === undefined
+        ? ''
+        : b.umurHari === 0
+          ? inggris ? ' (today)' : ' (hari ini)'
+          : inggris ? ` (${b.umurHari} days ago)` : ` (${b.umurHari} hari lalu)`
+    return `- ${b.judul} — ${b.sumber}${umur}`
+  })
+  const kepala = inggris
+    ? 'The summary could not be written right now, but these are the health news items that were fetched:'
+    : 'Ringkasannya sedang tidak bisa dibuat, tetapi ini berita kesehatan yang berhasil diambil:'
+  const ekor = inggris
+    ? 'These are news reports, not medical explanations. Tap a link to read the original article, and check it against the official source.'
+    : 'Ini berita, bukan penjelasan medis. Ketuk tautannya untuk membaca artikel aslinya, dan cek lagi ke sumber resminya.'
+  return `${kepala}\n\n${baris.join('\n')}\n\n${ekor}`
+}
+
 /* ================================================== ringkasan harian + lonceng ==
  *
  * Jagi meminta (15 Okt 2026): berita WAJIB diperbarui minimal sehari sekali,
