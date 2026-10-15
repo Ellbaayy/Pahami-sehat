@@ -12,10 +12,12 @@
  */
 
 import express from 'express'
+import { pasangKepala } from '../server/kepala.js'
 import rute from '../server/rute.js'
 
 const app = express()
 
+pasangKepala(app)
 app.use(express.json({ limit: '1mb' }))
 app.use(rute)
 

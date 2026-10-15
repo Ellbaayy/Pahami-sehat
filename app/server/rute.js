@@ -23,6 +23,7 @@ import {
   TINGKAT,
   TINGKAT_DEFAULT,
   deteksiSantai,
+  promptBerita,
   promptTanya,
   promptSantai,
   promptSederhanakan,
@@ -31,6 +32,7 @@ import {
   promptSederhanakanDenganCari,
   promptVerifikasiDenganCari,
 } from './prompts.js'
+import { ambilBeritaKesehatan, menanyakanBerita } from './berita.js'
 import { cariInternet } from './cari.js'
 import { kataKunciPencarian, istilahKesehatan, PETA_MEDLINEPLUS, PETA_MEDLINEPLUS_BIDANG } from './kataKunci.js'
 import { batasi } from './batas.js'
@@ -129,6 +131,22 @@ function ringkasHasilCari(hasil = []) {
 }
 
 /**
+ * Ringkas daftar berita untuk dikirim ke frontend.
+ * Berbeda dari ringkasHasilCari: berita punya sumber (nama media) dan tanggal,
+ * dan link Google News ditandai karena tidak bisa dibuka dari server.
+ */
+function ringkasBerita(berita = []) {
+  return berita.map((b) => ({
+    judul: String(b.judul ?? '').slice(0, 160),
+    url: /^https?:\/\//i.test(String(b.link ?? '')) ? b.link : '',
+    sumber: String(b.sumber ?? ''),
+    tanggal: String(b.tanggal ?? ''),
+    umurHari: b.umurHari ?? null,
+    linkTidakBisaDibuka: Boolean(b.linkTidakBisaDibuka),
+  }))
+}
+
+/**
  * Cari sumber untuk sebuah pertanyaan.
  *
  * Bahan pencariannya dipilih oleh kataKunci.js — SATU tempat untuk seluruh
@@ -200,6 +218,7 @@ const batasVerifikasi = batasi({ ...LAJU.verifikasi, nama: 'permintaan' })
 const batasSuara = batasi({ ...LAJU.suara, nama: 'permintaan suara' })
 const batasKonten = batasi({ ...LAJU.konten, nama: 'permintaan konten' })
 const batasHealth = batasi({ ...LAJU.health, nama: 'pemeriksaan kesehatan' })
+const batasMeta = batasi({ ...LAJU.meta, nama: 'permintaan meta' })
 
 /**
  * Tolak masukan yang kepanjangan, dengan pesan yang menyebut batasnya.
@@ -267,7 +286,7 @@ rute.get('/api/konten', batasKonten, bungkus(async (req, res) => {
   res.json({ ok: true, ...data })
 }))
 
-rute.get('/api/meta', (_req, res) => {
+rute.get('/api/meta', batasMeta, (_req, res) => {
   res.json({
     model: config.model,
     tingkat: Object.entries(TINGKAT).map(([kunci, t]) => ({
@@ -345,6 +364,20 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
     ] })
     const santai = bentukHasil(ambilJson(h.text), tingkat)
     return res.json({ ...santai, santai: true, hasilCari: [], usage: h.usage })
+  }
+
+  // Pertanyaan soal BERITA kesehatan terkini: pakai jalur berita (RSS),
+  // bukan Wikipedia — karena yang ditanyakan memang kabar harian, bukan
+  // penjelasan medis. Berita tetap harus dicek ke sumber resminya.
+  if (menanyakanBerita(pertanyaan)) {
+    const berita = await ambilBeritaKesehatan({ maks: 8 })
+    const p = promptBerita({ pertanyaan, tingkat, berita, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
+    const hasil = await chat({ messages: [
+      { role: 'system', content: p.system },
+      { role: 'user', content: p.user },
+    ] })
+    const out = bentukHasil(ambilJson(hasil.text), tingkat)
+    return res.json({ ...out, berita: true, hasilCari: ringkasBerita(berita), usage: hasil.usage })
   }
 
   // cari di internet dulu supaya jawabannya berbasis sumber nyata
@@ -470,6 +503,35 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
 
       const santai = bentukHasil(ambilJson(h.text), tingkat)
       kirim('hasil', { ...santai, santai: true, hasilCari: [], usage: h.usage })
+      res.write('event: selesai\ndata: {}\n\n')
+      return
+    }
+
+    // Pertanyaan soal BERITA kesehatan terkini: pakai jalur berita (RSS),
+    // bukan Wikipedia — yang ditanyakan memang kabar harian, bukan penjelasan medis.
+    if (menanyakanBerita(pertanyaan)) {
+      kirim('status', { pesan: 'Mengambil berita kesehatan terbaru…' })
+      const berita = await ambilBeritaKesehatan({ maks: 8 })
+      kirim('sumber', { hasil: ringkasBerita(berita) })
+
+      kirim('status', { pesan: 'Menyiapkan jawaban…' })
+      const p = promptBerita({ pertanyaan, tingkat, berita, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
+      const ekstrakBerita = buatEkstrak('jawaban')
+
+      const hasilBerita = await chatStream({
+        messages: [
+          { role: 'system', content: p.system },
+          { role: 'user', content: p.user },
+        ],
+        signal: ac.signal,
+        onDelta: (t) => {
+          const bersih = ekstrakBerita.dorong(t)
+          if (bersih) kirim('delta', { teks: bersih })
+        },
+      })
+
+      const finalBerita = bentukHasil(ambilJson(hasilBerita.text), tingkat)
+      kirim('hasil', { ...finalBerita, berita: true, hasilCari: ringkasBerita(berita), usage: hasilBerita.usage })
       res.write('event: selesai\ndata: {}\n\n')
       return
     }

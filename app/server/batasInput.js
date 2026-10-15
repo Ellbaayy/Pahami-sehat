@@ -48,6 +48,13 @@ export const LAJU = {
    * Sebelumnya endpoint ini terbuka bebas sambil memanggil Kenari setiap kali.
    */
   health: { maks: 120, maksTotal: 600 },
+  /**
+   * Meta (daftar tingkat baca) murni membaca konstanta — tidak memanggil
+   * layanan luar. Ditemukan 15 Okt 2026 sebagai satu-satunya endpoint tanpa
+   * pembatas. Batasnya longgar seperti health (aplikasi memanggilnya tiap
+   * buka halaman), tapi TIDAK terbuka bebas.
+   */
+  meta: { maks: 120, maksTotal: 600 },
 }
 
 /**
