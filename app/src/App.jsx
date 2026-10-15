@@ -48,6 +48,9 @@ const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, kontras: false, tts: false, l
 const STATUS_SERVER = {
   'Menyiapkan jawaban…': 'tanya.menyiapkan',
   'Mencari sumber terpercaya…': 'tanya.mencari',
+  // Jalur berita (RSS) punya statusnya sendiri. Tanpa pemetaan ini, mode Inggris
+  // menampilkan kalimat Indonesia mentah di baris status.
+  'Mengambil berita kesehatan terbaru…': 'tanya.mengambilBerita',
 }
 
 /** Balasan API → bentuk yang dipakai komponen tampilan. */

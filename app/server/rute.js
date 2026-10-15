@@ -372,6 +372,25 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
   const tingkat = rapikanTingkat(req.body?.tingkat)
   const bhs = pilihBahasa(pertanyaan, rapikanBahasa(req.body?.bahasa))
 
+  // Pertanyaan soal BERITA kesehatan terkini: pakai jalur berita (RSS),
+  // bukan Wikipedia — karena yang ditanyakan memang kabar harian, bukan
+  // penjelasan medis. Berita tetap harus dicek ke sumber resminya.
+  //
+  // Diperiksa SEBELUM `deteksiSantai()` (15 Okt 2026): "berita terbaru hari
+  // ini" hanya 3 kata tanpa kata tanya, jadi mode santai menangkapnya lebih
+  // dulu dan pertanyaannya dijawab sebagai sapaan — jalur berita tidak pernah
+  // tercapai. Permintaan berita yang jelas harus menang atas mode santai.
+  if (menanyakanBerita(pertanyaan)) {
+    const berita = await ambilBeritaKesehatan({ maks: 8 })
+    const p = promptBerita({ pertanyaan, tingkat, berita, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
+    const hasil = await chat({ messages: [
+      { role: 'system', content: p.system },
+      { role: 'user', content: p.user },
+    ] })
+    const out = bentukHasil(ambilJson(hasil.text), tingkat)
+    return res.json({ ...out, berita: true, hasilCari: ringkasBerita(berita), usage: hasil.usage })
+  }
+
   // Obrolan biasa (sapaan / basa-basi) tidak perlu dicari di internet dan
   // tidak perlu menampilkan daftar sumber — tidak ada yang diverifikasi.
   if (deteksiSantai(pertanyaan)) {
@@ -382,20 +401,6 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
     ] })
     const santai = bentukHasil(ambilJson(h.text), tingkat)
     return res.json({ ...santai, santai: true, hasilCari: [], usage: h.usage })
-  }
-
-  // Pertanyaan soal BERITA kesehatan terkini: pakai jalur berita (RSS),
-  // bukan Wikipedia — karena yang ditanyakan memang kabar harian, bukan
-  // penjelasan medis. Berita tetap harus dicek ke sumber resminya.
-  if (menanyakanBerita(pertanyaan)) {
-    const berita = await ambilBeritaKesehatan({ maks: 8 })
-    const p = promptBerita({ pertanyaan, tingkat, berita, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
-    const hasil = await chat({ messages: [
-      { role: 'system', content: p.system },
-      { role: 'user', content: p.user },
-    ] })
-    const out = bentukHasil(ambilJson(hasil.text), tingkat)
-    return res.json({ ...out, berita: true, hasilCari: ringkasBerita(berita), usage: hasil.usage })
   }
 
   // cari di internet dulu supaya jawabannya berbasis sumber nyata
@@ -501,32 +506,13 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
   })
 
   try {
-    // Obrolan biasa: langsung jawab tanpa mencari dan tanpa daftar sumber.
-    if (deteksiSantai(pertanyaan)) {
-      kirim('status', { pesan: 'Menyiapkan jawaban…' })
-      const ps = promptSantai({ pertanyaan, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
-      const ekstrakSantai = buatEkstrak('jawaban')
-
-      const h = await chatStream({
-        messages: [
-          { role: 'system', content: ps.system },
-          { role: 'user', content: ps.user },
-        ],
-        signal: ac.signal,
-        onDelta: (t) => {
-          const bersih = ekstrakSantai.dorong(t)
-          if (bersih) kirim('delta', { teks: bersih })
-        },
-      })
-
-      const santai = bentukHasil(ambilJson(h.text), tingkat)
-      kirim('hasil', { ...santai, santai: true, hasilCari: [], usage: h.usage })
-      res.write('event: selesai\ndata: {}\n\n')
-      return
-    }
-
     // Pertanyaan soal BERITA kesehatan terkini: pakai jalur berita (RSS),
     // bukan Wikipedia — yang ditanyakan memang kabar harian, bukan penjelasan medis.
+    //
+    // Diperiksa SEBELUM `deteksiSantai()` (15 Okt 2026): "berita terbaru hari
+    // ini" hanya 3 kata tanpa kata tanya, jadi mode santai menangkapnya lebih
+    // dulu dan pertanyaannya dijawab sebagai sapaan — jalur berita tidak pernah
+    // tercapai. Permintaan berita yang jelas harus menang atas mode santai.
     if (menanyakanBerita(pertanyaan)) {
       kirim('status', { pesan: 'Mengambil berita kesehatan terbaru…' })
       const berita = await ambilBeritaKesehatan({ maks: 8 })
@@ -550,6 +536,30 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
 
       const finalBerita = bentukHasil(ambilJson(hasilBerita.text), tingkat)
       kirim('hasil', { ...finalBerita, berita: true, hasilCari: ringkasBerita(berita), usage: hasilBerita.usage })
+      res.write('event: selesai\ndata: {}\n\n')
+      return
+    }
+
+    // Obrolan biasa: langsung jawab tanpa mencari dan tanpa daftar sumber.
+    if (deteksiSantai(pertanyaan)) {
+      kirim('status', { pesan: 'Menyiapkan jawaban…' })
+      const ps = promptSantai({ pertanyaan, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
+      const ekstrakSantai = buatEkstrak('jawaban')
+
+      const h = await chatStream({
+        messages: [
+          { role: 'system', content: ps.system },
+          { role: 'user', content: ps.user },
+        ],
+        signal: ac.signal,
+        onDelta: (t) => {
+          const bersih = ekstrakSantai.dorong(t)
+          if (bersih) kirim('delta', { teks: bersih })
+        },
+      })
+
+      const santai = bentukHasil(ambilJson(h.text), tingkat)
+      kirim('hasil', { ...santai, santai: true, hasilCari: [], usage: h.usage })
       res.write('event: selesai\ndata: {}\n\n')
       return
     }

@@ -21,6 +21,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya |
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
 > | Riwayat pertanyaan | berjalan. Tersimpan di peramban saja (bukan server), maksimal **20 obrolan** (lihat `MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan setiap penghapusan **bisa dibatalkan** |
+> | Berita kesehatan harian | berjalan. Pertanyaan seperti "berita terbaru hari ini" dijawab dari **RSS** (Detik Health, WHO, Google News) — bukan dari ensiklopedia, karena Wikipedia tidak punya berita harian. Setiap berita disebutkan **nama medianya** dan **umurnya**, dan lonceng pemberitahuan berbunyi kalau ada berita segar (diperiksa maksimal sekali sehari). Di Vercel jalur ini jalan karena memakai HTTPS biasa, bukan WebSocket |
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
 > 20 permintaan/menit per alamat IP (lihat `app/server/batas.js`).
@@ -117,6 +118,7 @@ flowchart TB
     K["Kenari.id<br/>deepseek-v4-1-flash"]
     W["Wikipedia bahasa Indonesia"]
     M["MedlinePlus<br/>wsearch.nlm.nih.gov"]
+    N["RSS berita kesehatan<br/>Detik Health · WHO · Google News"]
   end
 
   UI --> B --> R
@@ -126,6 +128,7 @@ flowchart TB
 
   R -->|"kata kunci terpilih"| W
   R -->|"istilah Inggris"| M
+  R -->|"pertanyaan berita"| N
   R -->|"sumber + pertanyaan"| K
   K -->|"jawaban + sumber yang dikutip"| R
   R -->|"jawaban"| UI
@@ -139,19 +142,27 @@ flowchart TB
 1. **Peramban** mengirim pertanyaan ke `POST /api/tanya` (atau `/api/tanya/stream`
    untuk jawaban yang muncul bertahap).
 2. **Pembatas laju** memeriksa jumlah permintaan dari alamat IP itu.
-3. **Lapis pencarian** memilih **satu istilah** dari pertanyaan
+3. **Jalur berita** diperiksa lebih dulu (`menanyakanBerita()`). Pertanyaan
+   seperti "berita terbaru hari ini" atau "latest health news today" tidak
+   dijawab dari ensiklopedia — Wikipedia tidak punya berita harian. Pertanyaan
+   itu dijawab dari **RSS** (Detik Health, WHO, Google News), dan setiap berita
+   disebutkan beserta **nama medianya** dan **umurnya**. Di dalam aplikasi
+   kesehatan, pertanyaan berita tidak perlu menyebut kata "kesehatan" — tetapi
+   permintaan berita tentang topik yang jelas bukan kesehatan (politik, bola,
+   ekonomi) ditolak dan dijawab sebagai obrolan biasa.
+4. **Lapis pencarian** memilih **satu istilah** dari pertanyaan
    (`pilihIstilah()` di `app/server/kataKunci.js`). Nama penyakit selalu menang
    atas kata gejala; kata tindakan seperti `penyebab` atau `operasi` tidak pernah
    dipilih selama ada istilah yang lebih khusus.
-4. Istilah itu dipetakan ke **dua bentuk berbeda**, karena dua mesin pencari
+5. Istilah itu dipetakan ke **dua bentuk berbeda**, karena dua mesin pencari
    memakai kosakata yang berbeda:
    - Wikipedia ID memakai **judul artikel kanonik** (`PETA_PENCARIAN`),
      mis. `stunting` → `Hambatan pertumbuhan`.
    - MedlinePlus memakai **istilah Inggris** (`PETA_MEDLINEPLUS`),
      mis. `rontgen` → `xrays`.
-5. **Model AI** menerima pertanyaan + hasil pencarian, lalu menjawab **hanya**
+6. **Model AI** menerima pertanyaan + hasil pencarian, lalu menjawab **hanya**
    dari bahan itu. Prompt melarang menambah fakta dari ingatan.
-6. Jawaban kembali bersama **sumber yang benar-benar dikutip**, dan panel
+7. Jawaban kembali bersama **sumber yang benar-benar dikutip**, dan panel
    `SumberJawaban` membedakan sumber yang **dipakai** dari yang cuma **ditemukan**.
 
 ### Di mana datanya disimpan
@@ -166,10 +177,11 @@ flowchart TB
 
 **Tidak ada basis data.** Server ini tidak punya tabel, tidak punya akun
 pengguna, dan tidak menulis isi percakapan ke mana pun. Yang ditulis ke disk
-hanya **cache konten kesehatan** (`.cache-konten.json`, berlaku 24 jam) — isinya
-artikel publik dari Kemenkes, bukan data pengguna.
+hanya dua berkas **cache**, keduanya berlaku 24 jam dan isinya bukan data
+pengguna: `.cache-konten.json` (artikel publik dari Kemenkes) dan
+`.cache-berita.json` (judul berita kesehatan dari RSS, maksimal 3 judul).
 
-### Tiga hal yang dijaga di sisi server
+### Empat hal yang dijaga di sisi server
 
 - **`app/server/kataKunci.js`** — pengenalan topik kesehatan. Satu daftar
   istilah dipakai bersama oleh `PENGENALAN_TOPIK`, `KATA_KESEHATAN`, dan kedua
@@ -182,6 +194,12 @@ artikel publik dari Kemenkes, bukan data pengguna.
   jadi di serverless batas ini **per-instance, bukan global** — cukup untuk
   menahan penyalahgunaan kasar, bukan jaminan global. Batasnya disebut apa
   adanya di komentar berkasnya.
+- **`app/server/berita.js`** — jalur berita kesehatan. Parser RSS memperlakukan
+  isi media sebagai **data**, bukan instruksi: judul/deskripsi yang menyuruh
+  model mengabaikan aturan diabaikan, tag HTML dibuang, link wajib `http(s)`
+  (menolak `javascript:` dan `data:`), satu feed dibatasi 30 item dan 2 MB, dan
+  tanggal yang tidak sah diperlakukan seperti tanggal kosong — bukan `NaN` yang
+  bocor ke pengurutan. Diuji `uji-berita.mjs` (78 pemeriksaan).
 
 ---
 
@@ -360,7 +378,8 @@ node uji-kata-kunci.mjs   # pencocokan kata kunci topik
 node uji-teks.mjs         # perapian teks & pemotongan kalimat
 node uji-ocr.mjs          # 36 pemeriksaan: perapian teks & penandaan angka
 node uji-bahasa.mjs       # 25 pemeriksaan: kesehatan kamus id/en
-node uji-keterbacaan.mjs  # 32 pemeriksaan: alat ukur keterbacaan itu sendiri
+node uji-berita.mjs       # 78 pemeriksaan: deteksi berita, parser RSS, penetrasi
+node uji-keterbacaan.mjs  # 38 pemeriksaan: alat ukur keterbacaan itu sendiri
 ```
 
 `uji-bahasa.mjs` menjaga tiga cacat kamus sekaligus: kunci yang dipakai tapi
