@@ -6,6 +6,7 @@ import {
   Info,
   Archive,
   Plug,
+  Newspaper,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react'
@@ -29,7 +30,7 @@ import { cn } from '../../lib/cn'
  * ikut tampil di tablet & desktop (sebelumnya hanya di ponsel).
  */
 
-const IKON = { konten: Info, riwayat: Archive, server: Plug }
+const IKON = { konten: Info, riwayat: Archive, server: Plug, berita: Newspaper }
 
 export default function TopBar({
   onOpenMenu,

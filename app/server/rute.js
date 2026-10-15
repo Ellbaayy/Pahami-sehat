@@ -32,7 +32,7 @@ import {
   promptSederhanakanDenganCari,
   promptVerifikasiDenganCari,
 } from './prompts.js'
-import { ambilBeritaKesehatan, menanyakanBerita } from './berita.js'
+import { ambilBeritaKesehatan, menanyakanBerita, ringkasanBerita } from './berita.js'
 import { cariInternet } from './cari.js'
 import { kataKunciPencarian, istilahKesehatan, PETA_MEDLINEPLUS, PETA_MEDLINEPLUS_BIDANG } from './kataKunci.js'
 import { batasi } from './batas.js'
@@ -219,6 +219,7 @@ const batasSuara = batasi({ ...LAJU.suara, nama: 'permintaan suara' })
 const batasKonten = batasi({ ...LAJU.konten, nama: 'permintaan konten' })
 const batasHealth = batasi({ ...LAJU.health, nama: 'pemeriksaan kesehatan' })
 const batasMeta = batasi({ ...LAJU.meta, nama: 'permintaan meta' })
+const batasBerita = batasi({ ...LAJU.berita, nama: 'ringkasan berita' })
 
 /**
  * Tolak masukan yang kepanjangan, dengan pesan yang menyebut batasnya.
@@ -297,6 +298,23 @@ rute.get('/api/meta', batasMeta, (_req, res) => {
     tingkatDefault: TINGKAT_DEFAULT,
   })
 })
+
+/**
+ * Ringkasan berita harian untuk lonceng pemberitahuan.
+ *
+ * Jagi meminta (15 Okt 2026): berita WAJIB segar minimal sehari sekali, dan
+ * lonceng harus berbunyi kalau ada yang baru. Endpoint ini yang dibaca hook
+ * `useBerita` di aplikasi: jumlah berita segar (<= 1 hari), 3 judul teratas,
+ * tanggal diperbarui, dan sidik jari daftarnya.
+ *
+ * Murah: fetch RSS-nya di-cache sekali sehari di sisi server (lihat
+ * ringkasanBerita di berita.js), jadi endpoint ini hanya membaca simpanan.
+ */
+rute.get('/api/berita/ringkas', batasBerita, bungkus(async (_req, res) => {
+  const d = await ringkasanBerita()
+  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400')
+  res.json({ ok: true, ...d })
+}))
 
 /**
  * Suara natural untuk jawaban AI.

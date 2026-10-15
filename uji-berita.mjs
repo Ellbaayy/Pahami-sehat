@@ -12,7 +12,7 @@
  *
  * Berjalan: node uji-berita.mjs
  */
-import { menanyakanBerita, parseRss, ambilBeritaKesehatan } from './app/server/berita.js'
+import { menanyakanBerita, parseRss, ambilBeritaKesehatan, buatSidikBerita, ringkasanBerita } from './app/server/berita.js'
 
 let lulus = 0
 let gagal = 0
@@ -121,6 +121,11 @@ cek('entitas berlapis 10k cepat (<1s)', (() => {
   const t1 = Date.now(); parseRss(feed(item('A', 'https://c.com/7', bomb)), 'X'); return Date.now() - t1 < 1000
 })())
 
+console.log('== sidik berita (pemicu lonceng):')
+cek('daftar sama -> sidik sama', buatSidikBerita([{ judul: 'A' }, { judul: 'B' }]) === buatSidikBerita([{ judul: 'B' }, { judul: 'A' }]))
+cek('daftar beda -> sidik beda', buatSidikBerita([{ judul: 'A' }]) !== buatSidikBerita([{ judul: 'B' }]))
+cek('daftar kosong -> sidik tetap string', typeof buatSidikBerita([]) === 'string')
+
 console.log('== jalur hidup (RSS sungguhan, butuh jaringan):')
 try {
   const t2 = Date.now()
@@ -137,6 +142,31 @@ try {
   }
 } catch (e) {
   cek('jalur hidup tidak melempar', false, String(e))
+}
+
+console.log('== ringkasan harian (cache sekali sehari):')
+try {
+  const t3 = Date.now()
+  const r1 = await ringkasanBerita()
+  cek('bentuk sah (judul/segar/sidik/diperbarui)', Array.isArray(r1.judul) && typeof r1.segar === 'number' && typeof r1.sidik === 'string')
+  if (r1.judul.length) {
+    cek(`maks 3 judul (terukur ${r1.judul.length})`, r1.judul.length <= 3)
+    cek('setiap judul punya sumber', r1.judul.every((j) => j.judul && j.sumber))
+    cek('berikutnya ~24 jam dari diperbarui', (() => {
+      const d = new Date(r1.berikutnya) - new Date(r1.diperbarui)
+      return d > 23 * 3600e3 && d <= 24 * 3600e3 + 5000
+    })())
+    // panggilan kedua harus dari cache (cepat, hasil identik)
+    const t4 = Date.now()
+    const r2 = await ringkasanBerita()
+    cek('panggilan kedua dari cache (sidik sama)', r2.sidik === r1.sidik)
+    cek(`panggilan kedua cepat (<1s, terukur ${Date.now() - t4}ms)`, Date.now() - t4 < 1000)
+    console.log(`  (panggilan pertama ${Date.now() - t3}ms — termasuk fetch RSS sungguhan)`)
+  } else {
+    console.log('  (RSS tak terjangkau & belum ada cache — bentuk kosong yang sah, bukan gagal)')
+  }
+} catch (e) {
+  cek('ringkasan tidak melempar', false, String(e))
 }
 
 console.log(`\n${lulus} lulus, ${gagal} gagal`)

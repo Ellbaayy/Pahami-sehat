@@ -55,6 +55,12 @@ export const LAJU = {
    * buka halaman), tapi TIDAK terbuka bebas.
    */
   meta: { maks: 120, maksTotal: 600 },
+  /**
+   * Ringkasan berita harian untuk lonceng. Hanya membaca simpanan server
+   * (fetch RSS-nya di-cache sekali sehari), jadi longgar seperti health.
+   * Aplikasi memanggilnya tiap buka + tiap 30 menit.
+   */
+  berita: { maks: 120, maksTotal: 600 },
 }
 
 /**

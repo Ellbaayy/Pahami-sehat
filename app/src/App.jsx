@@ -21,6 +21,7 @@ import { PlugZap, Plug, Trash2 } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP } from './data/dummy'
 import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
+import { useBerita } from './lib/useBerita'
 import { gunakanBahasa } from './lib/useBahasa'
 import { tanyaStream, sederhanakan, ambilKonten } from './lib/api'
 import { ttsBaca } from './lib/tts'
@@ -267,8 +268,45 @@ export default function App() {
 
   // --- pemberitahuan -------------------------------------------------------
   // Isinya dihitung dari keadaan nyata: kapan konten harian terakhir
-  // diperbarui, berapa obrolan tersimpan, dan apakah server hidup.
+  // diperbarui, berapa obrolan tersimpan, apakah server hidup, dan apakah
+  // ada berita kesehatan segar (lihat useBerita).
+  const berita = useBerita()
+
+  /**
+   * Sidik berita yang terakhir DIBACA. Disimpan terpisah dari notifDibaca
+   * supaya daftar berita yang BERUBAH (sidik beda) menyalakan lagi titik
+   * merahnya — kalau cuma mengandalkan notifDibaca, berita baru tidak
+   * pernah membunyikan lonceng setelah panel dibuka sekali.
+   */
+  const [beritaDibaca, setBeritaDibaca] = useState(() => {
+    try {
+      return localStorage.getItem('pahami-sehat:berita-dibaca') || ''
+    } catch {
+      return ''
+    }
+  })
+
+  // berita "baru" = ada yang segar (<= 1 hari) DAN daftarnya berubah
+  const beritaBaru = Boolean(
+    berita && berita.segar > 0 && berita.sidik && berita.sidik !== beritaDibaca,
+  )
+
   const notifikasi = []
+  if (berita && berita.segar > 0) {
+    notifikasi.push({
+      id: 'berita',
+      jenis: 'berita',
+      judul: t('notif.beritaJudul', { n: berita.segar }),
+      isi: (berita.judul?.[0]?.judul || t('notif.beritaIsi')),
+      waktu: berita.diperbarui
+        ? new Date(berita.diperbarui).toLocaleDateString(t('umum.kodeLokal'), {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : null,
+    })
+  }
   if (konten.diperbarui) {
     notifikasi.push({
       id: 'konten',
@@ -611,7 +649,7 @@ export default function App() {
             })
           }
           notifikasi={notifikasi}
-          belumDibaca={!notifDibaca}
+          belumDibaca={!notifDibaca || beritaBaru}
           onBaca={() => {
             setNotifDibaca(true)
             try {
@@ -619,10 +657,27 @@ export default function App() {
             } catch {
               /* diabaikan */
             }
+            // membuka panel = berita ikut dibaca: catat sidiknya supaya
+            // lonceng diam sampai daftarnya berubah lagi
+            if (berita?.sidik) {
+              setBeritaDibaca(berita.sidik)
+              try {
+                localStorage.setItem('pahami-sehat:berita-dibaca', berita.sidik)
+              } catch {
+                /* diabaikan */
+              }
+            }
           }}
           onBuka={(n) => {
             if (n.jenis === 'konten') navigate('beranda')
             else if (n.jenis === 'sesi') navigate('riwayat')
+            else if (n.jenis === 'berita') {
+              // buka Tanya AI dengan pertanyaan berita terisi otomatis —
+              // pengguna tinggal menekan kirim (atau mengubah dulu)
+              setMode('tanya')
+              setInput(t('notif.beritaTanya'))
+              navigate('tanya')
+            }
           }}
           t={t}
           />
