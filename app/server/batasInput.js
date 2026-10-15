@@ -26,6 +26,34 @@ export const MAKS_SEDERHANAKAN = 8000
 export const MAKS_VERIFIKASI = 4000
 export const MAKS_SUARA = 4000
 
+/**
+ * Anggaran token KELUARAN untuk model — DIUKUR satu per satu, bukan ditebak.
+ *
+ * KENAPA PERLU (15 Okt 2026): satu angka untuk semua jalur (1500) membuat DUA
+ * fitur menjawab KOSONG. Balasan model berhenti karena menyentuh batas
+ * (`finish_reason: length`, `usage.completion_tokens` tepat sama dengan batas),
+ * JSON-nya terpotong, dan model bahkan membuang sebagian token untuk menulis
+ * rencana berpikir di dalam `content`. Terukur:
+ *
+ *   jalur          kebutuhan  hasil di 1500
+ *   berita         2178–2483   terpotong, jawaban KOSONG
+ *   sederhanakan   2453        terpotong, jawaban KOSONG
+ *   verifikasi     1495–2092   kadang terpotong (tergantung panjang keluaran)
+ *   tanya          935         utuh
+ *
+ * Menaikkan BATAS tidak menambah biaya saat model berhenti sendiri — ia hanya
+ * mencegah potongan. Yang bertambah cuma batas atas waktu. Batas waktu internal
+ * server 50 detik (lihat config.js), dan pengukuran di atas memakai 14–19 detik.
+ *
+ * Kalau menambah jalur baru: UKUR dulu, jangan menyalin angka jalur lain.
+ */
+export const MAKS_TOKEN = {
+  tanya: 2000,
+  berita: 3000,
+  sederhanakan: 3400,
+  verifikasi: 2800,
+}
+
 /** Laju permintaan: per alamat IP per menit, dan total per-instance per menit. */
 export const LAJU = {
   tanya: { maks: 20, maksTotal: 300 },

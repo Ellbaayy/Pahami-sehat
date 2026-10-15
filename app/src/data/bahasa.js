@@ -69,6 +69,7 @@ const KAMUS = {
     'tanya.menyiapkan': 'Menyiapkan jawaban…',
     'tanya.mencari': 'Mencari sumber terpercaya…',
     'tanya.mengambilBerita': 'Mengambil berita kesehatan terbaru…',
+    'tanya.menyusunUlang': 'Menyusun ulang jawaban…',
     'tanya.mendengar': 'Mendengarkan… bicara sekarang.',
     'tanya.belumAda': 'Belum ada percakapan',
     'tanya.belumAdaSub': 'Ajukan pertanyaan pertamamu — hasilnya akan muncul sebagai utas di sini.',
@@ -349,6 +350,13 @@ const KAMUS = {
     'galat.isiPesan': 'Terjadi kesalahan saat menampilkan bagian ini. Coba pindah ke menu lain lewat navigasi, atau muat ulang halaman.',
     'galat.bawahJudul': 'Bagian bawah halaman gagal ditampilkan',
     'galat.bawahPesan': 'Keterangan kaki halaman tidak bisa ditampilkan. Isi halaman di atasnya masih bisa dipakai.',
+    // Dipakai di gelembung jawaban: lebih baik menjelaskan daripada menampilkan
+    // gelembung KOSONG (pernah terjadi 15 Okt 2026 di jalur berita).
+    'galat.jawabanTakTerbaca': 'Jawaban dari model tidak bisa dibaca dengan utuh. Coba kirim ulang pertanyaannya, ya.',
+    'galat.jawabanKosong': 'Jawaban tidak bisa dirakit kali ini. Coba kirim ulang pertanyaannya, ya.',
+    'galat.serverMati': 'Tidak bisa menghubungi server. Pastikan servernya jalan, lalu coba lagi.',
+    'galat.streamPutus': 'Koneksi terputus sebelum jawaban selesai. Coba kirim ulang pertanyaannya.',
+    'galat.kode': 'Kode',
 
     // pengaturan
     'set.eyebrow': 'Preferensi',
@@ -436,6 +444,7 @@ const KAMUS = {
     'tanya.menyiapkan': 'Preparing the answer…',
     'tanya.mencari': 'Searching trustworthy sources…',
     'tanya.mengambilBerita': 'Fetching the latest health news…',
+    'tanya.menyusunUlang': 'Rewriting the answer…',
     'tanya.mendengar': 'Listening… speak now.',
     'tanya.belumAda': 'No conversation yet',
     'tanya.belumAdaSub': 'Ask your first question — the result will appear as a thread here.',
@@ -693,6 +702,11 @@ const KAMUS = {
     'galat.isiPesan': 'Something went wrong while displaying this section. Try another menu via the navigation, or reload the page.',
     'galat.bawahJudul': 'The bottom of the page failed to display',
     'galat.bawahPesan': 'The footer cannot be shown. The page content above still works.',
+    'galat.jawabanTakTerbaca': 'The model answer could not be read in full. Try sending the question again.',
+    'galat.jawabanKosong': 'The answer could not be assembled this time. Try sending the question again.',
+    'galat.serverMati': 'Cannot reach the server. Make sure it is running, then try again.',
+    'galat.streamPutus': 'The connection closed before the answer finished. Try sending the question again.',
+    'galat.kode': 'Code',
 
     'set.eyebrow': 'Preferences',
     'set.judul': 'Settings',

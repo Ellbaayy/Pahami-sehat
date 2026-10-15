@@ -199,7 +199,35 @@ pengguna: `.cache-konten.json` (artikel publik dari Kemenkes) dan
   model mengabaikan aturan diabaikan, tag HTML dibuang, link wajib `http(s)`
   (menolak `javascript:` dan `data:`), satu feed dibatasi 30 item dan 2 MB, dan
   tanggal yang tidak sah diperlakukan seperti tanggal kosong — bukan `NaN` yang
-  bocor ke pengurutan. Diuji `uji-berita.mjs` (78 pemeriksaan).
+  bocor ke pengurutan. Diuji `uji-berita.mjs` (90 pemeriksaan).
+
+### Jawaban kosong tidak boleh terjadi — dan cara membuktikannya
+
+Diukur 15 Okt 2026: dua fitur pernah menjawab **KOSONG** — "berikan aku berita
+terkini" dan Sederhanakan untuk teks medis panjang. Penyebabnya bukan prompt,
+melainkan **jatah token**: model `deepseek-v4-1-flash` adalah model *reasoning*,
+dan token `reasoning_content` yang ia hasilkan **ikut memakan `max_tokens`**.
+Jawabannya belum sempat ditulis, jatahnya sudah habis (`finish_reason: length`),
+JSON-nya terpotong, dan pengguna melihat gelembung hampa.
+
+Tiga lapis perbaikan, semuanya terukur:
+
+1. **Penalaran dimatikan** (`KENARI_REASONING_EFFORT=none`, lihat `config.js`).
+   Pada pertanyaan yang sama dengan batas 120 token: dasar 48 token, `low` 21
+   token, `none` **5 token** — jawaban yang dihasilkan sama persis. Setelah
+   dimatikan, satu jawaban Sederhanakan turun dari >3400 token (terpotong)
+   menjadi 474–985 token (utuh), dan seluruh gerbang keterbacaan tetap lulus.
+2. **Anggaran token per jalur** (`MAKS_TOKEN` di `app/server/batasInput.js`),
+   diukur satu per satu — bukan satu angka untuk semua jalur.
+3. **Coba ulang + jawaban darurat.** Balasan yang tidak terbaca sebagai JSON
+   diulang sekali; kalau tetap gagal, jalur berita menyusun jawabannya langsung
+   dari daftar RSS (judul + media + umur, tanpa mengarang). Di antarmuka,
+   jawaban kosong selalu diganti kalimat penjelasan — tidak pernah gelembung
+   hampa.
+
+Buktinya ada di uji, bukan di klaim: `uji-berita.mjs` bagian "jawaban darurat"
+(12 pemeriksaan), bagian "uji jalur berita" di `uji-jawaban.mjs` (3 pertanyaan,
+ikut menentukan exit code), dan `ukur-panjang.mjs` (batas kata per tingkat).
 
 ---
 

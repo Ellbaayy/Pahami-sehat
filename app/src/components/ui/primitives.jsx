@@ -233,7 +233,7 @@ export function PoinKunci({ items = [], t = (k) => k }) {
 }
 
 /* ---------------- Peringatan / error ---------------- */
-export function Peringatan({ pesan, code, aksi }) {
+export function Peringatan({ pesan, code, aksi, t = (k) => k }) {
   if (!pesan) return null
   const saldo = code === 'insufficient_balance'
   return (
@@ -247,7 +247,7 @@ export function Peringatan({ pesan, code, aksi }) {
       <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{pesan}</p>
-        {code ? <p className="mt-0.5 text-[0.76rem] opacity-80">Kode: {code}</p> : null}
+        {code ? <p className="mt-0.5 text-[0.76rem] opacity-80">{t('galat.kode')}: {code}</p> : null}
       </div>
       {aksi}
     </div>

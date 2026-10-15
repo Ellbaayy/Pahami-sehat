@@ -186,7 +186,7 @@ export default function ThreadPanel({
       </div>
 
       <SumberJawaban cari={sumberCari} sumber={sumberDikutip} t={t} />
-      {error ? <Peringatan pesan={error.pesan} code={error.code} /> : null}
+      {error ? <Peringatan pesan={error.pesan} code={error.code} t={t} /> : null}
 
       {thread.length === 0 && !loading ? (
         <EmptyState

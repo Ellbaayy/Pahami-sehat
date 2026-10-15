@@ -36,6 +36,27 @@ export const config = {
   /** batas token output; Kenari tidak menolak hingga 4000 pada akun saldo 0 */
   maxTokens: Number(process.env.MAX_TOKENS || 1500),
   temperature: Number(process.env.TEMPERATURE || 0.3),
+  /**
+   * Seberapa banyak model boleh "berpikir" sebelum menjawab.
+   *
+   * BAWAAN 'none' — INI PENTING, JANGAN DIUBAH TANPA MENGUKUR.
+   * `deepseek-v4-1-flash` adalah model PENALARAN: ia menghasilkan token
+   * `reasoning_content` yang IKUT memakan jatah `max_tokens`. Diukur 15 Okt 2026
+   * dengan pertanyaan yang sama dan batas 120 token:
+   *
+   *   dasar                    48 token (41 di antaranya penalaran)
+   *   reasoning_effort: 'low'  21 token
+   *   reasoning_effort: 'none'  5 token  <- jawabannya sama persis
+   *
+   * Akibat penalaran itu NYATA dan sudah terjadi: jalur berita dan Sederhanakan
+   * menjawab KOSONG karena token habis dipakai berpikir sebelum jawabannya
+   * ditulis (`finish_reason: length`, `usage.completion_tokens` tepat di batas).
+   * Dengan penalaran dimatikan, anggaran token terpakai untuk JAWABAN.
+   *
+   * Setel `KENARI_REASONING_EFFORT=low` kalau suatu saat mutu jawaban perlu
+   * dinaikkan — tetapi batas token di batasInput.js harus diukur ulang dulu.
+   */
+  reasoningEffort: process.env.KENARI_REASONING_EFFORT || 'none',
   requestTimeoutMs: Math.min(
     Number(process.env.REQUEST_TIMEOUT_MS || BATAS_AMAN_MS),
     BATAS_AMAN_MS,
@@ -50,5 +71,6 @@ export function safeInfo() {
     keyTerpasang: Boolean(config.apiKey),
     keyPrefix: config.apiKey.slice(0, 3) + '…',
     maxTokens: config.maxTokens,
+    reasoningEffort: config.reasoningEffort,
   }
 }

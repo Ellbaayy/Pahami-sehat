@@ -12,7 +12,7 @@
  *
  * Berjalan: node uji-berita.mjs
  */
-import { menanyakanBerita, parseRss, ambilBeritaKesehatan, buatSidikBerita, ringkasanBerita } from './app/server/berita.js'
+import { menanyakanBerita, parseRss, ambilBeritaKesehatan, buatSidikBerita, ringkasanBerita, jawabanBeritaDarurat } from './app/server/berita.js'
 
 let lulus = 0
 let gagal = 0
@@ -140,6 +140,39 @@ cek('pubDate ngawur -> umurHari null, item tetap masuk', (() => {
 const bomb = '&amp;'.repeat(10000)
 cek('entitas berlapis 10k cepat (<1s)', (() => {
   const t1 = Date.now(); parseRss(feed(item('A', 'https://c.com/7', bomb)), 'X'); return Date.now() - t1 < 1000
+})())
+
+console.log('== jawaban darurat (dipakai kalau model gagal dua kali):')
+/*
+ * KENAPA ADA (15 Okt 2026): "berikan aku berita terkini" dijawab KOSONG.
+ * Balasan model terpotong tepat di batas token (usage.completion_tokens = 1500)
+ * dan teksnya dimulai dengan rencana berpikir, jadi tidak ada JSON utuh.
+ * `bentukHasil(null)` mengembalikan jawaban kosong — pengguna melihat gelembung
+ * hampa. Sekarang jalur berita mengulang sekali, lalu menjawab dari daftar RSS.
+ *
+ * Bagian ini menguji jawaban daruratnya TANPA jaringan dan TANPA model.
+ */
+const contohBerita = [
+  { judul: 'Kabut Asap Memburuk, Singapura Bagikan Masker N95', sumber: 'Detik Health', umurHari: 0 },
+  { judul: 'BPOM Buka Kolaborasi Indonesia-India', sumber: 'Detik Health', umurHari: 3 },
+  { judul: 'Sesuatu dari WHO', sumber: 'WHO', umurHari: null },
+]
+const daruratId = jawabanBeritaDarurat(contohBerita, 'id')
+cek('daftar kosong -> null (bukan teks kosong)', jawabanBeritaDarurat([], 'id') === null)
+cek('tanpa argumen tidak melempar', (() => { try { jawabanBeritaDarurat(); return true } catch { return false } })())
+cek(' memuat SEMUA judul', contohBerita.every((b) => daruratId.includes(b.judul)))
+cek('memuat nama media', daruratId.includes('Detik Health') && daruratId.includes('WHO'))
+cek('umur 0 ditulis "hari ini"', daruratId.includes('hari ini'))
+cek('umur 3 ditulis "3 hari lalu"', daruratId.includes('3 hari lalu'))
+cek('umur null tidak menulis "null"', !daruratId.includes('null'))
+cek('menegaskan ini berita, bukan penjelasan medis', /bukan penjelasan medis/i.test(daruratId))
+const daruratEn = jawabanBeritaDarurat(contohBerita, 'en')
+cek('versi Inggris tidak memuat kata Indonesia', !/hari lalu|hari ini|bukan penjelasan/i.test(daruratEn))
+cek('versi Inggris memuat "today"', daruratEn.includes('(today)'))
+cek('versi Inggris memuat semua judul', contohBerita.every((b) => daruratEn.includes(b.judul)))
+cek('judul dengan karakter aneh tetap tampil apa adanya', (() => {
+  const aneh = jawabanBeritaDarurat([{ judul: 'Uji <script>alert(1)</script> & "kutip"', sumber: 'X', umurHari: 0 }], 'id')
+  return aneh.includes('<script>')
 })())
 
 console.log('== sidik berita (pemicu lonceng):')

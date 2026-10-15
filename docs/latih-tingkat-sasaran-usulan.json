@@ -1,30 +1,30 @@
 {
   "anak": {
     "aslMaks": 7,
-    "aswMaks": 2.29,
+    "aswMaks": 2.31,
     "sulitMaks": 28,
     "kalimatTerpanjangMaks": 11,
     "sangatPanjangMaks": 5
   },
   "lansia": {
-    "aslMaks": 8,
-    "aswMaks": 2.54,
-    "sulitMaks": 43,
-    "kalimatTerpanjangMaks": 12,
-    "sangatPanjangMaks": 10
+    "aslMaks": 9,
+    "aswMaks": 2.57,
+    "sulitMaks": 45,
+    "kalimatTerpanjangMaks": 13,
+    "sangatPanjangMaks": 11
   },
   "remaja": {
-    "aslMaks": 9,
-    "aswMaks": 2.47,
+    "aslMaks": 10,
+    "aswMaks": 2.5,
     "sulitMaks": 39,
-    "kalimatTerpanjangMaks": 14,
-    "sangatPanjangMaks": 10
+    "kalimatTerpanjangMaks": 16,
+    "sangatPanjangMaks": 11
   },
   "dewasa": {
     "aslMaks": 12,
-    "aswMaks": 2.59,
-    "sulitMaks": 46,
-    "kalimatTerpanjangMaks": 23,
-    "sangatPanjangMaks": 13
+    "aswMaks": 2.57,
+    "sulitMaks": 44,
+    "kalimatTerpanjangMaks": 25,
+    "sangatPanjangMaks": 14
   }
 }
