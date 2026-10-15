@@ -661,3 +661,37 @@ menjawab `200` berisi MP3 24 kHz — hal yang tidak bisa dilakukan lewat alamat 
   hanyalah `cloudflared`. Jadi tidak ada port yang terbuka ke jaringan lokal.
 - Terowongan ini membuka aplikasi ke publik. Batas laju di `app/server/batas.js`
   tetap berlaku, tetapi tidak ada autentikasi — jangan dipakai untuk data pribadi.
+
+### Memakai nama domain sendiri (alamat tetap)
+
+Quick tunnel menghasilkan alamat acak yang **berubah setiap dijalankan**. Kalau butuh
+alamat tetap — mis. agar juri bisa membuka URL yang sama tanpa dikirim ulang — pakai
+**named tunnel**. Syaratnya hanya **punya domain**, bukan langganan berbayar: dokumentasi
+Cloudflare menyebut "a Cloudflare account" dan "a domain on Cloudflare", keduanya gratis.
+
+Sekali saja:
+
+```bash
+./siapkan-domain.sh pahami-sehat.id
+```
+
+Skrip itu memandu login Cloudflare, membuat tunnel bernama `pahami-sehat`, memetakan
+hostname ke `http://127.0.0.1:8787`, lalu menulis `~/.cloudflared/config.yml`.
+Setelah itu cukup:
+
+```bash
+./jalankan-online.sh      # otomatis memakai named tunnel kalau config.yml ada
+```
+
+`jalankan-online.sh` memilih sendiri: **ada `~/.cloudflared/config.yml` → alamat tetap**;
+tidak ada → quick tunnel seperti biasa. Jadi menambah domain tidak merusak cara lama.
+
+| | Quick tunnel | Named tunnel |
+|---|---|---|
+| Alamat | acak, berubah tiap dijalankan | **tetap** (`https://pahami-sehat.id`) |
+| Butuh domain | tidak | ya |
+| Batas 200 permintaan bersamaan | ya | **tidak ada** |
+| Sertifikat HTTPS | otomatis | otomatis |
+
+Yang tetap berlaku di keduanya: alamatnya hidup hanya selama skrip jalan dan mesin ini
+menyala, dan tidak ada autentikasi — jangan dipakai untuk data pribadi.
