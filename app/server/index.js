@@ -14,12 +14,14 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 import { config, safeInfo } from './config.js'
+import { pasangKepala } from './kepala.js'
 import rute from './rute.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
 
 const app = express()
+pasangKepala(app)
 app.use(express.json({ limit: '1mb' }))
 
 // seluruh endpoint API
