@@ -708,8 +708,13 @@ function rapikanHasil(hasil = []) {
     .filter((h) => h && (h.judul || h.isi || h.ringkas))
     .map((h, i) => {
       const tanda = h.resmi ? ' [SUMBER RESMI]' : ''
-      const isi = h.ringkas ? `Ringkasan: ${h.ringkas}` : h.isi ? `Isi: ${h.isi}` : ''
-      return `${i + 1}. ${h.judul || '(tanpa judul)'}${tanda}\n   URL: ${h.url}\n   ${isi}`.trim()
+      const simpanan = h.tersimpan ? ' [TERSIMPAN]' : ''
+      // Pakai `isi` (lebih lengkap) kalau ada, baru `ringkas`. Sebelumnya
+      // `ringkas` didahulukan, sehingga pengetahuan tersimpan yang panjang
+      // hanya masuk 400 karakter pertama — padahal maksudnya supaya model
+      // punya banyak bahan.
+      const isi = h.isi ? `Isi: ${h.isi}` : h.ringkas ? `Ringkasan: ${h.ringkas}` : ''
+      return `${i + 1}. ${h.judul || '(tanpa judul)'}${tanda}${simpanan}\n   URL: ${h.url}\n   ${isi}`.trim()
     })
     .join('\n\n')
 }

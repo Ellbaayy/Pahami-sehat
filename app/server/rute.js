@@ -46,7 +46,7 @@ import {
   SIMPANAN_HEALTH_MS,
 } from './batasInput.js'
 import { kontenHarianLengkap } from './konten.js'
-import { keteranganDb, ambilBerita, hitungBeritaSegar, ambilKonten } from './db.js'
+import { keteranganDb, ambilBerita, hitungBeritaSegar, ambilKonten, ambilPengetahuan } from './db.js'
 import { bahasaJawaban } from './bahasa.js'
 
 /* ---------------------------------------------------------------- util ---- */
@@ -164,13 +164,23 @@ function pilihBahasa(pesan, bahasaUi) {
   return { nama: b.nama, kodeAsal: b.dariPesan ? 'pesan' : null, kode: b.kode }
 }
 
-/** Ringkas daftar hasil pencarian untuk dikirim ke frontend (tanpa isi panjang). */
+/**
+ * Ringkas daftar hasil pencarian untuk dikirim ke frontend (tanpa isi panjang).
+ *
+ * Hasil web dan pengetahuan tersimpan diberi jatah masing-masing. Sebelumnya
+ * hanya `slice(0, 8)` polos — akibatnya kalau hasil web sudah 8, entri dari
+ * database TIDAK PERNAH terlihat di antarmuka walaupun model tetap memakainya.
+ */
 function ringkasHasilCari(hasil = []) {
-  return hasil.slice(0, 8).map((h) => ({
+  const bentuk = (h) => ({
     judul: String(h.judul ?? '').slice(0, 160),
     url: /^https?:\/\//i.test(String(h.url ?? '')) ? h.url : '',
     resmi: Boolean(h.resmi),
-  }))
+    tersimpan: Boolean(h.tersimpan),
+  })
+  const web = hasil.filter((h) => !h.tersimpan).slice(0, 6).map(bentuk)
+  const simpanan = hasil.filter((h) => h.tersimpan).slice(0, 2).map(bentuk)
+  return [...web, ...simpanan]
 }
 
 /**
@@ -231,7 +241,44 @@ async function cariDenganCadangan(teks) {
   const istilahMedlinePlusBidang = PETA_MEDLINEPLUS_BIDANG[istilah] ?? null
 
   const { hasil } = await cariInternet(kunci, { istilahMedlinePlus, istilahMedlinePlusBidang })
-  return { hasil, dipakaiKataKunci: hasil.length ? kunci : null }
+
+  // Tambahkan pengetahuan yang sudah tersimpan di database — OPSIONAL dan
+  // SELALU di belakang hasil pencarian hidup. Dua alasan:
+  //   1. Hasil pencarian hidup lebih baru daripada salinan tersimpan.
+  //   2. Kalau database mati, hasilnya null dan tidak mengubah apa pun.
+  // Yang disajikan hanya baris yang MASIH BERLAKU (kedaluwarsa > NOW());
+  // yang basi tidak pernah ikut — itu ditegakkan di db.js.
+  const tersimpan = await bahanTersimpan(istilah, kunci)
+
+  return { hasil: [...hasil, ...tersimpan], dipakaiKataKunci: hasil.length ? kunci : null }
+}
+
+/**
+ * Ambil pengetahuan tersimpan sebagai bahan tambahan.
+ *
+ * Diberi penanda `tersimpan: true` supaya jelas bedanya dengan hasil
+ * pencarian hidup, dan tetap menyertakan URL sumber aslinya — jadi klaim
+ * "ini dari MedlinePlus" tetap bisa diperiksa pengguna.
+ *
+ * Tidak pernah melempar: database opsional.
+ */
+async function bahanTersimpan(istilah, kunci) {
+  try {
+    const cari = istilah || kunci
+    if (!cari) return []
+    const baris = await ambilPengetahuan(cari, 2)
+    if (!baris?.length) return []
+    return baris.map((b) => ({
+      judul: b.topik,
+      url: b.url_sumber,
+      sumber: b.sumber,
+      isi: b.isi,
+      tersimpan: true,
+      diambilPada: b.diambil_pada,
+    }))
+  } catch {
+    return []
+  }
 }
 
 /** Bungkus handler async supaya error-nya tertangkap middleware error. */
