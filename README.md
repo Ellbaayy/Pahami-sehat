@@ -613,3 +613,51 @@ Pengumuman finalis 21 November 2026 · Puncak acara 29 November 2026.
 Ketentuan yang mengikat: karya MVP berbasis Web/Mobile, source code di repo GitHub,
 video demo 3–5 menit **tanpa narasi peserta**, dan aplikasi harus bisa dijalankan
 di localhost saat Grand Final.
+
+---
+
+## Membuka aplikasi ke internet, tapi tetap berjalan di laptop sendiri
+
+Aplikasi ini dirancang berjalan di komputer sendiri: satu server Express menyajikan
+halaman penjelasan (`/`) dan aplikasi (`/app/`), dan fitur suara neural memakai
+WebSocket yang tidak bisa hidup di fungsi serverless. Yang kurang hanya satu: orang
+lain tidak bisa membukanya.
+
+**Cloudflare Tunnel** menutup celah itu tanpa membuka port di router dan tanpa
+menyewa server:
+
+```bash
+./jalankan-online.sh
+```
+
+Skrip itu membangun aplikasi, menjalankan server, membuka terowongan, lalu mencetak
+alamat `https://….trycloudflare.com` yang bisa dibuka siapa saja. Berhenti dengan
+**Ctrl+C** — keduanya ikut berhenti.
+
+### Kenapa ini lebih baik daripada sekadar `http://<ip-lan>`
+
+| | `http://192.168.x.x:8787` | Terowongan Cloudflare |
+|---|---|---|
+| Bisa dibuka dari luar jaringan | tidak | ya |
+| HTTPS | tidak | **ya** |
+| Pengenalan suara (mikrofon) | **tidak** — peramban memblokir mikrofon di halaman http | ya |
+| Suara neural (TTS) | ya | ya |
+| Port terbuka di router | perlu | **tidak** |
+| Alamat tetap | ya | berubah tiap dijalankan |
+
+Peramban hanya mengizinkan mikrofon dan papan klip di **konteks aman** — `https://`
+atau `localhost`. Diukur 15 Okt 2026: lewat terowongan, `window.isSecureContext`
+bernilai `true`, `SpeechRecognition` dan `mediaDevices` tersedia, dan `/api/suara`
+menjawab `200` berisi MP3 24 kHz — hal yang tidak bisa dilakukan lewat alamat IP biasa.
+
+### Batasnya, disebut apa adanya
+
+- Alamatnya **hidup hanya selama skrip jalan dan mesin ini menyala**. Tidak ada
+  uptime yang dijanjikan, dan terowongan tanpa akun Cloudflare memang tanpa jaminan.
+- Alamat `trycloudflare.com` **berubah setiap kali dijalankan**. Kalau butuh alamat
+  tetap (mis. untuk dinilai juri), pakai *named tunnel* dengan akun Cloudflare —
+  itu di luar cakupan skrip ini.
+- Server tetap hanya mendengarkan di `127.0.0.1`; yang menghubungkannya ke internet
+  hanyalah `cloudflared`. Jadi tidak ada port yang terbuka ke jaringan lokal.
+- Terowongan ini membuka aplikasi ke publik. Batas laju di `app/server/batas.js`
+  tetap berlaku, tetapi tidak ada autentikasi — jangan dipakai untuk data pribadi.
