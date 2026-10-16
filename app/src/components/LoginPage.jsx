@@ -21,7 +21,7 @@
  * ============================================================================
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, Loader2, Check, AlertCircle, ShieldCheck, HeartHandshake, Users } from 'lucide-react'
 import logo from '../assets/logo-mark.png'
 
@@ -115,8 +115,13 @@ function Langkah({ aktif, jumlah }) {
   )
 }
 
-export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerbang', onKeluar = null }) {
-  // gerbang | masuk | buat1 | buat2 | buat3 | nama
+export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'masuk', onKeluar = null }) {
+  // masuk | buat1 | buat2 | buat3 | nama
+  //
+  // 'masuk' = halaman masuk satu-satunya (alamat + kata sandi sekaligus).
+  // 'buat1'..'buat3' = tiga langkah MEMBUAT akun. Tidak ada lagi layar
+  // 'gerbang' — dulu ia hanya memeriksa apakah alamat sudah terdaftar, dan
+  // itu membuat halaman masuk terasa seperti dua halaman.
   //
   // `layarAwal` dipakai untuk MEMULAI langsung di layar nama panggilan. Itu
   // diperlukan pengguna yang masuk lewat Google: alur Google tidak melewati
@@ -132,7 +137,6 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
   const [lihatSandi, setLihatSandi] = useState(false)
   const [memuat, setMemuat] = useState(false)
   const [galat, setGalat] = useState('')
-  const [catatan, setCatatan] = useState('')
 
   /**
    * Kunci re-mount saat layar berpindah, supaya animasi masuk (.rise) ikut
@@ -148,44 +152,36 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
 
   const bersihkan = useCallback(() => {
     setGalat('')
-    setCatatan('')
   }, [])
 
   const cocok = sandi.length >= MIN_SANDI && sandi === ulangi
-  const jenis = useMemo(() => (cara === 'email' ? 'email' : 'telepon'), [cara])
 
-  /* ------------------------------------------------------ 1. gerbang ------ */
+  /* --------------------------------------------------------- 1. masuk ------ */
 
-  const cekAkun = async (e) => {
+  /**
+   * Halaman masuk SATU-satunya: alamat dan kata sandi sekaligus.
+   *
+   * KENAPA DIUBAH (permintaan jagi, 16 Okt 2026): sebelumnya dua langkah —
+   * isi alamat dulu, diperiksa ke server, baru kolom kata sandi muncul. Itu
+   * membuat halaman masuk terasa seperti dua halaman, dan menambah satu
+   * perjalanan ke server sebelum pengguna sempat mengetik sandi. Sekarang
+   * keduanya ada di satu formulir. Halaman lain hanya untuk MEMBUAT akun.
+   *
+   * Pesan galatnya SENGAJA tidak membedakan "akun tidak ada" dari "sandi
+   * salah" — server memang menyamakan keduanya, berikut waktu balasannya,
+   * supaya alamat mana yang terdaftar tidak bisa ditebak orang lain. Karena
+   * itu jalan ke pembuatan akun ditawarkan lewat tautan "Belum punya akun?",
+   * BUKAN lewat pesan galat.
+   */
+  const lakukanMasuk = async (e) => {
     e.preventDefault()
     bersihkan()
     const nilai = identifier.trim()
     if (!nilai) return setGalat('Isi email atau nomor telepon dulu, ya.')
-    setMemuat(true)
-    try {
-      const d = await panggilApi('/api/akun/cek', { body: { identifier: nilai } })
-      if (d.terdaftar) {
-        keLayar('masuk')
-      } else {
-        setCatatan('Belum ada akun dengan alamat ini. Yuk buat akun dulu.')
-        keLayar('buat1')
-      }
-    } catch (err) {
-      setGalat(err.message)
-    } finally {
-      setMemuat(false)
-    }
-  }
-
-  /* -------------------------------------------------------- 2. masuk ------ */
-
-  const lakukanMasuk = async (e) => {
-    e.preventDefault()
-    bersihkan()
     if (!sandi) return setGalat('Kata sandi belum diisi.')
     setMemuat(true)
     try {
-      const d = await panggilApi('/api/akun/masuk', { body: { identifier: identifier.trim(), sandi } })
+      const d = await panggilApi('/api/akun/masuk', { body: { identifier: nilai, sandi } })
       if (d.perluNama) {
         keLayar('nama')
       } else {
@@ -262,8 +258,9 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
   /* ------------------------------------------------------------ tampilan --
    *
    * Split-screen mengikuti referensi jagi (Antarmuka Login Hidup Sehat
-   * Minimalis). Yang berubah HANYA tampilannya — alur kerja (gerbang -> masuk
-   * -> 3 langkah -> nama) dan semua handler di atas tidak disentuh.
+   * Minimalis). Alur kerja: masuk -> (buat: 3 langkah) -> nama panggilan.
+   * Halaman masuk kini SATU formulir (alamat + kata sandi sekaligus); sisanya
+   * khusus untuk MEMBUAT akun. Semua handler di atas sudah disesuaikan.
    *
    * Di ponsel, panel kiri disembunyikan dan kartu mengambil seluruh lebar.
    * Di tablet/desktop, panel kiri tampil sebagai sisi branding.
@@ -341,21 +338,29 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
               <p className="mt-1 text-[0.85rem] text-navy-500">Informasi Kesehatan untuk Semua</p>
             </div>
 
-            {/* ---------------------------------------------------- gerbang -- */}
-            {layar === 'gerbang' && (
-              <form onSubmit={cekAkun} className="space-y-4 text-left">
+            {/* ------------------------------------------------------ masuk --
+             *
+             * SATU formulir untuk masuk: alamat dan kata sandi sekaligus
+             * (permintaan jagi, 16 Okt 2026). Sebelumnya dua langkah dengan
+             * pemeriksaan ke server di antaranya — terasa seperti dua
+             * halaman, dan menambah satu perjalanan ke server sebelum
+             * pengguna sempat mengetik sandi.
+             *
+             * Jalan ke pembuatan akun sengaja lewat tautan di bawah, BUKAN
+             * lewat pesan galat: server menyamakan pesan "akun tidak ada"
+             * dengan "sandi salah" supaya alamat mana yang terdaftar tidak
+             * bisa ditebak orang lain (lihat `masuk()` di server/akun.js).
+             * Kalau pesan galat yang membedakannya, sifat rahasia itu hilang.
+             */}
+            {layar === 'masuk' && (
+              <form onSubmit={lakukanMasuk} className="space-y-4 text-left">
                 <div className="space-y-1.5 text-center">
-                  <h3 className="text-[1.05rem] font-bold text-navy-900">Sudah punya akun?</h3>
+                  <h3 className="text-[1.05rem] font-bold text-navy-900">Masuk ke akunmu</h3>
                   <p className="text-[0.85rem] text-navy-500">
-                    Masukkan email atau nomor telepon untuk memeriksa apakah akun sudah terdaftar.
+                    Pakai email atau nomor telepon yang sudah terdaftar.
                   </p>
                 </div>
                 <Galat pesan={galat} />
-                {catatan && (
-                  <p className="rounded-xl border border-brand-100 bg-brand-50 px-3.5 py-2.5 text-[0.82rem] text-brand-800">
-                    {catatan}
-                  </p>
-                )}
                 <Kolom
                   ikon={Mail}
                   type="text"
@@ -366,43 +371,6 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
                   onChange={(e) => setIdentifier(e.target.value)}
                   aria-label="Email atau nomor telepon"
                 />
-                <TombolUtama memuat={memuat} type="submit">
-                  Lanjut
-                </TombolUtama>
-                <p className="text-center text-[0.82rem] text-navy-500">
-                  Belum punya akun?{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      bersihkan()
-                      keLayar('buat1')
-                    }}
-                    className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
-                  >
-                    Buat akun
-                  </button>
-                </p>
-              </form>
-            )}
-
-            {/* ------------------------------------------------------ masuk -- */}
-            {layar === 'masuk' && (
-              <form onSubmit={lakukanMasuk} className="space-y-4 text-left">
-                <button
-                  type="button"
-                  onClick={() => {
-                    bersihkan()
-                    keLayar('gerbang')
-                  }}
-                  className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
-                >
-                  <ArrowLeft className="size-3.5" aria-hidden="true" /> Kembali
-                </button>
-                <div className="space-y-1.5 text-center">
-                  <h3 className="text-[1.05rem] font-bold text-navy-900">Masuk</h3>
-                  <p className="text-[0.85rem] break-all text-navy-500">{identifier}</p>
-                </div>
-                <Galat pesan={galat} />
                 <div className="relative">
                   <Kolom
                     ikon={Lock}
@@ -425,6 +393,20 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
                 <TombolUtama memuat={memuat} type="submit">
                   Masuk
                 </TombolUtama>
+                <p className="text-center text-[0.82rem] text-navy-500">
+                  Belum punya akun?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      bersihkan()
+                      setSandi('')
+                      keLayar('buat1')
+                    }}
+                    className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
+                  >
+                    Buat akun
+                  </button>
+                </p>
               </form>
             )}
 
@@ -435,7 +417,8 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
                   type="button"
                   onClick={() => {
                     bersihkan()
-                    keLayar('gerbang')
+                    setSandi('')
+                    keLayar('masuk')
                   }}
                   className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
                 >
@@ -634,7 +617,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
             )}
 
             {/* ------------------------------------------------------ google -- */}
-            {GOOGLE_ID && (layar === 'gerbang' || layar === 'buat1') && (
+            {GOOGLE_ID && (layar === 'masuk' || layar === 'buat1') && (
               <>
                 <div className="my-5 flex items-center gap-3">
                   <span className="h-px flex-1 bg-line-200" />
@@ -669,8 +652,8 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
           {/* catatan privasi — di luar kartu, mengikuti referensi */}
           <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[0.8rem] leading-relaxed text-navy-500">
             <ShieldCheck className="size-3.5 shrink-0 text-brand-600" aria-hidden="true" />
-            Yang disimpan hanya email atau nomor telepon, nama panggilan, dan kata sandi
-            (terenkripsi). Tidak ada nama lengkap, NIK, atau alamat.
+            Privasi Anda prioritas kami! Data minimal, kata sandi terenkripsi, tanpa NIK
+            atau alamat.
           </p>
         </div>
       </div>
