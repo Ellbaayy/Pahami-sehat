@@ -253,34 +253,57 @@ export async function idSumber(domain) {
 /**
  * Catat dokumen yang dipakai sebagai sumber, dan kembalikan id-nya.
  *
+ * ANTI-DUPLIKAT: sebelum menyisipkan, dicari dulu berdasarkan `url`. Kalau
+ * sudah ada, baris itu yang DIPERBARUI (tanggal diambil & masa berlaku),
+ * bukan disisipkan lagi. Tanpa ini, tabel `dokumen` membengkak satu baris
+ * setiap kali pengguna bertanya — URL yang sama tercatat puluhan kali.
+ * (Kolom `url` tidak bisa diberi UNIQUE langsung: panjangnya 700 dan melebihi
+ * batas indeks; jadi pengecekannya dilakukan di sini.)
+ *
  * @param {{domain?:string, url:string, judul?:string, bahasa?:string, teks?:string, berlakuHari?:number}} d
+ * @returns {Promise<number|null>} id dokumen, atau null kalau tidak ada DB
  */
 export async function catatDokumen(d = {}) {
   const p = await db()
   if (!p || !d.url) return null
   try {
+    const url = String(d.url).slice(0, 700)
+
+    // sudah pernah dicatat? perbarui saja, jangan tambah baris baru
+    const [ada] = await p.query(`SELECT id FROM dokumen WHERE url = ? LIMIT 1`, [url])
+    const hari = Number(d.berlakuHari) > 0 ? Number(d.berlakuHari) : 30
+    if (ada?.length) {
+      await p.query(
+        `UPDATE dokumen
+            SET diambil_pada = NOW(),
+                kedaluwarsa  = DATE_ADD(NOW(), INTERVAL ? DAY),
+                judul        = COALESCE(?, judul)
+          WHERE id = ?`,
+        [hari, d.judul ? String(d.judul).slice(0, 300) : null, ada[0].id],
+      )
+      return ada[0].id
+    }
+
     let sid = d.domain ? await idSumber(d.domain) : null
     if (!sid) {
       // sumber belum terdaftar — daftarkan supaya tautannya tetap bisa dilacak
+      const domain = String(d.domain || ambilHost(url) || url).slice(0, 120)
       const [h] = await p.query(
         `INSERT INTO sumber (domain, nama, jenis, resmi)
          VALUES (?, ?, 'lainnya', 0)
          ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`,
-        [String(d.domain || new URL(d.url).hostname).slice(0, 120), String(d.domain || d.url).slice(0, 160)],
+        [domain, String(d.namaSumber || domain).slice(0, 160)],
       )
       sid = h?.insertId ?? null
     }
     if (!sid) return null
 
-    // masa berlaku dokumen umum: 30 hari (bukan pendek seperti pengetahuan,
-    // karena ini salinan halaman, bukan pernyataan medis)
-    const hari = Number(d.berlakuHari) > 0 ? Number(d.berlakuHari) : 30
     const [hasil] = await p.query(
       `INSERT INTO dokumen (sumber_id, url, judul, bahasa, diambil_pada, sidik_isi, kedaluwarsa, teks)
        VALUES (?, ?, ?, ?, NOW(), ?, DATE_ADD(NOW(), INTERVAL ? DAY), ?)`,
       [
         sid,
-        String(d.url).slice(0, 700),
+        url,
         d.judul ? String(d.judul).slice(0, 300) : null,
         d.bahasa ? String(d.bahasa).slice(0, 2) : null,
         d.teks ? sidikDari(String(d.teks)) : null,
@@ -292,6 +315,52 @@ export async function catatDokumen(d = {}) {
   } catch {
     return null
   }
+}
+
+/** Ambil nama host dari URL, dengan aman (URL rusak tidak melempar). */
+function ambilHost(url) {
+  try {
+    return new URL(String(url)).hostname
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Catat SEMUA sumber yang dikutip model untuk satu jawaban.
+ *
+ * Ini yang membuat klaim "jawaban ini bersumber dari Kemenkes" bisa DILACAK,
+ * bukan cuma ditulis. Dipanggil setelah jawaban jadi, jadi kegagalan di sini
+ * tidak pernah memengaruhi jawaban yang sudah dikirim ke pengguna.
+ *
+ * @param {'tanya'|'verifikasi'|'berita'|'sederhanakan'} jenis
+ * @param {Array<{judul?:string, penerbit?:string, url?:string}>} daftarSumber
+ * @returns {Promise<number>} jumlah sitasi yang berhasil dicatat
+ */
+export async function catatSumberDikutip(jenis, daftarSumber = []) {
+  const p = await db()
+  if (!p || !Array.isArray(daftarSumber) || !daftarSumber.length) return 0
+  let n = 0
+  for (const s of daftarSumber) {
+    const url = String(s?.url ?? '').trim()
+    // Hanya URL http(s) yang dicatat — sama seperti penyaring di bentukHasil().
+    if (!/^https?:\/\//i.test(url)) continue
+    try {
+      const dokId = await catatDokumen({
+        url,
+        judul: s?.judul || s?.penerbit || null,
+        domain: ambilHost(url),
+        namaSumber: s?.penerbit || null,
+        berlakuHari: 30,
+      })
+      if (!dokId) continue
+      await catatSitasi(jenis, dokId, null)
+      n += 1
+    } catch {
+      /* satu sumber gagal dicatat tidak menghalangi yang lain */
+    }
+  }
+  return n
 }
 
 /**
