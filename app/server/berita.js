@@ -42,6 +42,7 @@ import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { simpanBerita } from './db.js'
+import { catatJamServer, jamSekarang } from './jam.js'
 
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
@@ -108,7 +109,7 @@ export function parseRss(xml, namaSumber) {
     // tanggal tidak valid (NaN) diperlakukan sama seperti tidak ada tanggalnya —
     // jangan biarkan NaN bocor ke umurHari, sort, dan frontend
     const sah = tanggal !== null && !Number.isNaN(tanggal.getTime())
-    const umurHari = sah ? Math.floor((Date.now() - tanggal.getTime()) / 86400000) : null
+    const umurHari = sah ? Math.floor((jamSekarang() - tanggal.getTime()) / 86400000) : null
 
     // hanya berita yang masih baru — kecuali WHO yang memang jarang
     if (umurHari !== null && umurHari > MAKS_HARI && namaSumber !== 'WHO') continue
@@ -168,6 +169,9 @@ async function ambilSatuSumber(url, namaSumber, percobaan = 2) {
         signal: kontrol.signal,
       })
       clearTimeout(timer)
+      // Jam acuan ikut diperbarui dari respons ini (lihat server/jam.js) —
+      // jadi penjadwalan berita memakai jam internet, bukan jam mesin.
+      catatJamServer(res)
 
       if (!res.ok) throw new Error(`http_${res.status}`)
       const xml = await bacaDenganBatas(res)
@@ -468,7 +472,7 @@ export function buatSidikBerita(daftar = []) {
 
 function ringkasWaktunyaCek(data) {
   if (!data?.berikutnya) return true
-  return Date.now() >= new Date(data.berikutnya).getTime()
+  return jamSekarang() >= new Date(data.berikutnya).getTime()
 }
 
 async function bacaRingkasDariDisk() {
@@ -513,8 +517,8 @@ export async function ringkasanBerita() {
         judul: daftar.map((b) => ({ judul: b.judul, sumber: b.sumber })),
         segar: daftar.filter((b) => b.umurHari !== null && b.umurHari <= SEGAR_HARI).length,
         sidik: buatSidikBerita(daftar),
-        diperbarui: new Date().toISOString(),
-        berikutnya: new Date(Date.now() + BERLAKU_RINGKAS_MS).toISOString(),
+        diperbarui: new Date(jamSekarang()).toISOString(),
+        berikutnya: new Date(jamSekarang() + BERLAKU_RINGKAS_MS).toISOString(),
       }
       ringkasDiMemori = hasil
       await simpanRingkasKeDisk(hasil)

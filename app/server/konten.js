@@ -55,6 +55,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { potongKalimat, butirDari } from './teks.js'
+import { catatJamServer, jamSekarang, selisihJam, jamInternetTerbaca } from './jam.js'
 import { simpanKonten } from './db.js'
 
 const UA =
@@ -94,7 +95,9 @@ async function ambil(url, timeoutMs = 15000) {
     redirect: 'follow',
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.text()
+  const teks = await res.text()
+  catatJamServer(res)
+  return teks
 }
 
 function buangTag(s) {
@@ -292,9 +295,31 @@ function gabungPool(lama = [], baru = []) {
   return [...tambahan, ...lama].slice(0, MAKS_POOL)
 }
 
-/** Ubah kumpulan artikel jadi bentuk yang dipakai tampilan. */
-function susun(pool) {
-  const siap = pool.filter((d) => d.ringkas || d.tubuh)
+/**
+ * Ubah kumpulan artikel jadi bentuk yang dipakai tampilan.
+ *
+ * `geser` = berapa posisi daftarnya diputar. Ini yang membuat halaman tidak
+ * menampilkan artikel yang sama terus-menerus selama sumbernya belum berubah
+ * (permintaan jagi, 16 Okt 2026 — "Topik populer / Tips / Artikel kok tidak
+ * update-update ya?").
+ *
+ * KENAPA PERLU: halaman depan Kemenkes hanya memuat ~11 artikel dan `susun()`
+ * selalu mengambil 5 teratas. Selama sumbernya tidak menerbitkan apa pun,
+ * yang tampil SELALU lima artikel yang sama — berhari-hari. Padahal di pool
+ * sudah tersimpan 8 artikel yang isinya lengkap; sisanya tidak pernah terlihat.
+ *
+ * YANG TIDAK DILANGGAR: yang diputar adalah artikel yang MEMANG sudah ada di
+ * pool, semuanya dari sumber resmi. Tidak ada artikel karangan, dan tanggal
+ * `diperbarui` tetap menunjuk kapan sumbernya benar-benar berubah — jadi
+ * halaman tetap jujur. `geser` disimpan di simpanan supaya putarannya
+ * berlanjut, bukan mengulang dari awal setiap instance baru.
+ */
+export function susun(pool, geser = 0) {
+  const dasar = pool.filter((d) => d.ringkas || d.tubuh)
+  // Putar daftarnya. Modulo supaya `geser` boleh membesar tanpa batas.
+  const n = dasar.length
+  const k = n ? ((geser % n) + n) % n : 0
+  const siap = k ? [...dasar.slice(k), ...dasar.slice(0, k)] : dasar
 
   const topik = siap.slice(0, 5).map((d) => ({
     id: d.slug,
@@ -370,13 +395,13 @@ let sedangMengambil = null
  */
 let bisaTulisBerkas = null
 
-const sekarangISO = () => new Date().toISOString()
-const besokISO = () => new Date(Date.now() + BERLAKU_MS).toISOString()
+const sekarangISO = () => new Date(jamSekarang()).toISOString()
+const besokISO = () => new Date(jamSekarang() + BERLAKU_MS).toISOString()
 
 /** Waktunya Pencarian Berikutnya? (lihat diagram) */
 function waktunyaCek(data) {
   if (!data?.berikutnya) return true
-  return Date.now() >= new Date(data.berikutnya).getTime()
+  return jamSekarang() >= new Date(data.berikutnya).getTime()
 }
 
 async function bacaDariDisk() {
@@ -472,8 +497,21 @@ export async function kontenHarian({ paksa = false } = {}) {
 
       // 3) Ada Informasi Terbaru?
       if (diMemori && sidikBaru === diMemori.sidik) {
-        // Tidak -> jangan update. Cukup catat bahwa sistem sudah dicek.
-        const sesudah = { ...diMemori, diperiksa: sekarangISO(), berikutnya: besokISO() }
+        // Tidak -> ISI-nya jangan diubah, dan `diperbarui` TETAP (halaman tidak
+        // boleh berpura-pura ada pembaruan). Tapi daftar yang TAMPIL diputar
+        // satu langkah, supaya tidak menampilkan lima artikel yang sama
+        // berhari-hari selama sumbernya belum menerbitkan apa pun.
+        //
+        // Rotasi ditaruh DI SINI karena cabang ini hanya dilewati sekali sehari
+        // (lihat `waktunyaCek`), jadi putarannya ikut sekali sehari.
+        const geser = (diMemori.geser ?? 0) + 1
+        const sesudah = {
+          ...diMemori,
+          ...susun(diMemori.pool ?? [], geser),
+          geser,
+          diperiksa: sekarangISO(),
+          berikutnya: besokISO(),
+        }
         diMemori = sesudah
         await simpanKeDisk(sesudah)
         // Sinkronkan juga ke database pada jalur "tidak ada yang berubah".
@@ -488,26 +526,33 @@ export async function kontenHarian({ paksa = false } = {}) {
       //    Hanya artikel yang belum punya detail yang perlu diambil, dan
       //    jumlahnya dibatasi MAKS_DETAIL (lihat catatan di atas konstanta itu).
       const pool = gabungPool(diMemori?.pool ?? [], daftar)
-      let diambil = 0
+      // Penghitung dinaikkan SESUDAH slotnya benar-benar terpakai. Sebelumnya
+      // dinaikkan sebelum `isiArtikel()` dipanggil, sehingga artikel yang
+      // GAGAL diambil tetap menghabiskan jatah — dan artikel di bawahnya tidak
+      // pernah dicoba sama sekali pada tarikan itu. Akibatnya artikel baru bisa
+      // tertahan di belakang artikel yang isinya tidak pernah berhasil diambil.
+      let terpakai = 0
       await Promise.all(
         pool.map(async (d) => {
           if (d.ringkas || d.tubuh) return
-          if (diambil >= MAKS_DETAIL) return
-          diambil += 1
+          if (terpakai >= MAKS_DETAIL) return
+          terpakai += 1
           try {
             Object.assign(d, await isiArtikel(d))
           } catch {
-            /* satu artikel gagal diambil tidak menghalangi yang lain */
+            // Gagal: kembalikan jatahnya supaya artikel berikutnya tetap dicoba.
+            terpakai -= 1
           }
         }),
       )
 
-      const isi = susun(pool)
+      const isi = susun(pool, 0)
       if (!isi.topik.length && !isi.artikel.length) throw new Error('hasil kosong')
 
       const hasil = {
         ...isi,
         pool,
+        geser: 0,
         sidik: sidikBaru,
         diperbarui: sekarangISO(),
         diperiksa: sekarangISO(),
@@ -545,11 +590,22 @@ export async function kontenHarianLengkap({ paksa = false } = {}) {
   const d = await kontenHarian({ paksa })
   // Yang TIDAK dikirim ke tampilan:
   //   - pool          : isinya besar dan tidak dipakai
+  //   - geser         : hitungan putaran internal (urutan tampil sudah jadi)
   //   - sidik         : sidik jari internal isi sumber; tidak ada gunanya bagi
   //                     pengguna dan membocorkan cara kerja pengecekan
   //   - sumberHalaman : alamat sumber internal (ayosehat.kemkes.go.id). Alamat
   //                     itu sudah tampil di setiap artikel lewat kolom `url`,
   //                     jadi tidak perlu dikirim lagi sebagai metadata.
-  const { pool, sidik, sumberHalaman, ...kirim } = d
-  return { ...kirim, jumlahTersimpan: pool?.length ?? 0 }
+  const { pool, sidik, sumberHalaman, geser, ...kirim } = d
+  return {
+    ...kirim,
+    jumlahTersimpan: pool?.length ?? 0,
+    // Jam acuan yang dipakai penjadwalan — supaya bisa diperiksa dari luar,
+    // bukan cuma dipercaya. `sumber` = 'internet' kalau header Date dari
+    // sumber berhasil dibaca, 'mesin' kalau jatuh ke cadangan.
+    jam: {
+      sumber: jamInternetTerbaca() ? 'internet' : 'mesin',
+      selisihDetik: Math.round(selisihJam() / 1000),
+    },
+  }
 }
