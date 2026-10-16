@@ -291,7 +291,6 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'masuk'
         />
 
         <div className="relative max-w-xl">
-          <img src={logo} alt="" width="58" height="54" className="mb-6" />
           <h1 className="text-[clamp(2.3rem,3.4vw,3.4rem)] leading-[1.08] font-extrabold tracking-tight text-navy-900">
             Langkah kecil untuk hidup{' '}
             <span className="text-brand-600">lebih sehat</span>
