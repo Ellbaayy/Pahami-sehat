@@ -17,11 +17,13 @@ import BatasGalat from './components/ui/BatasGalat'
 import ToastBatal from './components/ui/ToastBatal'
 import PanelSalin from './components/ui/PanelSalin'
 import LoadingPage from './components/LoadingPage'
+import LoginPage from './components/LoginPage'
 import { PlugZap, Plug, Trash2 } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP } from './data/dummy'
 import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
 import { useServer } from './lib/useServer'
 import { useBerita } from './lib/useBerita'
+import { useAkun } from './lib/useAkun'
 import { gunakanBahasa } from './lib/useBahasa'
 import { tanyaStream, sederhanakan, ambilKonten, KUNCI_GALAT_KLIEN } from './lib/api'
 import { ttsBaca } from './lib/tts'
@@ -282,6 +284,11 @@ export default function App() {
   // diperbarui, berapa obrolan tersimpan, apakah server hidup, dan apakah
   // ada berita kesehatan segar (lihat useBerita).
   const berita = useBerita()
+
+  // --- akun ---------------------------------------------------------------
+  // Siapa yang sedang masuk. Kalau belum masuk, aplikasi menampilkan halaman
+  // login lebih dulu (lihat gerbang di bagian return).
+  const { pengguna, memuat: memuatAkun, setelahMasuk, keluar, simpanNama } = useAkun()
 
   /**
    * Sidik berita yang terakhir DIBACA. Disimpan terpisah dari notifDibaca
@@ -642,9 +649,27 @@ export default function App() {
     })
   }, [])
 
+  /* ---------------------------------------------------- gerbang akun ----
+   * Dua hal yang penting di sini, dan keduanya pernah salah:
+   *
+   * 1. DASHBOARD TIDAK DIRENDER SEBELUM MASUK. Sebelumnya gerbang ini hanya
+   *    menumpuk halaman login DI ATAS dashboard — dashboard-nya tetap ada di
+   *    DOM dan tombol-tombolnya bisa dijangkau papan ketik atau pembaca layar.
+   *    Sekarang dashboard benar-benar tidak dibuat kalau belum masuk.
+   *
+   * 2. LOADING MUNCUL SETELAH LOGIN. `kunci={pengguna.id}` membuat
+   *    LoadingPage tampil ULANG tepat setelah berhasil masuk — sesuai alur
+   *    yang diminta: login -> loading -> beranda.
+   *
+   * Selama sesi masih diperiksa, LoadingPage yang tampil, supaya pengguna
+   * yang sudah masuk tidak melihat kedipan halaman login.
+   */
+  if (memuatAkun) return <LoadingPage t={t} />
+  if (!pengguna) return <LoginPage t={t} onSelesai={setelahMasuk} />
+
   return (
     <>
-      <LoadingPage t={t} />
+      <LoadingPage t={t} kunci={pengguna.id} />
       <div className="flex min-h-dvh w-full bg-bg">
       <a
         href="#konten"
@@ -726,7 +751,7 @@ export default function App() {
           <div className="mx-auto w-full max-w-[86rem]">
             {active === 'beranda' ? (
               <div className="space-y-[clamp(1.4rem,1.1rem+1.1vw,2.4rem)]">
-                <Greeting t={t} />
+                <Greeting t={t} nama={pengguna?.namaPengguna} />
 
                 {/* Pintu masuk saja: begitu dikirim, pengguna pindah ke Tanya AI */}
                 <AskAI
@@ -844,7 +869,15 @@ export default function App() {
 
             {active === 'kuesioner' ? <QuizPanel t={t} /> : null}
             {active === 'pengaturan' ? (
-              <SettingsPanel settings={settings} onChange={setSettings} t={t} labelTingkat={labelTingkat} />
+              <SettingsPanel
+                settings={settings}
+                onChange={setSettings}
+                t={t}
+                labelTingkat={labelTingkat}
+                pengguna={pengguna}
+                onKeluar={keluar}
+                onGantiNama={simpanNama}
+              />
             ) : null}
           </div>
         </main>
