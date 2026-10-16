@@ -13,7 +13,11 @@ import IlustrasiAnimasi from '../ui/IlustrasiAnimasi'
  * Indonesia walau antarmukanya sudah diset Inggris — padahal kunci kamusnya
  * (beranda.*) sudah tersedia sejak awal dan tidak pernah dipakai.
  */
-export default function Greeting({ t = (k) => k }) {
+export default function Greeting({ t = (k) => k, nama = null }) {
+  // Nama panggilan dipakai untuk menyapa: "Halo Bayu!" — bukan "Halo!" saja.
+  // Kalau nama belum diisi (mis. akun lama), kembali ke sapaan biasa supaya
+  // tidak muncul "Halo null!".
+  const sapa = nama ? t('beranda.sapaNama', { nama }) : t('beranda.sapa')
   return (
     <section
       aria-labelledby="greeting-title"
@@ -27,7 +31,7 @@ export default function Greeting({ t = (k) => k }) {
           id="greeting-title"
           className="text-[clamp(1.6rem,1.2rem+1.6vw,2.6rem)] leading-[1.1] font-extrabold tracking-tight text-navy-900"
         >
-          {t('beranda.sapa')}{' '}
+          {sapa}{' '}
           <Hand
             className="inline-block size-[0.85em] -translate-y-[0.08em] align-baseline text-brand-500"
             aria-hidden="true"

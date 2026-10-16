@@ -94,6 +94,26 @@ jobs:
       - name: Uji lapis sumber (tanpa jaringan)
         run: node uji-sumber.mjs
 
+      - name: Uji ejaan & nada suara (tanpa jaringan)
+        # Menjaga pembagian singkatan yang DIEJA dan yang TIDAK. Setiap anggota
+        # kedua kelompok diuji satu per satu, jadi menambah/mengurangi daftarnya
+        # tanpa mengukur ulang akan langsung gagal.
+        run: node uji-suara.mjs
+
+      - name: Uji jejak sitasi
+        # Bagian "murni" (aturan penolakan URL) selalu jalan. Bagian yang butuh
+        # MariaDB DILEWATI dengan exit 0 kalau database tidak ada — database
+        # memang opsional, jadi CI tidak boleh merah karenanya.
+        run: node uji-sitasi.mjs
+
+      - name: Uji akun (kata sandi, sesi, normalisasi)
+        # Fitur akun menyimpan kata sandi, jadi yang diuji bukan "apakah bisa
+        # masuk" melainkan: sandi tidak pernah tersimpan apa adanya, dua sandi
+        # sama menghasilkan hash berbeda (salt), pesan galat masuk tidak
+        # membedakan "akun tidak ada" dari "sandi salah", dan token sesi
+        # disimpan sebagai hash. Butuh MariaDB; bagian itu dilewati di CI.
+        run: node uji-akun.mjs
+
       - name: Build produksi
         working-directory: app
         run: npm run build

@@ -13,7 +13,7 @@ import logo from '../assets/logo-mark.png'
 const DURASI = 1000 // 1 detik
 const FADE = 450 // waktu memudar setelah 1 detik
 
-export default function LoadingPage({ t = (k) => k }) {
+export default function LoadingPage({ t = (k) => k, kunci = null }) {
   const [fase, setFase] = useState('tampil') // tampil → keluar → lepas
 
   useEffect(() => {
@@ -23,7 +23,11 @@ export default function LoadingPage({ t = (k) => k }) {
       window.clearTimeout(t1)
       window.clearTimeout(t2)
     }
-  }, [])
+    // `kunci` dipakai supaya halaman ini MUNCUL ULANG saat nilainya berubah —
+    // yaitu tepat setelah pengguna berhasil masuk. Tanpa ini, LoadingPage
+    // hanya tampil sekali saat aplikasi dibuka, dan jagi meminta loading
+    // muncul SETELAH halaman login.
+  }, [kunci])
 
   if (fase === 'lepas') return null
 
