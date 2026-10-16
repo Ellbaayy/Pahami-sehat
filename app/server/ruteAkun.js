@@ -24,6 +24,7 @@
  */
 
 import { Router } from 'express'
+import { timingSafeEqual } from 'node:crypto'
 import { batasi } from './batas.js'
 import {
   AkunError,
@@ -43,6 +44,14 @@ import {
   normalkanTelepon,
   emailMasukAkal,
 } from './akun.js'
+import {
+  googleSiap,
+  buatState,
+  urlMasuk,
+  redirectUriDari,
+  tukarCode,
+  masukDenganGoogle,
+} from './google.js'
 
 const rute = Router()
 
@@ -59,6 +68,16 @@ const COOKIE = 'ps_sesi'
 const batasMasuk = batasi({ jendelaMs: 60_000, maks: 10, nama: 'percobaan masuk' })
 const batasDaftar = batasi({ jendelaMs: 60_000, maks: 5, nama: 'pendaftaran' })
 const batasUmum = batasi({ jendelaMs: 60_000, maks: 60, nama: 'permintaan akun' })
+/**
+ * Batas untuk rute yang dibuka sebagai NAVIGASI (tombol Google), bukan fetch.
+ *
+ * Kenapa dipisah: kalau batas ini tercapai, balasannya `res.status(429).json(...)`
+ * — dan JSON di jendela peramban tampil sebagai teks mentah, bukan halaman.
+ * Untuk navigasi, batasnya dibuat lebih longgar supaya hanya menahan
+ * penyalahgunaan kasar (mis. skrip yang menghajar tautan itu berulang-ulang),
+ * dan balasannya tetap halaman HTML yang bisa dibaca.
+ */
+const batasNavigasi = batasi({ jendelaMs: 60_000, maks: 120, nama: 'permintaan masuk Google' })
 
 /** Bungkus handler async supaya galatnya tertangkap middleware galat. */
 const bungkus = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next)
@@ -88,12 +107,17 @@ function setelCookie(req, res, token, kedaluwarsa) {
     `Expires=${kedaluwarsa.toUTCString()}`,
   ]
   if (lewatHttps(req)) bagian.push('Secure')
-  res.setHeader('Set-Cookie', bagian.join('; '))
+  // `append`, BUKAN `setHeader`. `setHeader('Set-Cookie', ...)` MENGGANTI
+  // seluruh header Set-Cookie yang sudah ada — dan di alur Google, cookie
+  // `state` dihapus tepat sebelum baris ini, sehingga penghapusannya ikut
+  // terhapus dan cookie `state` tetap hidup (bisa dipakai ulang). Kesalahan
+  // ini pernah benar-benar terjadi dan ketahuan lewat uji-google.mjs.
+  res.append('Set-Cookie', bagian.join('; '))
 }
 
 /** Hapus cookie sesi (keluar). */
 function hapusCookie(res) {
-  res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`)
+  res.append('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`)
 }
 
 /** Baca cookie sesi dari header, tanpa pustaka tambahan. */
@@ -257,6 +281,168 @@ rute.post(
       res.json({ ok: true, pengguna })
     } catch (e) {
       kirimGalat(res, e)
+    }
+  }),
+)
+
+/* ------------------------------------------------------------- google ---- */
+
+/**
+ * Nama cookie `state` OAuth.
+ *
+ * `state` adalah penangkal login CSRF: tanpa itu, penyerang bisa menyiapkan
+ * tautan balikan dengan `code` miliknya sendiri dan membuat korban masuk ke
+ * akun penyerang. Nilainya acak, disimpan di cookie HttpOnly, dan dibandingkan
+ * saat balikan datang.
+ */
+const COOKIE_STATE = 'ps_oauth_state'
+
+/** Cookie `state` ditulis manual, sama seperti cookie sesi — tanpa pustaka baru. */
+function setelCookieState(req, res, nilai) {
+  const bagian = [
+    `${COOKIE_STATE}=${nilai}`,
+    'Path=/api/akun/google',
+    'HttpOnly',
+    'SameSite=Lax', // wajib Lax: Google mengirim pengguna kembali lewat navigasi biasa
+    'Max-Age=600', // 10 menit — cukup untuk memilih akun, tidak menggantung selamanya
+  ]
+  if (lewatHttps(req)) bagian.push('Secure')
+  res.append('Set-Cookie', bagian.join('; '))
+}
+
+/** Hapus cookie `state` — dipakai begitu balikan diterima (sekali pakai). */
+function hapusCookieState(res) {
+  res.append('Set-Cookie', `${COOKIE_STATE}=; Path=/api/akun/google; HttpOnly; SameSite=Lax; Max-Age=0`)
+}
+
+/** Baca satu cookie dari header. Dipakai untuk `state`. */
+function bacaCookie(req, nama) {
+  const mentah = req?.headers?.cookie
+  if (!mentah) return null
+  for (const bagian of String(mentah).split(';')) {
+    const i = bagian.indexOf('=')
+    if (i < 0) continue
+    if (bagian.slice(0, i).trim() === nama) return bagian.slice(i + 1).trim() || null
+  }
+  return null
+}
+
+/** Perbandingan `state` yang tidak membocorkan selisih waktu. */
+function stateCocok(a, b) {
+  const x = String(a ?? '')
+  const y = String(b ?? '')
+  if (!x || x.length !== y.length) return false
+  return timingSafeEqual(Buffer.from(x), Buffer.from(y))
+}
+
+/** Halaman kecil untuk menutup alur kalau terjadi sesuatu di tengah jalan. */
+function halamanPesan(res, judul, pesan, status = 400) {
+  res
+    .status(status)
+    .type('html')
+    .send(
+      `<!doctype html><html lang="id"><head><meta charset="utf-8">` +
+        `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+        `<title>${judul} — Pahami Sehat</title></head>` +
+        `<body style="margin:0;font:16px/1.6 system-ui,sans-serif;background:#f5f8fa;color:#0f1e33">` +
+        `<main style="max-width:34rem;margin:12vh auto;padding:0 1.25rem">` +
+        `<div style="background:#fff;border:1px solid #e3e9ef;border-radius:1rem;padding:1.75rem">` +
+        `<h1 style="margin:0 0 .5rem;font-size:1.2rem">${judul}</h1>` +
+        `<p style="margin:0 0 1.25rem;color:#41546b">${pesan}</p>` +
+        `<a href="/app/" style="display:inline-block;background:#0d7a6a;color:#fff;` +
+        `text-decoration:none;font-weight:600;padding:.7rem 1.2rem;border-radius:.75rem">` +
+        `Kembali ke halaman masuk</a></div></main></body></html>`,
+    )
+}
+
+/**
+ * Mulai masuk dengan Google.
+ *
+ * Peramban datang ke sini sebagai navigasi biasa (tautan `<a href>`), bukan
+ * lewat fetch — jadi balasannya harus pengalihan HTTP, bukan JSON.
+ */
+rute.get(
+  '/api/akun/google',
+  batasNavigasi,
+  (req, res) => {
+    if (!googleSiap()) {
+      return halamanPesan(
+        res,
+        'Masuk dengan Google belum siap',
+        'Client ID atau Client Secret Google belum diisi di server. Masuk dengan email dan kata sandi dulu, ya.',
+        503,
+      )
+    }
+    const state = buatState()
+    setelCookieState(req, res, state)
+    res.redirect(302, urlMasuk({ redirectUri: redirectUriDari(req), state }))
+  },
+)
+
+/**
+ * Balikan dari Google.
+ *
+ * Alur yang harus terjadi berurutan — urutannya penting:
+ *   1. Pengguna mungkin menolak di layar Google (`error=access_denied`).
+ *   2. `state` DIPERIKSA lebih dulu, sebelum `code` ditukar. Kalau tidak,
+ *      kode dari penyerang sudah terlanjur ditukar dan sesi sudah terbit.
+ *   3. Cookie `state` dihapus — sekali pakai.
+ *   4. Baru `code` ditukar ke Google (dari server, dengan client secret).
+ *   5. Akun dicari/dibuat, sesi diterbitkan, pengguna dikembalikan ke /app/.
+ */
+rute.get(
+  '/api/akun/google/callback',
+  batasMasuk,
+  bungkus(async (req, res) => {
+    const { code, state, error } = req.query ?? {}
+
+    if (error) {
+      hapusCookieState(res)
+      return halamanPesan(
+        res,
+        'Masuk dengan Google dibatalkan',
+        'Tidak ada yang berubah — kamu belum masuk. Bisa coba lagi kapan saja.',
+      )
+    }
+
+    if (!stateCocok(state, bacaCookie(req, COOKIE_STATE))) {
+      hapusCookieState(res)
+      return halamanPesan(
+        res,
+        'Sesi masuk tidak sah',
+        'Halaman ini dibuka tanpa diawali dari tombol Google, atau sudah kedaluwarsa. Mulai lagi dari halaman masuk.',
+      )
+    }
+    hapusCookieState(res)
+
+    if (!googleSiap()) {
+      return halamanPesan(
+        res,
+        'Masuk dengan Google belum siap',
+        'Client ID atau Client Secret Google belum diisi di server.',
+        503,
+      )
+    }
+
+    try {
+      const identitas = await tukarCode(code, redirectUriDari(req))
+      const pengguna = await masukDenganGoogle(identitas)
+      const { token, kedaluwarsa } = await buatSesi(pengguna.id, req.headers['user-agent'])
+      setelCookie(req, res, token, kedaluwarsa)
+      // Kembali ke aplikasi. Status akun akan diperiksa ulang oleh aplikasi
+      // lewat /api/akun/saya, jadi tidak perlu membawa data apa pun di URL.
+      return res.redirect(302, '/app/')
+    } catch (e) {
+      if (e instanceof AkunError) {
+        return halamanPesan(res, 'Belum bisa masuk', e.message, e.status >= 500 ? 502 : e.status)
+      }
+      console.error('[akun] galat google tak terduga:', e?.message ?? e)
+      return halamanPesan(
+        res,
+        'Belum bisa masuk',
+        'Terjadi kesalahan saat memproses masuk dengan Google. Coba lagi sebentar lagi.',
+        500,
+      )
     }
   }),
 )

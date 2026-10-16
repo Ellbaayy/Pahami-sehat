@@ -665,7 +665,42 @@ export default function App() {
    * yang sudah masuk tidak melihat kedipan halaman login.
    */
   if (memuatAkun) return <LoadingPage t={t} />
-  if (!pengguna) return <LoginPage t={t} onSelesai={setelahMasuk} />
+  if (!pengguna) return <LoginPage t={t} onSelesai={setelahMasuk} key="masuk" />
+
+  /**
+   * Nama panggilan belum diisi — dan itu SELALU terjadi pada pengguna yang
+   * masuk lewat Google: alur Google tidak melewati halaman login sama sekali
+   * (peramban keluar ke Google, lalu kembali ke /app/).
+   *
+   * Tanpa gerbang ini, pengguna Google langsung masuk ke Beranda dan disapa
+   * "Halo!" tanpa nama — padahal alur yang diminta adalah
+   * masuk -> loading -> "Halo Bayu!". Karena itu langkah nama dimunculkan
+   * di sini, dengan halaman dan penyimpanan yang SAMA seperti alur biasa
+   * (LoginPage layar `nama` -> POST /api/akun/nama), bukan jalur tersendiri
+   * yang bisa berbeda perilakunya.
+   *
+   * Hanya berlaku kalau namanya memang kosong — pengguna lama tidak terganggu.
+   */
+  if (!pengguna.namaPengguna) {
+    return (
+      <LoginPage
+        t={t}
+        layarAwal="nama"
+        onSelesai={setelahMasuk}
+        onKeluar={keluar}
+        /*
+         * `key` WAJIB berbeda dari yang di atas. Tanpa ini React memakai ulang
+         * komponen yang sama (posisinya di pohon sama-sama anak pertama), dan
+         * `useState(layarAwal)` hanya dibaca SAAT MOUNT — sehingga setelah
+         * keluar, layar tetap "nama" walau pengguna sudah keluar: halaman
+         * "Mau dipanggil apa?" muncul lagi TANPA jalan keluar. Kesalahan ini
+         * pernah benar-benar terjadi; ketahuan lewat uji peramban, bukan lewat
+         * build yang hijau.
+         */
+        key="nama"
+      />
+    )
+  }
 
   return (
     <>

@@ -3,20 +3,27 @@
  *
  * Jalankan:  npm run server
  *
- * Semua endpoint ada di server/rute.js (dipakai bersama dengan versi Vercel).
+ * Semua endpoint ada di server/rute.js dan server/ruteAkun.js (keduanya dipakai
+ * bersama dengan versi Vercel lewat api/index.js).
  * Kalau folder `dist/` ada, server ini sekaligus menyajikan aplikasi hasil build
  * di `/` — jadi untuk Grand Final cukup satu perintah, satu port, tanpa internet.
+ *
+ * CATATAN: berkas ini juga MENGIMPOR-nya untuk uji (`uji-google.mjs` memakai
+ * `app`-nya langsung). Karena itu port hanya dibuka kalau berkas ini
+ * dijalankan langsung — lihat penjagaan `dijalankanLangsung` di bagian bawah.
  */
 
 import express from 'express'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 
 import { config, safeInfo } from './config.js'
 import { pasangKepala } from './kepala.js'
 import rute from './rute.js'
 import ruteAkun from './ruteAkun.js'
+import { db, keteranganDb } from './db.js'
+import { googleSiap } from './google.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
@@ -82,17 +89,46 @@ app.use((err, _req, res, _next) => {
 
 /* --------------------------------------------------------------- start ---- */
 
-const server = app.listen(config.port, '127.0.0.1', () => {
-  const info = safeInfo()
-  console.log(`\n  Pahami Sehat — server siap`)
-  console.log(`  http://127.0.0.1:${config.port}`)
-  console.log(`  model   : ${info.model}`)
-  console.log(`  api key : terpasang (${info.keyPrefix})`)
-  console.log(`  dist    : ${existsSync(DIST) ? 'disajikan dari /' : 'belum dibuild'}\n`)
-})
+/**
+ * Server hanya dinyalakan kalau berkas ini DIJALANKAN LANGSUNG
+ * (`node server/index.js` atau `npm run server`).
+ *
+ * Kalau diimpor — mis. oleh `uji-google.mjs`, yang perlu `app`-nya saja —
+ * TIDAK ada port yang dibuka. Tanpa penjagaan ini, mengimpor berkas ini
+ * langsung membuka port 8787 dan menghentikan proses saat portnya sudah
+ * dipakai, sehingga uji tidak bisa berjalan berdampingan dengan server biasa.
+ */
+const dijalankanLangsung =
+  process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 
-for (const sinyal of ['SIGINT', 'SIGTERM']) {
-  process.on(sinyal, () => {
-    server.close(() => process.exit(0))
+let server = null
+
+if (dijalankanLangsung) {
+  server = app.listen(config.port, '127.0.0.1', async () => {
+    const info = safeInfo()
+    console.log(`\n  Pahami Sehat — server siap`)
+    console.log(`  http://127.0.0.1:${config.port}`)
+    console.log(`  model   : ${info.model}`)
+    console.log(`  api key : terpasang (${info.keyPrefix})`)
+    console.log(`  dist    : ${existsSync(DIST) ? 'disajikan dari /' : 'belum dibuild'}`)
+
+    // Keadaan fitur yang GAMPANG salah dan tidak terlihat dari luar. Dicetak saat
+    // mulai supaya tidak perlu ditebak saat ada yang tidak jalan:
+    //   - akun tanpa database menjawab 503, bukan diam-diam gagal
+    //   - tombol Google disembunyikan kalau client id belum tertanam saat build
+    const dbInfo = await keteranganDb().catch(() => ({ aktif: false, alasan: 'gagal diperiksa' }))
+    console.log(`  database: ${dbInfo.aktif ? `tersambung (${dbInfo.database}@${dbInfo.host}:${dbInfo.port})` : `TIDAK AKTIF — ${dbInfo.alasan}`}`)
+    console.log(`  akun    : ${dbInfo.aktif ? 'siap' : 'butuh database (endpoint akun menjawab 503)'}`)
+    console.log(`  google  : ${googleSiap() ? 'siap (client id + secret terpasang)' : 'BELUM diisi — tombol Google tidak muncul'}`)
+    console.log(`  alamat  : ${existsSync(APP_DIST) ? `http://127.0.0.1:${config.port}/app/` : 'belum dibuild'}\n`)
   })
+
+  for (const sinyal of ['SIGINT', 'SIGTERM']) {
+    process.on(sinyal, () => {
+      server.close(() => process.exit(0))
+    })
+  }
 }
+
+export { app }
+export default app

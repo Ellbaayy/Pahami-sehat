@@ -115,9 +115,15 @@ function Langkah({ aktif, jumlah }) {
   )
 }
 
-export default function LoginPage({ t = (k) => k, onSelesai }) {
+export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerbang', onKeluar = null }) {
   // gerbang | masuk | buat1 | buat2 | buat3 | nama
-  const [layar, setLayar] = useState('gerbang')
+  //
+  // `layarAwal` dipakai untuk MEMULAI langsung di layar nama panggilan. Itu
+  // diperlukan pengguna yang masuk lewat Google: alur Google tidak melewati
+  // halaman ini sama sekali (peramban keluar ke Google lalu kembali ke
+  // /app/), jadi langkah "Mau dipanggil apa?" harus dimunculkan App setelah
+  // tahu pengguna sudah masuk tapi belum punya nama panggilan.
+  const [layar, setLayar] = useState(layarAwal)
   const [identifier, setIdentifier] = useState('')
   const [sandi, setSandi] = useState('')
   const [ulangi, setUlangi] = useState('')
@@ -527,6 +533,25 @@ export default function LoginPage({ t = (k) => k, onSelesai }) {
               <TombolUtama memuat={memuat} type="submit" disabled={nama.trim().length < 2}>
                 Simpan
               </TombolUtama>
+              {/*
+                JALAN KELUAR. Layar ini juga muncul SENDIRI setelah masuk lewat
+                Google (lihat `layarAwal`), dan tanpa ini pengguna yang tidak
+                mau mengisi nama akan TERJEBAK — tidak ada tombol kembali
+                (memang tidak boleh: dia sudah masuk) dan tidak ada cara
+                keluar selain menghapus cookie peramban secara manual.
+              */}
+              {onKeluar && (
+                <p className="text-center text-[0.82rem] text-navy-500">
+                  Tidak sekarang?{' '}
+                  <button
+                    type="button"
+                    onClick={onKeluar}
+                    className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
+                  >
+                    Keluar dari akun ini
+                  </button>
+                </p>
+              )}
             </form>
           )}
 

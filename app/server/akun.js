@@ -168,7 +168,7 @@ export function buatToken() {
 /* ---------------------------------------------------------------- akun ---- */
 
 /** Pastikan database ada; kalau tidak, beri galat yang jelas (bukan diam). */
-async function butuhDb() {
+export async function butuhDb() {
   const p = await db()
   if (!p) {
     throw new AkunError(
@@ -181,7 +181,7 @@ async function butuhDb() {
 }
 
 /** Bentuk pengguna yang AMAN dikirim ke peramban (tanpa hash/salt). */
-function aman(u) {
+export function aman(u) {
   if (!u) return null
   return {
     id: u.id,
