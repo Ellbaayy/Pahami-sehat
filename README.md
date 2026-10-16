@@ -177,7 +177,8 @@ flowchart TB
     T2[("konten")]
     T3[("pengetahuan<br/>salinan berlabel tanggal")]
     T4[("sumber")]
-    T5[("dokumen · sitasi · pengguna<br/>setelan · riwayat<br/>sudah ada, belum dipakai")]
+    T6[("dokumen · sitasi<br/>jejak sumber yang dikutip")]
+    T5[("pengguna · setelan · riwayat<br/>sudah ada, belum dipakai")]
   end
 
   subgraph Luar["Layanan luar"]
@@ -204,12 +205,13 @@ flowchart TB
   DBJ --> T2
   DBJ --> T3
   DBJ --> T4
+  DBJ --> T6
   DBJ -.->|"belum disambungkan"| T5
 
   classDef store fill:#eef,stroke:#446,color:#113
   classDef opsional fill:#ffe9c9,stroke:#a63,color:#420,stroke-dasharray:4 3
   class LS store
-  class T1,T2,T3,T4 store
+  class T1,T2,T3,T4,T6 store
   class T5 opsional
   class DBJ opsional
 ```
@@ -274,11 +276,42 @@ Dibuktikan, bukan diklaim — dengan database dimatikan (`DB_MATI=1`):
 | `konten` | artikel & tips harian dari Kemenkes | `.cache-konten.json` |
 | `pengetahuan` | **331 topik medis** dari sumber resmi, salinan berlabel tanggal | (baru) |
 | `sumber` | 12 lembaga resmi (Kemenkes, WHO, BPOM, NIH, …) | (baru) |
+| `dokumen` + `sitasi` | **jejak sumber yang dikutip** — klaim "jawaban ini dari WHO" jadi bisa **dilacak**, bukan cuma ditulis | (baru) |
 
-`pengguna`, `setelan`, `riwayat`, `dokumen`, dan `sitasi` sudah dibuat di skema
-tapi **belum disambungkan** ke jalur aplikasi — sengaja, karena riwayat
-lintas-perangkat butuh keputusan desain lebih dulu. Keadaannya ditandai apa
-adanya di diagram di atas (garis putus-putus).
+`pengguna`, `setelan`, dan `riwayat` sudah dibuat di skema tapi **belum
+disambungkan** ke jalur aplikasi — sengaja, karena riwayat lintas-perangkat
+butuh identitas pengguna, sedangkan aplikasi ini **menjanjikan tanpa akun** di
+layar Pengaturan. Keadaannya ditandai apa adanya di diagram di atas (garis
+putus-putus).
+
+#### Jejak sitasi — cara memeriksanya
+
+Setiap jawaban yang menyertakan sumber akan mencatatnya ke `dokumen` + `sitasi`,
+**setelah** respons dikirim supaya pengguna tidak ikut menunggu. Untuk
+memeriksa:
+
+```bash
+curl -s http://127.0.0.1:8787/api/sitasi
+```
+
+Yang dijaga:
+
+- **Hanya URL `http(s)`** yang dicatat — sama seperti penyaring di
+  `bentukHasil()`. `javascript:` dan `data:` ditolak, jadi model tidak bisa
+  menyelipkan skema lain ke dalam tabel.
+- **Anti-duplikat berdasarkan URL**: URL yang sama tidak menambah baris, hanya
+  memperbarui tanggalnya. Kalau tidak dijaga, tabel membengkak satu baris
+  setiap kali pengguna bertanya. (Kolom `url` panjangnya 700 karakter sehingga
+  tidak bisa diberi `UNIQUE` langsung — pengecekannya dilakukan di kode.)
+- **`kedaluwarsa` tetap ditegakkan** (30 hari untuk dokumen): baris yang sudah
+  basi tidak ikut tersaji.
+- **Pertanyaan pengguna tidak ikut disimpan** — endpoint `/api/sitasi` sengaja
+  hanya menampilkan sumber mana dipakai untuk jenis jawaban apa, kapan.
+
+Diuji `uji-sitasi.mjs` (**15 pemeriksaan**). Uji itu punya dua bagian: yang
+**murni** (tanpa jaringan/database — aturan penolakan URL) dan yang
+**terhubung** (butuh MariaDB). Kalau database mati, bagian kedua **dilewati
+dengan pesan jelas dan exit 0** — bukan gagal, karena database memang opsional.
 
 #### Satu aturan yang ditegakkan database sendiri
 
@@ -574,6 +607,7 @@ node uji-bahasa.mjs       # 25 pemeriksaan: kesehatan kamus id/en
 node uji-berita.mjs       # 89 pemeriksaan: deteksi berita, parser RSS, penetrasi
 node uji-keterbacaan.mjs  # 38 pemeriksaan: alat ukur keterbacaan itu sendiri
 node uji-suara.mjs        # 49 pemeriksaan: ejaan singkatan & kestabilan nada
+node uji-sitasi.mjs       # 15 pemeriksaan: jejak sumber (butuh MariaDB)
 ```
 
 `uji-suara.mjs` **tidak memanggil layanan suara** (tidak butuh jaringan), jadi

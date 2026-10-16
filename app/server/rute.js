@@ -46,7 +46,15 @@ import {
   SIMPANAN_HEALTH_MS,
 } from './batasInput.js'
 import { kontenHarianLengkap } from './konten.js'
-import { keteranganDb, ambilBerita, hitungBeritaSegar, ambilKonten, ambilPengetahuan } from './db.js'
+import {
+  keteranganDb,
+  ambilBerita,
+  hitungBeritaSegar,
+  ambilKonten,
+  ambilPengetahuan,
+  catatSumberDikutip,
+  tanya,
+} from './db.js'
 import { bahasaJawaban } from './bahasa.js'
 
 /* ---------------------------------------------------------------- util ---- */
@@ -363,6 +371,44 @@ rute.get('/api/db', batasHealth, bungkus(async (_req, res) => {
   })
 }))
 
+/**
+ * Jejak sitasi — membuktikan klaim "jawaban ini bersumber dari X" bisa DILACAK.
+ *
+ * Menampilkan: berapa dokumen tercatat, berapa sitasi, dan rincian terakhir
+ * (sumber mana dipakai untuk jenis jawaban apa, kapan). Sengaja TIDAK
+ * menampilkan pertanyaan pengguna — itu memang tidak pernah disimpan.
+ */
+rute.get('/api/sitasi', batasHealth, bungkus(async (_req, res) => {
+  const ket = await keteranganDb()
+  if (!ket.aktif) return res.json({ ok: true, db: ket, tersambung: false })
+
+  const ringkas = await tanya(
+    `SELECT (SELECT COUNT(*) FROM dokumen) AS dokumen,
+            (SELECT COUNT(*) FROM sitasi)  AS sitasi,
+            (SELECT COUNT(*) FROM dokumen WHERE kedaluwarsa > NOW()) AS dokumen_berlaku`,
+  )
+  const perJenis = await tanya(
+    `SELECT jenis_jawaban, COUNT(*) AS n FROM sitasi GROUP BY jenis_jawaban ORDER BY n DESC`,
+  )
+  const terakhir = await tanya(
+    `SELECT s.jenis_jawaban, d.judul, d.url, s.dipakai_pada, src.nama AS sumber
+       FROM sitasi s
+       JOIN dokumen d   ON d.id = s.dokumen_id
+       JOIN sumber  src ON src.id = d.sumber_id
+      ORDER BY s.dipakai_pada DESC
+      LIMIT 10`,
+  )
+
+  res.json({
+    ok: true,
+    db: ket,
+    tersambung: true,
+    ringkas: ringkas?.[0] ?? {},
+    perJenis: perJenis ?? [],
+    terakhir: terakhir ?? [],
+  })
+}))
+
 rute.get('/api/health', batasHealth, bungkus(async (_req, res) => {
   const sekarang = Date.now()
   if (simpananHealth && sekarang - simpananHealth.waktu < SIMPANAN_HEALTH_MS) {
@@ -564,6 +610,13 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
 
   const out = bentukHasil(json, tingkat)
   res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage })
+
+  // Catat sumber yang benar-benar DIKUTIP model ke tabel sitasi — OPSIONAL,
+  // dan sengaja SETELAH respons dikirim supaya pengguna tidak ikut menunggu.
+  // Ini yang membuat klaim "jawaban ini bersumber dari X" bisa DILACAK,
+  // bukan cuma ditulis. Tidak pernah melempar: kegagalan di sini tidak boleh
+  // terlihat pengguna, dan database memang opsional.
+  catatSumberDikutip('tanya', out.sumber).catch(() => null)
 }))
 
 rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
@@ -591,6 +644,7 @@ rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
 
   const out = bentukHasil(json, tingkat)
   res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage })
+  catatSumberDikutip('sederhanakan', out.sumber).catch(() => null)
 }))
 
 rute.post('/api/verifikasi', batasVerifikasi, bungkus(async (req, res) => {
@@ -612,11 +666,13 @@ rute.post('/api/verifikasi', batasVerifikasi, bungkus(async (req, res) => {
     maxTokens: MAKS_TOKEN.verifikasi,
   })
 
+  const keluar = bentukHasil(json, tingkat, { verdictKey: 'verdict' })
   res.json({
-    ...bentukHasil(json, tingkat, { verdictKey: 'verdict' }),
+    ...keluar,
     hasilCari: ringkasHasilCari(hasilCari),
     usage,
   })
+  catatSumberDikutip('verifikasi', keluar.sumber).catch(() => null)
 }))
 
 /**
@@ -807,6 +863,7 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
 
     kirim('hasil', { ...final, hasilCari: ringkasHasilCari(hasilCari), usage: usageFinal })
     res.write('event: selesai\ndata: {}\n\n')
+    catatSumberDikutip('tanya', final.sumber).catch(() => null)
   } catch (e) {
     if (!ac.signal.aborted) {
       kirim('error', { code: e.code ?? 'upstream_error', pesan: e.message })
