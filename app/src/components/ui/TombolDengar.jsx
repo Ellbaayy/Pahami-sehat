@@ -21,7 +21,8 @@ import { cn } from '../../lib/cn'
 export default function TombolDengar({
   teks,
   label,
-  bahasa = 'id',
+  bahasa = 'auto',
+  jenis = 'p',
   className,
   t = (k) => k,
 }) {
@@ -42,6 +43,7 @@ export default function TombolDengar({
     setError(null)
     const jalan = ttsBaca(teks, {
       bahasa,
+      jenis,
       onMulai: () => setBicara(true),
       onSelesai: () => setBicara(false),
       onError: (e) => {

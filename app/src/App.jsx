@@ -49,7 +49,11 @@ import {
   MAKS_SESI,
 } from './lib/sesi'
 
-const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, kontras: false, tts: false, lang: 'id' }
+const DEFAULT_SETTINGS = { level: TINGKAT_DEFAULT, kontras: false, tts: false, lang: 'id', suaraBahasa: 'auto', suaraJenis: 'p' }
+
+/** Kode bahasa suara yang sah. 'auto' = tebak dari isi jawaban. */
+const SUARA_BAHASA = ['auto', 'id', 'jv', 'su', 'en']
+const SUARA_JENIS = ['p', 'l']
 
 /**
  * Terjemahkan pesan status yang dikirim server lewat SSE.
@@ -117,6 +121,10 @@ function bacaSetelan() {
       kontras: isi.kontras === true,
       tts: isi.tts === true,
       lang: isi.lang === 'en' ? 'en' : 'id',
+      // Setelan suara juga diperiksa satu per satu: nilai dari penyimpanan
+      // TIDAK dipercaya begitu saja (bisa tua atau diubah tangan).
+      suaraBahasa: SUARA_BAHASA.includes(isi.suaraBahasa) ? isi.suaraBahasa : DEFAULT_SETTINGS.suaraBahasa,
+      suaraJenis: SUARA_JENIS.includes(isi.suaraJenis) ? isi.suaraJenis : DEFAULT_SETTINGS.suaraJenis,
     }
   } catch {
     return DEFAULT_SETTINGS
@@ -864,6 +872,8 @@ export default function App() {
                 onSesiBaru={sesiBaru}
                 onBagikan={() => bagikan([sesiAktif])}
                 onHapusSesi={() => hapusSesi([sesiAktifId])}
+                suaraBahasa={settings.suaraBahasa}
+                suaraJenis={settings.suaraJenis}
               />
             ) : null}
 
@@ -883,6 +893,8 @@ export default function App() {
                   serverOnline={server.online}
                   serverMemuat={server.memuat}
                   bahasa={kodeBahasa}
+                  suaraBahasa={settings.suaraBahasa}
+                  suaraJenis={settings.suaraJenis}
                 />
               </Suspense>
             ) : null}

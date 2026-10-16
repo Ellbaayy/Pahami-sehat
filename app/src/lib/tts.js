@@ -107,11 +107,13 @@ function bacaDenganPeramban(teks, { onMulai, onSelesai, onError } = {}) {
 
 /* ------------------------------------------------ lapis 1: suara natural -- */
 
-async function ambilSuaraNatural(teks, bahasa, signal) {
+async function ambilSuaraNatural(teks, bahasa, jenis, signal) {
   const res = await fetch(`${API_BASE}/suara`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ teks, bahasa }),
+    // `bahasa` boleh berisi pilihan pengguna ('id'/'jv'/'su'/'en') atau 'auto'.
+    // Pilihan pengguna MENANG atas tebakan otomatis di server.
+    body: JSON.stringify({ teks, bahasa, jenis }),
     signal,
   })
   if (!res.ok) throw new Error(`suara ${res.status}`)
@@ -124,10 +126,10 @@ async function ambilSuaraNatural(teks, bahasa, signal) {
  * Bacakan teks: coba suara natural dulu, jatuh ke suara bawaan kalau gagal.
  *
  * @param {string} teks
- * @param {{bahasa?: string, onMulai?: Function, onSelesai?: Function, onError?: Function}} opsi
+ * @param {{bahasa?: string, jenis?: string, onMulai?: Function, onSelesai?: Function, onError?: Function}} opsi
  * @returns {boolean} true kalau ada yang mulai dibacakan
  */
-export function ttsBaca(teks, { bahasa = 'id', onMulai, onSelesai, onError } = {}) {
+export function ttsBaca(teks, { bahasa = 'auto', jenis = 'p', onMulai, onSelesai, onError } = {}) {
   const isi = String(teks ?? '').trim()
   if (!isi) return false
 
@@ -136,7 +138,7 @@ export function ttsBaca(teks, { bahasa = 'id', onMulai, onSelesai, onError } = {
   const ac = new AbortController()
   sumberSekarang = ac
 
-  ambilSuaraNatural(isi, bahasa, ac.signal)
+  ambilSuaraNatural(isi, bahasa, jenis, ac.signal)
     .then((url) => {
       if (ac.signal.aborted) {
         URL.revokeObjectURL(url)

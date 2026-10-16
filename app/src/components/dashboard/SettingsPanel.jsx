@@ -206,6 +206,55 @@ export default function SettingsPanel({
           }
         />
 
+        {/*
+          PEMILIH SUARA.
+          
+          Dua pilihan yang berdiri sendiri: bahasa dan jenis suara. Daftar
+          bahasanya memuat "Otomatis" di urutan pertama, dan itu memang
+          bawaannya — jawaban berbahasa Jawa/Sunda dibacakan dengan suara yang
+          sesuai tanpa pengguna perlu mengatur apa pun.
+
+          Kalau pengguna MEMILIH bahasa tertentu, pilihannya MENANG dan tebakan
+          otomatis tidak dijalankan. Itu penting: sebelumnya pilihan seperti ini
+          tidak ada, sehingga pengguna yang memakai bahasa Indonesia tetap bisa
+          dibacakan dengan suara Jawa karena tebakan otomatis salah membaca
+          kalimatnya.
+        */}
+        <Row
+          title={
+            <span className="inline-flex items-center gap-2">
+              <Volume2 className="size-4 text-brand-700" aria-hidden="true" />
+              {t('set.suara')}
+            </span>
+          }
+          description={t('set.suaraSub')}
+          control={
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                aria-label={t('set.suaraBahasa')}
+                value={settings.suaraBahasa}
+                onChange={(e) => set('suaraBahasa', e.target.value)}
+                className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              >
+                <option value="auto">{t('set.suaraOtomatis')}</option>
+                <option value="id">{t('set.suaraId')}</option>
+                <option value="jv">{t('set.suaraJv')}</option>
+                <option value="su">{t('set.suaraSu')}</option>
+                <option value="en">{t('set.suaraEn')}</option>
+              </select>
+              <select
+                aria-label={t('set.suaraJenis')}
+                value={settings.suaraJenis}
+                onChange={(e) => set('suaraJenis', e.target.value)}
+                className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              >
+                <option value="p">{t('set.suaraPerempuan')}</option>
+                <option value="l">{t('set.suaraLaki')}</option>
+              </select>
+            </div>
+          }
+        />
+
         <Row
           title={
             <span className="inline-flex items-center gap-2">

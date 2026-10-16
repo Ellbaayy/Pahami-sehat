@@ -30,6 +30,8 @@ export default function VerifikasiPanel({
   serverOnline,
   serverMemuat,
   bahasa = 'id',
+  suaraBahasa = 'auto',
+  suaraJenis = 'p',
   t = (k) => k,
   labelTingkat = (x) => x,
 }) {
@@ -167,7 +169,7 @@ export default function VerifikasiPanel({
           </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <TombolDengar teks={hasil.jawaban} bahasa={bahasa} t={t} />
+            <TombolDengar teks={hasil.jawaban} bahasa={suaraBahasa} jenis={suaraJenis} t={t} />
           </div>
           <PoinKunci items={hasil.poinKunci} t={t} />
           <SourcePills

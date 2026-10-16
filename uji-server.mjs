@@ -159,9 +159,17 @@ cek('isi setelah dibongkar sama dengan aslinya', kembali.ok, true)
 cek('benar-benar lebih kecil', dengan.buf.length < tanpa.buf.length, true)
 console.log(`        tanpa: ${tanpa.buf.length}B · gzip: ${dengan.buf.length}B (hemat ${Math.round((1 - dengan.buf.length / tanpa.buf.length) * 100)}%)`)
 
-// Respons kecil tidak perlu dikompresi — header gzip bisa lebih besar dari hematannya.
-const kecil = await ambilMentah('/api/meta', { 'Accept-Encoding': 'gzip' })
+// Respons kecil tidak perlu dikompresi — header gzip bisa lebih besar dari
+// hematannya. Dipakai rute yang memang kecil dan TIDAK berubah ukurannya
+// (/api/health ~300 byte), bukan /api/meta: sejak daftar suara diumumkan,
+// /api/meta menjadi 1.238 byte sehingga memang WAJAR dikompresi.
+const kecil = await ambilMentah('/api/health', { 'Accept-Encoding': 'gzip' })
 cek('respons kecil dibiarkan apa adanya', kecil.headers['content-encoding'], undefined)
+cek('ukurannya memang di bawah ambang', kecil.buf.length < 500, true)
+
+// Dan sebaliknya: yang sudah besar memang dikompresi.
+const meta = await ambilMentah('/api/meta', { 'Accept-Encoding': 'gzip' })
+cek('/api/meta (1.238B) dikompresi', meta.headers['content-encoding'], 'gzip')
 
 /* ============================================ 4. SSE JANGAN DIKOMPRESI == */
 
