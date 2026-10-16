@@ -278,11 +278,11 @@ Dibuktikan, bukan diklaim — dengan database dimatikan (`DB_MATI=1`):
 | `sumber` | 12 lembaga resmi (Kemenkes, WHO, BPOM, NIH, …) | (baru) |
 | `dokumen` + `sitasi` | **jejak sumber yang dikutip** — klaim "jawaban ini dari WHO" jadi bisa **dilacak**, bukan cuma ditulis | (baru) |
 
-`pengguna`, `setelan`, dan `riwayat` sudah dibuat di skema tapi **belum
-disambungkan** ke jalur aplikasi — sengaja, karena riwayat lintas-perangkat
-butuh identitas pengguna, sedangkan aplikasi ini **menjanjikan tanpa akun** di
-layar Pengaturan. Keadaannya ditandai apa adanya di diagram di atas (garis
-putus-putus).
+Tabel `pengguna`, `setelan`, dan `riwayat` versi **LAMA** sudah dibuat di skema
+tapi **belum disambungkan** ke jalur aplikasi dan tidak akan dipakai. Yang
+aktif adalah `pengguna_baru`, `sesi`, dan `riwayat_pengguna` dari
+`docs/skema-akun.sql` — dipakai oleh fitur akun (opsional: tanpa akun,
+aplikasi tetap jalan penuh dan riwayat tinggal di peramban).
 
 #### Jejak sitasi — cara memeriksanya
 
@@ -748,13 +748,28 @@ ketiga** (Kenari.id). Karena itu aplikasi memperingatkan pengguna agar tidak
 menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah — peringatan
 itu tampil di panel **Pengaturan** (`set.privasi1..3` di `app/src/data/bahasa.js`).
 
-**Tidak ada akun.** Tidak ada pendaftaran, tidak ada autentikasi, dan isi
-percakapan tidak ditulis ke mana pun — bahkan ketika database menyala.
-Database hanya menyimpan **bahan publik** (berita RSS, artikel Kemenkes,
-salinan berlabel tanggal dari sumber resmi), bukan pertanyaan atau jawaban
-pengguna. Tabel `pengguna` dan `riwayat` sudah ada di skema, tetapi **belum
-disambungkan** dan hanya akan berisi pengenal acak (`token_sesi`) tanpa nama,
-email, atau data pribadi — kalau nanti dipakai.
+**Ada akun, tetapi opsional.** Aplikasi ini tetap bisa dipakai tanpa masuk —
+tanpa akun, semuanya jalan seperti sebelumnya dan riwayat obrolan tinggal di
+peramban. Akun baru diperlukan kalau riwayat ingin ikut lintas perangkat.
+
+Kalau pengguna memilih punya akun, yang disimpan **hanya**: email ATAU nomor
+telepon, nama panggilan, hash kata sandi (scrypt + salt, tidak pernah kata
+sandinya), `google_id` kalau masuk lewat Google, dan riwayat obrolan miliknya
+sendiri. **Tidak ada** nama lengkap, NIK, tanggal lahir, alamat, atau foto —
+aplikasi ini bahkan memperingatkan pengguna agar tidak menuliskan data seperti
+itu di pertanyaan, jadi menyimpannya di akun akan bertentangan dengan
+peringatan sendiri. Isi percakapan tidak pernah dipakai untuk analitik.
+
+Bahan publik (berita RSS, artikel Kemenkes, salinan berlabel tanggal dari
+sumber resmi) tetap tersimpan terpisah dari akun. Tabel `pengguna`, `setelan`,
+dan `riwayat` versi **lama** di `skema-database.sql` masih ada tapi tidak
+dipakai — yang aktif adalah `pengguna_baru`, `sesi`, dan `riwayat_pengguna`
+dari `docs/skema-akun.sql`.
+
+Masuk dengan Google memakai alur **server-side**: client secret hanya hidup di
+server, dan `state` diperiksa supaya alur ini tidak bisa dibajak (login CSRF).
+Rinciannya — termasuk kenapa akun hanya ditautkan kalau email Google-nya
+terverifikasi — ada di `app/server/google.js` dan diuji oleh `uji-google.mjs`.
 
 Yang ditulis ke disk: `.cache-konten.json` dan `.cache-berita.json` (berlaku
 24 jam), plus tabel-tabel di atas bila MariaDB dijalankan.
@@ -807,7 +822,7 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
 
 | Prinsip | Keadaan |
 |---|---|
-| Minimalisasi data | Yang diambil hanya teks pertanyaan. Tidak ada nama, akun, atau identitas yang diminta. |
+| Minimalisasi data | Yang diambil hanya teks pertanyaan. Tidak ada nama lengkap, NIK, atau alamat yang diminta. Akun (opsional) menyimpan hanya email/telepon, nama panggilan, dan hash kata sandi. |
 | Kendali di tangan subjek data | Riwayat dan jawaban kuesioner disimpan di perangkat pengguna dan bisa dihapus pengguna kapan saja. |
 | Keterbukaan | Perpindahan data dijelaskan sebelum pengguna memakainya (panel Pengaturan), bukan disembunyikan. |
 | Hak penghapusan | Terpenuhi secara teknis (tombol hapus riwayat), **belum** terpenuhi secara prosedural (belum ada kanal kontak resmi). |

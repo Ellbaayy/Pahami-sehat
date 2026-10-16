@@ -14,11 +14,17 @@
 import express from 'express'
 import { pasangKepala } from '../server/kepala.js'
 import rute from '../server/rute.js'
+import ruteAkun from '../server/ruteAkun.js'
 
 const app = express()
 
 pasangKepala(app)
 app.use(express.json({ limit: '1mb' }))
 app.use(rute)
+// Rute akun WAJIB dipasang di sini juga. Sebelumnya hanya server lokal yang
+// memasangnya, sehingga di Vercel seluruh /api/akun/* menjawab 404 — dan itu
+// membuat halaman masuk gagal dengan pesan yang menyesatkan ("Gagal
+// menghubungi server"), bukan "fitur ini tidak tersedia di sini".
+app.use(ruteAkun)
 
 export default app
