@@ -608,7 +608,32 @@ node uji-berita.mjs       # 89 pemeriksaan: deteksi berita, parser RSS, penetras
 node uji-keterbacaan.mjs  # 38 pemeriksaan: alat ukur keterbacaan itu sendiri
 node uji-suara.mjs        # 49 pemeriksaan: ejaan singkatan & kestabilan nada
 node uji-sitasi.mjs       # 15 pemeriksaan: jejak sumber (butuh MariaDB)
+node uji-akun.mjs         # 65 pemeriksaan: kata sandi, sesi, normalisasi (butuh MariaDB)
+node uji-google.mjs       # 50 pemeriksaan: masuk dengan Google (tanpa jaringan)
+node uji-server.mjs       # 24 pemeriksaan: kompresi, 404 JSON, galat klien
 ```
+
+### Lapisan server — hal yang salahnya tidak terlihat dari build hijau
+
+`uji-server.mjs` menguji empat hal yang **tidak merusak fitur apa pun** kalau
+salah, sehingga tidak akan ketahuan dari uji fitur maupun build yang lulus:
+
+| Yang dijaga | Kenapa penting |
+|---|---|
+| Respons besar dikompresi (gzip) | `/api/konten` **7.281 → 2.083 byte (hemat 71%)**. Tanpa ini aplikasi tetap jalan — hanya lambat di jaringan seluler. |
+| JSON rusak dijawab **400**, bukan 500 | Kalau salah, kesalahan klien dilaporkan sebagai kesalahan server: pengguna disuruh "coba lagi" padahal isinya yang salah, dan pemantauan melihat 500 seolah server kita yang rusak. |
+| `/api/*` tak dikenal → **JSON** | Bawaan Express membalas halaman HTML yang **menyebut "Express"** — memberitahu penyerang kerangka yang dipakai, sekaligus menyesatkan klien yang mengharap JSON. |
+| `X-Waktu-Ms` di setiap respons | Menjawab "lambat di server atau di jaringan?" tanpa membuka log. Permintaan > 3 detik juga dicatat di log sebagai `[lambat]`. |
+
+**Dua jebakan yang sudah terukur** (dan sebabnya uji ini ditulis):
+
+1. `res.on('finish')` berjalan **setelah** header terkirim, jadi `setHeader` di
+   dalamnya tidak berpengaruh — `X-Waktu-Ms` sempat tidak pernah muncul. Yang
+   benar: hitung saat header AKAN dikirim (bungkus `res.writeHead`).
+2. `fetch` bawaan Node **selalu** mengirim `Accept-Encoding: gzip` sendiri dan
+   langsung men-dekompresi balasannya. Mengukur kompresi lewat `fetch`
+   menghasilkan kesimpulan palsu ("tidak dikompresi", "ukurannya sama").
+   Karena itu pengukuran kompresi memakai **HTTP mentah** (`node:http`).
 
 `uji-suara.mjs` **tidak memanggil layanan suara** (tidak butuh jaringan), jadi
 bisa ikut dijalankan di CI. Yang dijaganya: singkatan mana yang dieja dan mana

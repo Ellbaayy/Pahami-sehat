@@ -20,9 +20,10 @@ import { dirname, join, resolve } from 'node:path'
 
 import { config, safeInfo } from './config.js'
 import { pasangKepala } from './kepala.js'
+import { pasangSaji, pasang404Api } from './saji.js'
 import rute from './rute.js'
 import ruteAkun from './ruteAkun.js'
-import { db, keteranganDb } from './db.js'
+import { db, keteranganDb, tutupDb } from './db.js'
 import { googleSiap } from './google.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -30,6 +31,8 @@ const DIST = join(__dirname, '..', 'dist')
 
 const app = express()
 pasangKepala(app)
+// kompresi + waktu proses — SEBELUM rute supaya berlaku untuk semua respons
+pasangSaji(app)
 app.use(express.json({ limit: '1mb' }))
 
 // seluruh endpoint API
@@ -66,6 +69,12 @@ if (existsSync(DIST)) {
   )
 }
 
+/* -------------------------------------------------------- 404 API ------- */
+
+// Dipasang setelah rute & berkas statis, TAPI sebelum penangan galat.
+// Hanya /api/* yang diubah jadi JSON — lihat catatan di saji.js.
+pasang404Api(app)
+
 /* ------------------------------------------------------- galat terakhir --- */
 
 /**
@@ -74,15 +83,42 @@ if (existsSync(DIST)) {
  * Tanpa ini, Express mengirim halaman HTML berisi jejak tumpukan — dan itu
  * membocorkan isi kode serta detail SQL ke pengguna. Di sini semua galat
  * diubah jadi JSON yang aman.
+ *
+ * URUTAN PEMERIKSAAN PENTING. Express menandai galat dengan `err.status` /
+ * `err.statusCode` (mis. body JSON yang rusak = 400, body terlalu besar = 413).
+ * Kalau nomor itu DIABAIKAN, kesalahan KLIEN dilaporkan sebagai kesalahan
+ * SERVER (500) — dan itu menyesatkan dua pihak sekaligus: pengguna disuruh
+ * "coba lagi" padahal permintaannya yang salah, dan pemantauan melihat 500
+ * seolah server kita yang rusak. Karena itu `err.status` dihormati lebih dulu.
+ *
+ * Galat 4xx dari parser TIDAK dicatat sebagai galat server — memang bukan.
  */
 app.use((err, _req, res, _next) => {
   if (err?.name === 'AkunError') {
     return res.status(err.status ?? 400).json({ ok: false, code: err.kode, pesan: err.message })
   }
-  // batas laju dari batas.js mengirim status 429 dengan pesan yang sudah ramah
-  if (err?.status === 429 || err?.statusCode === 429) {
+
+  // Kesalahan dari sisi KLIEN (Express sudah menandainya 4xx). Termasuk:
+  //   - body JSON yang rusak          -> 400 entity.parse.failed
+  //   - body melebihi batas 1 MB      -> 413 entity.too.large
+  //   - tipe konten tak didukung      -> 415
+  const statusKlien = Number(err?.status ?? err?.statusCode ?? 0)
+
+  // batas laju dari batas.js mengirim 429 dengan pesan yang sudah ramah.
+  // Diperiksa SEBELUM cabang 4xx umum di bawah — kalau tidak, 429 tertangkap
+  // lebih dulu oleh rentang 400-499 dan pesan aslinya ikut tergantikan.
+  if (statusKlien === 429) {
     return res.status(429).json({ ok: false, code: 'terlalu_sering', pesan: err.message })
   }
+
+  if (statusKlien >= 400 && statusKlien < 500) {
+    const pesan =
+      statusKlien === 413
+        ? 'Isi permintaan terlalu besar. Kirim teks yang lebih pendek.'
+        : 'Bentuk permintaan belum benar. Periksa lagi isinya.'
+    return res.status(statusKlien).json({ ok: false, code: 'permintaan_tidak_sah', pesan })
+  }
+
   console.error('[galat]', err?.message ?? err)
   res.status(500).json({ ok: false, code: 'galat_server', pesan: 'Terjadi kesalahan. Coba lagi.' })
 })
@@ -123,9 +159,53 @@ if (dijalankanLangsung) {
     console.log(`  alamat  : ${existsSync(APP_DIST) ? `http://127.0.0.1:${config.port}/app/` : 'belum dibuild'}\n`)
   })
 
+  /**
+   * Matikan dengan rapi: tutup dulu pool database, baru keluar.
+   *
+   * Tanpa ini, koneksi MariaDB dibiarkan menggantung sampai server habis
+   * waktunya. Saat menguji berulang kali (start/stop puluhan kali sehari), itu
+   * menumpuk menjadi koneksi "tidur" yang memakan slot `max_connections`.
+   *
+   * DUA HAL YANG GAMPANG SALAH DI SINI, dan keduanya pernah terjadi:
+   *
+   * 1. `server.close()` SENDIRI TIDAK CUKUP. Ia hanya berhenti menerima
+   *    koneksi BARU dan menunggu yang lama selesai — sedangkan peramban dan
+   *    curl memakai keep-alive, jadi koneksinya tetap terbuka dan callback-nya
+   *    TIDAK PERNAH dipanggil. Terukur: proses masih hidup 6 detik setelah
+   *    SIGTERM. Karena itu `closeIdleConnections()` dipanggil untuk menutup
+   *    yang menganggur.
+   *
+   * 2. Proses TIDAK BOLEH menggantung kalau database tidak menjawab. Penutupan
+   *    pool diberi batas waktu 3 detik, dan ada jaring pengaman terakhir:
+   *    kalau 5 detik berlalu, proses keluar juga. Mematikan server tidak boleh
+   *    menunggu selamanya.
+   */
   for (const sinyal of ['SIGINT', 'SIGTERM']) {
     process.on(sinyal, () => {
-      server.close(() => process.exit(0))
+      console.log(`\n  Menerima ${sinyal} — menutup dengan rapi…`)
+
+      // jaring pengaman: apa pun yang terjadi, jangan menggantung selamanya
+      const paksa = setTimeout(() => {
+        console.log('  Penutupan memakan waktu terlalu lama — keluar paksa.')
+        process.exit(0)
+      }, 5000)
+      paksa.unref()
+
+      server.close(async () => {
+        try {
+          await Promise.race([
+            tutupDb(),
+            new Promise((r) => setTimeout(r, 3000)), // jangan menggantung
+          ])
+        } catch {
+          /* gagal menutup pool tidak boleh menghalangi keluar */
+        }
+        console.log('  Selesai. Sampai jumpa.')
+        process.exit(0)
+      })
+
+      // tutup koneksi yang sedang menganggur supaya callback di atas terpanggil
+      server.closeIdleConnections?.()
     })
   }
 }

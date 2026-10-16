@@ -124,6 +124,14 @@ jobs:
         # tidak pernah sampai ke peramban.
         run: node uji-google.mjs
 
+      - name: Uji lapisan server (kompresi, 404 JSON, galat klien)
+        # Tanpa jaringan dan tanpa rahasia: server asli dinyalakan di port acak.
+        # Yang diuji bukan fitur, melainkan hal yang SALAHNYA tidak terlihat dari
+        # build hijau: respons besar dikompresi, JSON rusak dijawab 400 (bukan
+        # 500), dan /api/* yang tidak ada membalas JSON - bukan halaman HTML
+        # Express yang menyebut nama kerangkanya.
+        run: node uji-server.mjs
+
       - name: Build produksi
         working-directory: app
         run: npm run build
