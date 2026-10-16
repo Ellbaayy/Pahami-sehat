@@ -83,6 +83,20 @@ jobs:
         # jangan menjadikannya wajib-lulus.
         run: node uji-berita.mjs
 
+      - name: Uji jam acuan (tanpa jaringan)
+        # Penjadwalan "sekali sehari" memakai jam internet (header Date respons),
+        # bukan jam mesin. Uji ini membuktikan header ngawur ditolak, header sah
+        # dibaca, dan waktunya tetap maju — semuanya tanpa jaringan.
+        run: node uji-jam.mjs
+
+      - name: Uji rotasi daftar konten (tanpa jaringan)
+        # Selama sumbernya belum menerbitkan artikel baru, `susun()` selalu
+        # mengambil 5 teratas — jadi halaman menampilkan lima artikel yang sama
+        # berhari-hari. Rotasi menutup celah itu. Uji ini menjaga agar yang
+        # tampil benar-benar bergeser, tetap 5/4/1, dan TIDAK PERNAH keluar dari
+        # artikel yang memang ada di pool (tidak ada yang dikarang).
+        run: node uji-rotasi.mjs
+
       - name: Uji alat ukur keterbacaan
         # Alat ukur yang salah menghasilkan kesimpulan yang salah dengan sangat
         # meyakinkan. Uji ini memakai kata yang jumlah suku katanya bisa
