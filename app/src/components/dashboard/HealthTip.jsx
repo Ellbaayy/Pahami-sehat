@@ -27,7 +27,7 @@ export default function HealthTip({ tip, t = (k) => k }) {
           <Lightbulb className="size-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[0.72rem] font-bold tracking-[0.14em] uppercase text-brand-700">
+          <p className="text-[0.8125rem] font-bold tracking-[0.14em] uppercase text-brand-700">
             {t('tips.label')}
           </p>
           <h3 className="mt-1 text-[clamp(1.02rem,0.96rem+0.35vw,1.28rem)] font-extrabold tracking-tight text-navy-900">
@@ -47,7 +47,7 @@ export default function HealthTip({ tip, t = (k) => k }) {
             {tip.bullets.map((b) => (
               <li
                 key={b}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.78rem] font-semibold text-navy-700 ring-1 ring-brand-100"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.82rem] font-semibold text-navy-700 ring-1 ring-brand-100"
               >
                 <Check className="size-3.5 text-brand-700" aria-hidden="true" />
                 {b}
@@ -62,12 +62,12 @@ export default function HealthTip({ tip, t = (k) => k }) {
                 href={tip.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-brand-700 ring-1 ring-brand-100 underline decoration-dotted underline-offset-2 transition-colors hover:bg-brand-200"
+                className="rounded-full bg-white px-2.5 py-1 text-[0.8125rem] font-semibold text-brand-700 ring-1 ring-brand-100 underline decoration-dotted underline-offset-2 transition-colors hover:bg-brand-200"
               >
                 {t('tips.sumber')}: {tip.source}
               </a>
             ) : (
-              <span className="rounded-full bg-white px-2.5 py-1 text-[0.72rem] font-semibold text-brand-700 ring-1 ring-brand-100">
+              <span className="rounded-full bg-white px-2.5 py-1 text-[0.8125rem] font-semibold text-brand-700 ring-1 ring-brand-100">
                 {t('tips.sumber')}: {tip.source}
               </span>
             )}

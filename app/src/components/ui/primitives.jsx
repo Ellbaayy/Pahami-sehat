@@ -32,7 +32,7 @@ export function SectionHeading({ eyebrow, title, description, action, id, ilustr
     <div className="mb-[clamp(0.85rem,1.4vw,1.35rem)] flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
       <div className="min-w-0">
         {eyebrow ? (
-          <p className="mb-1 text-[0.72rem] font-bold tracking-[0.14em] uppercase text-brand-700">
+          <p className="mb-1 text-[0.8125rem] font-bold tracking-[0.14em] uppercase text-brand-700">
             {eyebrow}
           </p>
         ) : null}
@@ -163,14 +163,14 @@ export function SourcePills({ sources = [], negative = false, label, t = (k) => 
   if (!sources.length) return null
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-line-200 pt-3">
-      <span className="text-[0.68rem] font-bold tracking-[0.12em] uppercase text-navy-500">
+      <span className="text-[0.8125rem] font-bold tracking-[0.12em] uppercase text-navy-500">
         {label ?? t('umum.sumber')}
       </span>
       {sources.map((s, i) => {
         const teks = typeof s === 'string' ? s : [s.penerbit, s.judul].filter(Boolean).join(' — ')
         const url = typeof s === 'object' && /^https?:\/\//i.test(s?.url ?? '') ? s.url : ''
         const gaya = cn(
-          'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold',
+          'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.8125rem] font-semibold',
           negative
             ? 'bg-sky-100 text-sky-700 ring-1 ring-sky-100'
             : 'bg-brand-50 text-brand-700 ring-1 ring-brand-100',
@@ -213,7 +213,7 @@ export function PoinKunci({ items = [], t = (k) => k }) {
   if (!items.length) return null
   return (
     <details className="group mt-3 rounded-xl border border-line-200 bg-white/70 px-3.5 py-2.5">
-      <summary className="flex cursor-pointer items-center gap-2 text-[0.78rem] font-bold text-navy-700 marker:content-none">
+      <summary className="flex cursor-pointer items-center gap-2 text-[0.82rem] font-bold text-navy-700 marker:content-none">
         <span className="text-brand-700 transition-transform group-open:rotate-90" aria-hidden="true">
           ▸
         </span>
@@ -227,7 +227,7 @@ export function PoinKunci({ items = [], t = (k) => k }) {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-[0.7rem] text-muted-500">{t('umum.poinKunciCatatan')}</p>
+      <p className="mt-2 text-[0.8125rem] text-muted-500">{t('umum.poinKunciCatatan')}</p>
     </details>
   )
 }
@@ -247,7 +247,7 @@ export function Peringatan({ pesan, code, aksi, t = (k) => k }) {
       <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{pesan}</p>
-        {code ? <p className="mt-0.5 text-[0.76rem] opacity-80">{t('galat.kode')}: {code}</p> : null}
+        {code ? <p className="mt-0.5 text-[0.82rem] opacity-80">{t('galat.kode')}: {code}</p> : null}
       </div>
       {aksi}
     </div>
@@ -290,13 +290,13 @@ export function SumberJawaban({ sumber = [], cari = [], label, t = (k) => k }) {
         <Search className="size-3.5 text-brand-700" aria-hidden="true" />
         {label ?? t('sumber.judul')} ({semua.length})
         {adaResmi ? (
-          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[0.68rem] font-bold text-brand-700 ring-1 ring-brand-100">
+          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[0.8125rem] font-bold text-brand-700 ring-1 ring-brand-100">
             {t('sumber.adaResmi')}
           </span>
         ) : null}
       </summary>
 
-      <p className="mt-2 text-[0.78rem] text-muted-600">
+      <p className="mt-2 text-[0.82rem] text-muted-600">
         {t('sumber.cekSendiri')}
         {!dipakai.length ? ` ${t('sumber.belumDikutipCatatan')}` : ''}
       </p>
@@ -316,12 +316,12 @@ export function SumberJawaban({ sumber = [], cari = [], label, t = (k) => k }) {
                 <p className="text-[0.84rem] leading-snug font-semibold text-navy-800">
                   {s.judul}
                   {s.resmi ? (
-                    <span className="ml-1.5 text-[0.68rem] font-bold text-brand-700">
+                    <span className="ml-1.5 text-[0.8125rem] font-bold text-brand-700">
                       {t('sumber.resmi')}
                     </span>
                   ) : null}
                   {!s.dipakai ? (
-                    <span className="ml-1.5 text-[0.68rem] font-normal text-muted-500">
+                    <span className="ml-1.5 text-[0.8125rem] font-normal text-muted-500">
                       {t('sumber.belumDikutip')}
                     </span>
                   ) : null}
@@ -331,14 +331,14 @@ export function SumberJawaban({ sumber = [], cari = [], label, t = (k) => k }) {
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-0.5 block truncate font-mono text-[0.72rem] text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-700"
+                    className="mt-0.5 block truncate font-mono text-[0.8125rem] text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-700"
                     title={s.url}
                     aria-label={`${t('sumber.buka')}: ${s.judul || s.url}`}
                   >
                     {s.url}
                   </a>
                 ) : (
-                  <p className="mt-0.5 text-[0.72rem] text-muted-500">{t('sumber.tanpaTautan')}</p>
+                  <p className="mt-0.5 text-[0.8125rem] text-muted-500">{t('sumber.tanpaTautan')}</p>
                 )}
               </div>
             </div>
@@ -346,7 +346,7 @@ export function SumberJawaban({ sumber = [], cari = [], label, t = (k) => k }) {
         ))}
       </ul>
 
-      <p className="mt-2.5 text-[0.7rem] text-muted-500">{t('sumber.catatan')}</p>
+      <p className="mt-2.5 text-[0.8125rem] text-muted-500">{t('sumber.catatan')}</p>
     </details>
   )
 }

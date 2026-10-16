@@ -64,7 +64,7 @@ function ArticleCard({ article, t }) {
         )}
         <span
           className={cn(
-            'absolute top-3 left-3 rounded-full px-2.5 py-1 text-[0.7rem] font-bold ring-1',
+            'absolute top-3 left-3 rounded-full px-2.5 py-1 text-[0.8125rem] font-bold ring-1',
             tint.tag,
           )}
         >
@@ -81,7 +81,7 @@ function ArticleCard({ article, t }) {
         {open ? (
           <div className="rise mt-3 border-t border-dashed border-line-200 pt-3">
             <p className="text-[0.87rem] leading-relaxed text-navy-700">{article.body}</p>
-            <p className="mt-2 text-[0.74rem] font-semibold text-brand-700">
+            <p className="mt-2 text-[0.8125rem] font-semibold text-brand-700">
               {t('art.sumber')}: {article.source}
             </p>
             {article.url ? (
@@ -89,7 +89,7 @@ function ArticleCard({ article, t }) {
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-1.5 inline-flex items-center gap-1 text-[0.74rem] font-semibold text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-700"
+                className="mt-1.5 inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-700"
               >
                 {t('art.bacaAsli')}
                 <ArrowRight className="size-3" aria-hidden="true" />
@@ -99,7 +99,7 @@ function ArticleCard({ article, t }) {
         ) : null}
 
         <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
-          <span className="inline-flex items-center gap-1.5 text-[0.76rem] font-medium text-muted-500">
+          <span className="inline-flex items-center gap-1.5 text-[0.82rem] font-medium text-muted-500">
             <Clock className="size-3.5" aria-hidden="true" />
             {article.readTime}
           </span>

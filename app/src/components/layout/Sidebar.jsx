@@ -45,7 +45,7 @@ export default function Sidebar({ active, onSelect, terbuka = true, t = (k) => k
             <strong className="block truncate text-[0.98rem] font-extrabold tracking-tight text-navy-900">
               Pahami Sehat
             </strong>
-            <small className="block text-[0.66rem] leading-tight font-medium text-navy-500">
+            <small className="block text-[0.8125rem] leading-tight font-medium text-navy-500">
               {t('nav.isiDrawer')}
             </small>
           </span>

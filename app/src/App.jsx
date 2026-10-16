@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
 import Sidebar from './components/layout/Sidebar'
 import TopBar from './components/layout/TopBar'
 import MobileDrawer from './components/layout/MobileDrawer'
@@ -8,16 +8,29 @@ import TopicChips from './components/dashboard/TopicChips'
 import ArticleGrid from './components/dashboard/ArticleGrid'
 import HealthTip from './components/dashboard/HealthTip'
 import DaftarObrolan from './components/dashboard/DaftarObrolan'
-import QuizPanel from './components/dashboard/QuizPanel'
 import SettingsPanel from './components/dashboard/SettingsPanel'
 import ThreadPanel from './components/dashboard/ThreadPanel'
-import VerifikasiPanel from './components/dashboard/VerifikasiPanel'
 import { SectionHeading } from './components/ui/primitives'
 import BatasGalat from './components/ui/BatasGalat'
 import ToastBatal from './components/ui/ToastBatal'
 import PanelSalin from './components/ui/PanelSalin'
 import LoadingPage from './components/LoadingPage'
 import LoginPage from './components/LoginPage'
+
+/*
+ * Panel yang hanya tampil saat halamannya dibuka dimuat malas (lazy).
+ *
+ * Kuesioner (QuizPanel) dan Cek Klaim (VerifikasiPanel) tidak terlihat saat
+ * aplikasi pertama dibuka — Beranda/Tanya AI yang muncul. Memuatnya saat itu
+ * hanya menambah beban awal tanpa ada yang melihatnya. Dengan lazy, bundel
+ * keduanya baru diunduh saat pengguna benar-benar membuka halamannya.
+ *
+ * Ini bukan menebak: bundel awal adalah satu-satunya yang menunda aplikasi
+ * tampil di HP/koneksi lambat, jadi yang dipisah hanya yang tidak di layar
+ * pertama. LoadingPage/LoginPage tetap eager — keduanya pintu masuk.
+ */
+const QuizPanel = lazy(() => import('./components/dashboard/QuizPanel'))
+const VerifikasiPanel = lazy(() => import('./components/dashboard/VerifikasiPanel'))
 import { PlugZap, Plug, Trash2 } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP } from './data/dummy'
 import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
@@ -855,15 +868,23 @@ export default function App() {
             ) : null}
 
             {active === 'verifikasi' ? (
-              <VerifikasiPanel
-                t={t}
-                labelTingkat={labelTingkat}
-                tingkat={settings.level}
-                onTingkatChange={(lv) => setSettings((s) => ({ ...s, level: lv }))}
-                serverOnline={server.online}
-                serverMemuat={server.memuat}
-                bahasa={kodeBahasa}
-              />
+              <Suspense
+                fallback={
+                  <div className="grid place-items-center py-16 text-[0.84rem] text-muted-500">
+                    {t('umum.proses')}
+                  </div>
+                }
+              >
+                <VerifikasiPanel
+                  t={t}
+                  labelTingkat={labelTingkat}
+                  tingkat={settings.level}
+                  onTingkatChange={(lv) => setSettings((s) => ({ ...s, level: lv }))}
+                  serverOnline={server.online}
+                  serverMemuat={server.memuat}
+                  bahasa={kodeBahasa}
+                />
+              </Suspense>
             ) : null}
 
             {active === 'riwayat' ? (
@@ -902,7 +923,17 @@ export default function App() {
               </div>
             ) : null}
 
-            {active === 'kuesioner' ? <QuizPanel t={t} /> : null}
+            {active === 'kuesioner' ? (
+              <Suspense
+                fallback={
+                  <div className="grid place-items-center py-16 text-[0.84rem] text-muted-500">
+                    {t('umum.proses')}
+                  </div>
+                }
+              >
+                <QuizPanel t={t} />
+              </Suspense>
+            ) : null}
             {active === 'pengaturan' ? (
               <SettingsPanel
                 settings={settings}
@@ -928,7 +959,7 @@ export default function App() {
             <p className="text-[0.8rem] font-semibold text-navy-700">
               Pahami Sehat <span className="font-normal text-muted-500">· Created by NØCTURNE</span>
             </p>
-            <p className="flex items-center gap-1.5 text-[0.78rem] text-muted-500">
+            <p className="flex items-center gap-1.5 text-[0.82rem] text-muted-500">
               {server.memuat ? (
                 <>
                   <Plug className="size-3.5" aria-hidden="true" /> {t('umum.memeriksa')}
@@ -946,7 +977,7 @@ export default function App() {
                 </>
               )}
             </p>
-            <p className="flex items-center gap-1.5 text-[0.78rem] text-muted-500">
+            <p className="flex items-center gap-1.5 text-[0.82rem] text-muted-500">
               <a
                 href="https://lottiefiles.com/free-animation/doctor-welcoming-pacient-xsA9dFGcUA"
                 target="_blank"

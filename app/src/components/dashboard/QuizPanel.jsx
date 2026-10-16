@@ -199,7 +199,7 @@ export default function QuizPanel({ t = (k) => k }) {
           description={t('kuis.sub')}
           ilustrasi="kuesioner"
           action={
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-line-200 bg-white px-3 py-1.5 text-[0.78rem] font-semibold text-navy-600">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line-200 bg-white px-3 py-1.5 text-[0.82rem] font-semibold text-navy-600">
               <Clock className="size-3.5 text-brand-700" aria-hidden="true" />
               {t('kuis.waktu')}
             </span>
@@ -212,7 +212,7 @@ export default function QuizPanel({ t = (k) => k }) {
             <p className="text-[1.05rem] font-extrabold text-brand-700">
               {langkah + 1} <span className="text-navy-400">/ {TOTAL}</span>
             </p>
-            <p className="text-[0.78rem] text-muted-500">
+            <p className="text-[0.82rem] text-muted-500">
               {t('kuis.pertanyaanDari', { n: langkah + 1, b: TOTAL })}
             </p>
           </div>
@@ -363,7 +363,7 @@ export default function QuizPanel({ t = (k) => k }) {
               <p className="mt-2 max-w-[60ch] text-[0.92rem] leading-relaxed text-navy-700">
                 {result.saran}
               </p>
-              <p className="mt-3 text-[0.76rem] text-muted-500">{t('kuis.catatan')}</p>
+              <p className="mt-3 text-[0.82rem] text-muted-500">{t('kuis.catatan')}</p>
               <div className="mt-4">
                 <Button variant="neutral" size="md" onClick={ulangi}>
                   {t('kuis.ulangi')}
@@ -404,7 +404,7 @@ export default function QuizPanel({ t = (k) => k }) {
             <div className="min-w-0">
               <p className="text-[1.35rem] leading-none font-extrabold text-navy-900">{persen}%</p>
               <p className="mt-1 text-[0.86rem] font-bold text-navy-800">{t('kuis.progres')}</p>
-              <p className="text-[0.76rem] text-muted-500">
+              <p className="text-[0.82rem] text-muted-500">
                 {t('kuis.selesai', { n: terjawab, b: TOTAL })}
               </p>
             </div>
@@ -415,7 +415,7 @@ export default function QuizPanel({ t = (k) => k }) {
               style={{ width: `${persen}%` }}
             />
           </div>
-          <p className="mt-2 text-[0.76rem] text-muted-500">
+          <p className="mt-2 text-[0.82rem] text-muted-500">
             {t('kuis.terjawabDari', { a: terjawab, b: TOTAL })}
           </p>
         </Card>

@@ -31,7 +31,7 @@ export default function AskAI({
           <h2 className="text-[clamp(0.98rem,0.94rem+0.2vw,1.1rem)] font-bold text-navy-900">
             {t('tanya.judul')}
           </h2>
-          <p className="text-[0.8rem] leading-snug text-navy-500">{t('tanya.sub')}</p>
+          <p className="text-[0.84rem] leading-snug text-navy-500">{t('tanya.sub')}</p>
         </div>
       </div>
 
@@ -59,7 +59,7 @@ export default function AskAI({
 
       {/* Menjelaskan apa yang akan terjadi setelah menekan kirim — tanpa ini
           perpindahan halaman terasa seperti kejutan. */}
-      <p className="mt-2.5 inline-flex items-center gap-1.5 text-[0.78rem] text-muted-500">
+      <p className="mt-2.5 inline-flex items-center gap-1.5 text-[0.82rem] text-muted-500">
         <ArrowRight className="size-3.5" aria-hidden="true" />
         {t('tanya.pindahCatatan')}
       </p>

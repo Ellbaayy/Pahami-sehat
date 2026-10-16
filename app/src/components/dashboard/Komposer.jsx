@@ -176,7 +176,7 @@ export default function Komposer({
               }
             }}
             placeholder={sederhanakan ? t('sed.placeholder') : t('tanya.placeholder')}
-            className="min-h-[3.25rem] flex-1 resize-none bg-transparent text-[0.95rem] leading-relaxed text-navy-900 outline-none placeholder:text-muted-500"
+            className="min-h-[3.25rem] flex-1 resize-none bg-transparent text-[1rem] leading-relaxed text-navy-900 outline-none placeholder:text-muted-500"
           />
 
           {!ringkas ? (
@@ -187,14 +187,14 @@ export default function Komposer({
               aria-label={t('tanya.pindaiTombol')}
               title={t('tanya.pindaiTombol')}
               className={cn(
-                'grid size-10 shrink-0 place-items-center rounded-full transition-all duration-200',
+                'grid size-11 shrink-0 place-items-center rounded-full transition-all duration-200',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                 pindaiTerbuka
                   ? 'bg-brand-600 text-white'
                   : 'bg-surface-100 text-navy-500 hover:bg-brand-50 hover:text-brand-700',
               )}
             >
-              <Camera className="size-[17px]" aria-hidden="true" />
+              <Camera className="size-[18px]" aria-hidden="true" />
             </button>
           ) : null}
 
@@ -212,7 +212,7 @@ export default function Komposer({
                   : t('suara.ariaMulai')
             }
             className={cn(
-              'grid size-10 shrink-0 place-items-center rounded-full transition-all duration-200',
+              'grid size-11 shrink-0 place-items-center rounded-full transition-all duration-200',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
               'disabled:cursor-not-allowed disabled:opacity-45',
               suara.mendengar
@@ -220,7 +220,7 @@ export default function Komposer({
                 : 'bg-surface-100 text-navy-500 hover:bg-brand-50 hover:text-brand-700',
             )}
           >
-            <Mic className="size-[17px]" aria-hidden="true" />
+            <Mic className="size-[18px]" aria-hidden="true" />
           </button>
         </div>
 
@@ -237,30 +237,36 @@ export default function Komposer({
         </Button>
       </form>
 
-      <p className="mt-2 text-[0.8rem] text-muted-500">
-        {suara.mendengar ? (
-          suara.sementara ? (
-            <span className="text-brand-700">“{suara.sementara}”</span>
+      {/* Baris status di bawah kotak: hanya diisi kalau ADA yang perlu
+          dikatakan — suara yang sedang didengar, galat, atau info mode
+          Sederhanakan. Kalau sedang diam (mode Tanya biasa), baris ini KOSONG
+          dan tidak dirender sama sekali: dulu ia menampilkan placeholder yang
+          SAMA dengan yang ada di dalam kotak, sehingga teksnya terbaca dua
+          kali dan tampak seperti konten pengisi. */}
+      {suara.mendengar || suara.error || terlaluPanjang || sederhanakan ? (
+        <p className="mt-2 text-[0.82rem] text-muted-500" aria-live="polite">
+          {suara.mendengar ? (
+            suara.sementara ? (
+              <span className="text-brand-700">“{suara.sementara}”</span>
+            ) : (
+              t('tanya.mendengar')
+            )
+          ) : suara.error ? (
+            <span className="text-rose-700">{t(suara.error)}</span>
+          ) : terlaluPanjang ? (
+            <span className="text-amber-700">{t('tanya.terlaluPanjang')}</span>
           ) : (
-            t('tanya.mendengar')
-          )
-        ) : suara.error ? (
-          <span className="text-rose-700">{t(suara.error)}</span>
-        ) : terlaluPanjang ? (
-          <span className="text-amber-700">{t('tanya.terlaluPanjang')}</span>
-        ) : sederhanakan ? (
-          <>
-            {t('sed.sub')}
-            {value.length > 0 ? (
-              <span className="ml-2 text-muted-500">
-                {value.length}/{MAKS_SEDERHANAKAN}
-              </span>
-            ) : null}
-          </>
-        ) : (
-          t('tanya.placeholder')
-        )}
-      </p>
+            <>
+              {t('sed.sub')}
+              {value.length > 0 ? (
+                <span className="ml-2 text-muted-500">
+                  {value.length}/{MAKS_SEDERHANAKAN}
+                </span>
+              ) : null}
+            </>
+          )}
+        </p>
+      ) : null}
     </>
   )
 }

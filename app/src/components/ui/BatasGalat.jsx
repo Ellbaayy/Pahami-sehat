@@ -72,10 +72,10 @@ export default class BatasGalat extends Component {
 
             {/* rincian teknis dibuka hanya bila diminta — tidak menakut-nakuti pengguna biasa */}
             <details className="mt-2.5">
-              <summary className="cursor-pointer text-[0.78rem] font-semibold text-rose-700">
+              <summary className="cursor-pointer text-[0.82rem] font-semibold text-rose-700">
                 {t ? t('galat.rincian') : 'Rincian teknis'}
               </summary>
-              <p className="mt-1.5 rounded-lg bg-white/70 p-2.5 font-mono text-[0.72rem] break-words text-rose-800">
+              <p className="mt-1.5 rounded-lg bg-white/70 p-2.5 font-mono text-[0.8125rem] break-words text-rose-800">
                 {String(galat?.message ?? galat)}
               </p>
             </details>

@@ -563,7 +563,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
             <>
               <div className="my-5 flex items-center gap-3">
                 <span className="h-px flex-1 bg-line-200" />
-                <span className="text-[0.75rem] text-navy-400">atau</span>
+                <span className="text-[0.82rem] text-navy-400">atau</span>
                 <span className="h-px flex-1 bg-line-200" />
               </div>
               <a
@@ -592,7 +592,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
         </div>
 
         {/* catatan privasi — jujur, dan sesuai isi database */}
-        <p className="mt-5 text-center text-[0.78rem] leading-relaxed text-navy-500">
+        <p className="mt-5 text-center text-[0.82rem] leading-relaxed text-navy-500">
           Yang disimpan hanya email atau nomor telepon, nama panggilan, dan kata sandi (terenkripsi).
           Tidak ada nama lengkap, NIK, atau alamat.
         </p>

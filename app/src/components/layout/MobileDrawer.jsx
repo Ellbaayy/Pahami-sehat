@@ -81,7 +81,7 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
             <strong className="block truncate text-[0.95rem] font-extrabold tracking-tight text-navy-900">
               Pahami Sehat
             </strong>
-            <small className="block truncate text-[0.66rem] font-medium text-navy-500">
+            <small className="block truncate text-[0.8125rem] font-medium text-navy-500">
               {t('nav.isiDrawer')}
             </small>
           </span>

@@ -50,7 +50,7 @@ export default function TopicChips({
         description={t('topik.sub')}
         action={
           tglDiperiksa ? (
-            <p className="text-[0.74rem] font-medium text-muted-600">
+            <p className="text-[0.8125rem] font-medium text-muted-600">
               {belumBerubah
                 ? t('topik.diperbaruiPada', { tanggal: tglDiperbarui })
                 : t('topik.dicekDiperbarui', { dicek: tglDiperiksa, diperbarui: tglDiperbarui })}
