@@ -20,7 +20,7 @@
  *   node uji-suara.mjs
  */
 
-import { siapkanEjaan, nadaKalimat, pecahKalimat } from './app/server/suara.js'
+import { siapkanEjaan, nadaKalimat, pecahKalimat, DIEJA, JANGAN_EJA } from './app/server/suara.js'
 
 let lulus = 0
 let gagal = 0
@@ -38,29 +38,27 @@ function cek(nama, dapat, harap) {
   }
 }
 
-console.log('\n=== EJAAN: singkatan yang WAJIB dieja ===')
-// Diukur: bentuk polos dibaca sebagai kata oleh mesinnya, bentuk berspasi dieja.
-cek('DBD dieja', siapkanEjaan('Pasien DBD.'), 'Pasien D B D.')
-cek('ISPA dieja', siapkanEjaan('Gejala ISPA.'), 'Gejala I S P A.')
-cek('PPOK dieja', siapkanEjaan('Riwayat PPOK.'), 'Riwayat P P O K.')
-cek('GERD dieja', siapkanEjaan('Keluhan GERD.'), 'Keluhan G E R D.')
-cek('BPJS dieja', siapkanEjaan('Kartu BPJS.'), 'Kartu B P J S.')
-cek('RSUD dieja', siapkanEjaan('Rujuk ke RSUD.'), 'Rujuk ke R S U D.')
+console.log('\n=== PEMBAGIAN: dieja vs tidak dieja ===')
+console.log(`  dieja      (${DIEJA.length}): ${DIEJA.join(', ')}`)
+console.log(`  tidak dieja (${Object.keys(JANGAN_EJA).length}): ${Object.keys(JANGAN_EJA).join(', ')}`)
 
-console.log('\n=== EJAAN: yang SENGAJA TIDAK disentuh ===')
-// Sudah benar dibaca mesinnya (selisih durasi <= 12%). Mengubahnya = merusak.
-cek('TBC dibiarkan', siapkanEjaan('Obat TBC.'), 'Obat TBC.')
-cek('IGD dibiarkan', siapkanEjaan('Ke IGD sekarang.'), 'Ke IGD sekarang.')
-cek('ICU dibiarkan', siapkanEjaan('Masuk ICU.'), 'Masuk ICU.')
-cek('BMI dibiarkan', siapkanEjaan('Angka BMI.'), 'Angka BMI.')
-cek('USG dibiarkan', siapkanEjaan('Periksa USG.'), 'Periksa USG.')
-cek('MRI dibiarkan', siapkanEjaan('Hasil MRI.'), 'Hasil MRI.')
-cek('WHO dibiarkan', siapkanEjaan('Menurut WHO.'), 'Menurut WHO.')
+console.log('\n=== SETIAP yang perlu dieja BENAR-BENAR dieja ===')
+for (const kode of DIEJA) {
+  cek(`${kode} dieja`, siapkanEjaan(`Cek ${kode} sekarang.`), `Cek ${kode.split('').join(' ')} sekarang.`)
+}
 
-console.log('\n=== EJAAN: kata yang memang dibaca sebagai kata (JANGAN dieja) ===')
-// Rasio durasi 0,57-0,58 = memang dibaca sebagai kata, dan itu BENAR.
-cek('POSYANDU dibiarkan', siapkanEjaan('Datang ke POSYANDU.'), 'Datang ke POSYANDU.')
-cek('PUSKESMAS dibiarkan', siapkanEjaan('Ke PUSKESMAS terdekat.'), 'Ke PUSKESMAS terdekat.')
+console.log('\n=== SETIAP yang TIDAK perlu dieja TIDAK disentuh ===')
+// Ini bagian terpenting: mengeja yang sudah benar akan terdengar rusak.
+for (const kode of Object.keys(JANGAN_EJA)) {
+  cek(`${kode} dibiarkan`, siapkanEjaan(`Cek ${kode} sekarang.`), `Cek ${kode} sekarang.`)
+}
+
+console.log('\n=== yang mendekati batas (keputusan sadar) ===')
+// USG (0,89) dan WHO (0,90) ada di tepi. Sengaja TIDAK dieja: kalau ragu,
+// jangan mengeja — mengeja yang sudah benar lebih merusak daripada tidak
+// mengeja yang salah.
+cek('USG dibiarkan (rasio 0,89)', siapkanEjaan('Periksa USG.'), 'Periksa USG.')
+cek('WHO dibiarkan (rasio 0,90)', siapkanEjaan('Menurut WHO.'), 'Menurut WHO.')
 
 console.log('\n=== EJAAN: tidak mengganggu teks lain ===')
 cek('kata biasa utuh', siapkanEjaan('Demam berdarah perlu diperiksa.'), 'Demam berdarah perlu diperiksa.')

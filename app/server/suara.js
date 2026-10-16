@@ -252,67 +252,126 @@ export function nadaKalimat(kalimat, posisi = {}) {
 }
 
 /**
- * Singkatan yang WAJIB dieja supaya tidak salah dibaca.
+ * PEMBAGIAN SINGKATAN: mana yang DIEJA, mana yang JANGAN.
  *
  * ============================================================================
- * CARA MENGEJA — DAN KENAPA BUKAN `<say-as>`
+ * CARA MENGUKUR (jangan ubah daftar ini tanpa mengukur ulang)
  * ============================================================================
  *
- * Cara yang benar menurut standar SSML adalah `<say-as interpret-as="characters">`.
- * SUDAH DIUJI 15 Okt 2026: layanan Microsoft Edge Read Aloud MENOLAKnya —
- * koneksinya ditutup sebelum selesai ("no turn.end received"), sama seperti
- * `<break>` yang sudah lebih dulu tercatat gagal. Jadi cara itu TIDAK DIPAKAI.
+ * Setiap singkatan dibacakan DUA KALI dengan suara yang sama: bentuk polos
+ * ("DBD") dan bentuk berspasi ("D B D"). Lalu durasi audionya dibandingkan.
  *
- * Yang bekerja: menyisipkan SPASI di antara huruf ("B P J S"). Diukur dari
- * durasi audionya, dibandingkan bentuk polosnya:
+ *   rasio = durasi_polos / durasi_dieja
  *
- *   DBD      1,87s -> 2,26s (+21%)
- *   BPJS     2,57s -> 2,83s (+10%)
- *   ISPA     1,87s -> 2,38s (+27%)
- *   PPOK     1,87s -> 2,40s (+28%)
- *   GERD     1,87s -> 2,50s (+34%)
- *   POSYANDU 2,04s -> 3,55s (+74%)
+ * Arti rasionya:
+ *   ~1,0  -> mesinnya SUDAH mengeja sendiri; kedua bentuk sama panjangnya.
+ *            Mengeja paksa tidak mengubah apa pun, jadi jangan disentuh.
+ *   sedang (0,7–0,86) -> bentuk polos dibaca sebagai KATA; mengeja membuatnya
+ *            jelas lebih panjang. Inilah yang perlu dieja.
+ *   sangat kecil (< 0,6) -> bentuk polos DAN berspasi sama-sama dibaca sebagai
+ *            kata pendek. Ini singkatan yang sudah jadi kata Indonesia
+ *            (POSYANDU, PUSKESMAS) — mengejanya SALAH.
  *
- * ============================================================================
- * YANG SENGAJA **TIDAK** DIEJA — INI SAMA PENTINGNYA
- * ============================================================================
+ * Diukur 15 Okt 2026 dengan `id-ID-GadisNeural`, 33 singkatan:
+ *   yang perlu dieja      : rasio 0,72 – 0,86
+ *   yang sudah benar      : rasio 0,90 – 1,12
+ *   yang memang kata      : rasio 0,57 – 0,58 (POSYANDU, PUSKESMAS)
  *
- * Mengukur juga menunjukkan singkatan mana yang SUDAH dibaca huruf per huruf
- * oleh mesinnya, dan mana yang memang dibaca sebagai KATA. Memaksa yang sudah
- * benar akan MERUSAK, bukan memperbaiki:
- *
- *   TBC, HIV, WHO, BMI, RJP, IGD, ICU, USG, MRI, KB, NIK, APD, ASI, CT
- *     -> sudah dieja sendiri (selisih <= 12%). JANGAN diubah.
- *
- *   POSYANDU, PUSKESMAS
- *     -> memang dibaca sebagai kata (rasio 0,57–0,58). "posyandu" dan
- *        "puskesmas" adalah kata Indonesia yang lazim; mengejanya jadi salah.
- *
- * Karena itu daftarnya di bawah HANYA memuat singkatan yang terbukti salah
- * dibaca, bukan semua singkatan yang ada.
+ * Batasnya ditaruh di 0,88 — di tengah celah antara 0,86 dan 0,90. Yang
+ * mendekati batas (USG 0,89 dan WHO 0,90) sengaja TIDAK dieja: kalau ragu,
+ * jangan mengeja, karena mengeja yang sudah benar terdengar rusak, sedangkan
+ * tidak mengeja yang salah hanya kurang ideal.
  */
-const EJA = [
-  // empat huruf: mesinnya cenderung membacanya sebagai kata
-  'DBD',
-  'ISPA',
-  'PPOK',
-  'GERD',
-  'AIDS',
-  'PTM',
-  'RSUD',
-  // tiga huruf yang masih dibaca sebagai kata (rasio < 0,85)
-  'BPJS',
-  'HIV',
-]
+const UKUR = {
+  // ---- DIEJA: terbukti dibaca sebagai kata, dan bukan kata Indonesia (rasio 0,72–0,86) ----
+  AIDS: 0.72,
+  GERD: 0.75,
+  PPOK: 0.78,
+  ISPA: 0.79,
+  DBD: 0.83,
+  PTM: 0.83,
+  RSUD: 0.83,
+  PTB: 0.86,
+
+  // ---- JANGAN DIEJA: mesinnya sudah mengeja sendiri (rasio >= 0,88) ----
+  USG: 0.89, // mendekati batas — sengaja dibiarkan
+  WHO: 0.9, // mendekati batas — sengaja dibiarkan
+  BPJS: 0.91,
+  PCR: 0.91,
+  ASI: 0.91,
+  TBC: 0.92,
+  HIV: 0.92,
+  IGD: 0.93,
+  ICU: 0.93,
+  THT: 0.93,
+  NIH: 0.95,
+  EKG: 0.95,
+  NIK: 0.95,
+  RJP: 0.96,
+  BMKG: 0.98,
+  CT: 0.99,
+  KB: 1.0,
+  APD: 1.0,
+  TD: 1.0,
+  K3: 1.0,
+  BMI: 1.04,
+  BPOM: 1.07,
+  MRI: 1.12,
+}
+
+/**
+ * Singkatan yang sudah menjadi KATA INDONESIA — JANGAN dieja.
+ *
+ * Rasio terukurnya (0,57–0,58) membuatnya MIRIP kelompok "perlu dieja" kalau
+ * hanya melihat angkanya, padahal artinya berkebalikan: bentuk polos DAN
+ * bentuk berspasi sama-sama dibaca sebagai kata pendek. Keduanya memang kata
+ * yang lazim diucapkan, jadi mengejanya justru SALAH UCAP.
+ *
+ * Karena itu kelompok ini dipisah, bukan disatukan ke tabel UKUR — kesalahan
+ * pertama sempat memasukkan keduanya ke daftar "dieja" dan uji langsung
+ * menangkapnya.
+ */
+const KATA_INDONESIA = {
+  POSYANDU: 0.57,
+  PUSKESMAS: 0.58,
+}
+
+/** Batas rasio: di bawah ini berarti perlu dieja (dan bukan kata Indonesia). */
+const BATAS_EJA = 0.88
+
+/**
+ * Daftar singkatan yang DIEJA — diturunkan dari tabel pengukuran di atas,
+ * supaya tidak ada daftar kedua yang bisa berbeda dengan buktinya.
+ */
+const EJA = Object.entries(UKUR)
+  .filter(([, rasio]) => rasio < BATAS_EJA)
+  .map(([kode]) => kode)
 
 /** Bentuk regex sekali jadi — lebih cepat daripada menyusun ulang tiap kalimat. */
 const POLA_EJA = new RegExp(`\\b(${EJA.join('|')})\\b`, 'g')
 
 /**
+ * Keterangan untuk dipakai uji dan dokumentasi: singkatan mana yang JANGAN
+ * dieja, beserta rasio terukurnya. Dipakai supaya uji bisa memastikan daftar
+ * "jangan" ini benar-benar tidak disentuh.
+ */
+export const JANGAN_EJA = {
+  ...Object.fromEntries(Object.entries(UKUR).filter(([, rasio]) => rasio >= BATAS_EJA)),
+  ...KATA_INDONESIA,
+}
+
+/** Daftar singkatan yang dieja — dipakai uji. */
+export const DIEJA = EJA
+
+/** Kata Indonesia yang mirip singkatan — dipakai uji supaya tidak ikut dieja. */
+export const KATA_MIRIP_SINGKATAN = KATA_INDONESIA
+
+/**
  * Sisipkan spasi di antara huruf supaya singkatan DIEJA, bukan dibaca sebagai kata.
  *
  * Hanya menyentuh singkatan di daftar EJA. Teks lain tidak diubah sama sekali —
- * termasuk singkatan yang sudah benar dibaca mesinnya.
+ * termasuk singkatan yang sudah benar dibaca mesinnya (TBC, HIV, IGD, …) dan
+ * kata seperti POSYANDU/PUSKESMAS.
  *
  * @param {string} teks
  * @returns {string}
