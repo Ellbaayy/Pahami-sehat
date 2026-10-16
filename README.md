@@ -29,6 +29,60 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 
 ---
 
+## Tampilan
+
+Tangkapan layar di bawah diambil langsung dari aplikasi yang berjalan
+(`npm run server`) — bukan gambar desain. Berkasnya ada di
+[`docs/tangkapan-layar/`](docs/tangkapan-layar/). Yang terlihat di bagian
+**Produk** adalah mockup perangkat, dan itu memang ilustrasi di dalam halaman —
+sisanya tampilan sungguhan.
+
+### Aplikasi — dashboard
+
+| Beranda | Tanya AI | Cek Klaim |
+|---|---|---|
+| ![Beranda](docs/tangkapan-layar/dashboard-1-beranda.png) | ![Tanya AI](docs/tangkapan-layar/dashboard-2-tanya-ai.png) | ![Cek Klaim](docs/tangkapan-layar/dashboard-3-cek-klaim.png) |
+
+| Riwayat | Kuesioner | Pengaturan |
+|---|---|---|
+| ![Riwayat](docs/tangkapan-layar/dashboard-4-riwayat.png) | ![Kuesioner](docs/tangkapan-layar/dashboard-5-kuesioner.png) | ![Pengaturan](docs/tangkapan-layar/dashboard-6-pengaturan.png) |
+
+**Tampilan di ponsel** (lebar 390 px) — sidebar berubah jadi menu gulir:
+
+| Beranda | Menu terbuka |
+|---|---|
+| ![Beranda di HP](docs/tangkapan-layar/dashboard-hp-1-beranda.png) | ![Menu HP](docs/tangkapan-layar/dashboard-hp-2-menu.png) |
+
+**Mode kontras tinggi** — satu sakelar: teks jadi hitam penuh, huruf dasar
+membesar 112% (terukur 16 px → 17,92 px), garis dan batas fokus dipertebal:
+
+![Mode kontras tinggi](docs/tangkapan-layar/dashboard-kontras-tinggi.png)
+
+### Halaman penjelasan (prototype)
+
+| Pembuka | Masalah & data | Konsep |
+|---|---|---|
+| ![Pembuka](docs/tangkapan-layar/prototype-1-hero.png) | ![Masalah](docs/tangkapan-layar/prototype-2-masalah.png) | ![Konsep](docs/tangkapan-layar/prototype-3-konsep.png) |
+
+| Alur enam langkah | Lima fitur utama | Lanjutan fitur |
+|---|---|---|
+| ![Alur](docs/tangkapan-layar/prototype-4-alur.png) | ![Fitur](docs/tangkapan-layar/prototype-5-fitur.png) | ![Fitur lanjutan](docs/tangkapan-layar/prototype-6-fitur-lanjut.png) |
+
+| Produk — mockup dasbor & ponsel | Kuesioner HLS-SF12 | Sumber & etika |
+|---|---|---|
+| ![Produk](docs/tangkapan-layar/prototype-7-produk.png) | ![Kuesioner](docs/tangkapan-layar/prototype-8-kuesioner.png) | ![Sumber](docs/tangkapan-layar/prototype-9-sumber.png) |
+
+| Etika & keterbatasan | Prototype di ponsel | Bagian masalah di ponsel |
+|---|---|---|
+| ![Etika](docs/tangkapan-layar/prototype-10-etika.png) | ![Prototype HP](docs/tangkapan-layar/prototype-hp-1-hero.png) | ![Prototype HP masalah](docs/tangkapan-layar/prototype-hp-2-masalah.png) |
+
+> Mockup perangkat di bagian **Produk** menampilkan **menu yang sama** dengan
+> aplikasi sungguhan (Beranda, Tanya AI, Cek Klaim, Riwayat, Kuesioner,
+> Pengaturan) — "Sederhanakan" dan "Suara" tidak berdiri sendiri karena
+> keduanya sudah menjadi bagian dari Tanya AI.
+
+---
+
 ## Peta folder
 
 | Folder | Peran |
