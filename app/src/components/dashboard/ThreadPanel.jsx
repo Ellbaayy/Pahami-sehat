@@ -62,6 +62,15 @@ export default function ThreadPanel({
   onSesiBaru,
   onBagikan,
   onHapusSesi,
+  /**
+   * Pilihan suara pengguna. 'auto' = biarkan server menebak dari isi jawaban.
+   *
+   * Diteruskan apa adanya ke TombolDengar: pengguna yang sudah memilih suara
+   * tidak boleh dilawan oleh tebakan otomatis — itu yang dulu membuat jawaban
+   * Indonesia dibacakan dengan suara Jawa.
+   */
+  suaraBahasa = 'auto',
+  suaraJenis = 'p',
 }) {
   const [seretFoto, setSeretFoto] = useState(false)
 
@@ -234,7 +243,7 @@ export default function ThreadPanel({
               {m.role === 'ai' ? (
                 <>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <TombolDengar teks={m.text} t={t} />
+                    <TombolDengar teks={m.text} bahasa={suaraBahasa} jenis={suaraJenis} t={t} />
                   </div>
                   <PoinKunci items={m.poinKunci} t={t} />
                   <SourcePills sources={m.sources} negative={m.verdict === 'negative'} t={t} />

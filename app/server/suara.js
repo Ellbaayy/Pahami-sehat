@@ -74,13 +74,41 @@
 
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts'
 
-/** Suara per bahasa: jawaban dibacakan sesuai bahasanya. */
+/**
+ * Matriks suara: 4 bahasa × 2 jenis.
+ *
+ * SEMUA nama suara di sini sudah DIPERIKSA ke layanan Microsoft (322 suara
+ * tersedia) — bukan dari ingatan. Cara memeriksanya ada di uji-suara.mjs.
+ *
+ * `p` = perempuan, `l` = laki-laki.
+ *
+ * Catatan pemilihan untuk Inggris: Ava dan Andrew dipilih karena keduanya
+ * termasuk generasi suara terbaru Microsoft (lebih halus daripada Aria/Guy
+ * yang lebih tua). Yang penting keduanya ada dan sudah terverifikasi.
+ */
 const SUARA = {
-  id: 'id-ID-GadisNeural', // perempuan Indonesia — suara utama
-  jv: 'jv-ID-SitiNeural', // perempuan Jawa
-  su: 'su-ID-TutiNeural', // perempuan Sunda
-  en: 'en-US-AriaNeural', // perempuan Inggris (untuk jawaban berbahasa Inggris)
+  id: { p: 'id-ID-GadisNeural', l: 'id-ID-ArdiNeural' },
+  jv: { p: 'jv-ID-SitiNeural', l: 'jv-ID-DimasNeural' },
+  su: { p: 'su-ID-TutiNeural', l: 'su-ID-JajangNeural' },
+  en: { p: 'en-US-AvaNeural', l: 'en-US-AndrewNeural' },
 }
+
+/** Kode bahasa yang punya suara sendiri. */
+export const BAHASA_SUARA = ['id', 'jv', 'su', 'en']
+
+/** Jenis suara yang tersedia. */
+export const JENIS_SUARA = ['p', 'l']
+
+/** Label manusiawi untuk ditampilkan di antarmuka. */
+export const LABEL_SUARA = {
+  id: 'Indonesia',
+  jv: 'Jawa',
+  su: 'Sunda',
+  en: 'English',
+}
+
+/** Label jenis kelamin untuk antarmuka. */
+export const LABEL_JENIS = { p: 'Perempuan', l: 'Laki-laki' }
 
 /**
  * Batas aman panjang teks yang dibacakan.
@@ -140,49 +168,110 @@ function denganBatasWaktu(janji, ms) {
 }
 
 /**
- * Pilih suara berdasarkan bahasa jawaban.
+ * Pilih nama suara dari bahasa + jenis.
  *
- * CATATAN: fungsi ini HANYA menerima kode bahasa. Dulu ada pemanggil yang
- * mengirim argumen kedua (teks), padahal parameternya cuma satu — argumen itu
- * dibuang diam-diam. Sekarang hanya satu parameter supaya tidak ada yang
- * mengira ada logika tambahan di sini.
- *
- * @param {'id'|'jv'|'su'|'en'|string} kode
+ * @param {'id'|'jv'|'su'|'en'|string} kode bahasa
+ * @param {'p'|'l'|string} jenis 'p' perempuan (bawaan), 'l' laki-laki
  */
-export function pilihSuara(kode) {
-  return SUARA[kode] ?? SUARA.id
+export function pilihSuara(kode, jenis = 'p') {
+  const perBahasa = SUARA[kode] ?? SUARA.id
+  return perBahasa[jenis] ?? perBahasa.p
 }
 
 /**
  * Tentukan bahasa yang dipakai untuk membacakan.
  *
- * URUTANNYA PENTING: teks jawaban diperiksa LEBIH DULU, karena kode bahasa
- * yang dikirim aplikasi adalah bahasa ANTARMUKA (Indonesia/Inggris), bukan
- * bahasa jawaban. Tanpa ini, jawaban berbahasa Jawa akan dibacakan dengan
- * suara Indonesia — terdengar aneh dan salah logat.
+ * URUTAN KEPUTUSAN — dan urutannya penting:
+ *
+ *   1. PILIHAN PENGGUNA MENANG. Kalau pengguna sudah memilih suara sendiri di
+ *      Pengaturan, pilihannya dipakai APA ADANYA dan tebakan otomatis tidak
+ *      dijalankan sama sekali. Ini menutup keluhan yang paling mengganggu:
+ *      "aku nanya bahasa Indonesia, dijawab Indonesia, tapi dibacakan Jawa".
+ *      Penyebabnya ada di bawah (tebakan otomatis), tapi apa pun penyebabnya,
+ *      pengguna yang sudah memilih tidak boleh dilawan oleh tebakan.
+ *
+ *   2. KALAU 'otomatis', bahasa ditebak dari ISI TEKS — bukan dari kode bahasa
+ *      antarmuka, karena kode itu bahasa ANTARMUKA, bukan bahasa jawaban.
  *
  * @param {string} teks - teks jawaban
- * @param {string} diminta - kode bahasa dari aplikasi (cadangan)
+ * @param {string} diminta - kode bahasa dari aplikasi, atau 'auto'/''
+ * @returns {'id'|'jv'|'su'|'en'}
  */
 export function tentukanBahasa(teks, diminta = '') {
+  const minta = String(diminta ?? '').trim().toLowerCase()
+
+  // 1. pilihan pengguna — jangan dilawan tebakan
+  if (BAHASA_SUARA.includes(minta)) return minta
+
+  // 2. otomatis: tebak dari isi teks
   const dariTeks = tebakBahasaDaerah(teks)
   if (dariTeks !== 'id') return dariTeks // Jawa/Sunda menang
-  if (diminta === 'en') return 'en'
   return 'id'
 }
 
 /**
- * Tebak bahasa daerah dari teks jawaban, karena endpoint TTS hanya menerima
- * kode bahasa, bukan teksnya. Hanya Jawa dan Sunda yang punya suara sendiri.
+ * Tebak bahasa daerah dari teks jawaban.
+ *
+ * ============================================================================
+ * BUG YANG PERNAH TERJADI DI SINI — DAN KENAPA SEKARANG PAKAI BATAS KATA
+ * ============================================================================
+ *
+ * Versi sebelumnya mencocokkan POTONGAN KATA (`t.includes(kata)`). Akibatnya
+ * kata pendek memicu deteksi palsu pada kata Indonesia yang sangat umum:
+ *
+ *   'iku'  cocok di  "ikuti", "siku", "ikut"
+ *   'dina' cocok di  "dinamis", "dinamakan"
+ *   'abdi' cocok di  "abdi negara"
+ *
+ * Diukur 16 Okt 2026: 5 dari 10 kalimat kesehatan berbahasa INDONESIA
+ * dinyatakan Jawa, sehingga jawaban Indonesia dibacakan dengan suara Jawa.
+ * Itu keluhan yang disampaikan jagi, dan penyebabnya persis ini.
+ *
+ * Perbaikannya dua lapis:
+ *   1. Pencocokan memakai BATAS KATA (`\b`), jadi 'iku' tidak lagi cocok di
+ *      dalam "ikuti". Daftar kata juga diperketat: hanya kata yang TIDAK
+ *      muncul dalam bahasa Indonesia sehari-hari.
+ *   2. Ambangnya dinaikkan: satu kata daerah yang kebetulan muncul TIDAK
+ *      cukup. Butuh minimal DUA pemicu, ATAU satu pemicu yang sangat khas
+ *      (kata fungsi seperti 'yaiku', 'menika', 'nyaéta', 'sanggeus') yang
+ *      hampir tidak mungkin muncul di kalimat Indonesia.
+ *
+ * Yang TIDAK dilakukan: menghapus fitur deteksi. Jawaban berbahasa Jawa/Sunda
+ * tetap perlu dibacakan dengan suara yang tepat — itu justru fitur unggulan
+ * aplikasi ini. Yang diperbaiki adalah ketepatannya.
  */
 export function tebakBahasaDaerah(teks) {
   const t = String(teks ?? '').toLowerCase()
-  const jawa = ['yaiku', 'iku', 'dina', 'sawise', 'gejalane', 'menika', 'punika', 'saged', 'nganggo', 'wonten', 'matur', 'nuwun']
-  const sunda = ['nyaeta', 'nyaéta', 'ieu', 'sanggeus', 'panyakit', 'numutkeun', 'abdi', 'kasakit', 'teh ', 'oge ', 'ogé ']
-  const nJawa = jawa.filter((k) => t.includes(k)).length
-  const nSunda = sunda.filter((k) => t.includes(k)).length
-  if (nJawa === 0 && nSunda === 0) return 'id'
-  return nJawa >= nSunda ? 'jv' : 'su'
+
+  // Kata yang SANGAT khas — satu saja sudah cukup untuk memutuskan.
+  //
+  // SYARAT MASUK DAFTAR INI: kata itu TIDAK BOLEH punya arti dalam bahasa
+  // Indonesia. Ini pernah salah: 'abdi' ("abdi negara") dan 'teh' ("minum
+  // teh") sempat ada di sini, dan keduanya membuat kalimat Indonesia
+  // dinyatakan Sunda. Kata yang masih ambigu masuk PENDUKUNG, yang butuh dua.
+  const KHAS = {
+    jv: ['yaiku', 'menika', 'punika', 'gejalane', 'sawise', 'nganggo', 'wonten', 'matur nuwun', 'saged', 'dhateng', 'menawi', 'kula'],
+    su: ['nyaéta', 'nyaeta', 'sanggeus', 'numutkeun', 'panyakit', 'kasakit', 'oge', 'ogé', 'ieu', 'mangka'],
+  }
+
+  // Kata pendukung — perlu minimal DUA supaya dianggap daerah.
+  // Di sini boleh ada kata yang ambigu, karena satu saja tidak cukup.
+  const PENDUKUNG = {
+    jv: ['dina', 'iku', 'lan', 'kang', 'sing', 'wis', 'durung', 'kula', 'sok'],
+    su: ['jeung', 'mah', 'teh', 'geus', 'acan', 'kudu', 'abdi', 'sok', 'oge'],
+  }
+
+  /** Cocok sebagai KATA UTUH, bukan potongan kata. */
+  const adaUtuh = (kata) => new RegExp(`(^|[^a-zà-ÿ])${kata.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-zà-ÿ]|$)`, 'i').test(t)
+
+  for (const b of ['jv', 'su']) {
+    if (KHAS[b].some(adaUtuh)) return b
+  }
+
+  const nJawa = PENDUKUNG.jv.filter(adaUtuh).length
+  const nSunda = PENDUKUNG.su.filter(adaUtuh).length
+  if (nJawa >= 2 || nSunda >= 2) return nJawa >= nSunda ? 'jv' : 'su'
+  return 'id'
 }
 
 /**
@@ -458,7 +547,7 @@ async function sambung(e) {
   let terakhir
   for (let ke = 1; ke <= COBA_ULANG; ke++) {
     try {
-      await e.tts.setMetadata(pilihSuara(e.bahasa), FORMAT_MP3)
+      await e.tts.setMetadata(pilihSuara(e.bahasa, e.jenis), FORMAT_MP3)
       return
     } catch (err) {
       terakhir = err
@@ -509,10 +598,10 @@ async function buatBagianTahan(e, kalimat, opsi) {
  * lebih awal dengan pesan yang jujur daripada menunggu batas waktu habis.
  *
  * @param {string} teks
- * @param {{ bahasa?: string }} opsi
+ * @param {{ bahasa?: string, jenis?: 'p'|'l' }} opsi
  * @returns {Promise<Buffer>}
  */
-export async function buatSuara(teks, { bahasa = 'id' } = {}) {
+export async function buatSuara(teks, { bahasa = 'id', jenis = 'p' } = {}) {
   const kalimat = pecahKalimat(teks)
   if (!kalimat.length) throw new Error('Tidak ada teks untuk dibacakan.')
 
@@ -532,7 +621,7 @@ export async function buatSuara(teks, { bahasa = 'id' } = {}) {
   let i = 0
   const pekerja = Array.from({ length: Math.min(SERENTAK, kalimat.length) }, async () => {
     const tts = new MsEdgeTTS()
-    const e = { tts, bahasa }
+    const e = { tts, bahasa, jenis }
     // Pembukaan koneksi ikut diulang: 429 bisa datang di sini, bukan cuma saat
     // mengirim kalimat (lihat sambung()).
     await sambung(e)
@@ -573,4 +662,29 @@ export async function buatSuara(teks, { bahasa = 'id' } = {}) {
 
 /** Daftar suara msedge-tts per bahasa — dipakai rute sebagai petunjuk cadangan
  * saat suara natural gagal, jadi memang dipakai dari luar berkas ini. */
+/**
+ * Daftar suara yang tersedia, dalam bentuk yang siap dikirim ke antarmuka.
+ *
+ * Dikembalikan sebagai daftar datar (bukan matriks) supaya frontend bisa
+ * menampilkannya tanpa perlu tahu bentuk internalnya.
+ *
+ * @returns {Array<{bahasa: string, jenis: 'p'|'l', nama: string, labelBahasa: string, labelJenis: string}>}
+ */
+export function daftarSuara() {
+  const hasil = []
+  for (const bahasa of BAHASA_SUARA) {
+    for (const jenis of JENIS_SUARA) {
+      hasil.push({
+        bahasa,
+        jenis,
+        nama: SUARA[bahasa][jenis],
+        labelBahasa: LABEL_SUARA[bahasa],
+        labelJenis: LABEL_JENIS[jenis],
+      })
+    }
+  }
+  return hasil
+}
+
+/** Bentuk lama, tetap diekspor supaya tidak ada pemanggil yang rusak. */
 export const DAFTAR_SUARA = SUARA

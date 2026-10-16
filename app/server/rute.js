@@ -18,7 +18,7 @@ import { Router } from 'express'
 import { config, safeInfo } from './config.js'
 import { KenariError, chat, chatStream, cekSehat } from './kenari.js'
 import { buatEkstrak } from './ekstrak.js'
-import { buatSuara, tentukanBahasa, pilihSuara } from './suara.js'
+import { buatSuara, tentukanBahasa, pilihSuara, daftarSuara, BAHASA_SUARA, JENIS_SUARA } from './suara.js'
 import {
   TINGKAT,
   TINGKAT_DEFAULT,
@@ -458,6 +458,19 @@ rute.get('/api/meta', batasMeta, (_req, res) => {
       usia: t.usia,
     })),
     tingkatDefault: TINGKAT_DEFAULT,
+    /**
+     * Daftar suara yang bisa dipilih pengguna.
+     *
+     * Diumumkan SERVER, bukan ditulis ulang di frontend, supaya tidak ada dua
+     * daftar yang bisa berbeda. Kalau suatu saat suara ditambah/diganti,
+     * antarmuka ikut sendiri tanpa perlu diubah.
+     */
+    suara: {
+      daftar: daftarSuara(),
+      bahasa: BAHASA_SUARA,
+      jenis: JENIS_SUARA,
+      bawaan: { bahasa: 'auto', jenis: 'p' },
+    },
   })
 })
 
@@ -498,13 +511,18 @@ rute.post('/api/suara', batasSuara, bungkus(async (req, res) => {
   // tanpa balasan apa pun. Sekarang ditolak lebih awal dengan pesan jelas.
   if (tolakKalauPanjang(res, teks, MAKS_SUARA, 'Teks yang dibacakan')) return
 
-  // Bahasa ditentukan dari ISI TEKS lebih dulu (Jawa/Sunda), baru kode dari
-  // aplikasi sebagai cadangan — kode itu bahasa antarmuka, bukan bahasa jawaban.
+  // Bahasa & jenis suara.
+  //
+  // `bahasa` boleh berisi pilihan PENGGUNA ('id'/'jv'/'su'/'en') atau 'auto'.
+  // Pilihan pengguna MENANG atas tebakan otomatis — lihat tentukanBahasa().
+  // Inilah yang memperbaiki keluhan "dijawab Indonesia tapi dibacakan Jawa":
+  // kalau pengguna sudah memilih, tebakan tidak dijalankan sama sekali.
   const diminta = String(req.body?.bahasa ?? '').trim().toLowerCase()
   const bahasa = tentukanBahasa(teks, diminta)
+  const jenis = String(req.body?.jenis ?? '').trim().toLowerCase() === 'l' ? 'l' : 'p'
 
   try {
-    const audio = await buatSuara(teks, { bahasa })
+    const audio = await buatSuara(teks, { bahasa, jenis })
     res.set({
       'Content-Type': 'audio/mpeg',
       'Content-Length': String(audio.length),
@@ -521,7 +539,7 @@ rute.post('/api/suara', batasSuara, bungkus(async (req, res) => {
       ok: false,
       code: 'suara_gagal',
       pesan: 'Suara natural sedang tidak bisa dibuat. Peramban akan memakai suara bawaannya.',
-      suara: pilihSuara(bahasa),
+      suara: pilihSuara(bahasa, jenis),
     })
   }
 }))

@@ -20,7 +20,19 @@
  *   node uji-suara.mjs
  */
 
-import { siapkanEjaan, nadaKalimat, pecahKalimat, DIEJA, JANGAN_EJA } from './app/server/suara.js'
+import {
+  siapkanEjaan,
+  nadaKalimat,
+  pecahKalimat,
+  DIEJA,
+  JANGAN_EJA,
+  tebakBahasaDaerah,
+  tentukanBahasa,
+  pilihSuara,
+  daftarSuara,
+  BAHASA_SUARA,
+  JENIS_SUARA,
+} from './app/server/suara.js'
 
 let lulus = 0
 let gagal = 0
@@ -104,6 +116,112 @@ cek(
 )
 cek('kalimat pendek digabung', pecahKalimat('Ini kalimat panjang sekali untuk diuji. Ya.').length, 1)
 cek('kosong -> kosong', pecahKalimat('').length, 0)
+
+/* ==========================================================================
+ * DETEKSI BAHASA & PILIHAN SUARA — ditambahkan 16 Okt 2026
+ * ======================================================================== */
+
+console.log('\n=== BUG: kalimat INDONESIA tidak boleh dinyatakan Jawa/Sunda ===')
+/*
+ * Keluhan jagi: "aku nanya pakai bahasa indonesia, dijawab dalam bahasa
+ * indonesia, tapi pas pakai speech dibacain pakai bahasa jawa".
+ *
+ * Penyebabnya DIUKUR: pencocokan memakai POTONGAN KATA, sehingga kata daerah
+ * pendek memicu deteksi palsu pada kata Indonesia yang sangat umum —
+ * 'iku' cocok di "ikuti"/"siku", 'dina' cocok di "dinamis"/"dinamakan".
+ * Terukur saat itu: 5 dari 10 kalimat kesehatan Indonesia dinyatakan Jawa.
+ *
+ * Kalimat di bawah adalah kalimat kesehatan yang WAJAR, dan semuanya harus
+ * tetap dianggap Indonesia. Kalau salah satu mulai terdeteksi daerah lagi,
+ * uji ini akan menangkapnya sebelum sampai ke pengguna.
+ */
+const KALIMAT_INDONESIA = [
+  'Ikuti anjuran dokter dan minum obat secara teratur.',
+  'Penyakit ini dinamis dan bisa berubah sewaktu-waktu.',
+  'Kondisi ini dinamakan hipertensi oleh para ahli kesehatan.',
+  'Ayo ikuti program imunisasi dasar lengkap untuk anak.',
+  'Siku tangan terasa nyeri setelah olahraga berat.',
+  'Demam berdarah adalah penyakit dari virus yang ditularkan nyamuk.',
+  'Abdi negara bertugas melayani masyarakat.',
+  'Setelah minum teh, gejala biasanya membaik.',
+  'Dokter akan memeriksa tekanan darah Anda hari ini.',
+  'Jangan lupa lanjutkan pengobatan sampai selesai ya.',
+  'Gejala demam berdarah biasanya muncul tiga sampai tujuh hari.',
+  'Ikuti petunjuk pemakaian obat pada kemasan.',
+]
+for (const k of KALIMAT_INDONESIA) {
+  cek(`indonesia: "${k.slice(0, 40)}…"`, tebakBahasaDaerah(k), 'id')
+}
+
+console.log('\n=== JAWA & SUNDA tetap terdeteksi (fitur ini tidak boleh hilang) ===')
+// Fitur suara daerah adalah keunggulan aplikasi ini — yang diperbaiki adalah
+// KETEPATANNYA, bukan dihapus.
+for (const k of [
+  'Penyakit iki yaiku demam berdarah sing disebabake virus.',
+  'Menika kula badhe matur babagan lelara demam berdarah.',
+  'Sawise diombe obat, gejalane saya suda.',
+  'Nganggo cara menika, awak badhe saya sehat.',
+]) {
+  cek(`jawa: "${k.slice(0, 40)}…"`, tebakBahasaDaerah(k), 'jv')
+}
+for (const k of [
+  'Panyakit ieu nyaeta demam berdarah anu disababkeun ku virus.',
+  'Sanggeus diinum obatna, gejala teh ngurangan.',
+  'Numutkeun dokter, kasakit ieu kudu diubaran geura.',
+]) {
+  cek(`sunda: "${k.slice(0, 40)}…"`, tebakBahasaDaerah(k), 'su')
+}
+
+console.log('\n=== PILIHAN PENGGUNA menang atas tebakan otomatis ===')
+/*
+ * Ini inti perbaikannya: kalau pengguna sudah memilih suara sendiri di
+ * Pengaturan, tebakan otomatis TIDAK dijalankan. Jadi walaupun tebakannya
+ * salah, pengguna tidak lagi "dibacakan Jawa" tanpa bisa apa-apa.
+ */
+cek('pilih Jawa + teks Indonesia', tentukanBahasa('Ikuti anjuran dokter yaiku minum obat.', 'jv'), 'jv')
+cek('pilih Indonesia + teks Jawa', tentukanBahasa('Penyakit iki yaiku demam berdarah.', 'id'), 'id')
+cek('pilih Inggris + teks Indonesia', tentukanBahasa('Demam berdarah itu apa?', 'en'), 'en')
+cek('pilih Sunda + teks Indonesia', tentukanBahasa('Ikuti anjuran dokter.', 'su'), 'su')
+cek('auto + teks Indonesia', tentukanBahasa('Ikuti anjuran dokter.', 'auto'), 'id')
+cek('auto + teks Jawa', tentukanBahasa('Penyakit iki yaiku demam berdarah.', 'auto'), 'jv')
+cek('kosong -> auto', tentukanBahasa('Penyakit iki yaiku demam.', ''), 'jv')
+cek('kode ngawur -> auto', tentukanBahasa('Ikuti anjuran dokter.', 'xx'), 'id')
+
+console.log('\n=== MATRIKS SUARA: 4 bahasa × 2 jenis ===')
+/*
+ * SEMUA nama suara di bawah sudah DIPERIKSA ke layanan Microsoft (322 suara
+ * tersedia) — bukan dari ingatan. Cara memeriksa ulang:
+ *
+ *   node -e "import('msedge-tts').then(async m => {
+ *     const t = new m.MsEdgeTTS(); const v = await t.getVoices();
+ *     console.log(v.filter(x => /^(id|jv|su|en)-/.test(x.Locale)).map(x => x.ShortName + ' ' + x.Gender))
+ *   })"
+ *
+ * Uji ini mengunci PASANGANNYA: kalau suatu saat nama suara diganti, uji ini
+ * gagal sampai namanya diverifikasi ulang ke layanan — bukan sekadar dipercaya.
+ */
+const MATRIKS = [
+  ['id', 'p', 'id-ID-GadisNeural'],
+  ['id', 'l', 'id-ID-ArdiNeural'],
+  ['jv', 'p', 'jv-ID-SitiNeural'],
+  ['jv', 'l', 'jv-ID-DimasNeural'],
+  ['su', 'p', 'su-ID-TutiNeural'],
+  ['su', 'l', 'su-ID-JajangNeural'],
+  ['en', 'p', 'en-US-AvaNeural'],
+  ['en', 'l', 'en-US-AndrewNeural'],
+]
+for (const [b, j, nama] of MATRIKS) {
+  cek(`suara ${b}/${j}`, pilihSuara(b, j), nama)
+}
+cek('jenis ngawur -> perempuan', pilihSuara('id', 'x'), 'id-ID-GadisNeural')
+cek('bahasa ngawur -> Indonesia', pilihSuara('xx', 'l'), 'id-ID-ArdiNeural')
+
+console.log('\n=== DAFTAR SUARA untuk antarmuka ===')
+const daftar = daftarSuara()
+cek('jumlah entri = 4 bahasa x 2 jenis', daftar.length, BAHASA_SUARA.length * JENIS_SUARA.length)
+cek('semua punya label bahasa & jenis', daftar.every((x) => x.labelBahasa && x.labelJenis), true)
+cek('semua nama suara terisi', daftar.every((x) => typeof x.nama === 'string' && x.nama.length > 5), true)
+cek('tidak ada pasangan kembar', new Set(daftar.map((x) => x.bahasa + x.jenis)).size, daftar.length)
 
 console.log('\n=== RINGKASAN ===')
 console.log(`lulus : ${lulus}`)
