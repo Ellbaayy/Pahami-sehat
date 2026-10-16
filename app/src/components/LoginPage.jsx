@@ -22,7 +22,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, Loader2, Check, AlertCircle } from 'lucide-react'
+import { Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, Loader2, Check, AlertCircle, ShieldCheck, HeartHandshake, Users } from 'lucide-react'
 import logo from '../assets/logo-mark.png'
 
 const MIN_SANDI = 8
@@ -134,6 +134,18 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
   const [galat, setGalat] = useState('')
   const [catatan, setCatatan] = useState('')
 
+  /**
+   * Kunci re-mount saat layar berpindah, supaya animasi masuk (.rise) ikut
+   * berjalan ulang. Tanpa ini, berpindah layar terasa seperti teks yang
+   * diganti — bukan layar yang berganti.
+   */
+  const [kunciLayar, setKunciLayar] = useState(0)
+
+  const keLayar = useCallback((l) => {
+    setLayar(l)
+    setKunciLayar((k) => k + 1)
+  }, [])
+
   const bersihkan = useCallback(() => {
     setGalat('')
     setCatatan('')
@@ -153,10 +165,10 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
     try {
       const d = await panggilApi('/api/akun/cek', { body: { identifier: nilai } })
       if (d.terdaftar) {
-        setLayar('masuk')
+        keLayar('masuk')
       } else {
         setCatatan('Belum ada akun dengan alamat ini. Yuk buat akun dulu.')
-        setLayar('buat1')
+        keLayar('buat1')
       }
     } catch (err) {
       setGalat(err.message)
@@ -175,7 +187,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
     try {
       const d = await panggilApi('/api/akun/masuk', { body: { identifier: identifier.trim(), sandi } })
       if (d.perluNama) {
-        setLayar('nama')
+        keLayar('nama')
       } else {
         onSelesai?.(d.pengguna)
       }
@@ -200,7 +212,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
     if (cara === 'telepon' && !/^(\+?62|0)\d{8,14}$/.test(nilai.replace(/[^\d+]/g, ''))) {
       return setGalat('Bentuk nomornya belum benar. Contoh: 081234567890')
     }
-    setLayar('buat2')
+    keLayar('buat2')
   }
 
   // Form 2 -> Form 3
@@ -208,7 +220,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
     e.preventDefault()
     bersihkan()
     if (sandi.length < MIN_SANDI) return setGalat(`Kata sandi minimal ${MIN_SANDI} karakter.`)
-    setLayar('buat3')
+    keLayar('buat3')
   }
 
   // Form 3 -> daftar
@@ -221,7 +233,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
       const d = await panggilApi('/api/akun/daftar', {
         body: { identifier: identifier.trim(), sandi },
       })
-      setLayar('nama') // nama panggilan selalu diminta setelah daftar
+      keLayar('nama') // nama panggilan selalu diminta setelah daftar
     } catch (err) {
       setGalat(err.message)
     } finally {
@@ -247,355 +259,420 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
     }
   }
 
-  /* ------------------------------------------------------------ tampilan -- */
+  /* ------------------------------------------------------------ tampilan --
+   *
+   * Split-screen mengikuti referensi jagi (Antarmuka Login Hidup Sehat
+   * Minimalis). Yang berubah HANYA tampilannya — alur kerja (gerbang -> masuk
+   * -> 3 langkah -> nama) dan semua handler di atas tidak disentuh.
+   *
+   * Di ponsel, panel kiri disembunyikan dan kartu mengambil seluruh lebar.
+   * Di tablet/desktop, panel kiri tampil sebagai sisi branding.
+   *
+   * Teks di sini bahasa Indonesia tetap, sama seperti sebelumnya — LoginPage
+   * memang belum ikut kamus dua bahasa.
+   */
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-[linear-gradient(135deg,#f5f8fa_0%,#eef4f8_60%,#e8f2f0_100%)] px-5 py-10">
-      <div className="w-full max-w-[26rem]">
-        {/* kepala */}
-        <div className="mb-7 flex flex-col items-center text-center">
-          <img src={logo} alt="" width="52" height="48" className="mb-3" />
-          <h1 className="text-[1.45rem] font-extrabold tracking-tight text-navy-900">Pahami Sehat</h1>
-          <p className="mt-1 text-[0.85rem] text-navy-500">Informasi Kesehatan untuk Semua</p>
-        </div>
+    <div className="grid min-h-dvh lg:grid-cols-[55%_45%]">
+      {/* ------------------------------------------------ panel kiri (branding) -- */}
+      <aside
+        aria-hidden="true"
+        className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-center lg:px-[clamp(2rem,5vw,4.5rem)] lg:py-16"
+        style={{
+          background:
+            'linear-gradient(160deg, #eefbf8 0%, #e8f4f0 45%, #eef4fb 100%)',
+        }}
+      >
+        {/* aksen blur lembut di pojok — hanya hiasan */}
+        <div className="pointer-events-none absolute -top-24 -left-24 size-72 rounded-full bg-brand-200/40 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 -bottom-24 size-80 rounded-full bg-sky-200/40 blur-3xl" />
+        {/* watermark logo */}
+        <img
+          src={logo}
+          alt=""
+          className="pointer-events-none absolute -right-10 -bottom-12 w-[46%] opacity-[0.06]"
+        />
 
-        <div className="rounded-2xl border border-line-200 bg-white p-6 shadow-[0_14px_40px_-18px_rgba(15,30,51,.22)]">
-          {/* ---------------------------------------------------- gerbang -- */}
-          {layar === 'gerbang' && (
-            <form onSubmit={cekAkun} className="space-y-4">
-              <div className="space-y-1.5">
-                <h2 className="text-[1.05rem] font-bold text-navy-900">Sudah punya akun?</h2>
-                <p className="text-[0.85rem] text-navy-500">
-                  Masukkan email atau nomor telepon untuk memeriksa apakah akun sudah terdaftar.
+        <div className="relative max-w-xl">
+          <img src={logo} alt="" width="58" height="54" className="mb-6" />
+          <h1 className="text-[clamp(2.3rem,3.4vw,3.4rem)] leading-[1.08] font-extrabold tracking-tight text-navy-900">
+            Langkah kecil untuk hidup{' '}
+            <span className="text-brand-600">lebih sehat</span>
+          </h1>
+          <p className="mt-5 max-w-[46ch] text-[clamp(0.95rem,0.9rem+0.3vw,1.05rem)] leading-relaxed text-navy-500">
+            Dapatkan informasi kesehatan yang akurat, mudah dipahami, dan
+            terpercaya untuk masa depan yang lebih baik.
+          </p>
+
+          <ul className="mt-9 flex flex-wrap gap-x-8 gap-y-5">
+            {[
+              { teks: 'Informasi Terpercaya', ikon: ShieldCheck, warna: 'text-brand-700' },
+              { teks: 'Mudah Dipahami', ikon: HeartHandshake, warna: 'text-sky-700' },
+              { teks: 'Untuk Semua', ikon: Users, warna: 'text-brand-700' },
+            ].map(({ teks, ikon: Ikon, warna }) => (
+              <li key={teks} className="flex items-center gap-2.5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white ring-1 ring-line-200">
+                  <Ikon className={`size-4 ${warna}`} />
+                </span>
+                <span className="text-[0.82rem] font-semibold text-navy-700">{teks}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
+
+      {/* ------------------------------------------------- panel kanan (kartu) -- */}
+      <div className="relative flex min-h-dvh flex-col items-center justify-center bg-[linear-gradient(165deg,#eefbf8_0%,#e8f4f0_60%,#eef4fb_100%)] px-5 py-6 lg:h-dvh lg:bg-none lg:bg-[#e8f4f0] lg:overflow-y-auto">
+        {/* aksen untuk ponsel (panel kiri disembunyikan) */}
+        <div className="pointer-events-none absolute -top-20 -right-20 size-56 rounded-full bg-brand-200/40 blur-3xl lg:hidden" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 size-56 rounded-full bg-sky-200/40 blur-3xl lg:hidden" />
+
+        <div className="relative w-full max-w-[26.5rem]">
+          <div
+            key={kunciLayar}
+            className="rise rounded-[1.5rem] bg-white p-[clamp(1.5rem,1.2rem+1.2vw,2.25rem)] text-center shadow-[0_24px_60px_-16px_rgba(15,30,51,.18)]"
+          >
+            {/* kepala kartu */}
+            <div className="mb-6 flex flex-col items-center">
+              <img src={logo} alt="" width="46" height="43" className="mb-2.5" />
+              <h2 className="text-[1.3rem] font-extrabold tracking-tight text-navy-900">
+                Pahami Sehat
+              </h2>
+              <p className="mt-1 text-[0.85rem] text-navy-500">Informasi Kesehatan untuk Semua</p>
+            </div>
+
+            {/* ---------------------------------------------------- gerbang -- */}
+            {layar === 'gerbang' && (
+              <form onSubmit={cekAkun} className="space-y-4 text-left">
+                <div className="space-y-1.5 text-center">
+                  <h3 className="text-[1.05rem] font-bold text-navy-900">Sudah punya akun?</h3>
+                  <p className="text-[0.85rem] text-navy-500">
+                    Masukkan email atau nomor telepon untuk memeriksa apakah akun sudah terdaftar.
+                  </p>
+                </div>
+                <Galat pesan={galat} />
+                {catatan && (
+                  <p className="rounded-xl border border-brand-100 bg-brand-50 px-3.5 py-2.5 text-[0.82rem] text-brand-800">
+                    {catatan}
+                  </p>
+                )}
+                <Kolom
+                  ikon={Mail}
+                  type="text"
+                  inputMode="email"
+                  autoComplete="username"
+                  placeholder="email@contoh.com atau 0812…"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  aria-label="Email atau nomor telepon"
+                />
+                <TombolUtama memuat={memuat} type="submit">
+                  Lanjut
+                </TombolUtama>
+                <p className="text-center text-[0.82rem] text-navy-500">
+                  Belum punya akun?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      bersihkan()
+                      keLayar('buat1')
+                    }}
+                    className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
+                  >
+                    Buat akun
+                  </button>
                 </p>
-              </div>
-              <Galat pesan={galat} />
-              <Kolom
-                ikon={Mail}
-                type="text"
-                inputMode="email"
-                autoComplete="username"
-                placeholder="email@contoh.com atau 0812…"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                aria-label="Email atau nomor telepon"
-              />
-              <TombolUtama memuat={memuat} type="submit">
-                Lanjut
-              </TombolUtama>
-              <p className="text-center text-[0.82rem] text-navy-500">
-                Belum punya akun?{' '}
+              </form>
+            )}
+
+            {/* ------------------------------------------------------ masuk -- */}
+            {layar === 'masuk' && (
+              <form onSubmit={lakukanMasuk} className="space-y-4 text-left">
                 <button
                   type="button"
                   onClick={() => {
                     bersihkan()
-                    setLayar('buat1')
+                    keLayar('gerbang')
                   }}
-                  className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
+                  className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
                 >
-                  Buat akun
+                  <ArrowLeft className="size-3.5" aria-hidden="true" /> Kembali
                 </button>
-              </p>
-            </form>
-          )}
+                <div className="space-y-1.5 text-center">
+                  <h3 className="text-[1.05rem] font-bold text-navy-900">Masuk</h3>
+                  <p className="text-[0.85rem] break-all text-navy-500">{identifier}</p>
+                </div>
+                <Galat pesan={galat} />
+                <div className="relative">
+                  <Kolom
+                    ikon={Lock}
+                    type={lihatSandi ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder="Kata sandi"
+                    value={sandi}
+                    onChange={(e) => setSandi(e.target.value)}
+                    aria-label="Kata sandi"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLihatSandi((v) => !v)}
+                    aria-label={lihatSandi ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-navy-400 hover:text-navy-600"
+                  >
+                    {lihatSandi ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+                <TombolUtama memuat={memuat} type="submit">
+                  Masuk
+                </TombolUtama>
+              </form>
+            )}
 
-          {/* ------------------------------------------------------ masuk -- */}
-          {layar === 'masuk' && (
-            <form onSubmit={lakukanMasuk} className="space-y-4">
-              <button
-                type="button"
-                onClick={() => {
-                  bersihkan()
-                  setLayar('gerbang')
-                }}
-                className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
-              >
-                <ArrowLeft className="size-3.5" aria-hidden="true" /> Kembali
-              </button>
-              <div className="space-y-1.5">
-                <h2 className="text-[1.05rem] font-bold text-navy-900">Masuk</h2>
-                <p className="text-[0.85rem] break-all text-navy-500">{identifier}</p>
-              </div>
-              <Galat pesan={galat} />
-              <div className="relative">
-                <Kolom
-                  ikon={Lock}
-                  type={lihatSandi ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  placeholder="Kata sandi"
-                  value={sandi}
-                  onChange={(e) => setSandi(e.target.value)}
-                  aria-label="Kata sandi"
-                />
+            {/* -------------------------------------------------- buat: 1/3 -- */}
+            {layar === 'buat1' && (
+              <form onSubmit={lanjutKeSandi} className="space-y-4 text-left">
                 <button
                   type="button"
-                  onClick={() => setLihatSandi((v) => !v)}
-                  aria-label={lihatSandi ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-navy-400 hover:text-navy-600"
+                  onClick={() => {
+                    bersihkan()
+                    keLayar('gerbang')
+                  }}
+                  className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
                 >
-                  {lihatSandi ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  <ArrowLeft className="size-3.5" aria-hidden="true" /> Kembali
                 </button>
-              </div>
-              <TombolUtama memuat={memuat} type="submit">
-                Masuk
-              </TombolUtama>
-            </form>
-          )}
+                <Langkah aktif={1} jumlah={3} />
+                <div className="space-y-1.5 text-center">
+                  <h3 className="text-[1.05rem] font-bold text-navy-900">Buat akun — langkah 1 dari 3</h3>
+                  <p className="text-[0.85rem] text-navy-500">Mau pakai email atau nomor telepon?</p>
+                </div>
+                <Galat pesan={galat} />
+                <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Cara mendaftar">
+                  {[
+                    { kunci: 'email', label: 'Email', Ikon: Mail },
+                    { kunci: 'telepon', label: 'Nomor telepon', Ikon: Phone },
+                  ].map(({ kunci, label, Ikon }) => (
+                    <button
+                      key={kunci}
+                      type="button"
+                      role="radio"
+                      aria-checked={cara === kunci}
+                      onClick={() => {
+                        setCara(kunci)
+                        setIdentifier('')
+                        bersihkan()
+                      }}
+                      className={`flex h-11 items-center justify-center gap-2 rounded-xl border text-[0.88rem] font-semibold transition-colors ${
+                        cara === kunci
+                          ? 'border-brand-500 bg-brand-50 text-brand-800'
+                          : 'border-line-200 bg-white text-navy-600 hover:bg-surface-50'
+                      }`}
+                    >
+                      <Ikon className="size-4" aria-hidden="true" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <Kolom
+                  ikon={cara === 'email' ? Mail : Phone}
+                  type={cara === 'email' ? 'email' : 'tel'}
+                  inputMode={cara === 'email' ? 'email' : 'tel'}
+                  autoComplete={cara === 'email' ? 'email' : 'tel'}
+                  placeholder={cara === 'email' ? 'nama@email.com' : '081234567890'}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  aria-label={cara === 'email' ? 'Email' : 'Nomor telepon'}
+                />
+                <TombolUtama memuat={memuat} type="submit">
+                  Lanjut
+                </TombolUtama>
+              </form>
+            )}
 
-          {/* -------------------------------------------------- buat: 1/3 -- */}
-          {layar === 'buat1' && (
-            <form onSubmit={lanjutKeSandi} className="space-y-4">
-              <button
-                type="button"
-                onClick={() => {
-                  bersihkan()
-                  setLayar('gerbang')
-                }}
-                className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
-              >
-                <ArrowLeft className="size-3.5" aria-hidden="true" /> Kembali
-              </button>
-              <Langkah aktif={1} jumlah={3} />
-              <div className="space-y-1.5">
-                <h2 className="text-[1.05rem] font-bold text-navy-900">Buat akun — langkah 1 dari 3</h2>
-                <p className="text-[0.85rem] text-navy-500">Mau pakai email atau nomor telepon?</p>
-              </div>
-              <Galat pesan={galat} />
-              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Cara mendaftar">
-                {[
-                  { kunci: 'email', label: 'Email', Ikon: Mail },
-                  { kunci: 'telepon', label: 'Nomor telepon', Ikon: Phone },
-                ].map(({ kunci, label, Ikon }) => (
+            {/* -------------------------------------------------- buat: 2/3 -- */}
+            {layar === 'buat2' && (
+              <form onSubmit={lanjutKeUlangi} className="space-y-4 text-left">
+                <button
+                  type="button"
+                  onClick={() => {
+                    bersihkan()
+                    keLayar('buat1')
+                  }}
+                  className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
+                >
+                  <ArrowLeft className="size-3.5" aria-hidden="true" /> Kembali
+                </button>
+                <Langkah aktif={2} jumlah={3} />
+                <div className="space-y-1.5 text-center">
+                  <h3 className="text-[1.05rem] font-bold text-navy-900">Buat akun — langkah 2 dari 3</h3>
+                  <p className="text-[0.85rem] text-navy-500">
+                    Buat kata sandi. Minimal {MIN_SANDI} karakter, bebas mau apa saja.
+                  </p>
+                </div>
+                <Galat pesan={galat} />
+                <div className="relative">
+                  <Kolom
+                    ikon={Lock}
+                    type={lihatSandi ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    placeholder="Kata sandi baru"
+                    value={sandi}
+                    onChange={(e) => setSandi(e.target.value)}
+                    aria-label="Kata sandi baru"
+                  />
                   <button
-                    key={kunci}
                     type="button"
-                    role="radio"
-                    aria-checked={cara === kunci}
-                    onClick={() => {
-                      setCara(kunci)
-                      setIdentifier('')
-                      bersihkan()
-                    }}
-                    className={`flex h-11 items-center justify-center gap-2 rounded-xl border text-[0.88rem] font-semibold transition-colors ${
-                      cara === kunci
-                        ? 'border-brand-500 bg-brand-50 text-brand-800'
-                        : 'border-line-200 bg-white text-navy-600 hover:bg-surface-50'
-                    }`}
+                    onClick={() => setLihatSandi((v) => !v)}
+                    aria-label={lihatSandi ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-navy-400 hover:text-navy-600"
                   >
-                    <Ikon className="size-4" aria-hidden="true" />
-                    {label}
+                    {lihatSandi ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
-                ))}
-              </div>
-              <Kolom
-                ikon={cara === 'email' ? Mail : Phone}
-                type={cara === 'email' ? 'email' : 'tel'}
-                inputMode={cara === 'email' ? 'email' : 'tel'}
-                autoComplete={cara === 'email' ? 'email' : 'tel'}
-                placeholder={cara === 'email' ? 'nama@email.com' : '081234567890'}
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                aria-label={cara === 'email' ? 'Email' : 'Nomor telepon'}
-              />
-              <TombolUtama memuat={memuat} type="submit">
-                Lanjut
-              </TombolUtama>
-            </form>
-          )}
-
-          {/* -------------------------------------------------- buat: 2/3 -- */}
-          {layar === 'buat2' && (
-            <form onSubmit={lanjutKeUlangi} className="space-y-4">
-              <button
-                type="button"
-                onClick={() => {
-                  bersihkan()
-                  setLayar('buat1')
-                }}
-                className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
-              >
-                <ArrowLeft className="size-3.5" aria-hidden="true" /> Kembali
-              </button>
-              <Langkah aktif={2} jumlah={3} />
-              <div className="space-y-1.5">
-                <h2 className="text-[1.05rem] font-bold text-navy-900">Buat akun — langkah 2 dari 3</h2>
-                <p className="text-[0.85rem] text-navy-500">
-                  Buat kata sandi. Minimal {MIN_SANDI} karakter, bebas mau apa saja.
+                </div>
+                <p className="flex items-center gap-1.5 text-[0.8rem] text-navy-500">
+                  <Check
+                    className={`size-3.5 ${sandi.length >= MIN_SANDI ? 'text-brand-600' : 'text-navy-300'}`}
+                    aria-hidden="true"
+                  />
+                  {sandi.length >= MIN_SANDI
+                    ? `${sandi.length} karakter — sudah cukup`
+                    : `Baru ${sandi.length} karakter, minimal ${MIN_SANDI}`}
                 </p>
-              </div>
-              <Galat pesan={galat} />
-              <div className="relative">
+                <TombolUtama memuat={memuat} type="submit" disabled={sandi.length < MIN_SANDI}>
+                  Lanjut
+                </TombolUtama>
+              </form>
+            )}
+
+            {/* -------------------------------------------------- buat: 3/3 -- */}
+            {layar === 'buat3' && (
+              <form onSubmit={lakukanDaftar} className="space-y-4 text-left">
+                <button
+                  type="button"
+                  onClick={() => {
+                    bersihkan()
+                    keLayar('buat2')
+                  }}
+                  className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
+                >
+                  <ArrowLeft className="size-3.5" aria-hidden="true" /> Kembali
+                </button>
+                <Langkah aktif={3} jumlah={3} />
+                <div className="space-y-1.5 text-center">
+                  <h3 className="text-[1.05rem] font-bold text-navy-900">Buat akun — langkah 3 dari 3</h3>
+                  <p className="text-[0.85rem] text-navy-500">Ulangi kata sandinya supaya tidak salah ketik.</p>
+                </div>
+                <Galat pesan={galat} />
                 <Kolom
                   ikon={Lock}
                   type={lihatSandi ? 'text' : 'password'}
                   autoComplete="new-password"
-                  placeholder="Kata sandi baru"
-                  value={sandi}
-                  onChange={(e) => setSandi(e.target.value)}
-                  aria-label="Kata sandi baru"
+                  placeholder="Ulangi kata sandi"
+                  value={ulangi}
+                  onChange={(e) => setUlangi(e.target.value)}
+                  aria-label="Ulangi kata sandi"
                 />
-                <button
-                  type="button"
-                  onClick={() => setLihatSandi((v) => !v)}
-                  aria-label={lihatSandi ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-navy-400 hover:text-navy-600"
-                >
-                  {lihatSandi ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-              {/* penanda kekuatan sederhana — hanya panjang, tidak menghakimi */}
-              <p className="flex items-center gap-1.5 text-[0.8rem] text-navy-500">
-                <Check
-                  className={`size-3.5 ${sandi.length >= MIN_SANDI ? 'text-brand-600' : 'text-navy-300'}`}
-                  aria-hidden="true"
-                />
-                {sandi.length >= MIN_SANDI
-                  ? `${sandi.length} karakter — sudah cukup`
-                  : `Baru ${sandi.length} karakter, minimal ${MIN_SANDI}`}
-              </p>
-              <TombolUtama memuat={memuat} type="submit" disabled={sandi.length < MIN_SANDI}>
-                Lanjut
-              </TombolUtama>
-            </form>
-          )}
-
-          {/* -------------------------------------------------- buat: 3/3 -- */}
-          {layar === 'buat3' && (
-            <form onSubmit={lakukanDaftar} className="space-y-4">
-              <button
-                type="button"
-                onClick={() => {
-                  bersihkan()
-                  setLayar('buat2')
-                }}
-                className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-navy-500 hover:text-navy-700"
-              >
-                <ArrowLeft className="size-3.5" aria-hidden="true" /> Kembali
-              </button>
-              <Langkah aktif={3} jumlah={3} />
-              <div className="space-y-1.5">
-                <h2 className="text-[1.05rem] font-bold text-navy-900">Buat akun — langkah 3 dari 3</h2>
-                <p className="text-[0.85rem] text-navy-500">Ulangi kata sandinya supaya tidak salah ketik.</p>
-              </div>
-              <Galat pesan={galat} />
-              <Kolom
-                ikon={Lock}
-                type={lihatSandi ? 'text' : 'password'}
-                autoComplete="new-password"
-                placeholder="Ulangi kata sandi"
-                value={ulangi}
-                onChange={(e) => setUlangi(e.target.value)}
-                aria-label="Ulangi kata sandi"
-              />
-              {ulangi.length > 0 && (
-                <p
-                  className={`flex items-center gap-1.5 text-[0.8rem] ${
-                    cocok ? 'text-brand-700' : 'text-rose-700'
-                  }`}
-                >
-                  {cocok ? (
-                    <>
-                      <Check className="size-3.5" aria-hidden="true" /> Keduanya sama
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="size-3.5" aria-hidden="true" /> Belum sama
-                    </>
-                  )}
-                </p>
-              )}
-              <TombolUtama memuat={memuat} type="submit" disabled={!cocok}>
-                Buat akun
-              </TombolUtama>
-            </form>
-          )}
-
-          {/* ------------------------------------------------------- nama -- */}
-          {layar === 'nama' && (
-            <form onSubmit={simpanNama} className="space-y-4">
-              <div className="space-y-1.5">
-                <h2 className="text-[1.05rem] font-bold text-navy-900">Mau dipanggil apa?</h2>
-                <p className="text-[0.85rem] text-navy-500">
-                  Nama ini dipakai untuk menyapa di Beranda. Cukup nama panggilan — jangan nama lengkap.
-                </p>
-              </div>
-              <Galat pesan={galat} />
-              <Kolom
-                ikon={Mail}
-                type="text"
-                autoComplete="nickname"
-                placeholder="Contoh: Bayu"
-                value={nama}
-                onChange={(e) => setNama(e.target.value)}
-                maxLength={40}
-                aria-label="Nama panggilan"
-              />
-              <TombolUtama memuat={memuat} type="submit" disabled={nama.trim().length < 2}>
-                Simpan
-              </TombolUtama>
-              {/*
-                JALAN KELUAR. Layar ini juga muncul SENDIRI setelah masuk lewat
-                Google (lihat `layarAwal`), dan tanpa ini pengguna yang tidak
-                mau mengisi nama akan TERJEBAK — tidak ada tombol kembali
-                (memang tidak boleh: dia sudah masuk) dan tidak ada cara
-                keluar selain menghapus cookie peramban secara manual.
-              */}
-              {onKeluar && (
-                <p className="text-center text-[0.82rem] text-navy-500">
-                  Tidak sekarang?{' '}
-                  <button
-                    type="button"
-                    onClick={onKeluar}
-                    className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
+                {ulangi.length > 0 && (
+                  <p
+                    className={`flex items-center gap-1.5 text-[0.8rem] ${
+                      cocok ? 'text-brand-700' : 'text-rose-700'
+                    }`}
                   >
-                    Keluar dari akun ini
-                  </button>
-                </p>
-              )}
-            </form>
-          )}
+                    {cocok ? (
+                      <>
+                        <Check className="size-3.5" aria-hidden="true" /> Keduanya sama
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="size-3.5" aria-hidden="true" /> Belum sama
+                      </>
+                    )}
+                  </p>
+                )}
+                <TombolUtama memuat={memuat} type="submit" disabled={!cocok}>
+                  Buat akun
+                </TombolUtama>
+              </form>
+            )}
 
-          {/* ------------------------------------------------------ google -- */}
-          {/* Hanya tampil kalau Client ID sudah diisi. Kalau belum, tombolnya
-              disembunyikan — lebih baik tidak terlihat daripada terlihat
-              tapi tidak bekerja. */}
-          {GOOGLE_ID && (layar === 'gerbang' || layar === 'buat1') && (
-            <>
-              <div className="my-5 flex items-center gap-3">
-                <span className="h-px flex-1 bg-line-200" />
-                <span className="text-[0.82rem] text-navy-400">atau</span>
-                <span className="h-px flex-1 bg-line-200" />
-              </div>
-              <a
-                href="/api/akun/google"
-                className="inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-line-200 bg-white text-[0.92rem] font-semibold text-navy-700 transition-colors hover:bg-surface-50"
-              >
-                <svg viewBox="0 0 24 24" className="size-4.5" aria-hidden="true">
-                  <path
-                    fill="#4285F4"
-                    d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9Z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24Z"
-                  />
-                  <path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.6V6.7H1.4a12 12 0 0 0 0 10.7l4-3Z" />
-                  <path
-                    fill="#EA4335"
-                    d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8Z"
-                  />
-                </svg>
-                Masuk dengan Google
-              </a>
-            </>
-          )}
+            {/* ------------------------------------------------------- nama -- */}
+            {layar === 'nama' && (
+              <form onSubmit={simpanNama} className="space-y-4 text-left">
+                <div className="space-y-1.5 text-center">
+                  <h3 className="text-[1.05rem] font-bold text-navy-900">Mau dipanggil apa?</h3>
+                  <p className="text-[0.85rem] text-navy-500">
+                    Nama ini dipakai untuk menyapa di Beranda. Cukup nama panggilan — jangan nama lengkap.
+                  </p>
+                </div>
+                <Galat pesan={galat} />
+                <Kolom
+                  ikon={Mail}
+                  type="text"
+                  autoComplete="nickname"
+                  placeholder="Contoh: Bayu"
+                  value={nama}
+                  onChange={(e) => setNama(e.target.value)}
+                  maxLength={40}
+                  aria-label="Nama panggilan"
+                />
+                <TombolUtama memuat={memuat} type="submit" disabled={nama.trim().length < 2}>
+                  Simpan
+                </TombolUtama>
+                {onKeluar && (
+                  <p className="text-center text-[0.82rem] text-navy-500">
+                    Tidak sekarang?{' '}
+                    <button
+                      type="button"
+                      onClick={onKeluar}
+                      className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
+                    >
+                      Keluar dari akun ini
+                    </button>
+                  </p>
+                )}
+              </form>
+            )}
+
+            {/* ------------------------------------------------------ google -- */}
+            {GOOGLE_ID && (layar === 'gerbang' || layar === 'buat1') && (
+              <>
+                <div className="my-5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-line-200" />
+                  <span className="text-[0.82rem] text-navy-400">atau</span>
+                  <span className="h-px flex-1 bg-line-200" />
+                </div>
+                <a
+                  href="/api/akun/google"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-line-200 bg-white text-[0.92rem] font-semibold text-navy-700 transition-colors hover:bg-surface-50"
+                >
+                  <svg viewBox="0 0 24 24" className="size-4.5" aria-hidden="true">
+                    <path
+                      fill="#4285F4"
+                      d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9Z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24Z"
+                    />
+                    <path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.6V6.7H1.4a12 12 0 0 0 0 10.7l4-3Z" />
+                    <path
+                      fill="#EA4335"
+                      d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8Z"
+                    />
+                  </svg>
+                  Masuk dengan Google
+                </a>
+              </>
+            )}
+          </div>
+
+          {/* catatan privasi — di luar kartu, mengikuti referensi */}
+          <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[0.8rem] leading-relaxed text-navy-500">
+            <ShieldCheck className="size-3.5 shrink-0 text-brand-600" aria-hidden="true" />
+            Yang disimpan hanya email atau nomor telepon, nama panggilan, dan kata sandi
+            (terenkripsi). Tidak ada nama lengkap, NIK, atau alamat.
+          </p>
         </div>
-
-        {/* catatan privasi — jujur, dan sesuai isi database */}
-        <p className="mt-5 text-center text-[0.82rem] leading-relaxed text-navy-500">
-          Yang disimpan hanya email atau nomor telepon, nama panggilan, dan kata sandi (terenkripsi).
-          Tidak ada nama lengkap, NIK, atau alamat.
-        </p>
       </div>
     </div>
   )
