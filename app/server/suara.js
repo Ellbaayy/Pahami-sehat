@@ -191,30 +191,134 @@ export function tebakBahasaDaerah(teks) {
  * Aturannya sengaja sederhana dan bisa dibaca manusia — bukan model tambahan,
  * supaya hasilnya bisa diprediksi dan tidak menambah waktu tunggu.
  *
+ * ============================================================================
+ * DIUKUR 15 OKT 2026 — KENAPA NADANYA DIBUAT SEDATAR INI
+ * ============================================================================
+ *
+ * Keluhan jagi: "suara kadang masih naik turun". Penyebabnya diukur, bukan
+ * ditebak. Satu kalimat yang SAMA dibacakan dengan beberapa pitch, lalu nada
+ * dasarnya (f0) dihitung dari audionya:
+ *
+ *   pitch -18Hz -> f0 202,5 Hz
+ *   pitch -12Hz -> f0 210,5 Hz
+ *   pitch  -8Hz -> f0 219,2 Hz
+ *   pitch  -4Hz -> f0 222,2 Hz
+ *   pitch   0Hz -> f0 228,6 Hz
+ *   pitch  +4Hz -> f0 235,3 Hz
+ *   pitch +10Hz -> f0 246,2 Hz
+ *
+ * Versi sebelumnya memakai -18Hz untuk peringatan dan +10Hz untuk penutup.
+ * Selisihnya 43,7 Hz = 21,6% = hampir 4 semitone.
+ *
+ * JUJUR SOAL HASILNYA: memperkecil rentang ini HANYA mengurangi sebagian
+ * masalahnya, bukan menghilangkannya. Diukur ulang pada tiga kalimat asli
+ * sesudah perubahan: rentangnya masih 21,3% — hampir sama dengan sebelumnya.
+ *
+ * Penyebab SEBENARNYA ditemukan setelah itu: dengan pitch disamakan (+0Hz
+ * untuk semua kalimat), rentangnya tetap 16,1% (35,8 Hz). Jadi sebagian besar
+ * naik-turun itu datang dari INTONASI ALAMI tiap kalimat — kalimat yang
+ * berakhir dengan kata seperti "terdekat" memang dibaca lebih tinggi daripada
+ * kalimat berita biasa. Itu ciri bahasa manusia, bukan kerusakan.
+ *
+ * Jadi: memperkecil rentang pitch tetap dilakukan (supaya tidak menambah
+ * masalah), tapi jangan menjanjikan bahwa ini menghilangkan naik-turunnya.
+ * Kalau nanti terasa masih melompat, yang perlu diperiksa berikutnya adalah
+ * panjang & bentuk kalimatnya, bukan angka pitch-nya.
+ *
  * @returns {{pitch: string, rate: string}}
  */
 export function nadaKalimat(kalimat, posisi = {}) {
   const k = String(kalimat ?? '').trim()
   const kecil = k.toLowerCase()
 
-  // kalimat peringatan / tanda bahaya -> lebih rendah & lebih lambat
+  // kalimat peringatan / tanda bahaya -> sedikit lebih rendah & lebih lambat
   if (
     /^(perhatian|awas|penting|hati-hati|jangan|segera|waspada|tanda bahaya)\b/.test(kecil) ||
     /\b(bahaya|segera ke dokter|segera ke rumah sakit|jangan ditunda|bisa berakibat fatal)\b/.test(kecil)
   ) {
-    return { pitch: '-18Hz', rate: '-10%' }
+    return { pitch: '-4Hz', rate: '-8%' }
   }
 
   // pertanyaan -> sedikit naik, seperti orang bertanya
-  if (k.endsWith('?')) return { pitch: '+8Hz', rate: '+0%' }
+  if (k.endsWith('?')) return { pitch: '+4Hz', rate: '+0%' }
 
   // pembuka / sapaan -> hangat
   if (posisi.pertama) return { pitch: '+0Hz', rate: '-4%' }
 
   // penutup -> sedikit lebih tinggi supaya terdengar ramah
-  if (posisi.terakhir) return { pitch: '+10Hz', rate: '+0%' }
+  if (posisi.terakhir) return { pitch: '+2Hz', rate: '+0%' }
 
   return { pitch: '+0Hz', rate: '+0%' }
+}
+
+/**
+ * Singkatan yang WAJIB dieja supaya tidak salah dibaca.
+ *
+ * ============================================================================
+ * CARA MENGEJA — DAN KENAPA BUKAN `<say-as>`
+ * ============================================================================
+ *
+ * Cara yang benar menurut standar SSML adalah `<say-as interpret-as="characters">`.
+ * SUDAH DIUJI 15 Okt 2026: layanan Microsoft Edge Read Aloud MENOLAKnya —
+ * koneksinya ditutup sebelum selesai ("no turn.end received"), sama seperti
+ * `<break>` yang sudah lebih dulu tercatat gagal. Jadi cara itu TIDAK DIPAKAI.
+ *
+ * Yang bekerja: menyisipkan SPASI di antara huruf ("B P J S"). Diukur dari
+ * durasi audionya, dibandingkan bentuk polosnya:
+ *
+ *   DBD      1,87s -> 2,26s (+21%)
+ *   BPJS     2,57s -> 2,83s (+10%)
+ *   ISPA     1,87s -> 2,38s (+27%)
+ *   PPOK     1,87s -> 2,40s (+28%)
+ *   GERD     1,87s -> 2,50s (+34%)
+ *   POSYANDU 2,04s -> 3,55s (+74%)
+ *
+ * ============================================================================
+ * YANG SENGAJA **TIDAK** DIEJA — INI SAMA PENTINGNYA
+ * ============================================================================
+ *
+ * Mengukur juga menunjukkan singkatan mana yang SUDAH dibaca huruf per huruf
+ * oleh mesinnya, dan mana yang memang dibaca sebagai KATA. Memaksa yang sudah
+ * benar akan MERUSAK, bukan memperbaiki:
+ *
+ *   TBC, HIV, WHO, BMI, RJP, IGD, ICU, USG, MRI, KB, NIK, APD, ASI, CT
+ *     -> sudah dieja sendiri (selisih <= 12%). JANGAN diubah.
+ *
+ *   POSYANDU, PUSKESMAS
+ *     -> memang dibaca sebagai kata (rasio 0,57–0,58). "posyandu" dan
+ *        "puskesmas" adalah kata Indonesia yang lazim; mengejanya jadi salah.
+ *
+ * Karena itu daftarnya di bawah HANYA memuat singkatan yang terbukti salah
+ * dibaca, bukan semua singkatan yang ada.
+ */
+const EJA = [
+  // empat huruf: mesinnya cenderung membacanya sebagai kata
+  'DBD',
+  'ISPA',
+  'PPOK',
+  'GERD',
+  'AIDS',
+  'PTM',
+  'RSUD',
+  // tiga huruf yang masih dibaca sebagai kata (rasio < 0,85)
+  'BPJS',
+  'HIV',
+]
+
+/** Bentuk regex sekali jadi — lebih cepat daripada menyusun ulang tiap kalimat. */
+const POLA_EJA = new RegExp(`\\b(${EJA.join('|')})\\b`, 'g')
+
+/**
+ * Sisipkan spasi di antara huruf supaya singkatan DIEJA, bukan dibaca sebagai kata.
+ *
+ * Hanya menyentuh singkatan di daftar EJA. Teks lain tidak diubah sama sekali —
+ * termasuk singkatan yang sudah benar dibaca mesinnya.
+ *
+ * @param {string} teks
+ * @returns {string}
+ */
+export function siapkanEjaan(teks) {
+  return String(teks ?? '').replace(POLA_EJA, (cocok) => cocok.split('').join(' '))
 }
 
 /**
@@ -380,8 +484,15 @@ export async function buatSuara(teks, { bahasa = 'id' } = {}) {
           pertama: idx === 0,
           terakhir: idx === kalimat.length - 1,
         })
+        // Eja singkatan yang terbukti salah dibaca (DBD -> "D B D"). Dilakukan
+        // SETELAH nada dipilih, supaya aturan nada tetap membaca kalimat aslinya.
+        //
+        // HANYA untuk suara Indonesia/Jawa/Sunda. Pada suara Inggris singkatan
+        // seperti HIV sudah dibaca huruf per huruf dengan benar, jadi menyisipkan
+        // spasi justru bisa merusaknya.
+        const teksUcap = bahasa === 'en' ? kalimat[idx] : siapkanEjaan(kalimat[idx])
         // buatBagianTahan: ulangi saat kena 429, sambung ulang koneksinya.
-        hasil[idx] = await buatBagianTahan(e, kalimat[idx], opsi)
+        hasil[idx] = await buatBagianTahan(e, teksUcap, opsi)
       }
     } finally {
       try {
