@@ -89,6 +89,9 @@ membesar 112% (terukur 16 px → 17,92 px), garis dan batas fokus dipertebal:
 |---|---|
 | [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
+| [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **21 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
+| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 9 tabel. Idempoten, aman dijalankan ulang. |
+| [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`docs/verifikasi-*.md`](docs) | **Berkas pendukung.** Laporan verifikasi setiap angka di bagian "Masalah" — memastikan klaimnya berasal dari dokumen yang bisa dibuka, bukan dari ingatan. Ringkasannya tampil di halaman penjelasan, bagian **Sumber Data**. |
 
 ### Sumber data di halaman penjelasan
@@ -166,6 +169,15 @@ flowchart TB
   subgraph Server["Express 5 — lokal; Vercel Serverless saat produksi"]
     B["Pembatas laju<br/>20 permintaan/menit per IP + batas total per instance"]
     R["Rute /api/*"]
+    DBJ["app/server/db.js<br/>jembatan database — OPSIONAL<br/>gagal = null, tidak pernah melempar"]
+  end
+
+  subgraph Simpanan["MariaDB (XAMPP) — opsional, di laptop sendiri"]
+    T1[("berita")]
+    T2[("konten")]
+    T3[("pengetahuan<br/>salinan berlabel tanggal")]
+    T4[("sumber")]
+    T5[("dokumen · sitasi · pengguna<br/>setelan · riwayat<br/>sudah ada, belum dipakai")]
   end
 
   subgraph Luar["Layanan luar"]
@@ -187,8 +199,19 @@ flowchart TB
   K -->|"jawaban + sumber yang dikutip"| R
   R -->|"jawaban"| UI
 
+  R --> DBJ
+  DBJ --> T1
+  DBJ --> T2
+  DBJ --> T3
+  DBJ --> T4
+  DBJ -.->|"belum disambungkan"| T5
+
   classDef store fill:#eef,stroke:#446,color:#113
+  classDef opsional fill:#ffe9c9,stroke:#a63,color:#420,stroke-dasharray:4 3
   class LS store
+  class T1,T2,T3,T4 store
+  class T5 opsional
+  class DBJ opsional
 ```
 
 ### Alur satu pertanyaan
@@ -227,15 +250,71 @@ flowchart TB
 | Jawaban kuesioner | `localStorage` (`pahami-sehat:kuesioner`) | ya |
 | Setelan bahasa / tingkat baca / kontras | `localStorage` (`pahami-sehat:setelan`) | ya |
 | Foto yang dipindai | **tidak disimpan ke mana pun** — dibaca di memori peramban | tidak |
-| Pertanyaan & jawaban di server | **tidak disimpan** | tidak |
+| Pertanyaan & jawaban pengguna | **tidak disimpan** — bahkan dengan database menyala | tidak |
 
-**Tidak ada basis data.** Server ini tidak punya tabel, tidak punya akun
-pengguna, dan tidak menulis isi percakapan ke mana pun. Yang ditulis ke disk
-hanya dua berkas **cache**, keduanya berlaku 24 jam dan isinya bukan data
-pengguna: `.cache-konten.json` (artikel publik dari Kemenkes) dan
-`.cache-berita.json` (judul berita kesehatan dari RSS, maksimal 3 judul).
+**Database bersifat OPSIONAL, dan itu dijaga di kode.** MariaDB (lewat XAMPP)
+dipakai untuk menyimpan **bahan**, bukan percakapan pengguna. Kalau MariaDB
+mati, aplikasi **tetap jalan** memakai berkas cache seperti sebelumnya —
+`app/server/db.js` mengembalikan `null` alih-alih melempar galat.
 
-### Empat hal yang dijaga di sisi server
+Dibuktikan, bukan diklaim — dengan database dimatikan (`DB_MATI=1`):
+
+| Yang diperiksa | Hasil |
+|---|---|
+| `GET /api/konten` | **HTTP 200** |
+| `GET /api/berita/ringkas` | **HTTP 200** |
+| `GET /api/tanya` | **HTTP 200**, jawaban tidak kosong |
+| `GET /api/health` | melaporkan `{"aktif":false,"alasan":"dimatikan lewat DB_MATI=1"}` |
+
+#### Yang disimpan di database
+
+| Tabel | Isi | Padanan sebelumnya |
+|---|---|---|
+| `berita` | judul berita RSS, `sidik` UNIQUE mencegah duplikat | `.cache-berita.json` |
+| `konten` | artikel & tips harian dari Kemenkes | `.cache-konten.json` |
+| `pengetahuan` | **331 topik medis** dari sumber resmi, salinan berlabel tanggal | (baru) |
+| `sumber` | 12 lembaga resmi (Kemenkes, WHO, BPOM, NIH, …) | (baru) |
+
+`pengguna`, `setelan`, `riwayat`, `dokumen`, dan `sitasi` sudah dibuat di skema
+tapi **belum disambungkan** ke jalur aplikasi — sengaja, karena riwayat
+lintas-perangkat butuh keputusan desain lebih dulu. Keadaannya ditandai apa
+adanya di diagram di atas (garis putus-putus).
+
+#### Satu aturan yang ditegakkan database sendiri
+
+Setiap baris yang memuat informasi medis **wajib** punya kolom `kedaluwarsa`
+(`NOT NULL`), dan penyajiannya selalu menyaring `WHERE kedaluwarsa > NOW()`.
+
+```sql
+INSERT INTO pengetahuan (topik, jenis, isi, sumber_id, url_sumber, diambil_pada)
+VALUES ('uji','penyakit','x',1,'http://x',NOW());
+-- ERROR 1364 (HY000): Field 'kedaluwarsa' doesn't have a default value
+```
+
+Alasannya bukan kerapian, tapi keselamatan: menyajikan panduan medis yang sudah
+kadaluwarsa bukan bug teknis, itu risiko kesehatan. Baris yang basi **tidak
+tersaji** — aplikasi harus mengambil ulang dari sumber resmi.
+
+#### Asal 331 topik itu — dan kenapa bukan karangan AI
+
+`panen-pengetahuan.mjs` **mengambil teks asli** dari sumber resmi, bukan
+menyuruh model menulis dari ingatannya. Model bisa salah dosis atau mencampur
+dua penyakit, dan kesalahan itu akan tersimpan rapi seolah fakta.
+
+| Sumber | Baris | Ditandai |
+|---|---|---|
+| MedlinePlus (Perpustakaan Kedokteran Nasional AS, bagian NIH) | 270 | `resmi = 1` |
+| Wikipedia bahasa Indonesia (pelengkap) | 61 | `resmi = 0` |
+
+Setiap baris menyertakan `url_sumber` yang bisa diperiksa pengguna. Hasil akhir:
+**331 baris, 0 kosong, 0 tanpa URL**, rata-rata 2.383 karakter, masa berlaku
+90 hari. Tiga jebakan yang ditemukan dan ditutup: istilah Indonesia tidak
+ditemukan di MedlinePlus (wajib lewat `PETA_MEDLINEPLUS`), salah tangkap topik
+("luka" pernah tersimpan sebagai penjelasan cedera **bahu**), dan URL artikel
+yang ternyata ada di **atribut** tag XML — kesalahan itu sempat membuat semua
+tautan menunjuk halaman depan `medlineplus.gov`.
+
+### Lima hal yang dijaga di sisi server
 
 - **`app/server/kataKunci.js`** — pengenalan topik kesehatan. Satu daftar
   istilah dipakai bersama oleh `PENGENALAN_TOPIK`, `KATA_KESEHATAN`, dan kedua
@@ -253,7 +332,14 @@ pengguna: `.cache-konten.json` (artikel publik dari Kemenkes) dan
   model mengabaikan aturan diabaikan, tag HTML dibuang, link wajib `http(s)`
   (menolak `javascript:` dan `data:`), satu feed dibatasi 30 item dan 2 MB, dan
   tanggal yang tidak sah diperlakukan seperti tanggal kosong — bukan `NaN` yang
-  bocor ke pengurutan. Diuji `uji-berita.mjs` (90 pemeriksaan).
+  bocor ke pengurutan. Diuji `uji-berita.mjs` (89 pemeriksaan).
+- **`app/server/db.js`** — jembatan database. Tiga hal yang tidak boleh
+  dilanggar: (1) **tidak pernah melempar** — database mati harus menghasilkan
+  `null`, bukan galat yang sampai ke pengguna; (2) setelah gagal, koneksi
+  berikutnya ditunda 30 detik supaya setiap permintaan tidak ikut menunggu
+  timeout; (3) penyajian data medis **selalu** menyaring
+  `WHERE kedaluwarsa > NOW()`. Batasnya diakui: satu pool berisi 5 koneksi,
+  tanpa kolam cadangan dan tanpa penyimpanan ulang otomatis.
 
 ### Jawaban kosong tidak boleh terjadi — dan cara membuktikannya
 
@@ -304,6 +390,31 @@ npm run dev                  # frontend Vite (otomatis meneruskan /api ke backen
 # 3) mode Grand Final — satu perintah, satu port
 npm start                    # build + server di http://127.0.0.1:8787
 ```
+
+### Database (opsional)
+
+Aplikasi **jalan tanpa ini**. Kalau mau menyalakannya:
+
+```bash
+# XAMPP: pasang libxcrypt-compat DULU di Arch/CachyOS.
+# Tanpa itu `xampp` gagal dengan pesan "only available as 32 bit application"
+# yang MENYESATKAN — binernya 64-bit; akar masalahnya php butuh libcrypt.so.1.
+sudo pacman -S libxcrypt-compat
+
+sudo /opt/lampp/lampp startmysql          # MariaDB di port 3306
+/opt/lampp/bin/mysql -u root < docs/skema-database.sql
+
+# isi 331 topik medis dari sumber resmi (butuh ~10 menit)
+node panen-pengetahuan.mjs --semua
+```
+
+Setel koneksinya lewat `.env` (bawaan sudah cocok untuk XAMPP):
+`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAMA`.
+`DB_MATI=1` mematikan database sepenuhnya — dipakai untuk membuktikan aplikasi
+tetap jalan tanpa itu.
+
+Endpoint untuk memeriksa: `GET /api/health` (status db) dan `GET /api/db`
+(hitungan + contoh baris, bukan seluruh isi tabel).
 
 **Untuk Grand Final:** `npm start` adalah yang dipakai saat presentasi — Express
 menyajikan hasil build sekaligus melayani `/api`, jadi cukup satu alamat.
@@ -460,9 +571,15 @@ node uji-kata-kunci.mjs   # pencocokan kata kunci topik
 node uji-teks.mjs         # perapian teks & pemotongan kalimat
 node uji-ocr.mjs          # 36 pemeriksaan: perapian teks & penandaan angka
 node uji-bahasa.mjs       # 25 pemeriksaan: kesehatan kamus id/en
-node uji-berita.mjs       # 78 pemeriksaan: deteksi berita, parser RSS, penetrasi
+node uji-berita.mjs       # 89 pemeriksaan: deteksi berita, parser RSS, penetrasi
 node uji-keterbacaan.mjs  # 38 pemeriksaan: alat ukur keterbacaan itu sendiri
+node uji-suara.mjs        # 49 pemeriksaan: ejaan singkatan & kestabilan nada
 ```
+
+`uji-suara.mjs` **tidak memanggil layanan suara** (tidak butuh jaringan), jadi
+bisa ikut dijalankan di CI. Yang dijaganya: singkatan mana yang dieja dan mana
+yang **tidak boleh** dieja — setiap anggota kedua kelompok diuji satu per satu,
+sehingga menambah/mengurangi daftarnya tanpa mengukur ulang akan langsung gagal.
 
 `uji-bahasa.mjs` menjaga tiga cacat kamus sekaligus: kunci yang dipakai tapi
 tidak ada, kunci yang hanya ada di satu bahasa, dan kunci yang menganggur
@@ -597,9 +714,16 @@ ketiga** (Kenari.id). Karena itu aplikasi memperingatkan pengguna agar tidak
 menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah — peringatan
 itu tampil di panel **Pengaturan** (`set.privasi1..3` di `app/src/data/bahasa.js`).
 
-**Tidak ada akun dan tidak ada basis data.** Tidak ada tabel, tidak ada
-autentikasi, dan isi percakapan tidak ditulis ke mana pun. Yang ditulis ke disk
-hanya `.cache-konten.json` (artikel publik Kemenkes, berlaku 24 jam).
+**Tidak ada akun.** Tidak ada pendaftaran, tidak ada autentikasi, dan isi
+percakapan tidak ditulis ke mana pun — bahkan ketika database menyala.
+Database hanya menyimpan **bahan publik** (berita RSS, artikel Kemenkes,
+salinan berlabel tanggal dari sumber resmi), bukan pertanyaan atau jawaban
+pengguna. Tabel `pengguna` dan `riwayat` sudah ada di skema, tetapi **belum
+disambungkan** dan hanya akan berisi pengenal acak (`token_sesi`) tanpa nama,
+email, atau data pribadi — kalau nanti dipakai.
+
+Yang ditulis ke disk: `.cache-konten.json` dan `.cache-berita.json` (berlaku
+24 jam), plus tabel-tabel di atas bila MariaDB dijalankan.
 
 ### Etika AI — pagar yang ditanam di prompt
 
