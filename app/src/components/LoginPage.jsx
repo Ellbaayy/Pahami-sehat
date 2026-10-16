@@ -266,7 +266,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'gerban
               <div className="space-y-1.5">
                 <h2 className="text-[1.05rem] font-bold text-navy-900">Sudah punya akun?</h2>
                 <p className="text-[0.85rem] text-navy-500">
-                  Masukkan email atau nomor teleponmu. Eun-soo cek dulu, sudah terdaftar atau belum.
+                  Masukkan email atau nomor telepon untuk memeriksa apakah akun sudah terdaftar.
                 </p>
               </div>
               <Galat pesan={galat} />
