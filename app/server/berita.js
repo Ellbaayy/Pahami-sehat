@@ -285,6 +285,30 @@ const PENANDA_WAKTU =
   /\b(hari ini|kemarin|minggu ini|pekan ini|bulan ini|baru|terbaru|terkini|tadi|sekarang|today|yesterday|this week|now|latest|recent)\b/
 
 /**
+ * Pertanyaan "apa yang baru?" tanpa kata 'berita' atau 'kesehatan'.
+ *
+ * KENAPA PERLU (16 Okt 2026 — keluhan jagi): "apa yang baru hari ini" dijawab
+ * dengan "hasil pencarian kosong". Penyebabnya DIUKUR: kalimat itu TIDAK
+ * terdeteksi sebagai pertanyaan berita, jadi jatuh ke jalur pencarian
+ * Wikipedia — dan Wikipedia tidak punya apa-apa untuk "apa yang baru hari
+ * ini", sehingga hasilnya kosong dan model menjawab seadanya.
+ *
+ * Terukur saat itu: 6 dari 8 cara orang bertanya soal kabar terbaru TIDAK
+ * terdeteksi ("apa yang baru hari ini", "ada apa hari ini", "ada yang baru?",
+ * "apa yang baru di kesehatan", ...). Yang lolos hanya yang kebetulan memuat
+ * kata 'berita'/'kabar'/'terbaru'.
+ *
+ * Bentuk yang ditangkap di sini adalah POLA TANYA, bukan kata tunggal:
+ *   apa yang baru / ada apa / ada yang baru / apa yang terjadi / apa yang
+ *   sedang ramai / apa kabar terbaru
+ *
+ * SENGAJA TIDAK menangkap "apa kabar" saja — itu sapaan, bukan permintaan
+ * berita (lihat SAPAAN_KABAR di bawah, yang diperiksa lebih dulu).
+ */
+const TANYA_KABAR =
+  /\b(apa|ada)\s+(yang\s+)?(baru|terjadi|sedang|lagi|hangat|ramai|up|update|kabar)\b|\bada\s+(apa|yang\s+baru)\b|\bwhat('?s|\s+is|\s+are)?\s+(new|up|going on|happening)\b|\bany(thing)?\s+new\b/i
+
+/**
  * Ungkapan sapaan yang memuat kata "kabar".
  *
  * KENAPA PERLU (15 Okt 2026): "apa kabar hari ini" memuat kata 'kabar' DAN
@@ -333,6 +357,22 @@ export function menanyakanBerita(teks) {
   // tidak ada topik kesehatan sama sekali ("apa kabar kesehatan hari ini?" tetap
   // dianggap permintaan berita).
   if (SAPAAN_KABAR.test(t) && !adaKesehatan) return false
+
+  // --- bentuk tanya "apa yang baru?" -------------------------------------
+  //
+  // Diperiksa SEBELUM aturan kata kunci di bawah, karena pertanyaan seperti
+  // "apa yang baru hari ini" tidak memuat kata 'berita' maupun topik
+  // kesehatan — dua syarat yang dipakai aturan berikutnya. Tanpa cabang ini,
+  // pertanyaannya jatuh ke pencarian Wikipedia dan dijawab "hasil pencarian
+  // kosong" (keluhan jagi, 16 Okt 2026).
+  //
+  // PENGECUALIAN yang penting: kalau pertanyaannya menyebut topik yang JELAS
+  // bukan kesehatan ("ada apa dengan bola malam ini"), itu bukan urusan
+  // aplikasi kesehatan — biarkan aturan di bawah yang menolaknya.
+  if (TANYA_KABAR.test(t)) {
+    if (adaTopikLain && !adaKesehatan) return false
+    return true
+  }
 
   if (/\b(berita|kabar|news)\b/.test(t)) {
     if (adaTopikLain && !adaKesehatan) return false

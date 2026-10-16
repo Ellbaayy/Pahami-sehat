@@ -48,6 +48,24 @@ for (const t of [
   'ada berita baru?',
   'latest news today',
   'news today',
+  // --- bentuk TANYA tanpa kata 'berita'/'kabar' ---------------------------
+  //
+  // Keluhan jagi 16 Okt 2026: "apa yang baru hari ini" dijawab "hasil
+  // pencarian kosong". Penyebabnya diukur: kalimat itu tidak memuat kata
+  // 'berita' maupun topik kesehatan, jadi TIDAK dikenali sebagai permintaan
+  // berita — lalu dicari ke Wikipedia yang memang tidak punya jawabannya.
+  // Terukur saat itu: 6 dari 8 cara orang bertanya soal kabar terbaru tidak
+  // terdeteksi. Semua bentuk di bawah adalah cara orang bertanya sungguhan.
+  'apa yang baru hari ini',
+  'apa yang baru',
+  'ada apa hari ini',
+  'ada yang baru?',
+  'apa yang baru di kesehatan',
+  'apa yang sedang ramai hari ini',
+  'ada update terbaru',
+  'what is new today',
+  "what's new",
+  'anything new',
 ]) cek(`deteksi: "${t}"`, menanyakanBerita(t) === true)
 
 console.log('== menanyakanBerita — JANGAN deteksi (salah jalur = cacat):')
@@ -76,6 +94,12 @@ for (const [t, alasan] of [
   ['berita bola hari ini', 'topik bukan kesehatan'],
   ['kabar terkini soal pemilu', 'topik bukan kesehatan'],
   ['what is the latest news about the economy?', 'topik bukan kesehatan, Inggris'],
+  // Bentuk tanya "apa yang baru" TIDAK boleh dipakai untuk membajak topik lain.
+  // Tanpa pengecualian ini, "ada apa dengan bola" akan masuk jalur berita
+  // kesehatan dan menyesatkan pengguna.
+  ['ada apa dengan bola malam ini', 'bentuk tanya + topik bukan kesehatan'],
+  ['apa yang baru di dunia teknologi', 'bentuk tanya + topik bukan kesehatan'],
+  ['apa yang sedang ramai soal pemilu', 'bentuk tanya + topik bukan kesehatan'],
 ]) cek(`tolak: "${t}" (${alasan})`, menanyakanBerita(t) === false)
 
 console.log('== menanyakanBerita — masukan jahat / tak wajar:')
