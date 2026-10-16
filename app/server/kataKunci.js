@@ -428,8 +428,8 @@ export const PETA_PENCARIAN = {
    *   2. Perhatikan `exlimit`: `prop=extracts` hanya memproses 20 judul per
    *      permintaan. Mengirim lebih dari itu membuat sebagian halaman tidak
    *      diproses, dan halaman yang tidak diproses TAMPAK SEPERTI "tidak ada".
-   *      Ini pernah membuat Eun-soo menyimpulkan 107 dari 123 judul "hilang"
-   *      padahal semuanya ada.
+   *      Ini pernah membuat pemeriksaan menyimpulkan 107 dari 123 judul
+   *      "hilang" padahal semuanya ada.
    *   3. Judul yang berupa HALAMAN DISAMBIGUASI tidak boleh dipakai — model
    *      akan menerima daftar pilihan, bukan penjelasan. Contoh yang ditolak:
    *      'Rehabilitasi' (disambiguasi) -> dipakai 'Kedokteran fisik dan
