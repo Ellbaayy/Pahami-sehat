@@ -101,7 +101,7 @@ export default function TopBar({
           aria-label={t('nav.menu')}
           aria-expanded={menuOpen ? 'true' : 'false'}
           aria-controls="mobile-drawer"
-          className="grid size-10 shrink-0 place-items-center rounded-xl border border-line-200 text-navy-700 transition-colors hover:bg-surface-50 active:bg-surface-100 md:hidden"
+          className="grid size-11 shrink-0 place-items-center rounded-xl border border-line-200 text-navy-700 transition-colors hover:bg-surface-50 active:bg-surface-100 md:hidden"
         >
           <Menu className="size-5" aria-hidden="true" />
         </button>
@@ -115,7 +115,7 @@ export default function TopBar({
           aria-expanded={sidebarTerbuka ? 'true' : 'false'}
           aria-controls="sidebar-utama"
           className={cn(
-            'hidden size-10 shrink-0 place-items-center rounded-xl border border-line-200 md:grid',
+            'hidden size-11 shrink-0 place-items-center rounded-xl border border-line-200 md:grid',
             'text-navy-700 transition-colors hover:bg-surface-50 active:bg-surface-100',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
           )}
@@ -147,7 +147,7 @@ export default function TopBar({
             aria-expanded={buka ? 'true' : 'false'}
             aria-controls="panel-notifikasi"
             className={cn(
-              'relative grid size-10 place-items-center rounded-xl text-navy-500 transition-colors',
+              'relative grid size-11 place-items-center rounded-xl text-navy-500 transition-colors',
               'hover:bg-surface-100 hover:text-navy-800',
               buka && 'bg-surface-100 text-navy-800',
             )}
@@ -209,11 +209,11 @@ export default function TopBar({
                             <span className="block text-[0.84rem] font-semibold text-navy-900">
                               {n.judul}
                             </span>
-                            <span className="mt-0.5 block text-[0.78rem] leading-snug text-navy-500">
+                            <span className="mt-0.5 block text-[0.82rem] leading-snug text-navy-500">
                               {n.isi}
                             </span>
                             {n.waktu ? (
-                              <span className="mt-1 block text-[0.7rem] text-muted-500">{n.waktu}</span>
+                              <span className="mt-1 block text-[0.8125rem] text-muted-500">{n.waktu}</span>
                             ) : null}
                           </span>
                         </button>

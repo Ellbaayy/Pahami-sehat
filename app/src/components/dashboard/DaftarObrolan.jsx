@@ -212,14 +212,14 @@ export default function DaftarObrolan({
                   </p>
                 ) : null}
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  <span className="text-[0.72rem] font-medium text-muted-500">
+                  <span className="text-[0.8125rem] font-medium text-muted-500">
                     {waktuRelatif(s.diperbarui, t, kodeLokal)}
                   </span>
-                  <span className="rounded-full bg-surface-100 px-2 py-0.5 text-[0.68rem] font-semibold text-navy-500">
+                  <span className="rounded-full bg-surface-100 px-2 py-0.5 text-[0.8125rem] font-semibold text-navy-500">
                     {t('sesi.jumlahTanya', { n })}
                   </span>
                   {aktif && !ringkas ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[0.68rem] font-bold text-brand-700 ring-1 ring-brand-100">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[0.8125rem] font-bold text-brand-700 ring-1 ring-brand-100">
                       <ArrowRight className="size-3" aria-hidden="true" />
                       {t('sesi.sedangDibuka')}
                     </span>

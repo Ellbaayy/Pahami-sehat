@@ -98,7 +98,7 @@ export default function PanelSalin({ teks, onTutup, t = (k) => k }) {
             onFocus={(e) => e.target.setSelectionRange(0, e.target.value.length)}
             className="h-full max-h-[46dvh] min-h-[12rem] w-full resize-none rounded-xl border border-line-200 bg-surface-50/70 px-3.5 py-3 font-mono text-[0.8rem] leading-relaxed text-navy-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           />
-          <p className="mt-2 text-[0.78rem] text-muted-500">{t('salin.petunjuk')}</p>
+          <p className="mt-2 text-[0.82rem] text-muted-500">{t('salin.petunjuk')}</p>
           {hasil === true ? (
             <p className="mt-1.5 inline-flex items-center gap-1.5 text-[0.8rem] font-semibold text-brand-700">
               <Check className="size-3.5" aria-hidden="true" />

@@ -224,7 +224,7 @@ export default function PemindaiFoto({
                   <ImageUp className="size-6" aria-hidden="true" />
                 </span>
                 <p className="text-[0.9rem] font-semibold text-navy-800">{t('pindai.tarik')}</p>
-                <p className="max-w-[38ch] text-[0.78rem] text-muted-500">
+                <p className="max-w-[38ch] text-[0.82rem] text-muted-500">
                   {t('pindai.format')} · maksimal {MAKS_BYTE / 1048576} MB
                 </p>
               </>
@@ -273,7 +273,7 @@ export default function PemindaiFoto({
 
           <ul className="mt-3 space-y-1.5">
             {CONTOH_BANTUAN.map((kunci) => (
-              <li key={kunci} className="flex gap-2 text-[0.76rem] leading-snug text-muted-600">
+              <li key={kunci} className="flex gap-2 text-[0.82rem] leading-snug text-muted-600">
                 <span className="text-brand-700" aria-hidden="true">
                   •
                 </span>
@@ -335,7 +335,7 @@ export default function PemindaiFoto({
                   style={{ width: `${Math.max(4, Math.round(progres.persen * 100))}%` }}
                 />
               </div>
-              <p className="mt-2 text-[0.74rem] text-muted-500">{t('pindai.catatanMesin')}</p>
+              <p className="mt-2 text-[0.8125rem] text-muted-500">{t('pindai.catatanMesin')}</p>
             </div>
           ) : null}
 
@@ -352,13 +352,13 @@ export default function PemindaiFoto({
           {hasil ? (
             <div className="rise mt-3 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-[0.74rem] font-bold text-brand-700 ring-1 ring-brand-100">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-[0.8125rem] font-bold text-brand-700 ring-1 ring-brand-100">
                   <FileText className="size-3.5" aria-hidden="true" />
                   {terkirim.length} {t('pindai.karakter')}
                 </span>
                 <span
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.74rem] font-bold ring-1',
+                    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.8125rem] font-bold ring-1',
                     hasil.keyakinan >= 75
                       ? 'bg-brand-50 text-brand-700 ring-brand-100'
                       : hasil.keyakinan >= 50
@@ -368,7 +368,7 @@ export default function PemindaiFoto({
                 >
                   {t('pindai.keyakinan')} {hasil.keyakinan}%
                 </span>
-                <span className="text-[0.72rem] text-muted-500">
+                <span className="text-[0.8125rem] text-muted-500">
                   {hasil.lebar}×{hasil.tinggi} px · {t('pindai.diproses')}
                 </span>
               </div>
@@ -396,7 +396,7 @@ export default function PemindaiFoto({
                   </p>
                   <ul className="mt-1.5 space-y-1">
                     {angkaCuriga.map((a, i) => (
-                      <li key={`${a.teks}-${i}`} className="text-[0.78rem] leading-snug text-rose-800">
+                      <li key={`${a.teks}-${i}`} className="text-[0.82rem] leading-snug text-rose-800">
                         <code className="rounded bg-white px-1.5 py-0.5 font-mono font-bold">
                           {a.teks}
                         </code>{' '}
@@ -404,18 +404,18 @@ export default function PemindaiFoto({
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-1.5 text-[0.74rem] text-rose-700">{t('pindai.angkaCatatan')}</p>
+                  <p className="mt-1.5 text-[0.8125rem] text-rose-700">{t('pindai.angkaCatatan')}</p>
                 </div>
               ) : null}
 
               <p className="text-[0.8rem] font-semibold text-navy-700">{t('pindai.keKotak')}</p>
               {!serverOnline ? (
-                <p className="text-[0.78rem] text-amber-700">
+                <p className="text-[0.82rem] text-amber-700">
                   {t('umum.serverMati')} — {t('umum.jalankan')}{' '}
                   <code className="font-mono">npm run server</code>. {t('pindai.tetapBisa')}
                 </p>
               ) : terkirim.length > MAKS_TANYA ? (
-                <p className="text-[0.78rem] text-muted-500">{t('pindai.terlaluPanjang')}</p>
+                <p className="text-[0.82rem] text-muted-500">{t('pindai.terlaluPanjang')}</p>
               ) : null}
             </div>
           ) : null}
@@ -433,7 +433,7 @@ export default function PemindaiFoto({
             <p className="text-[0.82rem] font-bold text-navy-800">{t('pindai.privasiJudul')}</p>
             <ul className="mt-1.5 space-y-1.5">
               {[t('pindai.privasi1'), t('pindai.privasi2'), t('pindai.privasi3')].map((b) => (
-                <li key={b} className="flex gap-2 text-[0.78rem] leading-snug text-navy-600">
+                <li key={b} className="flex gap-2 text-[0.82rem] leading-snug text-navy-600">
                   <span className="text-brand-700" aria-hidden="true">
                     •
                   </span>

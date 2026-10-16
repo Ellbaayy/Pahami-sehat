@@ -176,7 +176,7 @@ export default function VerifikasiPanel({
             t={t}
           />
           {hasil.catatan ? (
-            <p className="mt-2 text-[0.78rem] text-muted-500">{hasil.catatan}</p>
+            <p className="mt-2 text-[0.82rem] text-muted-500">{hasil.catatan}</p>
           ) : null}
         </Card>
       ) : null}

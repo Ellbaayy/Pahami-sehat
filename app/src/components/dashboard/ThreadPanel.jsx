@@ -98,7 +98,7 @@ export default function ThreadPanel({
           <p className="truncate text-[0.88rem] font-semibold text-navy-900">
             {sesiAktif ? judulSesi : t('sesi.belumDisimpan')}
           </p>
-          <p className="text-[0.74rem] text-muted-500">
+          <p className="text-[0.8125rem] text-muted-500">
             {sesiAktif ? t('sesi.tersimpanCatatan') : t('sesi.belumDisimpanCatatan')}
           </p>
         </div>
@@ -208,7 +208,7 @@ export default function ThreadPanel({
             >
               <p
                 className={cn(
-                  'flex flex-wrap items-center gap-2 text-[0.7rem] font-bold tracking-[0.12em] uppercase',
+                  'flex flex-wrap items-center gap-2 text-[0.8125rem] font-bold tracking-[0.12em] uppercase',
                   m.role === 'user' ? 'text-brand-100' : 'text-brand-700',
                 )}
               >
@@ -217,7 +217,7 @@ export default function ThreadPanel({
                     biasa dan permintaan penyederhanaan sekaligus, dan tanpa
                     penanda ini keduanya terlihat sama. */}
                 {m.role === 'user' && m.mode === 'sederhanakan' ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2 py-0.5 text-[0.64rem] font-bold tracking-normal normal-case">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2 py-0.5 text-[0.8125rem] font-bold tracking-normal normal-case">
                     <Wand2 className="size-3" aria-hidden="true" />
                     {t('tanya.modeBadgeSederhanakan')}
                   </span>
@@ -239,7 +239,7 @@ export default function ThreadPanel({
                   <PoinKunci items={m.poinKunci} t={t} />
                   <SourcePills sources={m.sources} negative={m.verdict === 'negative'} t={t} />
                   {m.catatan ? (
-                    <p className="mt-2 text-[0.78rem] text-muted-500">{m.catatan}</p>
+                    <p className="mt-2 text-[0.82rem] text-muted-500">{m.catatan}</p>
                   ) : null}
                 </>
               ) : null}
@@ -250,7 +250,7 @@ export default function ThreadPanel({
             <li className="max-w-[min(100%,46rem)] rounded-2xl border border-line-200 bg-white p-4">
               {streaming ? (
                 <>
-                  <p className="mb-1 text-[0.7rem] font-bold tracking-[0.12em] uppercase text-brand-700">
+                  <p className="mb-1 text-[0.8125rem] font-bold tracking-[0.12em] uppercase text-brand-700">
                     {t('tanya.sedangMenyusun')}
                   </p>
                   <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-navy-700">
@@ -260,7 +260,7 @@ export default function ThreadPanel({
                 </>
               ) : (
                 <>
-                  <p className="mb-2 inline-flex items-center gap-1.5 text-[0.78rem] font-semibold text-brand-700">
+                  <p className="mb-2 inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-brand-700">
                     <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
                     {statusPesan || t('umum.proses')}
                   </p>

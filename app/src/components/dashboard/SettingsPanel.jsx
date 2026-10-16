@@ -135,7 +135,7 @@ export default function SettingsPanel({
             >
               {sedangKeluar ? t('set.akunSedangKeluar') : t('set.akunKeluar')}
             </button>
-            <p className="text-[0.78rem] text-navy-500">{t('set.akunKeluarCatatan')}</p>
+            <p className="text-[0.82rem] text-navy-500">{t('set.akunKeluarCatatan')}</p>
           </div>
         </Card>
       )}

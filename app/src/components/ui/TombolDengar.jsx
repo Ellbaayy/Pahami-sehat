@@ -76,7 +76,7 @@ export default function TombolDengar({
         )}
         {bicara ? t('umum.hentikan') : (label ?? t('umum.dengar'))}
       </button>
-      {error ? <span className="ml-2 text-[0.76rem] text-rose-600">{error}</span> : null}
+      {error ? <span className="ml-2 text-[0.82rem] text-rose-600">{error}</span> : null}
     </>
   )
 }
