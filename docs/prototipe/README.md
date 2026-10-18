@@ -1,16 +1,17 @@
 # Prototipe Halaman Penjelasan — Pahami Sehat
 
 > **Bukan produk utama.** Produk yang dipakai/dinilai ada di folder [`../../app`](../../app).
-> Folder ini adalah halaman penjelasan statis: latar belakang, konsep 4 lapis
-> aksesibilitas, alur pemakaian, dan demo tiap fitur — berguna untuk video demo
-> dan presentasi.
+> Folder ini adalah **halaman penjelasan statis**: latar belakang, konsep 4 lapis
+> aksesibilitas, alur pemakaian, dan status tiap fitur — berguna untuk video demo
+> dan presentasi. Gambaran proyek ada di [`../../README.md`](../../README.md).
 
 **"Informasi Kesehatan untuk Semua"**
 
-Prototipe website statis untuk platform informasi kesehatan *Pahami Sehat*.
-Seluruh fitur yang butuh backend (AI, RAG, suara, verifikasi, kuesioner)
-dijalankan sebagai **simulasi murni di sisi browser** — tanpa server,
-tanpa database, tanpa API.
+Halaman ini **tidak punya demo interaktif**. Semua yang bisa dicoba ada di
+aplikasi (tombol "Coba Aplikasinya" → `/app/`). Skrip `js/main.js` hanya
+mengurus hal presentasional: splash singkat, navbar menempel, menu mobile,
+animasi muncul saat di-scroll, penanda menu aktif, dan tombol kembali ke atas.
+**Tidak ada panggilan jaringan, tidak ada penyimpanan, tidak ada simulasi.**
 
 ## Menjalankan
 
@@ -21,7 +22,12 @@ python3 -m http.server 8080 --bind 127.0.0.1
 ```
 
 lalu buka <http://127.0.0.1:8080/>.
-Bisa juga cukup membuka `index.html` langsung di peramban (semua aset lokal).
+Bisa juga cukup membuka `index.html` langsung di peramban (semua aset lokal,
+tanpa build).
+
+Kalau dibuka lewat server Express (`npm start` di `app/`), halaman ini menempati
+**root situs** (`/`) dan salinannya di `/prototipe/` — hasil
+`app/scripts/salin-prototipe.mjs` saat `npm run build`.
 
 ## Struktur
 
@@ -32,42 +38,44 @@ docs/prototipe/
 │   ├── fonts.css       # @font-face Plus Jakarta Sans (vendored)
 │   └── style.css       # design tokens + gaya + responsif (mobile first)
 ├── js/
-│   └── main.js         # seluruh interaksi/demo (IIFE, tanpa dependensi)
+│   └── main.js         # presentasi saja (IIFE, tanpa dependensi)
 ├── assets/
 │   ├── logo-mark.png   # LOGO ASLI — dipotong dari gambar referensi desain
-│   └── fonts/pjs-var.woff2
+│   ├── logo-tim.jpeg   # logo tim NØCTURNE
+│   ├── qr-pahami-sehat.png
+│   ├── fonts/pjs-var.woff2
+│   └── ilustrasi/      # hero, masalah, konsep, alur, fitur, produk, kuesioner, klaim, tenang
 └── Pahami-Sehat.jpeg   # gambar referensi desain (source of truth)
 ```
 
 ## Section halaman
 
-1. Navbar (sticky, scroll-spy, hamburger di mobile)
-2. Hero — tagline + 4 feature badges
-3. Latar Belakang & Masalah — 5 celah utama + Kunci Temuan
-4. Konsep: 4 Lapis Aksesibilitas (Terpahami, Terjangkau, Tersambung, Terpercaya)
-5. Alur Pemakaian — alur resmi dari `alur-pahami-sehat.pdf`:
-   flow 6 langkah (MULAI → pilih bahasa/level → butuh bantuan apa → proses AI →
-   titik keputusan → SELESAI) + panel interaktif:
-   - **Langkah 1**: pilih bahasa + tingkat baca (Anak-anak/Remaja/Dewasa/Lansia),
-     tersinkron dengan demo penerjemah & mode suara
-   - **Langkah 2**: pilih bantuan (1 Terjemahkan / 2 Cek Info / 3 Kuesioner),
-     scroll ke demo yang sesuai
-6. Fitur Utama — 4 kartu dengan demo interaktif:
-   - Penerjemah: input teks/foto(OCR simulasi)/rekam suara, titik keputusan
-     **keterbacaan ≤ target tingkat?** (tingkat baca input diukur nyata dengan
-     Flesch-Kincaid dikalibrasi ×0,6 untuk bahasa Indonesia; bila belum lolos
-     → loop balik 1×), output = versi sederhana + indikator tingkat baca
-     + SUMBER + tombol **Dengar** (TTS Web Speech API)
-   - Mode suara: mic simulasi + TTS + pilihan bahasa daerah
-   - Mode kontras tinggi: toggle untuk gangguan penglihatan (warna, huruf, garis, fokus)
-     (cabang cache vs versi terbaru, ikut `navigator.onLine` + event online/offline)
-   - Verifikasi: percabangan **VERDICT SESUAI** (kutipan sumber) vs
-     **VERDICT TIDAK DITEMUKAN** (diarahkan ke Kemenkes/WHO/BPOM),
-     keputusan berdasar topik resmi & penanda klaim hoaks
-7. Gambaran Produk — mockup laptop (sidebar aktif) + mockup mobile
-8. Kuesioner HLS-SF12 — skor + donut chart + **saran** per kategori hasil
-9. Quote/tagline
-10. Footer
+Urutan `<section>` **wajib sama** dengan urutan tautan di navbar dan footer,
+karena keduanya dibaca sebagai daftar isi.
+
+1. Splash singkat (1 detik, lalu hilang)
+2. Navbar (sticky, scroll-spy, hamburger di ≤860 px)
+3. `#beranda` — hero: tagline, 4 feature badge, tombol "Coba Aplikasinya",
+   kartu QR ke aplikasi, dan statistik
+4. `#masalah` — **Latar Belakang & Masalah**: 5 celah utama + Kunci Temuan.
+   Setiap angka diusahakan punya rujukan yang bisa dibuka; yang belum ada
+   sumbernya ditandai `perlu rujukan`, bukan dihapus diam-diam
+5. `#konsep` — **4 Lapis Aksesibilitas**: Terpahami, Terjangkau, Tersambung,
+   Terpercaya
+6. `#alur` — **Alur Pemakaian**: MULAI → pilih bahasa + tingkat baca →
+   butuh bantuan apa → proses AI → titik keputusan → SELESAI
+7. `#fitur` — **Fitur Utama**: Penerjemah Bahasa Medis, Mode Suara &
+   Bahasa Sehari-hari, Mode Kontras Tinggi, Verifikasi klaim
+8. `#produk` — mockup laptop + mockup ponsel (ilustrasi, bukan tangkapan layar)
+9. `#kuesioner` — **Cek Tingkat Literasi Kesehatan** (instrumen HLS-SF12)
+10. `#sumber` — **Daftar Rujukan**
+11. `#etika` — **Privasi, Etika AI, dan Jejaknya**
+12. Quote band + footer
+
+> Mockup perangkat di bagian **Produk** menampilkan **menu yang sama** dengan
+> aplikasi sungguhan: Beranda, Tanya AI, Cek Klaim, Riwayat, Kuesioner,
+> Pengaturan. "Sederhanakan", "Suara", dan "Pindai Foto" tidak berdiri sendiri
+> karena ketiganya sudah menjadi bagian dari Tanya AI.
 
 ## Aksesibilitas & responsif
 
@@ -81,3 +89,7 @@ docs/prototipe/
 
 Logo di `assets/logo-mark.png` adalah potongan langsung dari desain referensi
 `Pahami-Sehat.jpeg` — konsep dan warna logo tidak diubah.
+
+Alamat di kartu QR (`https://pahami-sehat.vercel.app/app`) masih mengarah ke
+deployment Vercel. Kalau alamat publik berubah (mis. terowongan Cloudflare),
+gambar QR **dan** tautannya perlu diperbarui bersama.
