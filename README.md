@@ -10,22 +10,26 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > (`deepseek-v4-1-flash` lewat Kenari.id) dari server Express sendiri, dan
 > setiap jawaban disertai sumber yang bisa dibuka pengguna.
 >
-> **Status tiap fitur — apa adanya:**
+> **Status tiap fitur — apa adanya (diperiksa ulang 18 Okt 2026):**
 >
 > | Fitur | Keadaan |
 > |---|---|
+> | Gerbang akun | **WAJIB.** Aplikasi tidak bisa dipakai tanpa masuk. Alur: masuk → (kalau mendaftar: 3 langkah + nama panggilan) → loading → Beranda. **Butuh MariaDB**; tanpa database, endpoint akun menjawab `503 db_mati` dan aplikasi tidak bisa dilewati |
+> | Masuk dengan Google | berjalan lewat alur **server-side**, tetapi **baru muncul kalau `VITE_GOOGLE_CLIENT_ID` diisi saat build**. Selama kosong, tombolnya disembunyikan — lebih baik tidak terlihat daripada terlihat tapi tidak bekerja |
 > | Tanya AI + sumber | berjalan. Pencarian memakai kata kunci terpilih, bukan kalimat pengguna apa adanya |
-> | Sederhanakan teks | berjalan (4 tingkat baca) |
+> | Sederhanakan teks | berjalan (4 tingkat baca), menjadi salah satu mode di komposer Tanya AI |
 > | Cek klaim | berjalan (verdict + sumber) |
-> | Suara dibacakan | **BERJALAN sebagai suara neural Microsoft — di versi yang dijalankan di komputer sendiri; belum di versi daring.** Diukur 14 Okt 2026: `/api/suara` menjawab `200` berisi MP3 24 kHz untuk empat suara neural (Indonesia perempuan, Jawa, Sunda, Inggris); jawaban 39 kalimat (3.080 karakter) menghasilkan audio 1,4 MB dalam ~6 detik, dan isinya diperiksa dengan **transkripsi balik** (bukan hanya ukuran berkas) — terbaca kembali dengan keyakinan bahasa 1,00. Penyebab kegagalan lama sudah ditemukan: pustaka `msedge-tts` masih 2.0.9 dan **selalu** ditolak `403`; setelah dinaikkan ke `^2.1.0` suaranya berbunyi. **Jalur Kenari sudah DIBUANG** (keputusan jagi): saldo akun Rp 0, jadi setiap permintaan ditolak `402 insufficient_balance` atau menggantung 20 detik sebelum akhirnya pindah ke Microsoft — murni memperlambat. Layanan Microsoft membalas `429` kalau dihajar beruntun (terukur: 4 dari 8 permintaan lolos), jadi tiap kalimat sekarang **diulang sampai 4 kali** dengan jeda bertingkat; setelah itu 8/8 lolos. Di Vercel tetap `502` karena fungsi serverless tidak bisa mempertahankan WebSocket — batas platform, bukan bug. Rincian: `app/server/suara.js` |
-> | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya |
+> | Suara dibacakan | **berjalan sebagai suara neural Microsoft — hanya di versi yang dijalankan di komputer sendiri.** Diukur ulang 18 Okt 2026: `POST /api/suara` menjawab `200 audio/mpeg`, berkas 24 kHz mono, 24.048 byte untuk satu kalimat, 1,08 detik. Di Vercel tetap **`502`** (diukur ulang 18 Okt 2026) karena fungsi serverless tidak bisa mempertahankan WebSocket — batas platform, bukan bug. Rincian: `app/server/suara.js` |
+> | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya. Butuh konteks aman (`https://` atau `localhost`) |
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
-> | Riwayat pertanyaan | berjalan. Tersimpan di peramban saja (bukan server), maksimal **20 obrolan** (lihat `MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan setiap penghapusan **bisa dibatalkan** |
-> | Berita kesehatan harian | berjalan. Pertanyaan seperti "berita terbaru hari ini" dijawab dari **RSS** (Detik Health, WHO, Google News) — bukan dari ensiklopedia, karena Wikipedia tidak punya berita harian. Setiap berita disebutkan **nama medianya** dan **umurnya**, dan lonceng pemberitahuan berbunyi kalau ada berita segar (diperiksa maksimal sekali sehari). Di Vercel jalur ini jalan karena memakai HTTPS biasa, bukan WebSocket |
+> | Riwayat obrolan | berjalan. Tersimpan di peramban (bukan server), maksimal **20 obrolan** (`MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan penghapusan **bisa dibatalkan**. **Tidak lagi ditampilkan di Beranda** — hanya lewat menu **Riwayat** |
+> | Berita kesehatan harian | berjalan. Pertanyaan seperti "berita terbaru hari ini" dijawab dari **RSS** (Detik Health, WHO, Google News) — bukan dari ensiklopedia, karena Wikipedia tidak punya berita harian. Setiap berita disebutkan **nama medianya** dan **umurnya**, dan lonceng pemberitahuan berbunyi kalau ada berita segar (diperiksa maksimal sekali sehari) |
+> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **319 kunci** kamus |
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
-> 20 permintaan/menit per alamat IP (lihat `app/server/batas.js`).
-> Pindai foto tidak masuk hitungan itu karena tidak menyentuh server sama sekali.
+> 20 permintaan/menit per alamat IP (`app/server/batas.js`, angka di `LAJU` pada
+> `app/server/batasInput.js`). Pindai foto tidak masuk hitungan itu karena tidak
+> menyentuh server sama sekali.
 
 ---
 
@@ -33,7 +37,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 
 Tangkapan layar di bawah diambil langsung dari aplikasi yang berjalan
 (`npm run server`) — bukan gambar desain. Berkasnya ada di
-[`docs/tangkapan-layar/`](docs/tangkapan-layar/). Yang terlihat di bagian
+[`docs/tangkapan-layar/`](docs/tangkapan-layar/) (21 berkas). Yang terlihat di bagian
 **Produk** adalah mockup perangkat, dan itu memang ilustrasi di dalam halaman —
 sisanya tampilan sungguhan.
 
@@ -47,14 +51,14 @@ sisanya tampilan sungguhan.
 |---|---|---|
 | ![Riwayat](docs/tangkapan-layar/dashboard-4-riwayat.png) | ![Kuesioner](docs/tangkapan-layar/dashboard-5-kuesioner.png) | ![Pengaturan](docs/tangkapan-layar/dashboard-6-pengaturan.png) |
 
-**Tampilan di ponsel** (lebar 390 px) — sidebar berubah jadi menu gulir:
+**Tampilan di ponsel** — sidebar berubah jadi menu gulir:
 
 | Beranda | Menu terbuka |
 |---|---|
 | ![Beranda di HP](docs/tangkapan-layar/dashboard-hp-1-beranda.png) | ![Menu HP](docs/tangkapan-layar/dashboard-hp-2-menu.png) |
 
 **Mode kontras tinggi** — satu sakelar: teks jadi hitam penuh, huruf dasar
-membesar 112% (terukur 16 px → 17,92 px), garis dan batas fokus dipertebal:
+membesar 112%, garis dan batas fokus dipertebal:
 
 ![Mode kontras tinggi](docs/tangkapan-layar/dashboard-kontras-tinggi.png)
 
@@ -78,21 +82,31 @@ membesar 112% (terukur 16 px → 17,92 px), garis dan batas fokus dipertebal:
 
 > Mockup perangkat di bagian **Produk** menampilkan **menu yang sama** dengan
 > aplikasi sungguhan (Beranda, Tanya AI, Cek Klaim, Riwayat, Kuesioner,
-> Pengaturan) — "Sederhanakan" dan "Suara" tidak berdiri sendiri karena
-> keduanya sudah menjadi bagian dari Tanya AI.
+> Pengaturan) — "Sederhanakan", "Suara", dan "Pindai Foto" tidak berdiri sendiri
+> karena ketiganya sudah menjadi bagian dari Tanya AI (mode di komposer, tombol
+> mikrofon, dan tombol kamera).
 
 ---
 
 ## Peta folder
 
-| Folder | Peran |
+| Folder / berkas | Peran |
 |---|---|
 | [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
 | [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **21 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
-| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 9 tabel. Idempoten, aman dijalankan ulang. |
+| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB bahan** — 9 tabel. Idempoten, aman dijalankan ulang. |
+| [`docs/skema-akun.sql`](docs/skema-akun.sql) | **Skema akun** — 3 tabel (`pengguna_baru`, `sesi`, `riwayat_pengguna`). Dipakai fitur akun yang sekarang menjadi gerbang masuk. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
-| [`docs/verifikasi-*.md`](docs) | **Berkas pendukung.** Laporan verifikasi setiap angka di bagian "Masalah" — memastikan klaimnya berasal dari dokumen yang bisa dibuka, bukan dari ingatan. Ringkasannya tampil di halaman penjelasan, bagian **Sumber Data**. |
+| [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
+| [`uji-*.mjs`](.) | **17 berkas uji** — 16 di antaranya berjalan tanpa jaringan (total **666 pemeriksaan**, terukur 18 Okt 2026); `uji-jawaban.mjs` butuh server lokal + API key (lihat [Menjalankan uji](#menjalankan-uji)). |
+| [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
+| [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
+| [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
+| [`mermaid-diagram.png`](mermaid-diagram.png) | Sumber alur daur konten harian (dipakai `app/server/konten.js`). |
+| [`docs/verifikasi-*.md`](docs) | **Berkas pendukung.** Laporan verifikasi setiap angka di bagian "Masalah" — memastikan klaimnya berasal dari dokumen yang bisa dibuka, bukan dari ingatan. |
+| [`docs/latih-tingkat-*.json`](docs) | **16 berkas hasil pengukuran** tingkat baca + 1 usulan sasaran, dipakai `ukur-kalibrasi.mjs` untuk menurunkan `SASARAN`. |
+| [`docs/sumber-hls-sf12.txt`](docs/sumber-hls-sf12.txt) | Instrumen HLS-SF12 asli + teks Indonesia tervalidasi. |
 
 ### Sumber data di halaman penjelasan
 
@@ -110,8 +124,8 @@ Verifikasi itu juga menemukan **dua kekeliruan** yang sudah dibetulkan:
 | Cakupan imunisasi "turun 95% → 80%" | 93,7% (2019) → 84,5% (2021). Angka 95% adalah **target** kekebalan kelompok, bukan capaian |
 | Remaja 15–18 tahun "72% literasi rendah" | Dari responden yang berliterasi rendah, kelompok 15–18 tahun adalah **proporsi terbesar (72%)** — bukan 72% remaja berliterasi rendah |
 
-Laporan lengkapnya ada di `docs/verifikasi-klaim-kesehatan.md` dan
-`docs/verifikasi-studi-literasi-kesehatan.md`.
+Laporan lengkapnya ada di `docs/verifikasi-klaim-kesehatan.md`,
+`docs/verifikasi-klaim-tambahan.md`, dan `docs/verifikasi-studi-literasi-kesehatan.md`.
 
 ### Alamat di situs
 
@@ -120,34 +134,44 @@ Laporan lengkapnya ada di `docs/verifikasi-klaim-kesehatan.md` dan
 | `/` | halaman penjelasan — yang muncul pertama kali dibuka |
 | `/app/` | aplikasi yang bisa dipakai |
 | `/prototipe/` | salinan halaman penjelasan (tautan lama tetap hidup) |
+| `/api/...` | backend |
 
 ```
 pahami-sehat/
-├── .github/workflows/uji.yml ← integrasi berkelanjutan (uji + build)
-├── LICENSE                   ← MIT
+├── .github/workflows/uji.yml  ← integrasi berkelanjutan (uji + build)
+├── LICENSE                    ← MIT
 ├── README.md
-├── uji-*.mjs                 ← uji tanpa jaringan (lihat "Menjalankan uji")
-├── verifikasi-judul.mjs      ← buktikan judul artikel Wikipedia benar-benar ada
-├── periksa-istilah.mjs       ← periksa calon istilah baru sebelum masuk peta
-├── ukur-*.mjs                ← pengukuran untuk memilih angka batas
-├── mermaid-diagram.png       ← sumber alur daur konten harian (dipakai konten.js)
-├── app/                      ← PRODUK UTAMA (React + Express + Tailwind)
-│   ├── .env                  API key Kenari (JANGAN di-commit)
-│   ├── public/ocr/           mesin OCR: worker, core WASM, data bahasa
-│   ├── server/               backend Express: route, klien Kenari, prompt, rubrik
-│   ├── src/                  frontend React: App.jsx, lib/, data/, components/
-│   ├── api/index.js          pintu masuk serverless Vercel
+├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
+├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
+├── uji-*.mjs                  ← 17 berkas uji (16 tanpa jaringan)
+├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
+├── verifikasi-judul.mjs
+├── periksa-istilah.mjs
+├── panen-pengetahuan.mjs
+├── mermaid-diagram.png
+├── app/                       ← PRODUK UTAMA (React + Express + Tailwind)
+│   ├── .env                   ← API key Kenari (JANGAN di-commit, mode 600)
+│   ├── .env.example
+│   ├── public/ocr/            ← mesin OCR: worker, core WASM, data bahasa (17 MB)
+│   ├── scripts/               ← salin-prototipe.mjs (prebuild)
+│   ├── server/                ← backend Express (22 berkas)
+│   ├── src/                   ← frontend React: App.jsx, lib/, data/, components/
+│   ├── api/index.js           ← pintu masuk serverless Vercel
 │   ├── index.html
 │   ├── package.json
 │   ├── vercel.json
 │   └── vite.config.js
 └── docs/
-    ├── sumber-hls-sf12.txt   ← instrumen HLS-SF12 asli + teks Indonesia tervalidasi
-    └── prototipe/            ← halaman penjelasan (statis, tanpa build)
-        ├── index.html
-        ├── css/
-        ├── js/
-        └── assets/
+    ├── prototipe/             ← halaman penjelasan (statis, tanpa build)
+    │   ├── index.html
+    │   ├── css/
+    │   ├── js/
+    │   └── assets/
+    ├── tangkapan-layar/       ← 21 tangkapan layar
+    ├── skema-database.sql
+    ├── skema-akun.sql
+    ├── sumber-hls-sf12.txt
+    └── verifikasi-*.md
 ```
 
 Dua bagian ini saling menaut: sidebar di `app/` punya tombol **"Kembali ke situs"**
@@ -161,6 +185,7 @@ ke aplikasi.
 ```mermaid
 flowchart TB
   subgraph Peramban["Peramban — React 19 + Vite 8 + Tailwind 4"]
+    LOGIN["Halaman masuk<br/>gerbang WAJIB"]
     UI["Antarmuka<br/>Beranda · Tanya AI · Cek Klaim · Riwayat · Kuesioner · Pengaturan"]
     OCR["Mesin OCR<br/>tesseract.js / WebAssembly"]
     LS[("localStorage<br/>sesi · kuesioner · setelan")]
@@ -169,16 +194,19 @@ flowchart TB
   subgraph Server["Express 5 — lokal; Vercel Serverless saat produksi"]
     B["Pembatas laju<br/>20 permintaan/menit per IP + batas total per instance"]
     R["Rute /api/*"]
-    DBJ["app/server/db.js<br/>jembatan database — OPSIONAL<br/>gagal = null, tidak pernah melempar"]
+    AK["Rute /api/akun/*<br/>cookie HttpOnly + SameSite=Lax"]
+    DBJ["app/server/db.js<br/>jembatan database — OPSIONAL untuk bahan<br/>gagal = null, tidak pernah melempar"]
   end
 
-  subgraph Simpanan["MariaDB (XAMPP) — opsional, di laptop sendiri"]
+  subgraph Simpanan["MariaDB (XAMPP) — di laptop sendiri"]
     T1[("berita")]
     T2[("konten")]
     T3[("pengetahuan<br/>salinan berlabel tanggal")]
     T4[("sumber")]
     T6[("dokumen · sitasi<br/>jejak sumber yang dikutip")]
-    T5[("pengguna · setelan · riwayat<br/>sudah ada, belum dipakai")]
+    T7[("pengguna_baru · sesi<br/>AKTIF — gerbang akun")]
+    T8[("riwayat_pengguna<br/>tersimpan, belum dibaca UI")]
+    T5[("pengguna · setelan · riwayat<br/>skema LAMA, tidak dipakai")]
   end
 
   subgraph Luar["Layanan luar"]
@@ -186,8 +214,11 @@ flowchart TB
     W["Wikipedia bahasa Indonesia"]
     M["MedlinePlus<br/>wsearch.nlm.nih.gov"]
     N["RSS berita kesehatan<br/>Detik Health · WHO · Google News"]
+    MS["Microsoft Edge TTS<br/>suara neural via WebSocket"]
   end
 
+  LOGIN --> AK
+  AK --> T7
   UI --> B --> R
   UI <--> LS
   UI --> OCR
@@ -197,6 +228,8 @@ flowchart TB
   R -->|"istilah Inggris"| M
   R -->|"pertanyaan berita"| N
   R -->|"sumber + pertanyaan"| K
+  R -->|"teks"| MS
+  MS -->|"audio MP3"| R
   K -->|"jawaban + sumber yang dikutip"| R
   R -->|"jawaban"| UI
 
@@ -206,13 +239,14 @@ flowchart TB
   DBJ --> T3
   DBJ --> T4
   DBJ --> T6
-  DBJ -.->|"belum disambungkan"| T5
+  DBJ -.->|"tersimpan, belum disambungkan"| T8
 
   classDef store fill:#eef,stroke:#446,color:#113
   classDef opsional fill:#ffe9c9,stroke:#a63,color:#420,stroke-dasharray:4 3
   class LS store
   class T1,T2,T3,T4,T6 store
-  class T5 opsional
+  class T7 opsional
+  class T5,T8 opsional
   class DBJ opsional
 ```
 
@@ -235,38 +269,81 @@ flowchart TB
    dipilih selama ada istilah yang lebih khusus.
 5. Istilah itu dipetakan ke **dua bentuk berbeda**, karena dua mesin pencari
    memakai kosakata yang berbeda:
-   - Wikipedia ID memakai **judul artikel kanonik** (`PETA_PENCARIAN`),
-     mis. `stunting` → `Hambatan pertumbuhan`.
-   - MedlinePlus memakai **istilah Inggris** (`PETA_MEDLINEPLUS`),
-     mis. `rontgen` → `xrays`.
+   - Wikipedia ID memakai **judul artikel kanonik** (`PETA_PENCARIAN`,
+     **219 entri**), mis. `stunting` → `Hambatan pertumbuhan`.
+   - MedlinePlus memakai **istilah Inggris** (`PETA_MEDLINEPLUS`,
+     **262 entri**), mis. `rontgen` → `xrays`.
 6. **Model AI** menerima pertanyaan + hasil pencarian, lalu menjawab **hanya**
    dari bahan itu. Prompt melarang menambah fakta dari ingatan.
 7. Jawaban kembali bersama **sumber yang benar-benar dikutip**, dan panel
    `SumberJawaban` membedakan sumber yang **dipakai** dari yang cuma **ditemukan**.
 
+### Akun — gerbang masuk yang wajib
+
+Diperiksa 18 Okt 2026: **aplikasi tidak bisa dipakai tanpa masuk.** `App.jsx`
+berhenti di `LoginPage` selama `pengguna` bernilai kosong, jadi tidak ada jalur
+"lewati" atau "coba tanpa akun".
+
+| Langkah | Yang terjadi |
+|---|---|
+| 1. Gerbang | "Sudah punya akun?" → **[Masuk]** atau **[Buat akun]** |
+| 2. Masuk | satu formulir: email/nomor telepon + kata sandi |
+| 3. Buat akun | tiga langkah berurutan: alamat → kata sandi (min. 8 karakter) → ulangi kata sandi |
+| 4. Nama panggilan | "Mau dipanggil apa?" — minimal 2 karakter, disimpan lewat `POST /api/akun/nama` |
+| 5. Selesai | `LoadingPage` → Beranda dengan sapaan "Halo, {nama}!" |
+
+Yang disimpan hanya: email **atau** nomor telepon, nama panggilan, **hash** kata
+sandi (scrypt + salt — kata sandinya tidak pernah disimpan), `google_id` kalau
+masuk lewat Google, dan riwayat obrolan miliknya sendiri. Sesi dikirim sebagai
+cookie **HttpOnly + SameSite=Lax**; flag `Secure` dinyalakan otomatis kalau
+permintaannya lewat HTTPS (di `http://127.0.0.1` justru tidak dikirim kalau
+dipaksa).
+
+**Fitur akun butuh database.** Tanpa MariaDB, endpoint akun menjawab
+`503 {"code":"db_mati"}` dengan pesan yang jelas — diukur 18 Okt 2026. Karena
+gerbang masuk memakai fitur akun, **aplikasi tidak bisa dimasuki tanpa
+database**; bagian lain (konten, berita, Tanya AI) tetap hidup. `GET
+/api/akun/saya` tetap `200` dan menjawab `masuk: false`, supaya halaman masuk
+tidak macet menunggu.
+
+Pesan galat masuk **sengaja menyamakan** "akun tidak ada" dengan "sandi salah"
+supaya alamat mana yang terdaftar tidak bisa ditebak orang lain. Jalan ke
+pembuatan akun diberikan lewat tautan "Belum punya akun?", bukan lewat pesan
+galat.
+
 ### Di mana datanya disimpan
 
 | Data | Tempat | Bertahan setelah halaman ditutup? |
 |---|---|---|
-| Sesi obrolan | `localStorage` (`pahami-sehat:sesi`) | ya, sampai dihapus pengguna |
-| Jawaban kuesioner | `localStorage` (`pahami-sehat:kuesioner`) | ya |
-| Setelan bahasa / tingkat baca / kontras | `localStorage` (`pahami-sehat:setelan`) | ya |
+| Sesi obrolan | `localStorage` (`pahami-sehat:sesi`) | ya, sampai dihapus pengguna (maks. 20 obrolan) |
+| Jawaban kuesioner | `localStorage` | ya |
+| Setelan bahasa / tingkat baca / kontras / suara | `localStorage` (`pahami-sehat:setelan`) | ya |
 | Foto yang dipindai | **tidak disimpan ke mana pun** — dibaca di memori peramban | tidak |
-| Pertanyaan & jawaban pengguna | **tidak disimpan** — bahkan dengan database menyala | tidak |
+| Pertanyaan & jawaban pengguna | **tidak disimpan di server** — tidak ada tabel percakapan di jalur aplikasi | tidak |
+| Akun (opsional isinya, wajib gerbangnya) | `pengguna_baru` + `sesi` | ya, sampai keluar |
 
-**Database bersifat OPSIONAL, dan itu dijaga di kode.** MariaDB (lewat XAMPP)
-dipakai untuk menyimpan **bahan**, bukan percakapan pengguna. Kalau MariaDB
-mati, aplikasi **tetap jalan** memakai berkas cache seperti sebelumnya —
-`app/server/db.js` mengembalikan `null` alih-alih melempar galat.
+**Catatan jujur soal riwayat di akun.** Server sudah punya endpoint lengkap
+untuk riwayat milik akun (`GET/POST/PUT/DELETE /api/akun/riwayat*`) dan tabel
+`riwayat_pengguna` sudah terisi, tetapi **antarmuka masih membaca riwayat dari
+`localStorage`**. Yang sudah tersambung hanya **pemindahan sekali** saat
+pengguna pertama kali masuk (`POST /api/akun/riwayat/pindah`, maksimal 20 sesi).
+Jadi riwayat belum benar-benar lintas perangkat — itu disebut apa adanya di
+sini, bukan diklaim selesai.
 
-Dibuktikan, bukan diklaim — dengan database dimatikan (`DB_MATI=1`):
+**Database bahan bersifat OPSIONAL, dan itu dijaga di kode.** MariaDB (lewat
+XAMPP) dipakai untuk menyimpan **bahan**, bukan percakapan pengguna. Kalau
+MariaDB mati, bahan tetap tersaji memakai berkas cache — `app/server/db.js`
+mengembalikan `null` alih-alih melempar galat.
+
+Dibuktikan ulang 18 Okt 2026 dengan `DB_MATI=1`:
 
 | Yang diperiksa | Hasil |
 |---|---|
+| `GET /api/health` | **HTTP 200**, `{"db":{"aktif":false,"alasan":"dimatikan lewat DB_MATI=1"}}` |
 | `GET /api/konten` | **HTTP 200** |
-| `GET /api/berita/ringkas` | **HTTP 200** |
-| `GET /api/tanya` | **HTTP 200**, jawaban tidak kosong |
-| `GET /api/health` | melaporkan `{"aktif":false,"alasan":"dimatikan lewat DB_MATI=1"}` |
+| `POST /api/tanya` | **HTTP 200** dalam 9,25 detik, jawaban 732 karakter, **3 sumber** |
+| `POST /api/akun/daftar` | **HTTP 503**, `code: db_mati` (memang butuh database) |
+| `GET /api/akun/saya` | **HTTP 200**, `masuk: false` |
 
 #### Yang disimpan di database
 
@@ -275,14 +352,19 @@ Dibuktikan, bukan diklaim — dengan database dimatikan (`DB_MATI=1`):
 | `berita` | judul berita RSS, `sidik` UNIQUE mencegah duplikat | `.cache-berita.json` |
 | `konten` | artikel & tips harian dari Kemenkes | `.cache-konten.json` |
 | `pengetahuan` | **331 topik medis** dari sumber resmi, salinan berlabel tanggal | (baru) |
-| `sumber` | 12 lembaga resmi (Kemenkes, WHO, BPOM, NIH, …) | (baru) |
+| `sumber` | lembaga resmi (Kemenkes, WHO, BPOM, NIH, CDC, …) — **12 baris di skema**, bertambah saat panen | (baru) |
 | `dokumen` + `sitasi` | **jejak sumber yang dikutip** — klaim "jawaban ini dari WHO" jadi bisa **dilacak**, bukan cuma ditulis | (baru) |
+| `pengguna_baru`, `sesi` | akun & sesi login (skema-akun.sql) | (baru) |
+| `riwayat_pengguna` | riwayat milik akun — terisi lewat pemindahan, **belum dibaca UI** | (baru) |
 
-Tabel `pengguna`, `setelan`, dan `riwayat` versi **LAMA** sudah dibuat di skema
-tapi **belum disambungkan** ke jalur aplikasi dan tidak akan dipakai. Yang
-aktif adalah `pengguna_baru`, `sesi`, dan `riwayat_pengguna` dari
-`docs/skema-akun.sql` — dipakai oleh fitur akun (opsional: tanpa akun,
-aplikasi tetap jalan penuh dan riwayat tinggal di peramban).
+Tabel `pengguna`, `setelan`, dan `riwayat` versi **LAMA** masih ada di
+`skema-database.sql` tetapi **tidak dipakai** dan tidak akan dipakai. Jangan
+menyambungkannya tanpa alasan baru.
+
+Isi database pada 18 Okt 2026 (hitungan langsung, bukan perkiraan):
+`pengetahuan` **331** baris (270 dari MedlinePlus, 61 dari Wikipedia) ·
+`sumber` **19** baris · `dokumen` **79** · `sitasi` **246** · `berita` 3 ·
+`konten` 6.
 
 #### Jejak sitasi — cara memeriksanya
 
@@ -339,13 +421,46 @@ dua penyakit, dan kesalahan itu akan tersimpan rapi seolah fakta.
 | MedlinePlus (Perpustakaan Kedokteran Nasional AS, bagian NIH) | 270 | `resmi = 1` |
 | Wikipedia bahasa Indonesia (pelengkap) | 61 | `resmi = 0` |
 
-Setiap baris menyertakan `url_sumber` yang bisa diperiksa pengguna. Hasil akhir:
-**331 baris, 0 kosong, 0 tanpa URL**, rata-rata 2.383 karakter, masa berlaku
-90 hari. Tiga jebakan yang ditemukan dan ditutup: istilah Indonesia tidak
-ditemukan di MedlinePlus (wajib lewat `PETA_MEDLINEPLUS`), salah tangkap topik
-("luka" pernah tersimpan sebagai penjelasan cedera **bahu**), dan URL artikel
-yang ternyata ada di **atribut** tag XML — kesalahan itu sempat membuat semua
-tautan menunjuk halaman depan `medlineplus.gov`.
+Setiap baris menyertakan `url_sumber` yang bisa diperiksa pengguna. Hasil akhir
+(diukur 18 Okt 2026): **331 baris, 0 tanpa URL**, rata-rata **2.325 karakter**
+(terpendek 125, terpanjang 7.196), masa berlaku **90 hari**. Tiga jebakan yang
+ditemukan dan ditutup: istilah Indonesia tidak ditemukan di MedlinePlus (wajib
+lewat `PETA_MEDLINEPLUS`), salah tangkap topik ("luka" pernah tersimpan sebagai
+penjelasan cedera **bahu**), dan URL artikel yang ternyata ada di **atribut**
+tag XML — kesalahan itu sempat membuat semua tautan menunjuk halaman depan
+`medlineplus.gov`.
+
+---
+
+## Endpoint
+
+| Metode | Path | Isi |
+|---|---|---|
+| GET | `/api/health` | status server, key & model, status database |
+| GET | `/api/meta` | tingkat baca + model aktif + daftar suara |
+| GET | `/api/konten` | topik populer, artikel, tips harian |
+| GET | `/api/berita/ringkas` | ringkasan berita untuk lonceng |
+| GET | `/api/db` | hitungan + contoh baris (bukan seluruh isi tabel) |
+| GET | `/api/sitasi` | sumber mana dipakai untuk jenis jawaban apa |
+| POST | `/api/tanya` | jawab pertanyaan, sesuaikan tingkat baca |
+| POST | `/api/tanya/stream` | sama, tapi streaming (SSE) |
+| POST | `/api/sederhanakan` | terjemahkan teks medis |
+| POST | `/api/verifikasi` | periksa klaim kesehatan |
+| POST | `/api/suara` | teks → MP3 (suara neural) |
+| GET | `/api/akun/saya` | siapa yang sedang masuk |
+| POST | `/api/akun/cek` | apakah alamat sudah terdaftar |
+| POST | `/api/akun/daftar` | buat akun + langsung masuk |
+| POST | `/api/akun/masuk` | masuk |
+| POST | `/api/akun/keluar` | keluar dari perangkat ini |
+| POST | `/api/akun/keluar-semua` | keluarkan semua sesi |
+| POST | `/api/akun/nama` | simpan nama panggilan |
+| GET | `/api/akun/google` | mulai alur OAuth Google |
+| GET | `/api/akun/google/callback` | kembali dari Google |
+| GET/POST/PUT/DELETE | `/api/akun/riwayat*` | riwayat milik akun (belum dipakai UI) |
+
+Galat selalu berbentuk `{ ok: false, code, pesan }` — `code` sengaja dipakai UI
+untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
+`input_kosong` ditampilkan berbeda, bukan satu kotak merah yang sama).
 
 ### Lima hal yang dijaga di sisi server
 
@@ -353,19 +468,19 @@ tautan menunjuk halaman depan `medlineplus.gov`.
   istilah dipakai bersama oleh `PENGENALAN_TOPIK`, `KATA_KESEHATAN`, dan kedua
   peta pencarian, supaya tidak ada istilah yang dikenali di satu jalur tapi mati
   di jalur lain.
-- **`app/server/prompts.js`** — rubrik 7 butir. Butir 4 melarang mengarang
+- **`app/server/prompts.js`** — rubrik wajib. Butir 4 melarang mengarang
   sitasi, butir 5 dan 6 melarang memberi diagnosis/resep/dosis dan melarang
   menyimpulkan pengguna mengidap sesuatu.
-- **`app/server/batas.js`** — pembatas laju. Penyimpanannya di memori proses,
-  jadi di serverless batas ini **per-instance, bukan global** — cukup untuk
-  menahan penyalahgunaan kasar, bukan jaminan global. Batasnya disebut apa
-  adanya di komentar berkasnya.
+- **`app/server/batas.js`** + `batasInput.js` — pembatas laju dan anggaran
+  token. Penyimpanannya di memori proses, jadi di serverless batas ini
+  **per-instance, bukan global** — cukup untuk menahan penyalahgunaan kasar,
+  bukan jaminan global. Batasnya disebut apa adanya di komentar berkasnya.
 - **`app/server/berita.js`** — jalur berita kesehatan. Parser RSS memperlakukan
   isi media sebagai **data**, bukan instruksi: judul/deskripsi yang menyuruh
   model mengabaikan aturan diabaikan, tag HTML dibuang, link wajib `http(s)`
   (menolak `javascript:` dan `data:`), satu feed dibatasi 30 item dan 2 MB, dan
   tanggal yang tidak sah diperlakukan seperti tanggal kosong — bukan `NaN` yang
-  bocor ke pengurutan. Diuji `uji-berita.mjs` (89 pemeriksaan).
+  bocor ke pengurutan. Diuji `uji-berita.mjs` (**102 pemeriksaan**).
 - **`app/server/db.js`** — jembatan database. Tiga hal yang tidak boleh
   dilanggar: (1) **tidak pernah melempar** — database mati harus menghasilkan
   `null`, bukan galat yang sampai ke pengguna; (2) setelah gagal, koneksi
@@ -391,16 +506,17 @@ Tiga lapis perbaikan, semuanya terukur:
    dimatikan, satu jawaban Sederhanakan turun dari >3400 token (terpotong)
    menjadi 474–985 token (utuh), dan seluruh gerbang keterbacaan tetap lulus.
 2. **Anggaran token per jalur** (`MAKS_TOKEN` di `app/server/batasInput.js`),
-   diukur satu per satu — bukan satu angka untuk semua jalur.
+   diukur satu per satu — bukan satu angka untuk semua jalur:
+   `tanya` 2000 · `berita` 3000 · `sederhanakan` 3400 · `verifikasi` 2800.
 3. **Coba ulang + jawaban darurat.** Balasan yang tidak terbaca sebagai JSON
    diulang sekali; kalau tetap gagal, jalur berita menyusun jawabannya langsung
    dari daftar RSS (judul + media + umur, tanpa mengarang). Di antarmuka,
    jawaban kosong selalu diganti kalimat penjelasan — tidak pernah gelembung
    hampa.
 
-Buktinya ada di uji, bukan di klaim: `uji-berita.mjs` bagian "jawaban darurat"
-(12 pemeriksaan), bagian "uji jalur berita" di `uji-jawaban.mjs` (3 pertanyaan,
-ikut menentukan exit code), dan `ukur-panjang.mjs` (batas kata per tingkat).
+Buktinya ada di uji, bukan di klaim: `uji-berita.mjs` bagian "jawaban darurat",
+bagian "uji jalur berita" di `uji-jawaban.mjs` (3 pertanyaan, ikut menentukan
+exit code), dan `ukur-panjang.mjs` (batas kata per tingkat).
 
 ---
 
@@ -424,9 +540,18 @@ npm run dev                  # frontend Vite (otomatis meneruskan /api ke backen
 npm start                    # build + server di http://127.0.0.1:8787
 ```
 
-### Database (opsional)
+`npm run build` juga menjalankan `prebuild` → `scripts/salin-prototipe.mjs`,
+yang menyalin `docs/prototipe/` menjadi `dist/index.html` + `dist/prototipe/`.
+Jadi **mengubah halaman penjelasan wajib lewat build** sebelum diuji.
 
-Aplikasi **jalan tanpa ini**. Kalau mau menyalakannya:
+> Hasil build memakai ES module, jadi membuka `dist/index.html` lewat `file://`
+> **tidak akan jalan**. Harus disajikan lewat HTTP — `npm start` sudah begitu.
+
+> Tanpa API key, server tidak mau start dan akan memberi pesan jelas soal `.env`.
+
+### Database
+
+**Wajib untuk gerbang akun**, opsional untuk bahan.
 
 ```bash
 # XAMPP: pasang libxcrypt-compat DULU di Arch/CachyOS.
@@ -436,6 +561,7 @@ sudo pacman -S libxcrypt-compat
 
 sudo /opt/lampp/lampp startmysql          # MariaDB di port 3306
 /opt/lampp/bin/mysql -u root < docs/skema-database.sql
+/opt/lampp/bin/mysql -u root < docs/skema-akun.sql     # tabel akun
 
 # isi 331 topik medis dari sumber resmi (butuh ~10 menit)
 node panen-pengetahuan.mjs --semua
@@ -443,19 +569,14 @@ node panen-pengetahuan.mjs --semua
 
 Setel koneksinya lewat `.env` (bawaan sudah cocok untuk XAMPP):
 `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAMA`.
-`DB_MATI=1` mematikan database sepenuhnya — dipakai untuk membuktikan aplikasi
-tetap jalan tanpa itu.
+`DB_MATI=1` mematikan database sepenuhnya — dipakai untuk membuktikan bahan
+tetap tersaji tanpa database.
 
 Endpoint untuk memeriksa: `GET /api/health` (status db) dan `GET /api/db`
 (hitungan + contoh baris, bukan seluruh isi tabel).
 
 **Untuk Grand Final:** `npm start` adalah yang dipakai saat presentasi — Express
 menyajikan hasil build sekaligus melayani `/api`, jadi cukup satu alamat.
-
-> Hasil build memakai ES module, jadi membuka `dist/index.html` lewat `file://`
-> **tidak akan jalan**. Harus disajikan lewat HTTP — `npm start` sudah begitu.
-
-> Tanpa API key, server tidak mau start dan akan memberi pesan jelas soal `.env`.
 
 ## Melihat halaman penjelasan
 
@@ -465,9 +586,9 @@ python3 -m http.server 8080 --bind 127.0.0.1
 # buka http://127.0.0.1:8080/
 ```
 
-Halaman ini juga bisa dibuka langsung dari `index.html` di peramban (semua aset lokal).
-Tombol "Coba Aplikasinya" mengarah ke `/app/`, jadi **build aplikasi dulu**
-(`npm run build`) kalau ingin tombol itu berfungsi.
+Halaman ini juga bisa dibuka langsung dari `index.html` di peramban (semua aset
+lokal). Tombol "Coba Aplikasinya" mengarah ke `/app/`, jadi **build aplikasi
+dulu** (`npm run build`) kalau ingin tombol itu berfungsi.
 
 ---
 
@@ -482,13 +603,13 @@ Itu pilihan yang disengaja: kalau berkasnya diambil dari CDN, pemindaian akan
 mengirim permintaan ke pihak ketiga — dan janji "foto tidak keluar dari
 perangkat" jadi tidak benar.
 
-Isi `app/public/ocr/` (16,3 MB):
+Isi `app/public/ocr/` (diukur 18 Okt 2026: **17.048.779 byte ≈ 17 MB**):
 
 | Berkas | Asal |
 |---|---|
 | `worker.min.js` | paket `tesseract.js` |
-| `tesseract-core-lstm.wasm.js`, `-simd-lstm`, `-relaxedsimd-lstm` | paket `tesseract.js-core` (tiga varian, dipilih sesuai dukungan peramban) |
-| `langdata/ind.traineddata`, `langdata/eng.traineddata` | [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) (Apache-2.0) |
+| `tesseract-core-lstm.wasm.js`, `-simd-lstm`, `-relaxedsimd-lstm` (masing-masing ~3,8 MB) | paket `tesseract.js-core` (tiga varian, dipilih sesuai dukungan peramban) |
+| `langdata/ind.traineddata`, `langdata/eng.traineddata` (total ~5 MB) | [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) (Apache-2.0) |
 
 Memperbarui berkas mesin (hanya kalau versi `tesseract.js` dinaikkan):
 
@@ -544,8 +665,8 @@ node uji-ocr.mjs        # 36 pemeriksaan: perapian teks & penandaan angka
 ```
 
 Bagian yang butuh peramban sungguhan (mesin OCR-nya sendiri) diuji manual:
-jalankan `npm start`, buka `/app/`, pilih menu **Pindai Foto**, masukkan foto
-label obat atau hasil lab, lalu periksa bahwa teksnya muncul.
+jalankan `npm start`, buka `/app/`, pakai tombol kamera di komposer Tanya AI,
+masukkan foto label obat atau hasil lab, lalu periksa bahwa teksnya muncul.
 
 **Cara memeriksa "tanpa internet" yang benar.** Yang membuktikan janji
 "foto tidak keluar dari perangkat" adalah uji blokir: halangi
@@ -577,18 +698,35 @@ diperiksa:
 
 ## Tingkat baca
 
-Penyederhanaan teks memakai 4 tingkat, dengan target Flesch-grade (dikalibrasi ×0,6
-untuk bahasa Indonesia):
+Penyederhanaan teks memakai 4 tingkat, dengan patokan **umur pembaca** — bukan
+kelas sekolah, karena "setara kelas 6" tidak berarti apa-apa bagi orang tua atau
+lansia (`app/src/data/tingkat.js`):
 
-| Tingkat | Target |
-|---|---|
-| Anak-anak | kelas 6 |
-| Remaja | kelas 9 |
-| Dewasa | kelas 12 |
-| Lansia | kelas 8 |
+| Tingkat | Umur | `aslMaks` (kata/kalimat) | `kalimatTerpanjangMaks` |
+|---|---|---|---|
+| Anak-anak | 9–11 tahun | 7 | 11 |
+| Remaja | 12–25 tahun | 9 | 14 |
+| Dewasa | 26–59 tahun | 12 | 23 |
+| Lansia | 60 tahun ke atas | 8 | 12 |
 
-Lansia ditargetkan **lebih sederhana** dari Dewasa karena Flesch-grade mengukur
-kerumitan teks, bukan usia pembaca.
+Lansia ditargetkan **lebih sederhana** dari Dewasa, karena anak 9 tahun dan
+lansia 80 tahun sama-sama butuh bahasa sederhana. Rantai penuh
+`anak ≤ lansia ≤ remaja ≤ dewasa` **sengaja tidak dipakai sebagai syarat**:
+"mana yang lebih sederhana" di antara anak dan lansia tidak punya arti bagi
+pengguna.
+
+`SASARAN` di `app/src/lib/keterbacaan.js` adalah hasil **kalibrasi dari
+pengukuran nyata** (17 berkas `docs/latih-tingkat-*.json`), bukan angka yang
+dikarang. **Hanya `aslMaks` dan `kalimatTerpanjangMaks` yang menggagalkan**;
+`aswMaks`, `sulitMaks`, dan `sangatPanjangMaks` hanya dilaporkan sebagai tren.
+
+Bahasa Indonesia **tidak punya rumus keterbacaan resmi** — Flesch dan Gunning
+Fog tidak punya padanan baku, jadi modul itu tidak mengklaim "kelas baca".
+Yang dihitung: rata-rata kata/kalimat, suku kata/kata (gugus vokal berurutan),
+persentase kata sulit, dan kalimat terpanjang. **Panjang kata tidak dipakai
+sebagai gerbang**: kata yang paling sering dicap "sulit" ternyata kata
+sehari-hari (adalah, karena, latihan, tekanan), dan lantai normal prosa
+Indonesia adalah 31–46% kata ≥3 suku kata.
 
 ---
 
@@ -598,19 +736,39 @@ Semua uji di bawah ini berjalan tanpa jaringan dan tanpa API key, kecuali yang
 ditandai. Jalankan dari akar repo:
 
 ```bash
-node uji-batas.mjs        # batas panjang & laju tiap rute
-node uji-ekstrak.mjs      # penarikan konten dari HTML sumber
-node uji-kata-kunci.mjs   # pencocokan kata kunci topik
-node uji-teks.mjs         # perapian teks & pemotongan kalimat
+node uji-batas.mjs        # 24 pemeriksaan: batas panjang & laju tiap rute
+node uji-ekstrak.mjs      # 8  pemeriksaan: penarikan konten dari HTML sumber
+node uji-kata-kunci.mjs   # 33 pemeriksaan: pencocokan kata kunci topik
+node uji-teks.mjs         # 16 pemeriksaan: perapian teks & pemotongan kalimat
 node uji-ocr.mjs          # 36 pemeriksaan: perapian teks & penandaan angka
 node uji-bahasa.mjs       # 25 pemeriksaan: kesehatan kamus id/en
-node uji-berita.mjs       # 89 pemeriksaan: deteksi berita, parser RSS, penetrasi
+node uji-berita.mjs       # 102 pemeriksaan: deteksi berita, parser RSS, penetrasi
+node uji-jam.mjs          # 17 pemeriksaan: jam acuan dari header internet
+node uji-rotasi.mjs       # 22 pemeriksaan: rotasi daftar konten harian
 node uji-keterbacaan.mjs  # 38 pemeriksaan: alat ukur keterbacaan itu sendiri
-node uji-suara.mjs        # 49 pemeriksaan: ejaan singkatan & kestabilan nada
+node uji-sumber.mjs       # 99 pemeriksaan: lapis sumber (tanpa jaringan)
+node uji-suara.mjs        # 90 pemeriksaan: ejaan singkatan & kestabilan nada
 node uji-sitasi.mjs       # 15 pemeriksaan: jejak sumber (butuh MariaDB)
 node uji-akun.mjs         # 65 pemeriksaan: kata sandi, sesi, normalisasi (butuh MariaDB)
 node uji-google.mjs       # 50 pemeriksaan: masuk dengan Google (tanpa jaringan)
-node uji-server.mjs       # 24 pemeriksaan: kompresi, 404 JSON, galat klien
+node uji-server.mjs       # 26 pemeriksaan: kompresi, 404 JSON, galat klien
+```
+
+**Total 666 pemeriksaan, semuanya lulus** — diukur 18 Okt 2026. Angka per berkas
+di atas dihitung dari keluaran uji itu sendiri, bukan dari ingatan; kalau uji
+bertambah, hitung ulang.
+
+Dua skrip di bawah **butuh jaringan** dan hanya dipakai untuk memilih angka
+batas dari pengukuran, bukan untuk rutin:
+
+```bash
+node ukur-konten.mjs      # berapa permintaan jaringan saat cache konten kosong
+node ukur-suara.mjs       # berapa lama TTS benar-benar butuh (ini asal MAKS_SUARA)
+node ukur-pengetahuan.mjs # 86 pertanyaan lintas bidang -> berapa dapat sumber
+node ukur-tingkat.mjs     # 8 pertanyaan x 4 tingkat (butuh server lokal + key)
+node verifikasi-judul.mjs # buktikan setiap judul artikel Wikipedia benar-benar ADA
+node periksa-istilah.mjs  # periksa calon istilah baru sebelum masuk peta
+node uji-jawaban.mjs      # tembak /api/tanya server lokal, baca JAWABANNYA
 ```
 
 ### Lapisan server — hal yang salahnya tidak terlihat dari build hijau
@@ -620,10 +778,16 @@ salah, sehingga tidak akan ketahuan dari uji fitur maupun build yang lulus:
 
 | Yang dijaga | Kenapa penting |
 |---|---|
-| Respons besar dikompresi (gzip) | `/api/konten` **7.281 → 2.083 byte (hemat 71%)**. Tanpa ini aplikasi tetap jalan — hanya lambat di jaringan seluler. |
+| Respons besar dikompresi (gzip) | Diukur 18 Okt 2026: `/api/konten` **6.370 → 1.959 byte (hemat 69%)**. Tanpa ini aplikasi tetap jalan — hanya lambat di jaringan seluler. |
 | JSON rusak dijawab **400**, bukan 500 | Kalau salah, kesalahan klien dilaporkan sebagai kesalahan server: pengguna disuruh "coba lagi" padahal isinya yang salah, dan pemantauan melihat 500 seolah server kita yang rusak. |
 | `/api/*` tak dikenal → **JSON** | Bawaan Express membalas halaman HTML yang **menyebut "Express"** — memberitahu penyerang kerangka yang dipakai, sekaligus menyesatkan klien yang mengharap JSON. |
-| `X-Waktu-Ms` di setiap respons | Menjawab "lambat di server atau di jaringan?" tanpa membuka log. Permintaan > 3 detik juga dicatat di log sebagai `[lambat]`. |
+| `X-Waktu-Ms` di setiap respons | Menjawab "lambat di server atau di jaringan?" tanpa membuka log. Terukur 18 Okt 2026: `0.3` ms untuk `/api/meta`. Permintaan > 3 detik juga dicatat di log sebagai `[lambat]`. |
+
+Ditambah tiga kepala keamanan (`app/server/kepala.js`): `X-Powered-By`
+dimatikan, `X-Content-Type-Options: nosniff`, dan
+`Referrer-Policy: strict-origin-when-cross-origin`. **Content-Security-Policy
+sengaja belum dipasang** — salah tulis satu direktif bisa mematikan peta, suara,
+atau OCR, dan itu butuh pengujiannya sendiri.
 
 **Dua jebakan yang sudah terukur** (dan sebabnya uji ini ditulis):
 
@@ -643,6 +807,9 @@ sehingga menambah/mengurangi daftarnya tanpa mengukur ulang akan langsung gagal.
 `uji-bahasa.mjs` menjaga tiga cacat kamus sekaligus: kunci yang dipakai tapi
 tidak ada, kunci yang hanya ada di satu bahasa, dan kunci yang menganggur
 (tidak dipakai siapa pun). Ketiganya pernah terjadi di proyek ini.
+**Kunci dobel di dalam satu blok bahasa tidak ditangkap uji mana pun** —
+literal objek JS diam-diam memakai nilai terakhir, jadi hitung sendiri per kunci
+kalau menambah banyak kunci sekaligus.
 
 `uji-keterbacaan.mjs` menguji **alat ukurnya**, bukan jawabannya. Alat ukur yang
 salah menghasilkan kesimpulan yang salah dengan sangat meyakinkan, jadi
@@ -658,6 +825,9 @@ dipetakan benar-benar ada.
 
 `.github/workflows/uji.yml` menjalankan seluruh uji di atas ditambah
 `node --check` dan `npm run build` pada setiap push dan pull request ke `main`.
+`gh run view` melaporkan **25 langkah** (termasuk `Set up job` dan langkah
+pascajalan) dan **semuanya `success`** pada commit `8dca42b` — diperiksa 18 Okt
+2026 lewat `gh run view --json jobs --jq '.jobs[].steps[]'`.
 
 Dua hal yang **tidak** dijalankan di CI, dan alasannya disebut apa adanya:
 `uji-jawaban.mjs` butuh `KENARI_API_KEY` (rahasia tidak boleh jadi penentu pada
@@ -674,21 +844,11 @@ kita salah. Keduanya dijalankan manual sebelum deploy.
 > Urutan langkah juga penting — dependensi dipasang lebih dulu, karena
 > `uji-ocr.mjs` mengimpor `tesseract.js` lewat `app/src/lib/ocr.js`.
 
-Dua skrip di bawah **butuh jaringan** dan hanya dipakai untuk memilih angka
-batas dari pengukuran, bukan untuk rutin:
-
-```bash
-node ukur-konten.mjs      # berapa permintaan jaringan saat cache konten kosong
-node ukur-suara.mjs       # berapa lama TTS benar-benar butuh (ini asal MAKS_SUARA)
-```
-
 ### Mengukur & melatih tingkat pembaca
 
-Tingkat baca (anak / remaja / dewasa / lansia) punya alat ukurnya sendiri.
 "Latih" di sini **bukan fine-tuning** — Kenari tidak punya endpoint
 fine-tuning (diperiksa: `/fine_tuning/jobs`, `/fine-tunes`, `/finetuning/jobs`,
-`/models/train`, `/training/jobs` semuanya 404, dan tidak ada model berbau
-training dari 105 yang tersedia). Latih = memperdalam prompt di
+`/models/train`, `/training/jobs` semuanya 404). Latih = memperdalam prompt di
 `app/server/prompts.js`, lalu **mengukur hasilnya dengan angka**:
 
 ```bash
@@ -697,19 +857,8 @@ node ukur-tingkat.mjs --cepat         # 3 pertanyaan saja
 node ukur-kalibrasi.mjs docs/latih-tingkat-<cap>.json [--tulis]
 ```
 
-`app/src/lib/keterbacaan.js` mengukur rata-rata kata/kalimat, suku kata/kata,
-persentase kata sulit, dan kalimat terpanjang. **Bahasa Indonesia tidak punya
-rumus keterbacaan resmi**, jadi modul itu tidak mengklaim "kelas baca" baku —
-angkanya dipakai untuk membandingkan tingkat satu dengan lainnya.
-
-`SASARAN` di modul itu adalah hasil **kalibrasi dari pengukuran nyata**, bukan
-angka yang dikarang: `ukur-kalibrasi.mjs` menghitungnya dari hasil ukur +
-kelonggaran, lalu memeriksa bahwa urutan antar tingkat tetap benar. Ambang
-pertama yang ditulis dari perkiraan membuat 0 dari 8 jawaban lolos di semua
-tingkat — ambang yang tidak bisa dicapai tidak berguna.
-
-Yang diukur 14 Okt 2026 — rata-rata kata/kalimat dari 7 putaran pengukuran
-(makin kecil makin mudah diikuti):
+Hasil 14 Okt 2026 — rata-rata kata/kalimat dari 7 putaran pengukuran (makin
+kecil makin mudah diikuti):
 
 | | anak | lansia | remaja | dewasa |
 |---|---|---|---|---|
@@ -726,29 +875,37 @@ Diukur 8 putaran sebelum vs 7 putaran sesudah:
 | lansia < dewasa | 100,0% → 98,2% | 95,2% → 96,4% |
 | remaja < dewasa | 82,0% → **94,6%** | 72,1% → **94,6%** |
 
-Rantai penuh `anak <= lansia <= remaja <= dewasa` **sengaja tidak dipakai
-sebagai syarat**: anak 9 tahun dan lansia 80 tahun sama-sama butuh bahasa
-sederhana, dan "mana yang lebih sederhana" di antara keduanya tidak punya arti
-bagi pengguna. Angkanya tetap dilaporkan.
-
 Yang paling penting bukan angkanya, melainkan **isi tidak berkurang**: poin
 kunci rata-rata anak 7,77 · lansia 7,34 · remaja 7,39 · dewasa 7,09. Sebelum
 diperiksa, jawaban lansia justru punya poin kunci paling sedikit — batas kata
 per kalimat dibaca model sebagai batas seluruh jawaban.
-
-**Panjang kata tidak dipakai sebagai penilaian.** Kata yang paling sering dicap
-"sulit" ternyata kata sehari-hari (adalah, karena, latihan, tekanan), dan
-lantai normal prosa Indonesia adalah 31–46% kata ≥3 suku kata. Yang dipakai
-sebagai gerbang hanya panjang kalimat. Alasan lengkapnya ada di
-`app/src/lib/keterbacaan.js`.
 
 **Satu putaran bukan bukti.** Dengan prompt yang sama, satu putaran memberi
 `remaja < dewasa` 8/8 dan putaran berikutnya 5/8. Karena itu kesimpulan hanya
 diambil dari agregasi beberapa putaran.
 
 Yang **tidak** bisa diuji dari terminal — karena butuh peramban sungguhan —
-diuji manual di `/app/`: mesin OCR, pengenalan suara, pemutaran suara, dan
-tampilan mode Inggris.
+diuji manual di `/app/`: mesin OCR, pengenalan suara, pemutaran suara, papan
+klip, dan tampilan mode Inggris.
+
+---
+
+## Kuesioner HLS-SF12
+
+12 item asli, satu pertanyaan per layar, diambil dari paper validasinya (Duong
+et al., 2019) beserta terjemahan Indonesia yang tervalidasi — rinciannya di
+`docs/sumber-hls-sf12.txt`. Kalimatnya sengaja **tidak** diterjemahkan ke
+Inggris: menerjemahkan ulang membuat skornya tidak bisa dibandingkan dengan
+rujukan.
+
+Skor: tiap jawaban bernilai 0–3 (sangat sulit = 0 … sangat mudah = 3), jadi
+maksimum = 12 × 3 = 36. Persentase = `total / 36`, lalu tiga kategori:
+**≥ 70% Baik** · **≥ 45% Sedang** · **< 45% Perlu dukungan** — masing-masing
+dengan saran tindak lanjut. Seluruh perhitungan jalan di peramban; tidak ada
+jawaban yang dikirim ke mana pun.
+
+Aplikasi menyebut hasilnya apa adanya: *"Hasil ini alat bantu belajar, bukan
+diagnosis medis."*
 
 ---
 
@@ -767,17 +924,14 @@ dan Jejaknya** (`docs/prototipe/index.html`, `id="etika"`).
 | Jawaban kuesioner | Dihitung di peramban, disimpan di `localStorage`. Tidak pernah dikirim ke server. |
 | Riwayat obrolan | `localStorage` peramban. Bisa dihapus satu per satu atau sekaligus. |
 | Teks pertanyaan | **Hanya ini** yang dikirim ke server, karena model AI memang perlu membacanya. |
+| Email/telepon + hash kata sandi | Dikirim ke server saat mendaftar/masuk, karena akun adalah gerbang aplikasi. |
 
 Batas yang jujur disebut: teks pertanyaan diproses oleh **layanan model AI pihak
 ketiga** (Kenari.id). Karena itu aplikasi memperingatkan pengguna agar tidak
 menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah — peringatan
 itu tampil di panel **Pengaturan** (`set.privasi1..3` di `app/src/data/bahasa.js`).
 
-**Ada akun, tetapi opsional.** Aplikasi ini tetap bisa dipakai tanpa masuk —
-tanpa akun, semuanya jalan seperti sebelumnya dan riwayat obrolan tinggal di
-peramban. Akun baru diperlukan kalau riwayat ingin ikut lintas perangkat.
-
-Kalau pengguna memilih punya akun, yang disimpan **hanya**: email ATAU nomor
+**Akun wajib, tetapi isinya minimal.** Yang disimpan hanya: email ATAU nomor
 telepon, nama panggilan, hash kata sandi (scrypt + salt, tidak pernah kata
 sandinya), `google_id` kalau masuk lewat Google, dan riwayat obrolan miliknya
 sendiri. **Tidak ada** nama lengkap, NIK, tanggal lahir, alamat, atau foto —
@@ -786,15 +940,12 @@ itu di pertanyaan, jadi menyimpannya di akun akan bertentangan dengan
 peringatan sendiri. Isi percakapan tidak pernah dipakai untuk analitik.
 
 Bahan publik (berita RSS, artikel Kemenkes, salinan berlabel tanggal dari
-sumber resmi) tetap tersimpan terpisah dari akun. Tabel `pengguna`, `setelan`,
-dan `riwayat` versi **lama** di `skema-database.sql` masih ada tapi tidak
-dipakai — yang aktif adalah `pengguna_baru`, `sesi`, dan `riwayat_pengguna`
-dari `docs/skema-akun.sql`.
+sumber resmi) tetap tersimpan terpisah dari akun.
 
 Masuk dengan Google memakai alur **server-side**: client secret hanya hidup di
 server, dan `state` diperiksa supaya alur ini tidak bisa dibajak (login CSRF).
-Rinciannya — termasuk kenapa akun hanya ditautkan kalau email Google-nya
-terverifikasi — ada di `app/server/google.js` dan diuji oleh `uji-google.mjs`.
+Akun hanya ditautkan kalau email Google-nya terverifikasi. Rinciannya ada di
+`app/server/google.js` dan diuji oleh `uji-google.mjs` (50 pemeriksaan).
 
 Yang ditulis ke disk: `.cache-konten.json` dan `.cache-berita.json` (berlaku
 24 jam), plus tabel-tabel di atas bila MariaDB dijalankan.
@@ -827,8 +978,12 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
 | Kendali | Di mana | Angka |
 |---|---|---|
 | Cache konten kesehatan | `app/server/konten.js` (`BERLAKU_MS`) | 24 jam sekali sehari |
+| Rotasi daftar konten | `app/server/konten.js` (`susun()`, `geser`) | urutan bergeser supaya artikel yang tampil tidak itu-itu saja |
 | Batas pengambilan artikel | `app/server/konten.js` (`MAKS_DETAIL`) | 8, dari yang tadinya bisa sampai 40 |
-| Pembatas laju per IP | `app/server/batas.js` | 20 permintaan/menit |
+| Pembatas laju per IP | `app/server/batasInput.js` (`LAJU`) | 20 permintaan/menit (health/meta/berita 120) |
+| Simpanan hasil health | `batasInput.js` (`SIMPANAN_HEALTH_MS`) | 15 detik |
+| Kompresi gzip respons | `app/server/saji.js` | `/api/konten` 6.370 → 1.959 byte (**−69%**) |
+| Jam acuan tanpa permintaan tambahan | `app/server/jam.js` | memakai header `Date` respons yang sudah ada |
 | Cache aset ber-hash | `app/vercel.json` | 1 tahun, `immutable` |
 | Cache berkas ber-nama-tetap | `app/vercel.json` (`/app/ocr/`) | 1 hari + `stale-while-revalidate` |
 | Pemindaian foto | `app/src/lib/ocr.js` | 0 permintaan server |
@@ -847,8 +1002,8 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
 
 | Prinsip | Keadaan |
 |---|---|
-| Minimalisasi data | Yang diambil hanya teks pertanyaan. Tidak ada nama lengkap, NIK, atau alamat yang diminta. Akun (opsional) menyimpan hanya email/telepon, nama panggilan, dan hash kata sandi. |
-| Kendali di tangan subjek data | Riwayat dan jawaban kuesioner disimpan di perangkat pengguna dan bisa dihapus pengguna kapan saja. |
+| Minimalisasi data | Yang diambil hanya teks pertanyaan. Tidak ada nama lengkap, NIK, atau alamat yang diminta. Akun menyimpan hanya email/telepon, nama panggilan, dan hash kata sandi. |
+| Kendali di tangan subjek data | Riwayat dan jawaban kuesioner disimpan di perangkat pengguna dan bisa dihapus pengguna kapan saja. Akun bisa keluar dari satu perangkat atau semua perangkat. |
 | Keterbukaan | Perpindahan data dijelaskan sebelum pengguna memakainya (panel Pengaturan), bukan disembunyikan. |
 | Hak penghapusan | Terpenuhi secara teknis (tombol hapus riwayat), **belum** terpenuhi secara prosedural (belum ada kanal kontak resmi). |
 
@@ -865,6 +1020,8 @@ Pengumuman finalis 21 November 2026 · Puncak acara 29 November 2026.
 Ketentuan yang mengikat: karya MVP berbasis Web/Mobile, source code di repo GitHub,
 video demo 3–5 menit **tanpa narasi peserta**, dan aplikasi harus bisa dijalankan
 di localhost saat Grand Final.
+
+Tim: **NØCTURNE**.
 
 ---
 
@@ -906,44 +1063,58 @@ menjawab `200` berisi MP3 24 kHz — hal yang tidak bisa dilakukan lewat alamat 
 
 - Alamatnya **hidup hanya selama skrip jalan dan mesin ini menyala**. Tidak ada
   uptime yang dijanjikan, dan terowongan tanpa akun Cloudflare memang tanpa jaminan.
-- Alamat `trycloudflare.com` **berubah setiap kali dijalankan**. Kalau butuh alamat
-  tetap (mis. untuk dinilai juri), pakai *named tunnel* dengan akun Cloudflare —
-  itu di luar cakupan skrip ini.
+- Alamat `trycloudflare.com` **berubah setiap kali dijalankan**.
 - Server tetap hanya mendengarkan di `127.0.0.1`; yang menghubungkannya ke internet
   hanyalah `cloudflared`. Jadi tidak ada port yang terbuka ke jaringan lokal.
 - Terowongan ini membuka aplikasi ke publik. Batas laju di `app/server/batas.js`
-  tetap berlaku, tetapi tidak ada autentikasi — jangan dipakai untuk data pribadi.
+  tetap berlaku, tetapi **tidak ada autentikasi tambahan** — jangan dipakai untuk
+  data pribadi.
 
-### Memakai nama domain sendiri (alamat tetap)
+`siapkan-domain.sh` dan cabang named tunnel di `jalankan-online.sh` **sengaja
+dibiarkan di repo** tetapi **INERT**: keduanya tidak berpengaruh apa pun selama
+`~/.cloudflared/config.yml` tidak ada, dan `jalankan-online.sh` otomatis memakai
+quick tunnel. Tidak perlu dijalankan.
 
-Quick tunnel menghasilkan alamat acak yang **berubah setiap dijalankan**. Kalau butuh
-alamat tetap — mis. agar juri bisa membuka URL yang sama tanpa dikirim ulang — pakai
-**named tunnel**. Syaratnya hanya **punya domain**, bukan langganan berbayar: dokumentasi
-Cloudflare menyebut "a Cloudflare account" dan "a domain on Cloudflare", keduanya gratis.
+---
 
-Sekali saja:
+## Alamat produksi (Vercel)
 
-```bash
-./siapkan-domain.sh pahami-sehat.id
-```
+Repo ini masih tersambung ke Vercel dan deploy otomatis berjalan setiap push ke
+`main`. Diukur 18 Okt 2026:
 
-Skrip itu memandu login Cloudflare, membuat tunnel bernama `pahami-sehat`, memetakan
-hostname ke `http://127.0.0.1:8787`, lalu menulis `~/.cloudflared/config.yml`.
-Setelah itu cukup:
+| Yang diperiksa | Hasil |
+|---|---|
+| `https://pahami-sehat.vercel.app/app` | **200** |
+| `POST /api/tanya` di produksi | **200** dalam 7,14 detik, jawaban 757 karakter, **4 sumber** |
+| `GET /api/berita/ringkas` di produksi | **200**, berisi berita |
+| `GET /api/health` di produksi | **200**, `db: {"aktif":false}` (Vercel tanpa MariaDB) |
+| `POST /api/akun/daftar` di produksi | **503 `db_mati`** — fitur akun butuh database |
+| `POST /api/suara` di produksi | **502** — fungsi serverless tidak bisa mempertahankan WebSocket |
 
-```bash
-./jalankan-online.sh      # otomatis memakai named tunnel kalau config.yml ada
-```
+Karena itu **mode Grand Final tetap memakai `npm start` di laptop sendiri**, bukan
+alamat Vercel: hanya di situ suara neural dan akun bisa bekerja penuh.
 
-`jalankan-online.sh` memilih sendiri: **ada `~/.cloudflared/config.yml` → alamat tetap**;
-tidak ada → quick tunnel seperti biasa. Jadi menambah domain tidak merusak cara lama.
+Alamat Vercel juga masih muncul di kode QR halaman penjelasan
+(`docs/prototipe/index.html`, bagian hero) — kalau alamat publik berubah, QR dan
+tautannya perlu diperbarui.
 
-| | Quick tunnel | Named tunnel |
-|---|---|---|
-| Alamat | acak, berubah tiap dijalankan | **tetap** (`https://pahami-sehat.id`) |
-| Butuh domain | tidak | ya |
-| Batas 200 permintaan bersamaan | ya | **tidak ada** |
-| Sertifikat HTTPS | otomatis | otomatis |
+---
 
-Yang tetap berlaku di keduanya: alamatnya hidup hanya selama skrip jalan dan mesin ini
-menyala, dan tidak ada autentikasi — jangan dipakai untuk data pribadi.
+## Hal yang tidak diklaim
+
+Disebut di sini supaya tidak ada yang mengira lebih dari kenyataannya:
+
+- Riwayat obrolan **belum** lintas perangkat; UI masih membaca `localStorage`.
+- Fitur akun **butuh database**; tanpa MariaDB aplikasi tidak bisa dimasuki.
+- Suara neural **tidak** bekerja di Vercel.
+- Mode Inggris lengkap di antarmuka, tetapi teks instrumen kuesioner tetap
+  bahasa Indonesia (dan itu disengaja).
+- Angka akurasi OCR berasal dari tiga foto uji, bukan pengukuran besar.
+- Belum ada uji otomatis untuk mesin OCR, pengenalan suara, pemutaran suara,
+  papan klip, dan tampilan mode Inggris — semuanya masih diuji manual.
+
+---
+
+## Lisensi
+
+MIT — lihat [`LICENSE`](LICENSE).
