@@ -830,15 +830,9 @@ export default function App() {
                 />
                 <HealthTip tip={konten.tips} t={t} />
                 <ArticleGrid articles={konten.artikel} t={t} />
-                <DaftarObrolan
-                  sesi={sesi}
-                  aktifId={sesiAktifId}
-                  onBuka={bukaSesi}
-                  onSeeAll={() => navigate('riwayat')}
-                  ringkas
-                  t={t}
-                  kodeLokal={t('umum.kodeLokal')}
-                />
+                {/* Bagian "Obrolan Terakhir" sengaja TIDAK dirender di Beranda
+                    (keputusan jagi, 18 Okt 2026). Riwayat obrolan tetap
+                    tersimpan dan bisa dibuka lewat menu Riwayat. */}
               </div>
             ) : null}
 
