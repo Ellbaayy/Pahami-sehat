@@ -12,6 +12,7 @@
  *   - pembersihan memori: kunci mati dibuang, tidak tumbuh terus
  */
 import { batasi, ipPemanggil } from './app/server/batas.js'
+import { teksDari } from './app/server/batasInput.js'
 
 let gagal = 0
 function cek(nama, dapat, harus) {
@@ -114,6 +115,24 @@ minta(p4, 'pemicu')
 const isiMap = p4._isiCatatan?.() ?? null
 cek('tidak error saat membersihkan', true, true)
 console.log(`      (catatan internal: ${isiMap ? isiMap.length : 'tidak diekspos'} kunci)`)
+
+console.log('\n--- teksDari: masukan yang tipenya salah DITOLAK ---')
+/*
+ * Regresi dari celah nyata 19 Okt 2026: `String(req.body?.x ?? '')` membuat
+ * `{}` menjadi "[object Object]" dan `123` menjadi "123", keduanya lolos
+ * pemeriksaan kosong lalu diteruskan ke model berbayar / mesin suara.
+ * Diukur sebelum diperbaiki: POST /api/suara {"teks":{}} menjawab 200 dengan
+ * 12.960 byte audio yang membacakan kata "object Object".
+ */
+cek('string sah diterima', teksDari('Apa itu demam?'), 'Apa itu demam?')
+cek('spasi di ujung dipangkas', teksDari('  halo  '), 'halo')
+cek('objek ditolak', teksDari({ a: 1 }), '')
+cek('array ditolak', teksDari(['a']), '')
+cek('angka ditolak', teksDari(123), '')
+cek('boolean ditolak', teksDari(true), '')
+cek('null ditolak', teksDari(null), '')
+cek('undefined ditolak', teksDari(undefined), '')
+cek('string kosong ditolak', teksDari('   '), '')
 
 console.log(gagal === 0 ? '\nSEMUA LULUS' : `\n${gagal} UJI GAGAL`)
 process.exit(gagal === 0 ? 0 : 1)
