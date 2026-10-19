@@ -110,13 +110,13 @@ export default function SettingsPanel({
                   onChange={(e) => setNamaBaru(e.target.value)}
                   maxLength={40}
                   placeholder={pengguna.namaPengguna || ''}
-                  className="h-10 w-full rounded-xl border border-line-200 bg-white px-3 text-[0.88rem] text-navy-900 focus-visible:border-brand-500 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500"
+                  className="h-11 w-full rounded-xl border border-line-200 bg-white px-3 text-[0.88rem] text-navy-900 focus-visible:border-brand-500 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500"
                 />
               </label>
               <button
                 type="submit"
                 disabled={namaBaru.trim().length < 2}
-                className="h-10 rounded-xl bg-brand-600 px-4 text-[0.85rem] font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+                className="h-11 rounded-xl bg-brand-600 px-4 text-[0.85rem] font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
               >
                 {t('set.akunSimpanNama')}
               </button>
@@ -131,7 +131,7 @@ export default function SettingsPanel({
                 setSedangKeluar(false)
               }}
               disabled={sedangKeluar}
-              className="h-10 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[0.85rem] font-semibold text-rose-800 transition-colors hover:bg-rose-100 disabled:opacity-60"
+              className="h-11 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[0.85rem] font-semibold text-rose-800 transition-colors hover:bg-rose-100 disabled:opacity-60"
             >
               {sedangKeluar ? t('set.akunSedangKeluar') : t('set.akunKeluar')}
             </button>

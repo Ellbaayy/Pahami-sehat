@@ -318,7 +318,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'masuk'
       </aside>
 
       {/* ------------------------------------------------- panel kanan (kartu) -- */}
-      <div className="relative flex min-h-dvh flex-col items-center justify-center bg-[linear-gradient(165deg,#eefbf8_0%,#e8f4f0_60%,#eef4fb_100%)] px-5 py-6 lg:h-dvh lg:bg-none lg:bg-[#e8f4f0] lg:overflow-y-auto">
+      <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[linear-gradient(165deg,#eefbf8_0%,#e8f4f0_60%,#eef4fb_100%)] px-5 py-6 lg:h-dvh lg:bg-none lg:bg-[#e8f4f0] lg:overflow-y-auto">
         {/* aksen untuk ponsel (panel kiri disembunyikan) */}
         <div className="pointer-events-none absolute -top-20 -right-20 size-56 rounded-full bg-brand-200/40 blur-3xl lg:hidden" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 size-56 rounded-full bg-sky-200/40 blur-3xl lg:hidden" />
@@ -384,7 +384,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'masuk'
                     type="button"
                     onClick={() => setLihatSandi((v) => !v)}
                     aria-label={lihatSandi ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 text-navy-400 hover:text-navy-600"
+                    className="absolute top-1/2 right-1.5 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-lg text-navy-400 hover:text-navy-600"
                   >
                     {lihatSandi ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
@@ -401,7 +401,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'masuk'
                       setSandi('')
                       keLayar('buat1')
                     }}
-                    className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
+                    className="inline-flex min-h-11 items-center font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
                   >
                     Buat akun
                   </button>
@@ -506,7 +506,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'masuk'
                     type="button"
                     onClick={() => setLihatSandi((v) => !v)}
                     aria-label={lihatSandi ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 text-navy-400 hover:text-navy-600"
+                    className="absolute top-1/2 right-1.5 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-lg text-navy-400 hover:text-navy-600"
                   >
                     {lihatSandi ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
@@ -606,7 +606,7 @@ export default function LoginPage({ t = (k) => k, onSelesai, layarAwal = 'masuk'
                     <button
                       type="button"
                       onClick={onKeluar}
-                      className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
+                      className="inline-flex min-h-11 items-center font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800"
                     >
                       Keluar dari akun ini
                     </button>
