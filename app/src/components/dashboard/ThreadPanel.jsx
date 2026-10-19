@@ -87,7 +87,7 @@ export default function ThreadPanel({
   const sumberDikutip = [...thread].reverse().find((m) => m.role === 'ai')?.sources ?? []
 
   return (
-    <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
+    <div className="flex flex-col gap-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
         as="h1"
         eyebrow={t('tanya.eyebrow')}
@@ -142,60 +142,6 @@ export default function ThreadPanel({
           </button>
         </div>
       </div>
-
-      <div
-        onDragOver={(e) => {
-          // foto yang dijatuhkan di mana pun pada kartu ini membuka pemindai,
-          // supaya tidak perlu mencari tombolnya lebih dulu
-          if (![...(e.dataTransfer?.types ?? [])].includes('Files')) return
-          e.preventDefault()
-          setSeretFoto(true)
-        }}
-        onDragLeave={() => setSeretFoto(false)}
-        onDrop={(e) => {
-          if (![...(e.dataTransfer?.types ?? [])].includes('Files')) return
-          e.preventDefault()
-          setSeretFoto(false)
-          onPindaiBuka?.()
-        }}
-        className={cn(
-          'rounded-2xl border bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_1px_2px_rgba(15,30,51,0.04)] transition-colors',
-          seretFoto ? 'border-brand-400 ring-2 ring-brand-100' : 'border-line-200',
-        )}
-      >
-        <Komposer
-          t={t}
-          value={input}
-          onChange={onInputChange}
-          onKirim={onKirim}
-          loading={loading}
-          serverOnline={serverOnline}
-          serverMemuat={serverMemuat}
-          mode={mode}
-          onModeChange={onModeChange}
-          tingkat={tingkat}
-          onTingkatChange={onTingkatChange}
-          labelTingkat={labelTingkat}
-          onContohSederhanakan={onContohSederhanakan}
-          onPindaiBuka={onPindaiBuka}
-          pindaiTerbuka={pindaiTerbuka}
-          idKotak="thread-input"
-        />
-
-        {pindaiTerbuka ? (
-          <PemindaiFoto
-            t={t}
-            onTeks={onPindaiTeks}
-            onTutup={onPindaiTutup}
-            teksKomposer={input}
-            serverOnline={serverOnline}
-            bahasa={bahasa}
-          />
-        ) : null}
-      </div>
-
-      <SumberJawaban cari={sumberCari} sumber={sumberDikutip} t={t} />
-      {error ? <Peringatan pesan={error.pesan} code={error.code} t={t} /> : null}
 
       {thread.length === 0 && !loading ? (
         <EmptyState
@@ -282,6 +228,63 @@ export default function ThreadPanel({
           ) : null}
         </ol>
       )}
+
+      <SumberJawaban cari={sumberCari} sumber={sumberDikutip} t={t} />
+      {error ? <Peringatan pesan={error.pesan} code={error.code} t={t} /> : null}
+
+      {/* Kotak chat sengaja ditaruh di BAWAH utas, seperti aplikasi chat pada
+          umumnya: setelah jawaban terakhir, pengguna langsung bisa mengetik
+          pertanyaan berikutnya tanpa scroll kembali ke atas. */}
+      <div
+        onDragOver={(e) => {
+          // foto yang dijatuhkan di mana pun pada kartu ini membuka pemindai,
+          // supaya tidak perlu mencari tombolnya lebih dulu
+          if (![...(e.dataTransfer?.types ?? [])].includes('Files')) return
+          e.preventDefault()
+          setSeretFoto(true)
+        }}
+        onDragLeave={() => setSeretFoto(false)}
+        onDrop={(e) => {
+          if (![...(e.dataTransfer?.types ?? [])].includes('Files')) return
+          e.preventDefault()
+          setSeretFoto(false)
+          onPindaiBuka?.()
+        }}
+        className={cn(
+          'rounded-2xl border bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_-4px_16px_rgba(15,30,51,0.06),0_1px_2px_rgba(15,30,51,0.04)] transition-colors',
+          seretFoto ? 'border-brand-400 ring-2 ring-brand-100' : 'border-line-200',
+        )}
+      >
+        <Komposer
+          t={t}
+          value={input}
+          onChange={onInputChange}
+          onKirim={onKirim}
+          loading={loading}
+          serverOnline={serverOnline}
+          serverMemuat={serverMemuat}
+          mode={mode}
+          onModeChange={onModeChange}
+          tingkat={tingkat}
+          onTingkatChange={onTingkatChange}
+          labelTingkat={labelTingkat}
+          onContohSederhanakan={onContohSederhanakan}
+          onPindaiBuka={onPindaiBuka}
+          pindaiTerbuka={pindaiTerbuka}
+          idKotak="thread-input"
+        />
+
+        {pindaiTerbuka ? (
+          <PemindaiFoto
+            t={t}
+            onTeks={onPindaiTeks}
+            onTutup={onPindaiTutup}
+            teksKomposer={input}
+            serverOnline={serverOnline}
+            bahasa={bahasa}
+          />
+        ) : null}
+      </div>
     </div>
   )
 }
