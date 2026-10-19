@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ShieldCheck, ShieldAlert, ShieldQuestion, Loader2 } from 'lucide-react'
 import { Button, Card, SectionHeading, SourcePills, PoinKunci, Peringatan } from '../ui/primitives'
 import TombolDengar from '../ui/TombolDengar'
+import HealthTip from './HealthTip'
 import { TINGKAT } from '../../data/tingkat'
 import { verifikasi, KUNCI_GALAT_KLIEN } from '../../lib/api'
 
@@ -34,6 +35,7 @@ export default function VerifikasiPanel({
   suaraJenis = 'p',
   t = (k) => k,
   labelTingkat = (x) => x,
+  kontenTips = null,
 }) {
   const [klaim, setKlaim] = useState('')
   const [loading, setLoading] = useState(false)
@@ -66,7 +68,7 @@ export default function VerifikasiPanel({
   const labelVerdict = { didukung: t('ver.didukung'), tidak_didukung: t('ver.tidakDidukung'), tidak_bisa_dipastikan: t('ver.tidakPasti') }
 
   return (
-    <div className="space-y-3 [@media(min-height:1200px)]:space-y-[clamp(1rem,1.6vw,1.75rem)]">
+    <div className="flex flex-col gap-3 [@media(min-height:1200px)]:gap-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
         as="h1"
         eyebrow={t('ver.eyebrow')}
@@ -75,12 +77,11 @@ export default function VerifikasiPanel({
         ilustrasi="verifikasi"
       />
 
-      {/* Di layar pendek kartu dipadatkan: baris tingkat baca dan textarea
-          duduk berdampingan di layar lebar supaya seluruh formulir muat
-          tanpa scroll. */}
-      <Card className="p-3 [@media(min-height:1200px)]:p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+      {/* Kartu formulir mengembang secukupnya — textarea dibuat lega supaya
+          halaman terisi, tanpa memaksa tinggi berlebih. */}
+      <Card className="flex flex-col p-3 [@media(min-height:1200px)]:p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
+        <div className="flex flex-wrap items-stretch gap-x-4 gap-y-2.5">
+          <div className="flex min-w-0 flex-1 flex-wrap content-start items-center gap-2.5">
             <span className="text-[0.84rem] font-semibold text-navy-700">{t('umum.tingkatBaca')}:</span>
             <div
               role="group"
@@ -125,11 +126,11 @@ export default function VerifikasiPanel({
             </label>
             <textarea
               id="teks-klaim"
-              rows={3}
+              rows={4}
               value={klaim}
               onChange={(e) => setKlaim(e.target.value)}
               placeholder={t('ver.placeholder')}
-              className="w-full resize-y rounded-xl border border-line-200 bg-white px-3.5 py-3 text-[0.92rem] leading-relaxed text-navy-900 outline-none transition-colors placeholder:text-muted-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="min-h-32 w-full flex-1 resize-y rounded-xl border border-line-200 bg-white px-3.5 py-3 text-[0.92rem] leading-relaxed text-navy-900 outline-none transition-colors placeholder:text-muted-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
           </div>
         </div>
@@ -156,14 +157,14 @@ export default function VerifikasiPanel({
       {error ? <Peringatan pesan={error.pesan} code={error.code} t={t} /> : null}
 
       {loading ? (
-        <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
+        <Card className="p-3 [@media(min-height:1200px)]:p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
           <p className="inline-flex items-center gap-2 text-[0.88rem] font-semibold text-brand-700">
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
             {t('ver.proses')}
           </p>
         </Card>
       ) : hasil && v ? (
-        <Card className="rise p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
+        <Card className="rise p-3 [@media(min-height:1200px)]:p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
           <div className={`mb-3 inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 ${v.kelas}`}>
             <v.Ikon className="size-4 shrink-0" aria-hidden="true" />
             <span className="text-[0.86rem] font-bold">
@@ -189,6 +190,12 @@ export default function VerifikasiPanel({
           ) : null}
         </Card>
       ) : null}
+
+      {/* Saat belum ada hasil, ruang di bawah formulir diisi konten yang
+          benar-benar berguna — tips kesehatan hari ini dari Kemenkes (konten
+          harian yang sama dengan Beranda), bukan hiasan. Begitu ada hasil,
+          tips minggir dan jawaban yang mengisi ruangnya. */}
+      {!hasil && !loading && kontenTips ? <HealthTip tip={kontenTips} t={t} /> : null}
     </div>
   )
 }

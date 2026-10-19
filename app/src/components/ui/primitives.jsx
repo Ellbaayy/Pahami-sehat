@@ -141,9 +141,9 @@ export function Skeleton({ className }) {
 }
 
 /* ---------------- Empty state ---------------- */
-export function EmptyState({ icon: Icon, title, description, action }) {
+export function EmptyState({ icon: Icon, title, description, action, className }) {
   return (
-    <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-dashed border-line-300 bg-surface-50/60 px-6 py-4 text-center [@media(min-height:1200px)]:gap-3 [@media(min-height:1200px)]:py-10">
+    <div className={cn("flex flex-col items-center gap-2.5 rounded-2xl border border-dashed border-line-300 bg-surface-50/60 px-6 py-4 text-center [@media(min-height:1200px)]:gap-3 [@media(min-height:1200px)]:py-10", className)}>
       {/* Ilustrasi netral — muncul hanya saat belum ada isi, jadi tidak pernah
           ramai. Di layar pendek ilustrasinya disembunyikan supaya pesan kosong
           tetap muat satu layar bersama komposer (halaman Tanya AI). */}
