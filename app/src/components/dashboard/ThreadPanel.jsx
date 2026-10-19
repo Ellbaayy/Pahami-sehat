@@ -233,8 +233,9 @@ export default function ThreadPanel({
       {error ? <Peringatan pesan={error.pesan} code={error.code} t={t} /> : null}
 
       {/* Kotak chat sengaja ditaruh di BAWAH utas, seperti aplikasi chat pada
-          umumnya: setelah jawaban terakhir, pengguna langsung bisa mengetik
-          pertanyaan berikutnya tanpa scroll kembali ke atas. */}
+          umumnya, dan dibuat sticky bottom-0: saat utas masih lebih panjang
+          dari layar, kotaknya menempel di tepi bawah viewport — pengguna
+          tidak perlu scroll ke bawah dulu untuk mengetik pertanyaan. */}
       <div
         onDragOver={(e) => {
           // foto yang dijatuhkan di mana pun pada kartu ini membuka pemindai,
@@ -251,7 +252,7 @@ export default function ThreadPanel({
           onPindaiBuka?.()
         }}
         className={cn(
-          'rounded-2xl border bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_-4px_16px_rgba(15,30,51,0.06),0_1px_2px_rgba(15,30,51,0.04)] transition-colors',
+          'sticky bottom-0 z-10 rounded-2xl border bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_-4px_16px_rgba(15,30,51,0.06),0_1px_2px_rgba(15,30,51,0.04)] transition-colors',
           seretFoto ? 'border-brand-400 ring-2 ring-brand-100' : 'border-line-200',
         )}
       >
