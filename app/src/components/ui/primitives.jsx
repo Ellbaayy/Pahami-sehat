@@ -29,10 +29,10 @@ export function Card({ className, children, as: Tag = 'div', ...rest }) {
  */
 export function SectionHeading({ eyebrow, title, description, action, id, ilustrasi, as: Judul = 'h2' }) {
   return (
-    <div className="mb-[clamp(0.85rem,1.4vw,1.35rem)] flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+    <div className="mb-2.5 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 [@media(min-height:1200px)]:mb-[clamp(0.85rem,1.4vw,1.35rem)]">
       <div className="min-w-0">
         {eyebrow ? (
-          <p className="mb-1 text-[0.8125rem] font-bold tracking-[0.14em] uppercase text-brand-700">
+          <p className="mb-1 hidden text-[0.8125rem] font-bold tracking-[0.14em] uppercase text-brand-700 [@media(min-height:1200px)]:block">
             {eyebrow}
           </p>
         ) : null}
@@ -51,7 +51,10 @@ export function SectionHeading({ eyebrow, title, description, action, id, ilustr
           {title}
         </Judul>
         {description ? (
-          <p className="mt-1 max-w-[62ch] text-[clamp(0.85rem,0.8rem+0.15vw,0.95rem)] text-navy-500">
+          /* Deskripsi penjelas disembunyikan di layar pendek — judul halaman
+              tetap ada, dan tanpa ini heading memakan dua baris sehingga
+              isi halaman tidak muat satu layar. */
+          <p className="mt-1 hidden max-w-[62ch] text-navy-500 [@media(min-height:1200px)]:block [@media(min-height:1200px)]:text-[clamp(0.85rem,0.8rem+0.15vw,0.95rem)]">
             {description}
           </p>
         ) : null}
@@ -61,8 +64,11 @@ export function SectionHeading({ eyebrow, title, description, action, id, ilustr
           {action}
           {ilustrasi ? (
             /* kotak berukuran tetap + object-contain, supaya semua ilustrasi
-               menempati ruang yang sama walau rasio gambarnya berbeda-beda */
-            <div className="grid size-[clamp(3.25rem,6vw,5.25rem)] place-items-center">
+               menempati ruang yang sama walau rasio gambarnya berbeda-beda.
+               Di layar pendek (laptop umum ~700px ke bawah) ilustrasi
+               dekoratif ini disembunyikan supaya isi halaman fitur muat
+               tanpa scroll — teks judul dan deskripsinya tetap lengkap. */
+            <div className="hidden size-[clamp(3.25rem,6vw,5.25rem)] place-items-center [@media(min-height:1200px)]:grid">
               <IlustrasiAnimasi
                 nama={ilustrasi}
                 className="h-auto max-h-full w-auto max-w-full"
@@ -137,11 +143,13 @@ export function Skeleton({ className }) {
 /* ---------------- Empty state ---------------- */
 export function EmptyState({ icon: Icon, title, description, action }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line-300 bg-surface-50/60 px-6 py-10 text-center">
-      {/* Ilustrasi netral — muncul hanya saat belum ada isi, jadi tidak pernah ramai */}
+    <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-dashed border-line-300 bg-surface-50/60 px-6 py-4 text-center [@media(min-height:1200px)]:gap-3 [@media(min-height:1200px)]:py-10">
+      {/* Ilustrasi netral — muncul hanya saat belum ada isi, jadi tidak pernah
+          ramai. Di layar pendek ilustrasinya disembunyikan supaya pesan kosong
+          tetap muat satu layar bersama komposer (halaman Tanya AI). */}
       <IlustrasiAnimasi
         nama="kosong"
-        className="mb-1 w-[clamp(7.5rem,22vw,11rem)]"
+        className="mb-1 hidden w-[clamp(7.5rem,22vw,11rem)] [@media(min-height:1200px)]:block"
       />
       {Icon ? (
         <span className="grid size-11 place-items-center rounded-full bg-white text-brand-700 shadow-sm">

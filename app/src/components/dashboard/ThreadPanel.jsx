@@ -87,7 +87,7 @@ export default function ThreadPanel({
   const sumberDikutip = [...thread].reverse().find((m) => m.role === 'ai')?.sources ?? []
 
   return (
-    <div className="flex flex-col gap-[clamp(1rem,1.6vw,1.75rem)]">
+    <div className="flex flex-col gap-3 [@media(min-height:1200px)]:gap-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
         as="h1"
         eyebrow={t('tanya.eyebrow')}
@@ -98,16 +98,17 @@ export default function ThreadPanel({
 
       {/* bilah sesi: judul obrolan yang sedang dibuka + tindakannya.
           Tombolnya sengaja tidak muncul saat belum ada isi — "Bagikan" dan
-          "Hapus" pada obrolan kosong tidak ada artinya. */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line-200 bg-white px-3.5 py-2.5">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
-          <MessagesSquare className="size-4" aria-hidden="true" />
+          "Hapus" pada obrolan kosong tidak ada artinya. Di layar pendek
+          catatan kecilnya disembunyikan supaya bilahnya tetap ramping. */}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line-200 bg-white px-3 py-1.5 [@media(min-height:1200px)]:px-3.5 [@media(min-height:1200px)]:py-2.5">
+        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700 [@media(min-height:1200px)]:size-8">
+          <MessagesSquare className="size-3.5 [@media(min-height:1200px)]:size-4" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[0.88rem] font-semibold text-navy-900">
             {sesiAktif ? judulSesi : t('sesi.belumDisimpan')}
           </p>
-          <p className="text-[0.8125rem] text-muted-500">
+          <p className="hidden text-[0.8125rem] text-muted-500 [@media(min-height:1200px)]:block">
             {sesiAktif ? t('sesi.tersimpanCatatan') : t('sesi.belumDisimpanCatatan')}
           </p>
         </div>
@@ -252,7 +253,7 @@ export default function ThreadPanel({
           onPindaiBuka?.()
         }}
         className={cn(
-          'sticky bottom-0 z-10 rounded-2xl border bg-white p-[clamp(1rem,0.85rem+0.7vw,1.5rem)] shadow-[0_-4px_16px_rgba(15,30,51,0.06),0_1px_2px_rgba(15,30,51,0.04)] transition-colors',
+          'sticky bottom-0 z-10 rounded-2xl border bg-white p-3 shadow-[0_-4px_16px_rgba(15,30,51,0.06),0_1px_2px_rgba(15,30,51,0.04)] transition-colors [@media(min-height:1200px)]:p-[clamp(1rem,0.85rem+0.7vw,1.5rem)]',
           seretFoto ? 'border-brand-400 ring-2 ring-brand-100' : 'border-line-200',
         )}
       >

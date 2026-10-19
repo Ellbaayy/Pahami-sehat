@@ -72,7 +72,7 @@ export default function Komposer({
   return (
     <>
       {!ringkas ? (
-        <div className="mb-3 flex flex-wrap items-center gap-3">
+        <div className="mb-2.5 flex flex-wrap items-center gap-3 [@media(min-height:1200px)]:mb-3">
           <div
             role="group"
             aria-label={t('tanya.modeAria')}
@@ -153,10 +153,10 @@ export default function Komposer({
         </div>
       ) : null}
 
-      <form onSubmit={kirim} className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+      <form onSubmit={kirim} className="flex flex-col gap-2.5 lg:flex-row lg:items-stretch [@media(min-height:1200px)]:gap-3">
         <div
           className={cn(
-            'flex flex-1 items-start gap-2 rounded-2xl border bg-white px-3.5 py-3 transition-colors duration-200',
+            'flex flex-1 items-start gap-2 rounded-2xl border bg-white px-3.5 py-2.5 transition-colors duration-200 [@media(min-height:1200px)]:py-3',
             'focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100',
             loading ? 'border-brand-200' : 'border-line-200 hover:border-line-300',
           )}

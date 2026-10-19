@@ -190,8 +190,8 @@ export default function QuizPanel({ t = (k) => k }) {
   const idJudul = `q-soal-${langkah}`
 
   return (
-    <div className="grid gap-[clamp(1rem,0.5rem+1.6vw,1.75rem)] lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-      <div className="space-y-[clamp(1rem,1.6vw,1.75rem)] min-w-0">
+    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start [@media(min-height:1200px)]:gap-[clamp(1rem,0.5rem+1.6vw,1.75rem)]">
+      <div className="min-w-0 space-y-3 [@media(min-height:1200px)]:space-y-[clamp(1rem,1.6vw,1.75rem)]">
         <SectionHeading
           as="h1"
           eyebrow={t('kuis.eyebrow')}
@@ -233,8 +233,10 @@ export default function QuizPanel({ t = (k) => k }) {
 
         {/* --- kartu pertanyaan ------------------------------------------- */}
         <form onSubmit={maju} noValidate>
-          <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
-            <div className="mb-3 flex items-start gap-3">
+          {/* Di layar pendek kartu dipadatkan supaya satu soal + navigasinya
+              muat satu layar tanpa scroll. */}
+          <Card className="p-2.5 [@media(min-height:1200px)]:p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
+            <div className="mb-2 flex items-start gap-3">
               <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-[0.95rem] font-extrabold text-brand-700 ring-1 ring-brand-100">
                 {langkah + 1}
               </span>
@@ -246,7 +248,7 @@ export default function QuizPanel({ t = (k) => k }) {
               </p>
             </div>
 
-            <p className="mb-3 text-[0.82rem] text-muted-500">{t('kuis.instruksi')}</p>
+            <p className="mb-3 hidden text-[0.82rem] text-muted-500 [@media(min-height:1200px)]:block">{t('kuis.instruksi')}</p>
 
             <div role="radiogroup" aria-labelledby={idJudul} className="space-y-2">
               {opsi.map((o, j) => {
@@ -255,7 +257,7 @@ export default function QuizPanel({ t = (k) => k }) {
                   <label
                     key={o.label}
                     className={cn(
-                      'flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-all duration-200',
+                      'flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-2 transition-all duration-200 [@media(min-height:1200px)]:py-3',
                       'focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand-500',
                       checked
                         ? 'border-brand-300 bg-brand-50'
@@ -284,13 +286,16 @@ export default function QuizPanel({ t = (k) => k }) {
                       ) : null}
                     </span>
 
-                    <span className={cn('grid size-9 shrink-0 place-items-center rounded-lg', WARNA[o.ikon])}>
-                      <o.Ikon className="size-[18px]" aria-hidden="true" />
+                    <span className={cn('mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg [@media(min-height:1200px)]:size-9', WARNA[o.ikon])}>
+                      <o.Ikon className="size-4 [@media(min-height:1200px)]:size-[18px]" aria-hidden="true" />
                     </span>
 
                     <span className="min-w-0 flex-1">
                       <span className="block text-[0.92rem] font-bold text-navy-900">{o.label}</span>
-                      <span className="mt-0.5 block text-[0.8rem] leading-snug text-navy-500">
+                      {/* Subteks penjelas tiap opsi disembunyikan di layar
+                          pendek: labelnya sendiri sudah cukup jelas, dan
+                          tanpa ini empat opsi tidak muat satu layar. */}
+                      <span className="mt-0.5 hidden text-[0.8rem] leading-snug text-navy-500 [@media(min-height:1200px)]:block">
                         {o.sub}
                       </span>
                     </span>
@@ -310,18 +315,19 @@ export default function QuizPanel({ t = (k) => k }) {
             </p>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+          <div className="mt-3 flex flex-wrap items-center gap-2.5 [@media(min-height:1200px)]:mt-4">
             <Button
               type="button"
               variant="neutral"
               size="lg"
+              className="[@media(max-height:1199px)]:h-11"
               onClick={mundur}
               disabled={langkah === 0}
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
               {t('kuis.sebelumnya')}
             </Button>
-            <Button type="submit" size="lg" className="sm:ml-auto">
+            <Button type="submit" size="lg" className="sm:ml-auto [@media(max-height:1199px)]:h-11">
               {terakhir ? t('kuis.lihat') : t('kuis.selanjutnya')}
               {terakhir ? (
                 <Check className="size-4" aria-hidden="true" />
@@ -374,17 +380,28 @@ export default function QuizPanel({ t = (k) => k }) {
         ) : null}
 
         {!result && terjawab === 0 ? (
-          <EmptyState
-            title={t('kuis.hasilTampil')}
-            description={t('kuis.hasilTampilSub')}
-          />
+          /* Di layar pendek kartu "hasil akan tampil di sini" disembunyikan —
+             ia hanya penanda tempat, dan tanpa menyembunyikannya halaman
+             kuesioner tidak muat satu layar di laptop umum. Hasil aslinya
+             tetap muncul di tempat yang sama begitu selesai diisi. */
+          <div className="hidden [@media(min-height:1200px)]:block">
+            <EmptyState
+              title={t('kuis.hasilTampil')}
+              description={t('kuis.hasilTampilSub')}
+            />
+          </div>
         ) : null}
       </div>
 
-      {/* ---------------- sidebar kanan ---------------- */}
-      <aside className="space-y-[clamp(1rem,1.6vw,1.75rem)] min-w-0">
-        {/* progres kuesioner */}
-        <Card className="p-4">
+      {/* ---------------- sidebar kanan ----------------
+          Kartu "Tentang" dan "Tips" bersifat penjelas tambahan — di layar
+          pendek keduanya disembunyikan supaya soal dan progres muat satu
+          layar; kartu progres dan saran tetap tampil di segala ukuran. */}
+      <aside className="min-w-0 space-y-3 [@media(min-height:1200px)]:space-y-[clamp(1rem,1.6vw,1.75rem)]">
+        {/* progres kuesioner — di HP (satu kolom) disembunyikan: posisi soal
+            sudah tampil di bar "1 / 12" di atas kartu, jadi kartu ini hanya
+            menambah tinggi tanpa informasi baru. */}
+        <Card className="hidden p-4 lg:block">
           <div className="flex items-center gap-3.5">
             <svg viewBox="0 0 120 120" className="size-[68px] shrink-0 -rotate-90" aria-hidden="true">
               <circle cx="60" cy="60" r={R} fill="none" stroke="#e8eef5" strokeWidth="14" />
@@ -420,7 +437,7 @@ export default function QuizPanel({ t = (k) => k }) {
           </p>
         </Card>
 
-        <Card className="p-4">
+        <Card className="hidden p-4 [@media(min-height:1200px)]:block">
           <div className="flex items-center gap-2">
             <Info className="size-4 shrink-0 text-brand-700" aria-hidden="true" />
             <h2 className="text-[0.92rem] font-bold text-navy-900">{t('kuis.tentang')}</h2>
@@ -428,7 +445,7 @@ export default function QuizPanel({ t = (k) => k }) {
           <p className="mt-2 text-[0.82rem] leading-relaxed text-navy-600">{t('kuis.tentangIsi')}</p>
         </Card>
 
-        <Card className="p-4">
+        <Card className="hidden p-4 [@media(min-height:1200px)]:block">
           <div className="flex items-center gap-2">
             <Lightbulb className="size-4 shrink-0 text-amber-500" aria-hidden="true" />
             <h2 className="text-[0.92rem] font-bold text-navy-900">{t('kuis.tips')}</h2>
@@ -443,7 +460,10 @@ export default function QuizPanel({ t = (k) => k }) {
           </ul>
         </Card>
 
-        <div className="rounded-xl bg-brand-600 p-4 text-white">
+        {/* Pita saran di dasar sidebar: hanya tampil saat sidebar benar-benar
+            di samping (layar lebar DAN tinggi). Di HP sidebar menumpuk di
+            bawah soal, dan pita ini menambah tinggi tanpa isi yang wajib. */}
+        <div className="hidden rounded-xl bg-brand-600 p-4 text-white [@media(min-height:1200px)]:block">
           <p className="text-[0.84rem] leading-relaxed">{t('kuis.saranDari')}</p>
         </div>
       </aside>
