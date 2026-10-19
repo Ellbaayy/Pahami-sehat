@@ -66,7 +66,7 @@ export default function VerifikasiPanel({
   const labelVerdict = { didukung: t('ver.didukung'), tidak_didukung: t('ver.tidakDidukung'), tidak_bisa_dipastikan: t('ver.tidakPasti') }
 
   return (
-    <div className="space-y-[clamp(1rem,1.6vw,1.75rem)]">
+    <div className="space-y-3 [@media(min-height:1200px)]:space-y-[clamp(1rem,1.6vw,1.75rem)]">
       <SectionHeading
         as="h1"
         eyebrow={t('ver.eyebrow')}
@@ -75,57 +75,64 @@ export default function VerifikasiPanel({
         ilustrasi="verifikasi"
       />
 
-      <Card className="p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
-        <div className="mb-3 flex flex-wrap items-center gap-3">
-          <span className="text-[0.84rem] font-semibold text-navy-700">{t('umum.tingkatBaca')}:</span>
-          <div
-            role="group"
-            aria-label={t('umum.tingkatBaca')}
-            className="flex flex-wrap gap-1 rounded-xl border border-line-200 bg-white p-1"
-          >
-            {TINGKAT.map((lv) => (
-              <button
-                key={lv.kunci}
-                type="button"
-                onClick={() => onTingkatChange(lv.kunci)}
-                aria-pressed={tingkat === lv.kunci}
-                title={t('umum.umurPembaca', { usia: t(`usia.${lv.kunci}`) })}
-                className={
-                  'h-11 whitespace-nowrap rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200 ' +
-                  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ' +
-                  (tingkat === lv.kunci
-                    ? 'bg-brand-600 text-white'
-                    : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800')
-                }
-              >
-                {labelTingkat(lv.kunci)}
-              </button>
-            ))}
+      {/* Di layar pendek kartu dipadatkan: baris tingkat baca dan textarea
+          duduk berdampingan di layar lebar supaya seluruh formulir muat
+          tanpa scroll. */}
+      <Card className="p-3 [@media(min-height:1200px)]:p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+            <span className="text-[0.84rem] font-semibold text-navy-700">{t('umum.tingkatBaca')}:</span>
+            <div
+              role="group"
+              aria-label={t('umum.tingkatBaca')}
+              className="flex flex-wrap gap-1 rounded-xl border border-line-200 bg-white p-1"
+            >
+              {TINGKAT.map((lv) => (
+                <button
+                  key={lv.kunci}
+                  type="button"
+                  onClick={() => onTingkatChange(lv.kunci)}
+                  aria-pressed={tingkat === lv.kunci}
+                  title={t('umum.umurPembaca', { usia: t(`usia.${lv.kunci}`) })}
+                  className={
+                    'h-11 whitespace-nowrap rounded-lg px-3 text-[0.82rem] font-bold transition-colors duration-200 ' +
+                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ' +
+                    (tingkat === lv.kunci
+                      ? 'bg-brand-600 text-white'
+                      : 'text-navy-500 hover:bg-surface-100 hover:text-navy-800')
+                  }
+                >
+                  {labelTingkat(lv.kunci)}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setKlaim(t('ver.contoh'))
+                setHasil(null)
+                setError(null)
+              }}
+              className="text-[0.8rem] font-semibold text-brand-700 hover:text-brand-700"
+            >
+              {t('umum.pakaiContoh')}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setKlaim(t('ver.contoh'))
-              setHasil(null)
-              setError(null)
-            }}
-            className="ml-auto text-[0.8rem] font-semibold text-brand-700 hover:text-brand-700"
-          >
-            {t('umum.pakaiContoh')}
-          </button>
-        </div>
 
-        <label htmlFor="teks-klaim" className="sr-only">
-          {t('ver.label')}
-        </label>
-        <textarea
-          id="teks-klaim"
-          rows={3}
-          value={klaim}
-          onChange={(e) => setKlaim(e.target.value)}
-          placeholder={t('ver.placeholder')}
-          className="w-full resize-y rounded-xl border border-line-200 bg-white px-3.5 py-3 text-[0.92rem] leading-relaxed text-navy-900 outline-none transition-colors placeholder:text-muted-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-        />
+          <div className="min-w-[min(100%,22rem)] flex-1">
+            <label htmlFor="teks-klaim" className="sr-only">
+              {t('ver.label')}
+            </label>
+            <textarea
+              id="teks-klaim"
+              rows={3}
+              value={klaim}
+              onChange={(e) => setKlaim(e.target.value)}
+              placeholder={t('ver.placeholder')}
+              className="w-full resize-y rounded-xl border border-line-200 bg-white px-3.5 py-3 text-[0.92rem] leading-relaxed text-navy-900 outline-none transition-colors placeholder:text-muted-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            />
+          </div>
+        </div>
 
         <div className="mt-3">
           <Button

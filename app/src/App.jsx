@@ -802,7 +802,7 @@ export default function App() {
         >
         <main
           id="konten"
-          className="flex-1 px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-[clamp(1.25rem,1rem+1vw,2.25rem)]"
+          className="flex-1 px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-4 [@media(min-height:1200px)]:py-[clamp(1.25rem,1rem+1vw,2.25rem)]"
         >
           <div className="mx-auto w-full max-w-[86rem]">
             {active === 'beranda' ? (
