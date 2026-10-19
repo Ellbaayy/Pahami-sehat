@@ -44,6 +44,7 @@ import {
   MAKS_TOKEN,
   MAKS_VERIFIKASI,
   SIMPANAN_HEALTH_MS,
+  teksDari,
 } from './batasInput.js'
 import { kontenHarianLengkap } from './konten.js'
 import {
@@ -502,7 +503,7 @@ rute.get('/api/berita/ringkas', batasBerita, bungkus(async (_req, res) => {
  * tanpa menampilkan error yang membingungkan.
  */
 rute.post('/api/suara', batasSuara, bungkus(async (req, res) => {
-  const teks = String(req.body?.teks ?? '').trim()
+  const teks = teksDari(req.body?.teks)
   if (!teks) {
     return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Teks masih kosong.' })
   }
@@ -517,9 +518,9 @@ rute.post('/api/suara', batasSuara, bungkus(async (req, res) => {
   // Pilihan pengguna MENANG atas tebakan otomatis — lihat tentukanBahasa().
   // Inilah yang memperbaiki keluhan "dijawab Indonesia tapi dibacakan Jawa":
   // kalau pengguna sudah memilih, tebakan tidak dijalankan sama sekali.
-  const diminta = String(req.body?.bahasa ?? '').trim().toLowerCase()
+  const diminta = teksDari(req.body?.bahasa).toLowerCase()
   const bahasa = tentukanBahasa(teks, diminta)
-  const jenis = String(req.body?.jenis ?? '').trim().toLowerCase() === 'l' ? 'l' : 'p'
+  const jenis = teksDari(req.body?.jenis).toLowerCase() === 'l' ? 'l' : 'p'
 
   try {
     const audio = await buatSuara(teks, { bahasa, jenis })
@@ -545,7 +546,7 @@ rute.post('/api/suara', batasSuara, bungkus(async (req, res) => {
 }))
 
 rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
-  const pertanyaan = String(req.body?.pertanyaan ?? '').trim()
+  const pertanyaan = teksDari(req.body?.pertanyaan)
   if (!pertanyaan) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Pertanyaan masih kosong.' })
   if (tolakKalauPanjang(res, pertanyaan, MAKS_TANYA, 'Pertanyaan')) return
 
@@ -638,7 +639,7 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
 }))
 
 rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
-  const teks = String(req.body?.teks ?? '').trim()
+  const teks = teksDari(req.body?.teks)
   if (!teks) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Teks masih kosong.' })
   if (tolakKalauPanjang(res, teks, MAKS_SEDERHANAKAN, 'Teks')) return
 
@@ -666,7 +667,7 @@ rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
 }))
 
 rute.post('/api/verifikasi', batasVerifikasi, bungkus(async (req, res) => {
-  const klaim = String(req.body?.klaim ?? '').trim()
+  const klaim = teksDari(req.body?.klaim)
   if (!klaim) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Klaim masih kosong.' })
   if (tolakKalauPanjang(res, klaim, MAKS_VERIFIKASI, 'Klaim')) return
 
@@ -709,7 +710,7 @@ rute.post('/api/verifikasi', batasVerifikasi, bungkus(async (req, res) => {
  * pernah sampai. Karena itu pemeriksaan input dilakukan SEBELUM header.
  */
 rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
-  const pertanyaan = String(req.body?.pertanyaan ?? '').trim()
+  const pertanyaan = teksDari(req.body?.pertanyaan)
   if (!pertanyaan) return res.status(400).json({ ok: false, code: 'input_kosong', pesan: 'Pertanyaan masih kosong.' })
   if (tolakKalauPanjang(res, pertanyaan, MAKS_TANYA, 'Pertanyaan')) return
 

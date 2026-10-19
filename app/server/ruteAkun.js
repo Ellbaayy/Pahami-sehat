@@ -26,6 +26,7 @@
 import { Router } from 'express'
 import { timingSafeEqual } from 'node:crypto'
 import { batasi } from './batas.js'
+import { teksDari } from './batasInput.js'
 import {
   AkunError,
   daftar,
@@ -191,7 +192,7 @@ rute.post(
   '/api/akun/cek',
   batasMasuk,
   bungkus(async (req, res) => {
-    const identifier = String(req.body?.identifier ?? '').trim()
+    const identifier = teksDari(req.body?.identifier)
     const email = normalkanEmail(identifier)
     const telepon = normalkanTelepon(identifier)
     if (!email && !telepon) {
@@ -213,8 +214,8 @@ rute.post(
   bungkus(async (req, res) => {
     try {
       const pengguna = await daftar({
-        identifier: String(req.body?.identifier ?? '').trim(),
-        sandi: String(req.body?.sandi ?? ''),
+        identifier: teksDari(req.body?.identifier),
+        sandi: teksDari(req.body?.sandi),
         namaPengguna: req.body?.namaPengguna ?? null,
       })
       const { token, kedaluwarsa } = await buatSesi(pengguna.id, req.headers['user-agent'])
@@ -233,8 +234,8 @@ rute.post(
   bungkus(async (req, res) => {
     try {
       const pengguna = await masuk({
-        identifier: String(req.body?.identifier ?? '').trim(),
-        sandi: String(req.body?.sandi ?? ''),
+        identifier: teksDari(req.body?.identifier),
+        sandi: teksDari(req.body?.sandi),
       })
       const { token, kedaluwarsa } = await buatSesi(pengguna.id, req.headers['user-agent'])
       setelCookie(req, res, token, kedaluwarsa)

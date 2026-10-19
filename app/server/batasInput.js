@@ -101,3 +101,33 @@ export const LAJU = {
  * sementara hujan permintaan tidak lagi membebani akun Kenari.
  */
 export const SIMPANAN_HEALTH_MS = 15_000
+
+/**
+ * Ambil nilai teks dari body permintaan — MENOLAK objek, array, dan angka.
+ *
+ * KENAPA PERLU (ditemukan 19 Okt 2026)
+ * Semua rute memakai `String(req.body?.x ?? '')`. Untuk `{ pertanyaan: 123 }`
+ * hasilnya `"123"`, dan untuk `{ teks: {} }` hasilnya `"[object Object]"`.
+ * Keduanya LOLOS pemeriksaan `if (!teks)`, lalu diteruskan ke model berbayar
+ * atau ke mesin suara. Diukur sebelum diperbaiki:
+ *   - POST /api/tanya  {"pertanyaan":123}        -> 200, membakar token
+ *   - POST /api/tanya  {"pertanyaan":{"a":1}}    -> 200, membakar token
+ *   - POST /api/sederhanakan {"teks":123}        -> 200, 3332 token terpakai
+ *   - POST /api/suara  {"teks":{}}               -> 200, 12.960 byte audio
+ *                                                   berisi "[object Object]"
+ * Jadi bukan sekadar status kode: pengguna benar-benar mendengar kata
+ * "object Object" dan kuota akun benar-benar terpakai.
+ *
+ * KENAPA ANGKA JUGA DITOLAK
+ * `{ pertanyaan: 123 }` memang menghasilkan teks "123", jadi secara teknis
+ * bisa diproses — tetapi itu bukan pertanyaan kesehatan, dan memprosesnya
+ * tetap memanggil model berbayar lalu menjawab sapaan. Masukan seperti itu
+ * selalu berasal dari kesalahan program, bukan dari pengguna yang mengetik.
+ * Semua pemanggil yang sah (antarmuka, uji, curl) mengirim string.
+ *
+ * @returns {string} teks yang sudah di-trim, atau '' kalau tipenya tidak sah
+ */
+export function teksDari(nilai) {
+  if (typeof nilai === 'string') return nilai.trim()
+  return ''
+}

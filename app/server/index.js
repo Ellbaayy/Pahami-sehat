@@ -55,7 +55,20 @@ if (existsSync(DIST)) {
 
   // SPA fallback aplikasi: rute dalam aplikasi (mis. /app/apa-pun) -> index aplikasi.
   // Dibatasi ke /app supaya tidak menelan halaman penjelasan di root.
-  app.get(/^\/app(\/.*)?$/, (_req, res) => {
+  //
+  // PENTING: hanya jalur TANPA ekstensi berkas yang jatuh ke fallback.
+  // Sebelumnya pola ini menangkap SEMUA /app/*, sehingga permintaan untuk
+  // berkas yang tidak ada (mis. /app/.env, /app/package.json,
+  // /app/server/config.js) dijawab HTTP 200 berisi HTML 687 byte. Isinya tidak
+  // pernah bocor — express.static menolak melayani berkas di luar dist/ — tapi
+  // status 200 untuk berkas yang tidak ada itu menyesatkan: alat pemantau
+  // mengira berkasnya ada, dan orang yang memeriksa keamanan harus membuka
+  // isinya dulu untuk tahu itu bukan kebocoran. Sekarang berkas berekstensi
+  // yang tidak ada dijawab 404 apa adanya.
+  app.get(/^\/app(\/.*)?$/, (req, res, next) => {
+    // Ada titik di segmen terakhir = permintaan berkas, bukan rute aplikasi.
+    const segmen = req.path.split('/').pop() ?? ''
+    if (segmen.includes('.')) return next()
     const idx = join(APP_DIST, 'index.html')
     if (existsSync(idx)) return res.sendFile(idx)
     res.status(404).type('text/plain').send('Aplikasi belum dibuild. Jalankan: npm run build\n')
