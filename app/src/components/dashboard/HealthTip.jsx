@@ -19,7 +19,7 @@ export default function HealthTip({ tip, t = (k) => k }) {
   const lanjutan = (tip.selengkapnya ?? '').trim()
 
   return (
-    <Card className="relative overflow-hidden border-brand-100 bg-brand-50/60 p-[clamp(1.05rem,0.9rem+0.6vw,1.6rem)]">
+    <Card className="relative overflow-hidden border-brand-100 bg-brand-50/60 p-3.5 pl-4 [@media(min-height:1200px)]:p-[clamp(1.05rem,0.9rem+0.6vw,1.6rem)]">
       <span className="absolute inset-y-0 left-0 w-[3px] bg-brand-500" aria-hidden="true" />
 
       <div className="flex flex-wrap items-start gap-3 pl-2">
@@ -30,10 +30,10 @@ export default function HealthTip({ tip, t = (k) => k }) {
           <p className="text-[0.8125rem] font-bold tracking-[0.14em] uppercase text-brand-700">
             {t('tips.label')}
           </p>
-          <h3 className="mt-1 text-[clamp(1.02rem,0.96rem+0.35vw,1.28rem)] font-extrabold tracking-tight text-navy-900">
+          <h3 className="mt-0.5 text-[clamp(1.02rem,0.96rem+0.35vw,1.28rem)] font-extrabold tracking-tight text-navy-900">
             {tip.title}
           </h3>
-          <p className="mt-2 max-w-[68ch] text-[clamp(0.88rem,0.85rem+0.15vw,0.96rem)] leading-relaxed text-navy-700">
+          <p className="mt-1.5 max-w-[68ch] text-[clamp(0.88rem,0.85rem+0.15vw,0.96rem)] leading-relaxed text-navy-700">
             {tip.body}
           </p>
 
@@ -43,7 +43,7 @@ export default function HealthTip({ tip, t = (k) => k }) {
             </div>
           ) : null}
 
-          <ul className="mt-3.5 flex flex-wrap gap-2">
+          <ul className="mt-2.5 flex flex-wrap gap-2">
             {tip.bullets.map((b) => (
               <li
                 key={b}
@@ -55,7 +55,7 @@ export default function HealthTip({ tip, t = (k) => k }) {
             ))}
           </ul>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             {/* Sumber bisa dibuka supaya pembaca bisa memeriksa sendiri */}
             {tip.url ? (
               <a

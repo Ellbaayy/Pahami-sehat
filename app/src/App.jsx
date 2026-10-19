@@ -889,6 +889,7 @@ export default function App() {
                   bahasa={kodeBahasa}
                   suaraBahasa={settings.suaraBahasa}
                   suaraJenis={settings.suaraJenis}
+                  kontenTips={konten.tips}
                 />
               </Suspense>
             ) : null}
@@ -926,6 +927,12 @@ export default function App() {
                   t={t}
                   kodeLokal={t('umum.kodeLokal')}
                 />
+
+                {/* Ruang kosong di bawah daftar diisi bacaan yang berguna —
+                    satu artikel tepercaya dari Kemenkes (konten harian yang
+                    sama dengan Beranda), tanpa heading tambahan karena halaman
+                    sudah punya judulnya sendiri. */}
+                <ArticleGrid articles={konten.artikel.slice(0, 2)} t={t} heading={false} ringkas />
               </div>
             ) : null}
 

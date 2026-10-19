@@ -61,18 +61,24 @@ export default function DaftarObrolan({
 
   if (!sesi.length) {
     return (
-      <section aria-label={t('sesi.judul')}>
+      <section
+        aria-label={t('sesi.judul')}
+        className="flex flex-col"
+      >
+        {/* Keadaan kosong dibuat lebih lega supaya halaman tidak tampak
+            kosong di bagian bawah. */}
         <EmptyState
           icon={MessageSquareText}
           title={t('sesi.kosongJudul')}
           description={t('sesi.kosongSub')}
+          className="py-14"
         />
       </section>
     )
   }
 
   return (
-    <section aria-label={t('sesi.judul')} className="space-y-3">
+    <section aria-label={t('sesi.judul')} className="flex flex-col gap-3">
       {/* bilah tindakan — hanya kalau ada yang dipilih */}
       {ada ? (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2.5">

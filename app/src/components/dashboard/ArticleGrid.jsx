@@ -14,11 +14,60 @@ const TINTS = {
 
 const ICONS = { Literasi: FileText, Vaksinasi: Syringe, Gizi: Utensils }
 
-function ArticleCard({ article, t }) {
+function ArticleCard({ article, t, ringkas = false }) {
   const [open, setOpen] = useState(false)
   const Icon = ICONS[article.category] ?? FileText
   const tint = TINTS[article.tint] ?? TINTS.brand
   const punyaGambar = Boolean(article.gambar)
+
+  /* Versi ringkas: baris horizontal tanpa thumbnail besar — dipakai saat
+     kartu disisipkan di halaman lain (Riwayat) supaya tidak memaksa scroll. */
+  if (ringkas) {
+    return (
+      <Card
+        as="article"
+        className="group flex items-center gap-3 p-3.5 transition-colors hover:border-brand-200"
+      >
+        <span className={cn('grid size-10 shrink-0 place-items-center rounded-xl', tint.wrap)}>
+          <Icon className="size-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-[0.92rem] leading-snug font-bold text-navy-900 transition-colors group-hover:text-brand-700">
+            {article.title}
+          </h3>
+          <p className="mt-0.5 line-clamp-1 text-[0.82rem] leading-snug text-navy-500">
+            {article.excerpt}
+          </p>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-[0.82rem] font-medium text-muted-500">
+          <Clock className="size-3.5" aria-hidden="true" />
+          {article.readTime}
+        </span>
+        <Button variant="soft" size="sm" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+          {open ? t('art.tutup') : t('art.baca')}
+        </Button>
+        {open ? (
+          <div className="rise mt-2 basis-full border-t border-dashed border-line-200 pt-3">
+            <p className="text-[0.87rem] leading-relaxed text-navy-700">{article.body}</p>
+            <p className="mt-2 text-[0.8125rem] font-semibold text-brand-700">
+              {t('art.sumber')}: {article.source}
+            </p>
+            {article.url ? (
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-brand-700 underline decoration-dotted underline-offset-2 hover:text-brand-700"
+              >
+                {t('art.bacaAsli')}
+                <ArrowRight className="size-3" aria-hidden="true" />
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+      </Card>
+    )
+  }
 
   return (
     <Card
@@ -127,14 +176,18 @@ function ArticleCard({ article, t }) {
  * Judul dan isi artikel TIDAK diterjemahkan — itu isi dari sumber Kemenkes,
  * bukan teks antarmuka.
  */
-export default function ArticleGrid({ articles, t = (k) => k }) {
+export default function ArticleGrid({ articles, t = (k) => k, heading = true, ringkas = false }) {
   return (
-    <section aria-labelledby="artikel-title">
-      <SectionHeading id="artikel-title" title={t('art.judul')} description={t('art.sub')} />
+    <section aria-labelledby={heading ? 'artikel-title' : undefined}>
+      {heading ? (
+        <SectionHeading id="artikel-title" title={t('art.judul')} description={t('art.sub')} />
+      ) : null}
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16.5rem),1fr))] gap-[clamp(0.85rem,1.2vw,1.35rem)]">
+      <div className={ringkas
+        ? 'flex flex-col gap-2.5'
+        : 'grid grid-cols-[repeat(auto-fit,minmax(min(100%,16.5rem),1fr))] gap-[clamp(0.85rem,1.2vw,1.35rem)]'}>
         {articles.map((a) => (
-          <ArticleCard key={a.id} article={a} t={t} />
+          <ArticleCard key={a.id} article={a} t={t} ringkas={ringkas} />
         ))}
       </div>
     </section>
