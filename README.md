@@ -23,7 +23,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
 > | Riwayat obrolan | berjalan. Tersimpan di peramban (bukan server), maksimal **20 obrolan** (`MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan penghapusan **bisa dibatalkan**. **Tidak lagi ditampilkan di Beranda** — hanya lewat menu **Riwayat** |
 > | Berita kesehatan harian | berjalan. Pertanyaan seperti "berita terbaru hari ini" dijawab dari **RSS** (Detik Health, WHO, Google News) — bukan dari ensiklopedia, karena Wikipedia tidak punya berita harian. Setiap berita disebutkan **nama medianya** dan **umurnya**, dan lonceng pemberitahuan berbunyi kalau ada berita segar (diperiksa maksimal sekali sehari) |
-> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **308 kunci** kamus |
+> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **303 kunci** kamus |
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
 > 20 permintaan/menit per alamat IP (`app/server/batas.js`, angka di `LAJU` pada
@@ -894,9 +894,11 @@ dan Jejaknya** (`docs/prototipe/index.html`, `id="etika"`).
 | Teks pertanyaan | **Hanya ini** yang dikirim ke server, karena model AI memang perlu membacanya. |
 
 Batas yang jujur disebut: teks pertanyaan diproses oleh **layanan model AI pihak
-ketiga** (Kenari.id). Karena itu aplikasi memperingatkan pengguna agar tidak
-menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah — peringatan
-itu tampil di panel **Pengaturan** (`set.privasi1..3` di `app/src/data/bahasa.js`).
+ketiga** (Kenari.id). Peringatan agar pengguna tidak menuliskan nama lengkap,
+NIK, nomor rekam medis, atau alamat rumah tetap ada di halaman penjelasan
+(`docs/prototipe/index.html`) — kartu peringatan di panel **Pengaturan** sudah
+dihapus 20 Okt 2026 atas permintaan jagi, jadi jangan mencari `set.privasi*`
+di kamus lagi.
 
 **Tidak ada identitas yang diminta, sama sekali.** Tidak ada email, nomor
 telepon, kata sandi, nama panggilan, atau data pribadi lain yang dikirim ke

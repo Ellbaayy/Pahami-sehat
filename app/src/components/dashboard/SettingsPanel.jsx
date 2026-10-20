@@ -1,4 +1,4 @@
-import { Contrast, Volume2, Languages, ShieldCheck } from 'lucide-react'
+import { Contrast, Volume2, Languages } from 'lucide-react'
 import { Card, SectionHeading } from '../ui/primitives'
 import { cn } from '../../lib/cn'
 import { TINGKAT } from '../../data/tingkat'
@@ -196,22 +196,6 @@ export default function SettingsPanel({
           }
         />
       </Card>
-
-      <Card className="border-brand-100 bg-brand-50/60 p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
-        <p className="flex items-center gap-2 text-[0.92rem] font-bold text-navy-800">
-          <ShieldCheck className="size-4 text-brand-700" aria-hidden="true" />
-          {t('set.privasiJudul')}
-        </p>
-        <ul className="mt-2.5 space-y-1.5 text-[0.84rem] leading-snug text-navy-600">
-          <li>• {t('set.privasi1')}</li>
-          <li>• {t('set.privasi2')}</li>
-          <li>• {t('set.privasi3')}</li>
-        </ul>
-      </Card>
-
-      <p className="text-[0.8rem] text-muted-500">
-        {t('set.catatan')}
-      </p>
     </div>
   )
 }
