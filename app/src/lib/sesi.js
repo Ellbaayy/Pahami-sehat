@@ -6,10 +6,10 @@
  * sesi memuat seluruh utasan (pertanyaan, jawaban, poin kunci, sumber) dan bisa
  * dibuka lagi kapan saja, bahkan dilanjutkan.
  *
- * Disimpan di localStorage peramban — sama seperti sebelumnya, tidak ada akun
- * dan tidak ada server. Karena itu jumlahnya dibatasi: penyimpanan peramban
- * biasanya hanya memberi sekitar 5 MB, dan satu jawaban lengkap bisa beberapa
- * kilobyte. Yang dibuang saat penuh adalah sesi PALING LAMA, bukan yang baru.
+ * Disimpan di localStorage peramban — tidak ada server yang menyimpannya.
+ * Karena itu jumlahnya dibatasi: penyimpanan peramban biasanya hanya memberi
+ * sekitar 5 MB, dan satu jawaban lengkap bisa beberapa kilobyte. Yang dibuang
+ * saat penuh adalah sesi PALING LAMA, bukan yang baru.
  */
 
 export const KUNCI_SESI = 'pahami-sehat:sesi'

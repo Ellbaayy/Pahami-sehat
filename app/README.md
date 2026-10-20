@@ -15,7 +15,7 @@ model AI **`deepseek-v4-1-flash`** lewat **Kenari.id**.
 | Frontend | React 19 + Vite 8, Tailwind CSS 4 (`@tailwindcss/vite`), Lucide React |
 | Backend | Node + Express 5 (`express`, `mysql2`, `msedge-tts`, `tesseract.js`) |
 | Model | Kenari.id, OpenAI-compatible, default `deepseek-v4-1-flash` |
-| Database | MariaDB lewat XAMPP — **wajib untuk akun**, opsional untuk bahan |
+| Database | MariaDB lewat XAMPP — **opsional**, hanya untuk bahan (berita, konten, pengetahuan) |
 
 ## Alamat saat disajikan
 
@@ -56,15 +56,14 @@ build dari `dist/` sekaligus melayani `/api`, jadi cukup satu alamat.
 
 ## Database
 
-Gerbang masuk memakai fitur akun, dan **fitur akun butuh MariaDB**. Tanpa
-database, `POST /api/akun/daftar` dan `/masuk` menjawab `503 {"code":"db_mati"}`,
-sehingga aplikasi tidak bisa dimasuki. Bahan (konten, berita, pengetahuan) tetap
-tersaji tanpa database lewat berkas cache.
+Database **opsional**. Aplikasi tidak punya akun, jadi tidak ada gerbang masuk
+yang bergantung pada MariaDB. Yang disimpan di database hanya bahan (konten,
+berita, pengetahuan, sitasi), dan tanpa database bahan tetap tersaji lewat
+berkas cache.
 
 ```bash
 sudo /opt/lampp/lampp startmysql
 /opt/lampp/bin/mysql -u root < ../docs/skema-database.sql
-/opt/lampp/bin/mysql -u root < ../docs/skema-akun.sql
 ```
 
 Bawaan `server/db.js` sudah cocok untuk XAMPP (`127.0.0.1:3306`, `root` tanpa
@@ -85,9 +84,6 @@ app/
 │   ├── index.js              rute + penyajian hasil build
 │   ├── config.js             baca env, validasi key
 │   ├── rute.js               endpoint /api/*
-│   ├── ruteAkun.js           endpoint /api/akun/* (masuk, daftar, Google, riwayat)
-│   ├── akun.js               hash sandi (scrypt), token sesi, riwayat akun
-│   ├── google.js             OAuth server-side (state, penautan akun)
 │   ├── kenari.js             klien Kenari.id (chat + streaming SSE)
 │   ├── prompts.js            rubrik wajib + prompt per fitur
 │   ├── kataKunci.js          pengenalan topik + PETA_PENCARIAN/PETA_MEDLINEPLUS
@@ -105,12 +101,10 @@ app/
 │   ├── bahasa.js             pilihan bahasa jawaban
 │   └── teks.js               perapian teks
 └── src/                      frontend React
-    ├── App.jsx               state global + routing antar panel + gerbang akun
-    ├── components/LoginPage.jsx   gerbang masuk (masuk / buat akun 3 langkah / nama)
+    ├── App.jsx               state global + routing antar panel
     ├── components/LoadingPage.jsx
     ├── lib/api.js            klien API (termasuk pembaca SSE)
     ├── lib/sesi.js           bentuk sesi + localStorage (MAKS_SESI = 20)
-    ├── lib/useAkun.js        hook akun + pemindahan riwayat sekali
     ├── lib/useBahasa.js      kamus id/en
     ├── lib/useServer.js      hook status server
     ├── lib/useBerita.js      ringkasan berita untuk lonceng
@@ -118,7 +112,7 @@ app/
     ├── lib/tts.js            pemutar audio (variabel modul)
     ├── lib/ocr.js            tesseract.js + angka mutu pembacaan
     ├── lib/keterbacaan.js    alat ukur keterbacaan + SASARAN
-    ├── data/bahasa.js        kamus id + en (319 kunci masing-masing)
+    ├── data/bahasa.js        kamus id + en (308 kunci masing-masing)
     ├── data/tingkat.js       daftar tingkat baca (satu sumber kebenaran)
     ├── data/dummy.js         konten statis
     ├── components/layout/    Sidebar, TopBar, MobileDrawer, nav
@@ -141,10 +135,6 @@ app/
 | POST | `/api/sederhanakan` | terjemahkan teks medis |
 | POST | `/api/verifikasi` | periksa klaim kesehatan |
 | POST | `/api/suara` | teks → MP3 (suara neural) |
-| GET | `/api/akun/saya` | siapa yang sedang masuk |
-| POST | `/api/akun/cek` · `/daftar` · `/masuk` · `/keluar` · `/keluar-semua` · `/nama` | akun |
-| GET | `/api/akun/google` · `/api/akun/google/callback` | OAuth Google |
-| GET/POST/PUT/DELETE | `/api/akun/riwayat*` | riwayat milik akun |
 
 Error selalu berbentuk `{ ok: false, code, pesan }` — `code` sengaja dipakai UI untuk
 memilih pesan yang tepat (`db_mati` ditampilkan sebagai "butuh database",
@@ -199,8 +189,8 @@ layar sentuh, dan dukungan `prefers-reduced-motion`.
 - API key hanya ada di `app/.env` (mode 600) dan tidak pernah dikirim ke frontend.
 - Frontend memanggil `/api/...` di origin yang sama; key tidak pernah menyentuh peramban.
 - `.env` sudah masuk `.gitignore`.
-- Kata sandi disimpan sebagai **hash scrypt + salt**, sesi sebagai cookie
-  **HttpOnly + SameSite=Lax**; token sesi disimpan sebagai hash di database.
+- Tidak ada kata sandi, sesi, atau cookie: aplikasi tidak punya akun, jadi
+  tidak ada kredensial yang bisa bocor.
 - `X-Powered-By` dimatikan; `X-Content-Type-Options: nosniff` dan
   `Referrer-Policy: strict-origin-when-cross-origin` dipasang di semua respons.
 - Content-Security-Policy **belum** dipasang — sengaja, karena perlu pengujian
