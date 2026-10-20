@@ -112,7 +112,7 @@ app/
     ├── lib/tts.js            pemutar audio (variabel modul)
     ├── lib/ocr.js            tesseract.js + angka mutu pembacaan
     ├── lib/keterbacaan.js    alat ukur keterbacaan + SASARAN
-    ├── data/bahasa.js        kamus id + en (308 kunci masing-masing)
+    ├── data/bahasa.js        kamus id + en (303 kunci masing-masing)
     ├── data/tingkat.js       daftar tingkat baca (satu sumber kebenaran)
     ├── data/dummy.js         konten statis
     ├── components/layout/    Sidebar, TopBar, MobileDrawer, nav
