@@ -35,8 +35,13 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 ## Tampilan
 
 Tangkapan layar di bawah diambil langsung dari aplikasi yang berjalan
-(`npm run server`) — bukan gambar desain. Berkasnya ada di
-[`docs/tangkapan-layar/`](docs/tangkapan-layar/) (21 berkas). Yang terlihat di bagian
+(`npm run server`) — bukan gambar desain. Seluruh **21 berkas** di
+[`docs/tangkapan-layar/`](docs/tangkapan-layar/) diambil ulang **20 Okt 2026**,
+sesudah halaman login dihapus dan kartu privasi di Pengaturan dibuang, jadi yang
+terlihat di README adalah tampilan yang benar-benar berlaku sekarang.
+
+Dashboard diambil pada **1280×577** (laptop), ponsel **390×844** dengan DPR 2
+(780×1688 piksel), dan mode kontras tinggi **1440×900**. Yang terlihat di bagian
 **Produk** adalah mockup perangkat, dan itu memang ilustrasi di dalam halaman —
 sisanya tampilan sungguhan.
 
