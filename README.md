@@ -14,8 +14,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 >
 > | Fitur | Keadaan |
 > |---|---|
-> | Gerbang akun | **WAJIB.** Aplikasi tidak bisa dipakai tanpa masuk. Alur: masuk → (kalau mendaftar: 3 langkah + nama panggilan) → loading → Beranda. **Butuh MariaDB**; tanpa database, endpoint akun menjawab `503 db_mati` dan aplikasi tidak bisa dilewati |
-> | Masuk dengan Google | berjalan lewat alur **server-side**, tetapi **baru muncul kalau `VITE_GOOGLE_CLIENT_ID` diisi saat build**. Selama kosong, tombolnya disembunyikan — lebih baik tidak terlihat daripada terlihat tapi tidak bekerja |
+> | Tanpa akun | **Tidak ada halaman masuk, tidak ada pendaftaran, tidak ada sesi.** Aplikasi langsung terbuka di Beranda; riwayat, kuesioner, dan setelan tinggal di `localStorage` peramban |
 > | Tanya AI + sumber | berjalan. Pencarian memakai kata kunci terpilih, bukan kalimat pengguna apa adanya |
 > | Sederhanakan teks | berjalan (4 tingkat baca), menjadi salah satu mode di komposer Tanya AI |
 > | Cek klaim | berjalan (verdict + sumber) |
@@ -24,7 +23,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
 > | Riwayat obrolan | berjalan. Tersimpan di peramban (bukan server), maksimal **20 obrolan** (`MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan penghapusan **bisa dibatalkan**. **Tidak lagi ditampilkan di Beranda** — hanya lewat menu **Riwayat** |
 > | Berita kesehatan harian | berjalan. Pertanyaan seperti "berita terbaru hari ini" dijawab dari **RSS** (Detik Health, WHO, Google News) — bukan dari ensiklopedia, karena Wikipedia tidak punya berita harian. Setiap berita disebutkan **nama medianya** dan **umurnya**, dan lonceng pemberitahuan berbunyi kalau ada berita segar (diperiksa maksimal sekali sehari) |
-> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **319 kunci** kamus |
+> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **308 kunci** kamus |
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
 > 20 permintaan/menit per alamat IP (`app/server/batas.js`, angka di `LAJU` pada
@@ -95,11 +94,10 @@ membesar 112%, garis dan batas fokus dipertebal:
 | [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
 | [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **21 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
-| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB bahan** — 9 tabel. Idempoten, aman dijalankan ulang. |
-| [`docs/skema-akun.sql`](docs/skema-akun.sql) | **Skema akun** — 3 tabel (`pengguna_baru`, `sesi`, `riwayat_pengguna`). Dipakai fitur akun yang sekarang menjadi gerbang masuk. |
+| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB bahan** — 6 tabel. Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
-| [`uji-*.mjs`](.) | **17 berkas uji** — 16 di antaranya berjalan tanpa jaringan (total **666 pemeriksaan**, terukur 18 Okt 2026); `uji-jawaban.mjs` butuh server lokal + API key (lihat [Menjalankan uji](#menjalankan-uji)). |
+| [`uji-*.mjs`](.) | **15 berkas uji** — 14 di antaranya berjalan tanpa jaringan (total **560 pemeriksaan**, terukur 20 Okt 2026); `uji-jawaban.mjs` butuh server lokal + API key (lihat [Menjalankan uji](#menjalankan-uji)). |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -169,7 +167,6 @@ pahami-sehat/
     │   └── assets/
     ├── tangkapan-layar/       ← 21 tangkapan layar
     ├── skema-database.sql
-    ├── skema-akun.sql
     ├── sumber-hls-sf12.txt
     └── verifikasi-*.md
 ```
@@ -185,7 +182,6 @@ ke aplikasi.
 ```mermaid
 flowchart TB
   subgraph Peramban["Peramban — React 19 + Vite 8 + Tailwind 4"]
-    LOGIN["Halaman masuk<br/>gerbang WAJIB"]
     UI["Antarmuka<br/>Beranda · Tanya AI · Cek Klaim · Riwayat · Kuesioner · Pengaturan"]
     OCR["Mesin OCR<br/>tesseract.js / WebAssembly"]
     LS[("localStorage<br/>sesi · kuesioner · setelan")]
@@ -194,7 +190,6 @@ flowchart TB
   subgraph Server["Express 5 — lokal; Vercel Serverless saat produksi"]
     B["Pembatas laju<br/>20 permintaan/menit per IP + batas total per instance"]
     R["Rute /api/*"]
-    AK["Rute /api/akun/*<br/>cookie HttpOnly + SameSite=Lax"]
     DBJ["app/server/db.js<br/>jembatan database — OPSIONAL untuk bahan<br/>gagal = null, tidak pernah melempar"]
   end
 
@@ -204,9 +199,6 @@ flowchart TB
     T3[("pengetahuan<br/>salinan berlabel tanggal")]
     T4[("sumber")]
     T6[("dokumen · sitasi<br/>jejak sumber yang dikutip")]
-    T7[("pengguna_baru · sesi<br/>AKTIF — gerbang akun")]
-    T8[("riwayat_pengguna<br/>tersimpan, belum dibaca UI")]
-    T5[("pengguna · setelan · riwayat<br/>skema LAMA, tidak dipakai")]
   end
 
   subgraph Luar["Layanan luar"]
@@ -217,8 +209,6 @@ flowchart TB
     MS["Microsoft Edge TTS<br/>suara neural via WebSocket"]
   end
 
-  LOGIN --> AK
-  AK --> T7
   UI --> B --> R
   UI <--> LS
   UI --> OCR
@@ -278,38 +268,30 @@ flowchart TB
 7. Jawaban kembali bersama **sumber yang benar-benar dikutip**, dan panel
    `SumberJawaban` membedakan sumber yang **dipakai** dari yang cuma **ditemukan**.
 
-### Akun — gerbang masuk yang wajib
+### Tanpa akun — tidak ada gerbang masuk
 
-Diperiksa 18 Okt 2026: **aplikasi tidak bisa dipakai tanpa masuk.** `App.jsx`
-berhenti di `LoginPage` selama `pengguna` bernilai kosong, jadi tidak ada jalur
-"lewati" atau "coba tanpa akun".
+Diperiksa 20 Okt 2026: **aplikasi langsung terbuka di Beranda.** Tidak ada
+halaman masuk, pendaftaran, kata sandi, sesi, atau cookie. Permintaan jagi:
+hapus halaman login beserta seluruh bagian yang menopangnya, supaya tidak ada
+sisa gerbang yang bisa muncul lagi.
 
-| Langkah | Yang terjadi |
+Yang ikut dihapus, bukan hanya disembunyikan:
+
+| Bagian | Keadaan |
 |---|---|
-| 1. Gerbang | "Sudah punya akun?" → **[Masuk]** atau **[Buat akun]** |
-| 2. Masuk | satu formulir: email/nomor telepon + kata sandi |
-| 3. Buat akun | tiga langkah berurutan: alamat → kata sandi (min. 8 karakter) → ulangi kata sandi |
-| 4. Nama panggilan | "Mau dipanggil apa?" — minimal 2 karakter, disimpan lewat `POST /api/akun/nama` |
-| 5. Selesai | `LoadingPage` → Beranda dengan sapaan "Halo, {nama}!" |
+| `app/src/components/LoginPage.jsx` | dihapus |
+| `app/src/lib/useAkun.js` | dihapus |
+| `app/server/ruteAkun.js`, `akun.js`, `google.js` | dihapus — `/api/akun/*` kini menjawab **404 JSON** |
+| `docs/skema-akun.sql` (`pengguna_baru`, `sesi`, `riwayat_pengguna`) | dihapus |
+| `uji-akun.mjs`, `uji-google.mjs` | dihapus |
+| Kartu Akun di panel Pengaturan (ganti nama, keluar) | dihapus |
+| Kunci kamus `set.akun*` dan `beranda.sapaNama` | dihapus; sapaan kembali "Halo!" |
+| Variabel `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `VITE_GOOGLE_CLIENT_ID` | dihapus dari `.env` dan `.env.example` |
 
-Yang disimpan hanya: email **atau** nomor telepon, nama panggilan, **hash** kata
-sandi (scrypt + salt — kata sandinya tidak pernah disimpan), `google_id` kalau
-masuk lewat Google, dan riwayat obrolan miliknya sendiri. Sesi dikirim sebagai
-cookie **HttpOnly + SameSite=Lax**; flag `Secure` dinyalakan otomatis kalau
-permintaannya lewat HTTPS (di `http://127.0.0.1` justru tidak dikirim kalau
-dipaksa).
-
-**Fitur akun butuh database.** Tanpa MariaDB, endpoint akun menjawab
-`503 {"code":"db_mati"}` dengan pesan yang jelas — diukur 18 Okt 2026. Karena
-gerbang masuk memakai fitur akun, **aplikasi tidak bisa dimasuki tanpa
-database**; bagian lain (konten, berita, Tanya AI) tetap hidup. `GET
-/api/akun/saya` tetap `200` dan menjawab `masuk: false`, supaya halaman masuk
-tidak macet menunggu.
-
-Pesan galat masuk **sengaja menyamakan** "akun tidak ada" dengan "sandi salah"
-supaya alamat mana yang terdaftar tidak bisa ditebak orang lain. Jalan ke
-pembuatan akun diberikan lewat tautan "Belum punya akun?", bukan lewat pesan
-galat.
+**Tidak ada data pengguna yang tersimpan di server.** Riwayat obrolan,
+jawaban kuesioner, dan setelan tinggal di `localStorage` peramban. Karena itu
+aplikasi sekarang bisa dipakai tanpa MariaDB sama sekali — database hanya
+menyimpan bahan (lihat bagian berikut).
 
 ### Di mana datanya disimpan
 
@@ -320,15 +302,13 @@ galat.
 | Setelan bahasa / tingkat baca / kontras / suara | `localStorage` (`pahami-sehat:setelan`) | ya |
 | Foto yang dipindai | **tidak disimpan ke mana pun** — dibaca di memori peramban | tidak |
 | Pertanyaan & jawaban pengguna | **tidak disimpan di server** — tidak ada tabel percakapan di jalur aplikasi | tidak |
-| Akun (opsional isinya, wajib gerbangnya) | `pengguna_baru` + `sesi` | ya, sampai keluar |
+| Akun | **tidak ada** — tidak ada tabel akun, sesi, atau cookie | — |
 
-**Catatan jujur soal riwayat di akun.** Server sudah punya endpoint lengkap
-untuk riwayat milik akun (`GET/POST/PUT/DELETE /api/akun/riwayat*`) dan tabel
-`riwayat_pengguna` sudah terisi, tetapi **antarmuka masih membaca riwayat dari
-`localStorage`**. Yang sudah tersambung hanya **pemindahan sekali** saat
-pengguna pertama kali masuk (`POST /api/akun/riwayat/pindah`, maksimal 20 sesi).
-Jadi riwayat belum benar-benar lintas perangkat — itu disebut apa adanya di
-sini, bukan diklaim selesai.
+**Riwayat hanya ada di perangkat ini.** Tidak ada sinkronisasi lintas
+perangkat, dan itu bukan kekurangan yang disembunyikan: tanpa akun, memang
+tidak ada tempat menautkan riwayat ke seseorang. Menghapus riwayat di satu
+peramban tidak memengaruhi peramban lain, karena keduanya tidak pernah
+terhubung.
 
 **Database bahan bersifat OPSIONAL, dan itu dijaga di kode.** MariaDB (lewat
 XAMPP) dipakai untuk menyimpan **bahan**, bukan percakapan pengguna. Kalau
@@ -342,8 +322,7 @@ Dibuktikan ulang 18 Okt 2026 dengan `DB_MATI=1`:
 | `GET /api/health` | **HTTP 200**, `{"db":{"aktif":false,"alasan":"dimatikan lewat DB_MATI=1"}}` |
 | `GET /api/konten` | **HTTP 200** |
 | `POST /api/tanya` | **HTTP 200** dalam 9,25 detik, jawaban 732 karakter, **3 sumber** |
-| `POST /api/akun/daftar` | **HTTP 503**, `code: db_mati` (memang butuh database) |
-| `GET /api/akun/saya` | **HTTP 200**, `masuk: false` |
+| `GET /api/akun/saya` | **HTTP 404** — rute akun sudah tidak ada |
 
 #### Yang disimpan di database
 
@@ -354,12 +333,11 @@ Dibuktikan ulang 18 Okt 2026 dengan `DB_MATI=1`:
 | `pengetahuan` | **331 topik medis** dari sumber resmi, salinan berlabel tanggal | (baru) |
 | `sumber` | lembaga resmi (Kemenkes, WHO, BPOM, NIH, CDC, …) — **12 baris di skema**, bertambah saat panen | (baru) |
 | `dokumen` + `sitasi` | **jejak sumber yang dikutip** — klaim "jawaban ini dari WHO" jadi bisa **dilacak**, bukan cuma ditulis | (baru) |
-| `pengguna_baru`, `sesi` | akun & sesi login (skema-akun.sql) | (baru) |
-| `riwayat_pengguna` | riwayat milik akun — terisi lewat pemindahan, **belum dibaca UI** | (baru) |
 
-Tabel `pengguna`, `setelan`, dan `riwayat` versi **LAMA** masih ada di
-`skema-database.sql` tetapi **tidak dipakai** dan tidak akan dipakai. Jangan
-menyambungkannya tanpa alasan baru.
+Tidak ada tabel akun di skema mana pun. `skema-database.sql` malah
+menjalankan `DROP TABLE IF EXISTS riwayat, setelan, pengguna` untuk
+membersihkan sisa pemasangan lama — jadi tidak ada tabel identitas yang bisa
+terisi lagi tanpa sengaja.
 
 Isi database pada 18 Okt 2026 (hitungan langsung, bukan perkiraan):
 `pengetahuan` **331** baris (270 dari MedlinePlus, 61 dari Wikipedia) ·
@@ -447,16 +425,6 @@ tag XML — kesalahan itu sempat membuat semua tautan menunjuk halaman depan
 | POST | `/api/sederhanakan` | terjemahkan teks medis |
 | POST | `/api/verifikasi` | periksa klaim kesehatan |
 | POST | `/api/suara` | teks → MP3 (suara neural) |
-| GET | `/api/akun/saya` | siapa yang sedang masuk |
-| POST | `/api/akun/cek` | apakah alamat sudah terdaftar |
-| POST | `/api/akun/daftar` | buat akun + langsung masuk |
-| POST | `/api/akun/masuk` | masuk |
-| POST | `/api/akun/keluar` | keluar dari perangkat ini |
-| POST | `/api/akun/keluar-semua` | keluarkan semua sesi |
-| POST | `/api/akun/nama` | simpan nama panggilan |
-| GET | `/api/akun/google` | mulai alur OAuth Google |
-| GET | `/api/akun/google/callback` | kembali dari Google |
-| GET/POST/PUT/DELETE | `/api/akun/riwayat*` | riwayat milik akun (belum dipakai UI) |
 
 Galat selalu berbentuk `{ ok: false, code, pesan }` — `code` sengaja dipakai UI
 untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
@@ -551,7 +519,9 @@ Jadi **mengubah halaman penjelasan wajib lewat build** sebelum diuji.
 
 ### Database
 
-**Wajib untuk gerbang akun**, opsional untuk bahan.
+**Opsional.** Database hanya menyimpan bahan (berita, konten, pengetahuan,
+sitasi). Aplikasi tetap bisa dipakai penuh tanpa MariaDB — tidak ada akun yang
+butuh database lagi.
 
 ```bash
 # XAMPP: pasang libxcrypt-compat DULU di Arch/CachyOS.
@@ -561,7 +531,6 @@ sudo pacman -S libxcrypt-compat
 
 sudo /opt/lampp/lampp startmysql          # MariaDB di port 3306
 /opt/lampp/bin/mysql -u root < docs/skema-database.sql
-/opt/lampp/bin/mysql -u root < docs/skema-akun.sql     # tabel akun
 
 # isi 331 topik medis dari sumber resmi (butuh ~10 menit)
 node panen-pengetahuan.mjs --semua
@@ -736,7 +705,7 @@ Semua uji di bawah ini berjalan tanpa jaringan dan tanpa API key, kecuali yang
 ditandai. Jalankan dari akar repo:
 
 ```bash
-node uji-batas.mjs        # 24 pemeriksaan: batas panjang & laju tiap rute
+node uji-batas.mjs        # 33 pemeriksaan: batas panjang & laju tiap rute
 node uji-ekstrak.mjs      # 8  pemeriksaan: penarikan konten dari HTML sumber
 node uji-kata-kunci.mjs   # 33 pemeriksaan: pencocokan kata kunci topik
 node uji-teks.mjs         # 16 pemeriksaan: perapian teks & pemotongan kalimat
@@ -749,14 +718,13 @@ node uji-keterbacaan.mjs  # 38 pemeriksaan: alat ukur keterbacaan itu sendiri
 node uji-sumber.mjs       # 99 pemeriksaan: lapis sumber (tanpa jaringan)
 node uji-suara.mjs        # 90 pemeriksaan: ejaan singkatan & kestabilan nada
 node uji-sitasi.mjs       # 15 pemeriksaan: jejak sumber (butuh MariaDB)
-node uji-akun.mjs         # 65 pemeriksaan: kata sandi, sesi, normalisasi (butuh MariaDB)
-node uji-google.mjs       # 50 pemeriksaan: masuk dengan Google (tanpa jaringan)
 node uji-server.mjs       # 26 pemeriksaan: kompresi, 404 JSON, galat klien
 ```
 
-**Total 666 pemeriksaan, semuanya lulus** — diukur 18 Okt 2026. Angka per berkas
-di atas dihitung dari keluaran uji itu sendiri, bukan dari ingatan; kalau uji
-bertambah, hitung ulang.
+**Total 560 pemeriksaan, semuanya lulus** — diukur 20 Okt 2026, setelah
+`uji-akun.mjs` dan `uji-google.mjs` ikut dihapus bersama fitur akun. Angka per
+berkas di atas dihitung dari keluaran uji itu sendiri, bukan dari ingatan;
+kalau uji bertambah, hitung ulang.
 
 Dua skrip di bawah **butuh jaringan** dan hanya dipakai untuk memilih angka
 batas dari pengukuran, bukan untuk rutin:
@@ -825,9 +793,9 @@ dipetakan benar-benar ada.
 
 `.github/workflows/uji.yml` menjalankan seluruh uji di atas ditambah
 `node --check` dan `npm run build` pada setiap push dan pull request ke `main`.
-`gh run view` melaporkan **25 langkah** (termasuk `Set up job` dan langkah
-pascajalan) dan **semuanya `success`** pada commit `8dca42b` — diperiksa 18 Okt
-2026 lewat `gh run view --json jobs --jq '.jobs[].steps[]'`.
+Jumlah langkahnya berkurang dua setelah `uji-akun.mjs` dan `uji-google.mjs`
+dihapus; hitung ulang lewat `gh run view --json jobs --jq '.jobs[].steps[]'`
+pada jalannya yang berikutnya, jangan memakai angka lama.
 
 Dua hal yang **tidak** dijalankan di CI, dan alasannya disebut apa adanya:
 `uji-jawaban.mjs` butuh `KENARI_API_KEY` (rahasia tidak boleh jadi penentu pada
@@ -924,28 +892,22 @@ dan Jejaknya** (`docs/prototipe/index.html`, `id="etika"`).
 | Jawaban kuesioner | Dihitung di peramban, disimpan di `localStorage`. Tidak pernah dikirim ke server. |
 | Riwayat obrolan | `localStorage` peramban. Bisa dihapus satu per satu atau sekaligus. |
 | Teks pertanyaan | **Hanya ini** yang dikirim ke server, karena model AI memang perlu membacanya. |
-| Email/telepon + hash kata sandi | Dikirim ke server saat mendaftar/masuk, karena akun adalah gerbang aplikasi. |
 
 Batas yang jujur disebut: teks pertanyaan diproses oleh **layanan model AI pihak
 ketiga** (Kenari.id). Karena itu aplikasi memperingatkan pengguna agar tidak
 menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah — peringatan
 itu tampil di panel **Pengaturan** (`set.privasi1..3` di `app/src/data/bahasa.js`).
 
-**Akun wajib, tetapi isinya minimal.** Yang disimpan hanya: email ATAU nomor
-telepon, nama panggilan, hash kata sandi (scrypt + salt, tidak pernah kata
-sandinya), `google_id` kalau masuk lewat Google, dan riwayat obrolan miliknya
-sendiri. **Tidak ada** nama lengkap, NIK, tanggal lahir, alamat, atau foto —
-aplikasi ini bahkan memperingatkan pengguna agar tidak menuliskan data seperti
-itu di pertanyaan, jadi menyimpannya di akun akan bertentangan dengan
-peringatan sendiri. Isi percakapan tidak pernah dipakai untuk analitik.
+**Tidak ada identitas yang diminta, sama sekali.** Tidak ada email, nomor
+telepon, kata sandi, nama panggilan, atau data pribadi lain yang dikirim ke
+server — karena tidak ada formulir yang memintanya. Aplikasi ini bahkan
+memperingatkan pengguna agar tidak menuliskan nama lengkap, NIK, nomor rekam
+medis, atau alamat rumah di dalam pertanyaan. Isi percakapan tidak pernah
+dipakai untuk analitik.
 
 Bahan publik (berita RSS, artikel Kemenkes, salinan berlabel tanggal dari
-sumber resmi) tetap tersimpan terpisah dari akun.
-
-Masuk dengan Google memakai alur **server-side**: client secret hanya hidup di
-server, dan `state` diperiksa supaya alur ini tidak bisa dibajak (login CSRF).
-Akun hanya ditautkan kalau email Google-nya terverifikasi. Rinciannya ada di
-`app/server/google.js` dan diuji oleh `uji-google.mjs` (50 pemeriksaan).
+sumber resmi) tersimpan di database bahan dan tidak berisi apa pun tentang
+pengguna.
 
 Yang ditulis ke disk: `.cache-konten.json` dan `.cache-berita.json` (berlaku
 24 jam), plus tabel-tabel di atas bila MariaDB dijalankan.
@@ -1002,8 +964,8 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
 
 | Prinsip | Keadaan |
 |---|---|
-| Minimalisasi data | Yang diambil hanya teks pertanyaan. Tidak ada nama lengkap, NIK, atau alamat yang diminta. Akun menyimpan hanya email/telepon, nama panggilan, dan hash kata sandi. |
-| Kendali di tangan subjek data | Riwayat dan jawaban kuesioner disimpan di perangkat pengguna dan bisa dihapus pengguna kapan saja. Akun bisa keluar dari satu perangkat atau semua perangkat. |
+| Minimalisasi data | Yang diambil hanya teks pertanyaan. Tidak ada nama lengkap, NIK, alamat, email, atau kata sandi yang diminta — tidak ada formulir yang memintanya. |
+| Kendali di tangan subjek data | Riwayat dan jawaban kuesioner disimpan di perangkat pengguna dan bisa dihapus pengguna kapan saja. |
 | Keterbukaan | Perpindahan data dijelaskan sebelum pengguna memakainya (panel Pengaturan), bukan disembunyikan. |
 | Hak penghapusan | Terpenuhi secara teknis (tombol hapus riwayat), **belum** terpenuhi secara prosedural (belum ada kanal kontak resmi). |
 
@@ -1088,11 +1050,10 @@ Repo ini masih tersambung ke Vercel dan deploy otomatis berjalan setiap push ke
 | `POST /api/tanya` di produksi | **200** dalam 7,14 detik, jawaban 757 karakter, **4 sumber** |
 | `GET /api/berita/ringkas` di produksi | **200**, berisi berita |
 | `GET /api/health` di produksi | **200**, `db: {"aktif":false}` (Vercel tanpa MariaDB) |
-| `POST /api/akun/daftar` di produksi | **503 `db_mati`** — fitur akun butuh database |
 | `POST /api/suara` di produksi | **502** — fungsi serverless tidak bisa mempertahankan WebSocket |
 
 Karena itu **mode Grand Final tetap memakai `npm start` di laptop sendiri**, bukan
-alamat Vercel: hanya di situ suara neural dan akun bisa bekerja penuh.
+alamat Vercel: hanya di situ suara neural bisa bekerja penuh.
 
 Alamat Vercel juga masih muncul di kode QR halaman penjelasan
 (`docs/prototipe/index.html`, bagian hero) — kalau alamat publik berubah, QR dan
@@ -1104,8 +1065,8 @@ tautannya perlu diperbarui.
 
 Disebut di sini supaya tidak ada yang mengira lebih dari kenyataannya:
 
-- Riwayat obrolan **belum** lintas perangkat; UI masih membaca `localStorage`.
-- Fitur akun **butuh database**; tanpa MariaDB aplikasi tidak bisa dimasuki.
+- Riwayat obrolan **belum** lintas perangkat; tidak ada akun, jadi tidak ada
+  tempat menautkannya.
 - Suara neural **tidak** bekerja di Vercel.
 - Mode Inggris lengkap di antarmuka, tetapi teks instrumen kuesioner tetap
   bahasa Indonesia (dan itu disengaja).

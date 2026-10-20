@@ -54,8 +54,6 @@ const KAMUS = {
 
     // beranda
     'beranda.sapa': 'Halo!',
-    // Dipakai kalau pengguna sudah punya nama panggilan: "Halo Bayu!"
-    'beranda.sapaNama': 'Halo {nama}!',
     'beranda.tanya': 'Ada yang bisa kami bantu?',
     'beranda.sub': 'Temukan informasi kesehatan yang mudah dipahami atau tanyakan apa saja seputar kesehatan.',
     'beranda.badge1': 'Bersumber resmi',
@@ -360,18 +358,7 @@ const KAMUS = {
     // pengaturan
     'set.eyebrow': 'Preferensi',
     'set.judul': 'Pengaturan',
-    // --- bagian akun di Pengaturan ---
-    'set.akunJudul': 'Akun',
-    'set.akunSub': 'Kamu sedang masuk. Ini yang tersimpan tentangmu.',
-    'set.akunMasukSebagai': 'Masuk sebagai',
-    'set.akunNamaBaru': 'Ganti nama panggilan',
-    'set.akunSimpanNama': 'Simpan nama',
-    'set.akunNamaTersimpan': 'Nama panggilan tersimpan.',
-    'set.akunNamaGagal': 'Nama panggilan gagal disimpan.',
-    'set.akunKeluar': 'Keluar',
-    'set.akunSedangKeluar': 'Sedang keluar…',
-    'set.akunKeluarCatatan': 'Keluar hanya dari perangkat ini. Riwayat obrolanmu tetap aman di akun.',
-    'set.sub': 'Setelan tampilan disimpan di peramban ini. Akunmu menyimpan email atau nomor telepon, nama panggilan, dan kata sandi terenkripsi.',
+    'set.sub': 'Semua setelan tampilan disimpan di peramban ini saja, tidak di server.',
     'set.tingkat': 'Tingkat baca',
     'set.tingkatSub': 'Target penyederhanaan jawaban dan artikel, dipilih menurut umur pembaca.',
     'set.kontras': 'Mode kontras tinggi',
@@ -393,7 +380,7 @@ const KAMUS = {
     'set.bahasaSub': 'Mengubah seluruh tampilan dan bahasa jawaban AI.',
     'set.catatan': 'Semua preferensi tersimpan di peramban, bukan di server.',
     'set.privasiJudul': 'Ke mana datamu pergi',
-    'set.privasi1': 'Yang disimpan di akunmu hanya email atau nomor telepon, nama panggilan, dan kata sandi terenkripsi. Tidak ada nama lengkap, NIK, atau alamat. Jawaban kuesioner tetap tidak dikirim ke mana pun.',
+    'set.privasi1': 'Aplikasi ini tidak punya akun dan tidak menyimpan identitas apa pun. Jawaban kuesioner tetap tidak dikirim ke mana pun.',
     'set.privasi2': 'Foto yang dipindai dibaca di peramban dan tidak pernah dikirim ke server. Menutup halaman ini menghapusnya.',
     'set.privasi3': 'Hanya teks pertanyaan yang dikirim ke layanan AI. Sebaiknya jangan menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah.',
 
@@ -451,7 +438,6 @@ const KAMUS = {
     'app.judul': 'Dashboard — Pahami Sehat',
 
     'beranda.sapa': 'Hello!',
-    'beranda.sapaNama': 'Hello {nama}!',
     'beranda.tanya': 'How can we help?',
     'beranda.sub': 'Find easy-to-understand health information, or ask anything about health.',
     'beranda.badge1': 'From official sources',
@@ -729,17 +715,7 @@ const KAMUS = {
 
     'set.eyebrow': 'Preferences',
     'set.judul': 'Settings',
-    'set.akunJudul': 'Account',
-    'set.akunSub': 'You are signed in. This is what is stored about you.',
-    'set.akunMasukSebagai': 'Signed in as',
-    'set.akunNamaBaru': 'Change display name',
-    'set.akunSimpanNama': 'Save name',
-    'set.akunNamaTersimpan': 'Display name saved.',
-    'set.akunNamaGagal': 'Could not save the display name.',
-    'set.akunKeluar': 'Sign out',
-    'set.akunSedangKeluar': 'Signing out…',
-    'set.akunKeluarCatatan': 'Signs out of this device only. Your chat history stays safe in your account.',
-    'set.sub': 'Display settings are stored in this browser. Your account stores your email or phone number, display name, and an encrypted password.',
+    'set.sub': 'All display settings are stored in this browser only, never on the server.',
     'set.tingkat': 'Reading level',
     'set.tingkatSub': 'Target simplification level for answers and articles, chosen by reader age.',
     'set.kontras': 'High contrast mode',
@@ -761,7 +737,7 @@ const KAMUS = {
     'set.bahasaSub': 'Changes the whole interface and the language of AI answers.',
     'set.catatan': 'All preferences are stored in the browser, not on the server.',
     'set.privasiJudul': 'Where your data goes',
-    'set.privasi1': 'Your account stores only your email or phone number, display name, and an encrypted password. No full name, ID number, or address. Questionnaire answers are still never sent anywhere.',
+    'set.privasi1': 'This app has no accounts and stores no identity data. Questionnaire answers are still never sent anywhere.',
     'set.privasi2': 'A scanned photo is read in the browser and never sent to the server. Closing this page erases it.',
     'set.privasi3': 'Only the text of your question is sent to the AI service. Please avoid writing your full name, national ID number, medical record number, or home address.',
 

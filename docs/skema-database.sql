@@ -28,7 +28,7 @@ USE pahami_sehat;
 --    Daftar lembaga yang dianggap resmi. Diambil dari daftar di cari.js
 --    supaya satu sumber kebenaran, tidak diduplikasi di dua tempat.
 -- ---------------------------------------------------------------------------
-CREATE TABLE sumber (
+CREATE TABLE IF NOT EXISTS sumber (
   id          INT AUTO_INCREMENT PRIMARY KEY,
   domain      VARCHAR(120) NOT NULL,
   nama        VARCHAR(160) NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE sumber (
 --    `sidik_isi` = hash isi halaman; dipakai untuk tahu dokumen BERUBAH
 --    tanpa harus membandingkan seluruh teksnya.
 -- ---------------------------------------------------------------------------
-CREATE TABLE dokumen (
+CREATE TABLE IF NOT EXISTS dokumen (
   id            BIGINT AUTO_INCREMENT PRIMARY KEY,
   sumber_id     INT          NOT NULL,
   url           VARCHAR(700) NOT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE dokumen (
 --    dipakai. Jadi klaim "jawaban ini bersumber dari Kemenkes" bisa
 --    DILACAK, bukan cuma ditulis.
 -- ---------------------------------------------------------------------------
-CREATE TABLE sitasi (
+CREATE TABLE IF NOT EXISTS sitasi (
   id           BIGINT AUTO_INCREMENT PRIMARY KEY,
   jenis_jawaban ENUM('tanya','verifikasi','berita','sederhanakan') NOT NULL,
   rujukan_id   BIGINT     NULL,     -- id di tabel terkait (polymorphic)
@@ -80,7 +80,7 @@ CREATE TABLE sitasi (
 --    ada di kode: kalau sidik sama, konten TIDAK diperbarui dan tanggal
 --    "diperbarui" tidak ikut berubah.
 -- ---------------------------------------------------------------------------
-CREATE TABLE konten (
+CREATE TABLE IF NOT EXISTS konten (
   id          INT AUTO_INCREMENT PRIMARY KEY,
   slug        VARCHAR(180) NOT NULL,
   kategori    VARCHAR(80)  NULL,
@@ -101,7 +101,7 @@ CREATE TABLE konten (
 --    Menggantikan .cache-berita.json.
 --    `sidik` UNIQUE supaya berita yang sama tidak masuk dua kali.
 -- ---------------------------------------------------------------------------
-CREATE TABLE berita (
+CREATE TABLE IF NOT EXISTS berita (
   id        BIGINT AUTO_INCREMENT PRIMARY KEY,
   judul     VARCHAR(300) NOT NULL,
   sumber    VARCHAR(120) NULL,
@@ -125,7 +125,7 @@ CREATE TABLE berita (
 --    Kode WAJIB menolak menyajikan baris yang sudah lewat kedaluwarsa dan
 --    mengambil ulang dari sumber resmi.
 -- ---------------------------------------------------------------------------
-CREATE TABLE pengetahuan (
+CREATE TABLE IF NOT EXISTS pengetahuan (
   id           BIGINT AUTO_INCREMENT PRIMARY KEY,
   topik        VARCHAR(200) NOT NULL,
   jenis        ENUM('penyakit','obat','gejala','prosedur','istilah') NOT NULL,
@@ -142,40 +142,20 @@ CREATE TABLE pengetahuan (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------
--- 7. PENGGUNA & RIWAYAT
---    Untuk riwayat yang sinkron lintas perangkat. Sengaja MINIMAL: tidak ada
---    nama, tanggal lahir, atau data pribadi lain — aplikasi ini sudah
---    memperingatkan pengguna untuk tidak menuliskan data pribadi.
+-- 7. TIDAK ADA TABEL AKUN / SESI
+--    Aplikasi ini tidak punya akun, tidak punya halaman masuk, dan tidak
+--    menyimpan identitas siapa pun. Riwayat obrolan, jawaban kuesioner, dan
+--    setelan tinggal di localStorage peramban pengguna.
+--
+--    Tabel akun versi lama (pengguna, setelan, riwayat) DIHAPUS dari skema ini.
+--    Kalau database di komputer ini masih menyimpannya dari pemasangan
+--    sebelumnya, ketiga perintah di bawah membersihkannya. Aman dijalankan
+--    berulang kali; tidak menyentuh tabel bahan (sumber, dokumen, sitasi,
+--    konten, berita, pengetahuan).
 -- ---------------------------------------------------------------------------
-CREATE TABLE pengguna (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  token_sesi  CHAR(64)     NOT NULL,     -- pengenal acak, bukan akun/email
-  dibuat      DATETIME     NOT NULL,
-  terakhir    DATETIME     NULL,
-  UNIQUE KEY uq_pengguna_token (token_sesi)
-) ENGINE=InnoDB;
-
-CREATE TABLE setelan (
-  pengguna_id   INT NOT NULL PRIMARY KEY,
-  tingkat_baca  ENUM('anak','remaja','dewasa','lansia') NOT NULL DEFAULT 'dewasa',
-  kontras_tinggi TINYINT(1) NOT NULL DEFAULT 0,
-  suara_otomatis TINYINT(1) NOT NULL DEFAULT 0,
-  bahasa        ENUM('id','en') NOT NULL DEFAULT 'id',
-  diubah        DATETIME NOT NULL,
-  CONSTRAINT fk_setelan_pengguna FOREIGN KEY (pengguna_id) REFERENCES pengguna(id)
-) ENGINE=InnoDB;
-
-CREATE TABLE riwayat (
-  id           BIGINT AUTO_INCREMENT PRIMARY KEY,
-  pengguna_id  INT NOT NULL,
-  jenis        ENUM('tanya','verifikasi','berita','sederhanakan') NOT NULL,
-  pertanyaan   TEXT NULL,
-  jawaban      MEDIUMTEXT NULL,
-  tingkat_baca VARCHAR(20) NULL,
-  dibuat       DATETIME NOT NULL,
-  KEY idx_riwayat_pengguna (pengguna_id, dibuat),
-  CONSTRAINT fk_riwayat_pengguna FOREIGN KEY (pengguna_id) REFERENCES pengguna(id)
-) ENGINE=InnoDB;
+DROP TABLE IF EXISTS riwayat;
+DROP TABLE IF EXISTS setelan;
+DROP TABLE IF EXISTS pengguna;
 
 -- ---------------------------------------------------------------------------
 -- 8. ISI AWAL — daftar sumber resmi (dari cari.js)
