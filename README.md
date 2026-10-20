@@ -10,7 +10,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > (`deepseek-v4-1-flash` lewat Kenari.id) dari server Express sendiri, dan
 > setiap jawaban disertai sumber yang bisa dibuka pengguna.
 >
-> **Status tiap fitur — apa adanya (diperiksa ulang 18 Okt 2026):**
+> **Status tiap fitur — apa adanya (diperiksa ulang 20 Okt 2026):**
 >
 > | Fitur | Keadaan |
 > |---|---|
@@ -18,7 +18,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Tanya AI + sumber | berjalan. Pencarian memakai kata kunci terpilih, bukan kalimat pengguna apa adanya |
 > | Sederhanakan teks | berjalan (4 tingkat baca), menjadi salah satu mode di komposer Tanya AI |
 > | Cek klaim | berjalan (verdict + sumber) |
-> | Suara dibacakan | **berjalan sebagai suara neural Microsoft — hanya di versi yang dijalankan di komputer sendiri.** Diukur ulang 18 Okt 2026: `POST /api/suara` menjawab `200 audio/mpeg`, berkas 24 kHz mono, 24.048 byte untuk satu kalimat, 1,08 detik. Di Vercel tetap **`502`** (diukur ulang 18 Okt 2026) karena fungsi serverless tidak bisa mempertahankan WebSocket — batas platform, bukan bug. Rincian: `app/server/suara.js` |
+> | Suara dibacakan | **berjalan sebagai suara neural Microsoft — hanya di versi yang dijalankan di komputer sendiri.** Diukur ulang 20 Okt 2026: `POST /api/suara` menjawab `200 audio/mpeg`, berkas 24 kHz mono 48 kbps, 17.424 byte untuk satu kalimat, 0,80 detik. Di Vercel tetap **`502`** (diukur ulang 20 Okt 2026) karena fungsi serverless tidak bisa mempertahankan WebSocket — batas platform, bukan bug. Rincian: `app/server/suara.js` |
 > | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya. Butuh konteks aman (`https://` atau `localhost`) |
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
 > | Riwayat obrolan | berjalan. Tersimpan di peramban (bukan server), maksimal **20 obrolan** (`MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan penghapusan **bisa dibatalkan**. **Tidak lagi ditampilkan di Beranda** — hanya lewat menu **Riwayat** |
@@ -141,7 +141,7 @@ pahami-sehat/
 ├── README.md
 ├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
 ├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
-├── uji-*.mjs                  ← 17 berkas uji (16 tanpa jaringan)
+├── uji-*.mjs                  ← 15 berkas uji (14 tanpa jaringan)
 ├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
@@ -152,7 +152,7 @@ pahami-sehat/
 │   ├── .env.example
 │   ├── public/ocr/            ← mesin OCR: worker, core WASM, data bahasa (17 MB)
 │   ├── scripts/               ← salin-prototipe.mjs (prebuild)
-│   ├── server/                ← backend Express (22 berkas)
+│   ├── server/                ← backend Express (19 berkas)
 │   ├── src/                   ← frontend React: App.jsx, lib/, data/, components/
 │   ├── api/index.js           ← pintu masuk serverless Vercel
 │   ├── index.html
@@ -229,14 +229,11 @@ flowchart TB
   DBJ --> T3
   DBJ --> T4
   DBJ --> T6
-  DBJ -.->|"tersimpan, belum disambungkan"| T8
 
   classDef store fill:#eef,stroke:#446,color:#113
   classDef opsional fill:#ffe9c9,stroke:#a63,color:#420,stroke-dasharray:4 3
   class LS store
   class T1,T2,T3,T4,T6 store
-  class T7 opsional
-  class T5,T8 opsional
   class DBJ opsional
 ```
 
@@ -271,9 +268,9 @@ flowchart TB
 ### Tanpa akun — tidak ada gerbang masuk
 
 Diperiksa 20 Okt 2026: **aplikasi langsung terbuka di Beranda.** Tidak ada
-halaman masuk, pendaftaran, kata sandi, sesi, atau cookie. Permintaan jagi:
-hapus halaman login beserta seluruh bagian yang menopangnya, supaya tidak ada
-sisa gerbang yang bisa muncul lagi.
+halaman masuk, pendaftaran, kata sandi, sesi, atau cookie. Halaman login dihapus
+beserta seluruh bagian yang menopangnya, supaya tidak ada sisa gerbang yang bisa
+muncul lagi.
 
 Yang ikut dihapus, bukan hanya disembunyikan:
 
@@ -315,13 +312,14 @@ XAMPP) dipakai untuk menyimpan **bahan**, bukan percakapan pengguna. Kalau
 MariaDB mati, bahan tetap tersaji memakai berkas cache — `app/server/db.js`
 mengembalikan `null` alih-alih melempar galat.
 
-Dibuktikan ulang 18 Okt 2026 dengan `DB_MATI=1`:
+Dibuktikan ulang 20 Okt 2026 dengan `DB_MATI=1`:
 
 | Yang diperiksa | Hasil |
 |---|---|
 | `GET /api/health` | **HTTP 200**, `{"db":{"aktif":false,"alasan":"dimatikan lewat DB_MATI=1"}}` |
 | `GET /api/konten` | **HTTP 200** |
-| `POST /api/tanya` | **HTTP 200** dalam 9,25 detik, jawaban 732 karakter, **3 sumber** |
+| `GET /api/berita/ringkas` | **HTTP 200** |
+| `POST /api/tanya` | **HTTP 200**, jawaban 1.359 karakter, **5 sumber** |
 | `GET /api/akun/saya` | **HTTP 404** — rute akun sudah tidak ada |
 
 #### Yang disimpan di database
@@ -339,10 +337,10 @@ menjalankan `DROP TABLE IF EXISTS riwayat, setelan, pengguna` untuk
 membersihkan sisa pemasangan lama — jadi tidak ada tabel identitas yang bisa
 terisi lagi tanpa sengaja.
 
-Isi database pada 18 Okt 2026 (hitungan langsung, bukan perkiraan):
-`pengetahuan` **331** baris (270 dari MedlinePlus, 61 dari Wikipedia) ·
-`sumber` **19** baris · `dokumen` **79** · `sitasi` **246** · `berita` 3 ·
-`konten` 6.
+Isi database pada 20 Okt 2026 (hitungan langsung lewat `COUNT(*)`, bukan
+perkiraan `table_rows`): `pengetahuan` **331** baris (270 dari MedlinePlus,
+61 dari Wikipedia) · `sumber` **19** baris · `dokumen` **88** ·
+`sitasi` **351** · `berita` 3 · `konten` 7.
 
 #### Jejak sitasi — cara memeriksanya
 
@@ -572,7 +570,7 @@ Itu pilihan yang disengaja: kalau berkasnya diambil dari CDN, pemindaian akan
 mengirim permintaan ke pihak ketiga — dan janji "foto tidak keluar dari
 perangkat" jadi tidak benar.
 
-Isi `app/public/ocr/` (diukur 18 Okt 2026: **17.048.779 byte ≈ 17 MB**):
+Isi `app/public/ocr/` (diukur 20 Okt 2026: **17.048.779 byte ≈ 17 MB**, 6 berkas):
 
 | Berkas | Asal |
 |---|---|
@@ -746,10 +744,10 @@ salah, sehingga tidak akan ketahuan dari uji fitur maupun build yang lulus:
 
 | Yang dijaga | Kenapa penting |
 |---|---|
-| Respons besar dikompresi (gzip) | Diukur 18 Okt 2026: `/api/konten` **6.370 → 1.959 byte (hemat 69%)**. Tanpa ini aplikasi tetap jalan — hanya lambat di jaringan seluler. |
+| Respons besar dikompresi (gzip) | Diukur 20 Okt 2026: `/api/konten` **6.137 → 1.912 byte (hemat 69%)**. Tanpa ini aplikasi tetap jalan — hanya lambat di jaringan seluler. |
 | JSON rusak dijawab **400**, bukan 500 | Kalau salah, kesalahan klien dilaporkan sebagai kesalahan server: pengguna disuruh "coba lagi" padahal isinya yang salah, dan pemantauan melihat 500 seolah server kita yang rusak. |
 | `/api/*` tak dikenal → **JSON** | Bawaan Express membalas halaman HTML yang **menyebut "Express"** — memberitahu penyerang kerangka yang dipakai, sekaligus menyesatkan klien yang mengharap JSON. |
-| `X-Waktu-Ms` di setiap respons | Menjawab "lambat di server atau di jaringan?" tanpa membuka log. Terukur 18 Okt 2026: `0.3` ms untuk `/api/meta`. Permintaan > 3 detik juga dicatat di log sebagai `[lambat]`. |
+| `X-Waktu-Ms` di setiap respons | Menjawab "lambat di server atau di jaringan?" tanpa membuka log. Terukur 20 Okt 2026: `1.1` ms untuk `/api/meta`. Permintaan > 3 detik juga dicatat di log sebagai `[lambat]`. |
 
 Ditambah tiga kepala keamanan (`app/server/kepala.js`): `X-Powered-By`
 dimatikan, `X-Content-Type-Options: nosniff`, dan
@@ -793,9 +791,10 @@ dipetakan benar-benar ada.
 
 `.github/workflows/uji.yml` menjalankan seluruh uji di atas ditambah
 `node --check` dan `npm run build` pada setiap push dan pull request ke `main`.
-Jumlah langkahnya berkurang dua setelah `uji-akun.mjs` dan `uji-google.mjs`
-dihapus; hitung ulang lewat `gh run view --json jobs --jq '.jobs[].steps[]'`
-pada jalannya yang berikutnya, jangan memakai angka lama.
+Diukur 20 Okt 2026 lewat `gh run view <id> --json jobs --jq '.jobs[].steps[]'`:
+**23 langkah** (termasuk `Set up job`, dua `Post …`, dan `Complete job`), dan
+semuanya `success` pada commit `8ada582`. Sebelum fitur akun dihapus angkanya
+25 — dua langkah `uji-akun.mjs` dan `uji-google.mjs` ikut hilang.
 
 Dua hal yang **tidak** dijalankan di CI, dan alasannya disebut apa adanya:
 `uji-jawaban.mjs` butuh `KENARI_API_KEY` (rahasia tidak boleh jadi penentu pada
@@ -894,18 +893,16 @@ dan Jejaknya** (`docs/prototipe/index.html`, `id="etika"`).
 | Teks pertanyaan | **Hanya ini** yang dikirim ke server, karena model AI memang perlu membacanya. |
 
 Batas yang jujur disebut: teks pertanyaan diproses oleh **layanan model AI pihak
-ketiga** (Kenari.id). Peringatan agar pengguna tidak menuliskan nama lengkap,
-NIK, nomor rekam medis, atau alamat rumah tetap ada di halaman penjelasan
-(`docs/prototipe/index.html`) — kartu peringatan di panel **Pengaturan** sudah
-dihapus 20 Okt 2026 atas permintaan jagi, jadi jangan mencari `set.privasi*`
-di kamus lagi.
+ketiga** (Kenari.id). Karena itu halaman penjelasan memperingatkan pengguna agar
+tidak menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah di
+dalam pertanyaan (`docs/prototipe/index.html`, bagian
+**Privasi, Etika AI, dan Jejaknya**).
 
 **Tidak ada identitas yang diminta, sama sekali.** Tidak ada email, nomor
 telepon, kata sandi, nama panggilan, atau data pribadi lain yang dikirim ke
-server — karena tidak ada formulir yang memintanya. Aplikasi ini bahkan
-memperingatkan pengguna agar tidak menuliskan nama lengkap, NIK, nomor rekam
-medis, atau alamat rumah di dalam pertanyaan. Isi percakapan tidak pernah
-dipakai untuk analitik.
+server — karena tidak ada formulir yang memintanya. Panel **Pengaturan** hanya
+memuat preferensi tampilan (tingkat baca, kontras, suara, bahasa) dan tidak
+meminta data apa pun. Isi percakapan tidak pernah dipakai untuk analitik.
 
 Bahan publik (berita RSS, artikel Kemenkes, salinan berlabel tanggal dari
 sumber resmi) tersimpan di database bahan dan tidak berisi apa pun tentang
@@ -1044,15 +1041,16 @@ quick tunnel. Tidak perlu dijalankan.
 ## Alamat produksi (Vercel)
 
 Repo ini masih tersambung ke Vercel dan deploy otomatis berjalan setiap push ke
-`main`. Diukur 18 Okt 2026:
+`main`. Diukur ulang 20 Okt 2026 (setelah fitur akun dihapus):
 
 | Yang diperiksa | Hasil |
 |---|---|
-| `https://pahami-sehat.vercel.app/app` | **200** |
-| `POST /api/tanya` di produksi | **200** dalam 7,14 detik, jawaban 757 karakter, **4 sumber** |
+| `https://pahami-sehat.vercel.app/app` | **200** — langsung Beranda, tanpa halaman masuk |
+| `POST /api/tanya` di produksi | **200** dalam 6,86 detik, jawaban 1.023 karakter, **4 sumber** |
 | `GET /api/berita/ringkas` di produksi | **200**, berisi berita |
 | `GET /api/health` di produksi | **200**, `db: {"aktif":false}` (Vercel tanpa MariaDB) |
 | `POST /api/suara` di produksi | **502** — fungsi serverless tidak bisa mempertahankan WebSocket |
+| `GET /api/akun/saya` di produksi | **404** — rute akun sudah tidak ada |
 
 Karena itu **mode Grand Final tetap memakai `npm start` di laptop sendiri**, bukan
 alamat Vercel: hanya di situ suara neural bisa bekerja penuh.

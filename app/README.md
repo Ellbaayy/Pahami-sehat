@@ -80,7 +80,7 @@ app/
 ├── api/index.js              pintu masuk serverless Vercel
 ├── public/ocr/               mesin OCR: worker, core WASM, data bahasa (17 MB)
 ├── scripts/salin-prototipe.mjs  menyalin docs/prototipe -> dist/ (prebuild)
-├── server/                   backend Express — 22 berkas
+├── server/                   backend Express — 19 berkas
 │   ├── index.js              rute + penyajian hasil build
 │   ├── config.js             baca env, validasi key
 │   ├── rute.js               endpoint /api/*
