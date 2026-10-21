@@ -20,7 +20,7 @@ import { dirname, join, resolve } from 'node:path'
 
 import { config, safeInfo } from './config.js'
 import { pasangKepala } from './kepala.js'
-import { pasangSaji, pasang404Api } from './saji.js'
+import { pasangSaji, pasang404Api, sajikanFolder } from './saji.js'
 import rute from './rute.js'
 import { keteranganDb, tutupDb } from './db.js'
 
@@ -45,9 +45,15 @@ if (existsSync(DIST)) {
   // ada di /prototipe/ supaya tautan lama tetap hidup. Aplikasi React disajikan
   // terpisah di /app/ (dist/app/) — jadi yang muncul pertama kali dibuka adalah
   // halaman penjelasan, bukan aplikasi.
-  app.use(express.static(DIST))
+  //
+  // Memakai `sajikanFolder` (bukan `express.static`) supaya berkas statis ikut
+  // DIKOMPRESI dan DI-CACHE dengan benar. Diukur 21 Okt 2026: dengan
+  // `express.static`, bundle 402.486 byte terkirim tanpa Content-Encoding dan
+  // dengan `max-age=0` — padahal namanya ber-hash dan menyusut 69% bila
+  // dimampatkan. Alasan lengkapnya ada di kepala `sajikanFolder`.
+  app.use(sajikanFolder(DIST))
   // aplikasi React disajikan di /app/
-  if (existsSync(APP_DIST)) app.use('/app', express.static(APP_DIST))
+  if (existsSync(APP_DIST)) app.use('/app', sajikanFolder(APP_DIST, { awalan: '/app' }))
 
   // SPA fallback aplikasi: rute dalam aplikasi (mis. /app/apa-pun) -> index aplikasi.
   // Dibatasi ke /app supaya tidak menelan halaman penjelasan di root.
@@ -197,7 +203,9 @@ if (dijalankanLangsung) {
         try {
           await Promise.race([
             tutupDb(),
-            new Promise((r) => setTimeout(r, 3000)), // jangan menggantung
+            new Promise((r) => {
+              setTimeout(r, 3000) // jangan menggantung
+            }),
           ])
         } catch {
           /* gagal menutup pool tidak boleh menghalangi keluar */
