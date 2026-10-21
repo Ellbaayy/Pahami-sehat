@@ -6,6 +6,7 @@ import {
   SquarePen,
   Share2,
   Trash2,
+  Square,
 } from 'lucide-react'
 import {
   SectionHeading,
@@ -46,7 +47,6 @@ export default function ThreadPanel({
   t = (k) => k,
   serverOnline = true,
   serverMemuat = false,
-  bahasa = 'id',
   mode = 'tanya',
   onModeChange,
   tingkat,
@@ -71,6 +71,7 @@ export default function ThreadPanel({
    */
   suaraBahasa = 'auto',
   suaraJenis = 'p',
+  onHentikan,
 }) {
   const [seretFoto, setSeretFoto] = useState(false)
 
@@ -187,6 +188,14 @@ export default function ThreadPanel({
               >
                 {m.text}
               </p>
+              {/* Jawaban yang dihentikan di tengah jalan DITANDAI, bukan
+                  dibiarkan tampak seperti jawaban utuh. Tanpa penanda ini
+                  pengguna mengira jawabannya memang berakhir di situ. */}
+              {m.terhenti ? (
+                <p className="mt-1.5 text-[0.8rem] font-semibold text-amber-600">
+                  {t('tanya.terhenti')}
+                </p>
+              ) : null}
               {m.role === 'ai' ? (
                 <>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -203,26 +212,76 @@ export default function ThreadPanel({
           ))}
 
           {loading ? (
-            <li className="max-w-[min(100%,46rem)] rounded-2xl border border-line-200 bg-white p-4">
+            /*
+             * `aria-live="polite"` + `aria-busy` di sini, dan ini satu-satunya
+             * tempat di seluruh aplikasi yang memang membutuhkannya.
+             *
+             * Sebelum ini utasan Tanya AI TIDAK punya pengumuman apa pun:
+             * pembaca layar tidak tahu jawaban sedang disusun, tidak tahu
+             * kapan selesai, dan perubahan teks yang mengalir tidak pernah
+             * dibacakan. Di halaman lain (kuesioner, pemindai, toast) sudah
+             * ada `role="status"`/`aria-live`; justru halaman inti ini yang
+             * terlewat.
+             *
+             * Ditaruh di sini (bukan di setiap gelembung) supaya yang
+             * diumumkan hanya keadaan "sedang berjalan", bukan seluruh
+             * percakapan dibacakan ulang setiap kali satu huruf masuk.
+             */
+            <li
+              className="max-w-[min(100%,46rem)] rounded-2xl border border-line-200 bg-white p-4"
+              aria-busy={loading}
+            >
+              {/*
+               * Tombol hentikan ada di KEDUA cabang, bukan hanya saat
+               * `streaming` terisi.
+               *
+               * Diukur 21 Okt 2026: fase "Mencari sumber terpercaya…"
+               * berlangsung beberapa detik dengan teks jawaban MASIH kosong —
+               * dan justru di situlah pengguna paling butuh membatalkan.
+               * Kalau tombolnya hanya muncul saat `streaming` ada isinya,
+               * tombol itu praktis tidak pernah terlihat: jawaban mengalir
+               * begitu cepat sehingga fase itu lewat dalam hitungan milidetik.
+               */}
+              <div className="mb-1 flex items-center justify-between gap-3">
+                <p className="text-[0.8125rem] font-bold tracking-[0.12em] uppercase text-brand-700">
+                  {streaming ? t('tanya.sedangMenyusun') : t('umum.proses')}
+                </p>
+                {onHentikan ? (
+                  <button
+                    type="button"
+                    onClick={onHentikan}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-line-200 px-2.5 py-1 text-[0.78rem] font-semibold text-navy-600 transition-colors hover:border-line-300 hover:bg-surface-100 hover:text-navy-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                  >
+                    <Square className="size-3 fill-current" aria-hidden="true" />
+                    {t('tanya.hentikan')}
+                  </button>
+                ) : null}
+              </div>
               {streaming ? (
-                <>
-                  <p className="mb-1 text-[0.8125rem] font-bold tracking-[0.12em] uppercase text-brand-700">
-                    {t('tanya.sedangMenyusun')}
-                  </p>
-                  <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-navy-700">
-                    {streaming}
-                    <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-brand-500 align-middle" />
-                  </p>
-                </>
+                /* Wilayah live untuk teks yang mengalir. `aria-atomic="false"`
+                   supaya hanya bagian baru yang dibacakan, bukan seluruh
+                   jawaban dari awal pada setiap potongan. */
+                <p
+                  aria-live="polite"
+                  aria-atomic="false"
+                  className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-navy-700"
+                >
+                  {streaming}
+                  <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-brand-500 align-middle" />
+                </p>
               ) : (
                 <>
-                  <p className="mb-2 inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-brand-700">
+                  <p
+                    role="status"
+                    aria-live="polite"
+                    className="mb-2 inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-brand-700"
+                  >
                     <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
                     {statusPesan || t('umum.proses')}
                   </p>
-                  <div className="skeleton h-3 w-24 rounded" />
-                  <div className="skeleton mt-2.5 h-3.5 w-full rounded" />
-                  <div className="skeleton mt-2 h-3.5 w-[85%] rounded" />
+                  <div className="skeleton h-3 w-24 rounded" aria-hidden="true" />
+                  <div className="skeleton mt-2.5 h-3.5 w-full rounded" aria-hidden="true" />
+                  <div className="skeleton mt-2 h-3.5 w-[85%] rounded" aria-hidden="true" />
                 </>
               )}
             </li>
@@ -283,7 +342,6 @@ export default function ThreadPanel({
             onTutup={onPindaiTutup}
             teksKomposer={input}
             serverOnline={serverOnline}
-            bahasa={bahasa}
           />
         ) : null}
       </div>

@@ -110,7 +110,10 @@ function simpanHasil(q, data) {
 }
 
 /** Jeda kecil — dipakai supaya permintaan ke Wikipedia tidak beruntun. */
-const jeda = (ms) => new Promise((r) => setTimeout(r, ms))
+const jeda = (ms) =>
+  new Promise((r) => {
+    setTimeout(r, ms)
+  })
 
 /* ------------------------------------------------------- antrean Wikipedia -- */
 

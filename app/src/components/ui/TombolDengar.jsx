@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Volume2, Square } from 'lucide-react'
-import { ttsBaca, ttsBerhenti, ttsDidukung, ttsSedangBicara } from '../../lib/tts'
+import { ttsBaca, ttsBerhenti, ttsSedangBicara } from '../../lib/tts'
 import { cn } from '../../lib/cn'
 
 /**

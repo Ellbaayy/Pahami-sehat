@@ -47,10 +47,9 @@ import { catatJamServer, jamSekarang } from './jam.js'
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
 
-/** Berapa berita terbaru yang diambil dari tiap sumber. */
-const MAKS_PER_SUMBER = 8
-
-/** Batas umur berita: hanya berita dari N hari terakhir yang dianggap "terkini". */
+/**
+ * Batas umur berita: hanya berita dari N hari terakhir yang dianggap "terkini".
+ */
 const MAKS_HARI = 7
 
 /**
@@ -180,7 +179,9 @@ async function ambilSatuSumber(url, namaSumber, percobaan = 2) {
     } catch {
       // percobaan terakhir juga gagal — kembalikan kosong, bukan melempar
       if (i === percobaan - 1) return []
-      await new Promise((r) => setTimeout(r, 800))
+      await new Promise((r) => {
+        setTimeout(r, 800)
+      })
     }
   }
   return []
@@ -509,6 +510,12 @@ export async function ringkasanBerita() {
   if (ringkasDiMemori && !ringkasWaktunyaCek(ringkasDiMemori)) return ringkasDiMemori
   if (ringkasBerjalan) return ringkasBerjalan
 
+  /*
+   * `require-atomic-updates` dimatikan untuk berkas ini dengan alasan yang
+   * sama seperti `konten.js`: `ringkasBerjalan` bertindak sebagai kunci, jadi
+   * badan IIFE di bawah berjalan satu kali pada satu waktu, dan
+   * `ringkasBisaTulis` hanya penanda boolean idempoten.
+   */
   ringkasBerjalan = (async () => {
     try {
       const daftar = await ambilBeritaKesehatan({ maks: 3 })
