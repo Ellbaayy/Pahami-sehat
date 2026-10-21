@@ -8,7 +8,11 @@
     "predev": "npm run prototipe",
     "dev": "vite",
     "prebuild": "npm run prototipe",
-    "build": "vite build",
+    "build": "vite build && node scripts/mampatkan-dist.mjs",
+    "mampatkan": "node scripts/mampatkan-dist.mjs",
+    "test": "node ../uji-semua.mjs",
+    "lint": "eslint .",
+    "lint:perbaiki": "eslint . --fix",
     "preview": "vite preview",
     "server": "node --env-file=.env server/index.js",
     "start": "npm run build && npm run server"
@@ -23,8 +27,13 @@
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
     "tailwindcss": "^4.3.3",
     "vite": "^8.3.2"
   }

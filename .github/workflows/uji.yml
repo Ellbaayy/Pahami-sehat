@@ -57,6 +57,15 @@ jobs:
       - name: Periksa sintaks berkas server
         run: node --check app/server/*.js app/api/*.js
 
+      - name: Lint (ESLint)
+        # Gerbang mutu kode. Yang dijaga di sini BUKAN gaya penulisan,
+        # melainkan kesalahan yang tidak terlihat dari build hijau: variabel
+        # mati, kunci kamus dobel (nilai terakhir diam-diam menimpa yang
+        # pertama, tanpa galat dan tanpa gagal uji), dan penulisan state
+        # setelah await yang bisa balapan.
+        working-directory: app
+        run: npm run lint
+
       - name: Uji batas panjang & laju rute
         run: node uji-batas.mjs
 
@@ -131,3 +140,17 @@ jobs:
       - name: Build produksi
         working-directory: app
         run: npm run build
+
+      - name: Uji penyajian berkas statis (kompresi & cache)
+        # HARUS SESUDAH build: uji ini memeriksa `dist/` yang sungguhan.
+        # Yang dijaga di sini adalah hal yang tidak terlihat dari build hijau
+        # maupun dari uji lain: '/app/' bisa menyajikan halaman yang SALAH dan
+        # tetap HTTP 200, dan berkas hasil build bisa terkirim tanpa kompresi
+        # sambil tetap tampak wajar di peramban.
+        run: node uji-statis.mjs
+
+      - name: Uji skor HLS-SF12 (indeks 0-50 & empat kategori)
+        # Tanpa jaringan. Yang dijaga: rumus indeks dan batas kategori, supaya
+        # skor tidak diam-diam kembali menjadi persentase buatan sendiri.
+        run: node uji-skor-hls.mjs
+

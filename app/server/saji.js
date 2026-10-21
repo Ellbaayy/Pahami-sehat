@@ -37,6 +37,8 @@
  */
 
 import { gzipSync } from 'node:zlib'
+import { createReadStream, existsSync, statSync } from 'node:fs'
+import { join, resolve, sep } from 'node:path'
 
 /** Di bawah ukuran ini, mengompresi tidak sepadan. */
 const MIN_BYTE = 500
@@ -167,6 +169,154 @@ export function pasangSaji(app) {
   })
 
   /* -------------------------------------------------------- 404 JSON ---- */
+}
+
+/**
+ * Penyaji berkas statis dengan kompresi dan cache yang benar.
+ *
+ * ============================================================================
+ * KENAPA ADA, PADAHAL SUDAH PAKAI express.static
+ * ============================================================================
+ *
+ * Diukur 21 Okt 2026 di server lokal (jalur yang dipakai sekarang, bukan
+ * Vercel):
+ *
+ *   /app/assets/index-*.js   402.486 byte, Content-Encoding TIDAK ADA,
+ *                            Cache-Control: public, max-age=0
+ *   /app/assets/index-*.css   58.741 byte, sama
+ *
+ * Dua cacat sekaligus:
+ *
+ * 1. TIDAK DIKOMPRESI. Isinya teks dan menyusut ~70% (JS 402.486 -> 122.785,
+ *    CSS 58.741 -> 11.527). Lapisan gzip di `saji.js` tidak menolong karena ia
+ *    membungkus `res.json`/`res.send`, sedangkan `express.static` menulis
+ *    langsung ke soket.
+ *
+ * 2. TIDAK DI-CACHE, padahal nama berkasnya BER-HASH. Nama ber-hash berarti isi
+ *    berkas berubah -> nama berubah. Jadi berkas ber-hash boleh disimpan
+ *    peramban selamanya tanpa risiko versi basi. `max-age=0` memaksa peramban
+ *    menanyakan ulang setiap aset setiap kali halaman dibuka — pemborosan yang
+ *    justru bertentangan dengan bagian Green IT di README.
+ *
+ * Aturan cache dipisah menurut sifat nama berkas, dan itu bukan kerapian:
+ *   - ber-hash (`index-yrXE3a2d.js`)  -> 1 tahun, immutable
+ *   - ber-nama tetap (`/app/ocr/*`)   -> 1 hari + stale-while-revalidate
+ *   - `index.html`                    -> no-cache (harus selalu segar, karena
+ *                                        di dalamnya tertulis nama ber-hash)
+ *   - sisanya (halaman penjelasan)    -> 5 menit
+ *
+ * Berkas `.gz` disiapkan oleh `scripts/mampatkan-dist.mjs` saat build, jadi
+ * melayani permintaan tidak memakai CPU sama sekali. Kalau berkas `.gz` tidak
+ * ada (build lama), berkas asli tetap dikirim — hanya tanpa kompresi. Fitur
+ * tidak boleh mati karena satu langkah build terlewat.
+ */
+
+/** @param {string} jalur */
+function aturanCache(jalur) {
+  const nama = jalur.slice(jalur.lastIndexOf('/') + 1)
+
+  // Nama ber-hash dari Vite: nama-<hash8>.<ext>, atau nama-<hash>.js
+  const berHash = /-[A-Za-z0-9_-]{8,}\.(js|mjs|css|woff2?|png|jpe?g|webp|svg|gif|avif)$/.test(nama)
+  if (berHash) return 'public, max-age=31536000, immutable'
+
+  // index.html: nama tetap, isinya menyebut nama ber-hash -> wajib selalu segar.
+  // HANYA kerangka aplikasi di /app/. Halaman penjelasan di root juga bernama
+  // index.html, tapi isinya jarang berubah dan justru dibaca juri berulang
+  // kali — membuatnya no-cache hanya memaksa unduh ulang tanpa manfaat.
+  if (nama === 'index.html') {
+    if (jalur === '/app/index.html') return 'no-cache'
+    return 'public, max-age=300, stale-while-revalidate=86400'
+  }
+
+  // Berkas OCR ber-nama tetap dan besar (3,8 MB per inti + 5 MB data bahasa).
+  // Sehari + stale-while-revalidate: pengguna berikutnya tidak menunggu, dan
+  // versi baru tetap terpakai keesokan harinya.
+  if (jalur.includes('/ocr/')) return 'public, max-age=86400, stale-while-revalidate=604800'
+
+  // Halaman penjelasan dan asetnya: isinya jarang berubah, tapi namanya tetap.
+  return 'public, max-age=300, stale-while-revalidate=86400'
+}
+
+/**
+ * Sajikan satu folder sebagai berkas statis.
+ *
+ * @param {string} folder folder akar yang disajikan
+ * @param {{ awalan?: string }} [opsi] awalan URL (mis. '/app') untuk menentukan jalur
+ * @returns {import('express').RequestHandler}
+ */
+export function sajikanFolder(folder, { awalan = '' } = {}) {
+  const akar = resolve(folder)
+
+  return function penyajiStatis(req, res, next) {
+    // hanya GET/HEAD yang dilayani dari berkas
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+
+    const jalurUrl = decodeURIComponent(req.path)
+    // Jalur yang berakhir '/' memakai index.html DI DALAM folder itu — bukan
+    // diganti menjadi '/index.html'. Kesalahan ini pernah terjadi: '/app/'
+    // berubah jadi '/index.html' sehingga yang tersaji halaman penjelasan,
+    // bukan aplikasi.
+    const namaBerkas = jalurUrl === '' || jalurUrl.endsWith('/')
+      ? `${jalurUrl}index.html`
+      : jalurUrl
+
+    // Tolak percobaan keluar dari folder (../) sebelum menyentuh disk.
+    // Diperiksa SETELAH jalur digabung, karena `resolve` yang menormalkan '..'.
+    const berkas = resolve(join(akar, namaBerkas))
+    if (!berkas.startsWith(akar + sep)) return next()
+    if (!existsSync(berkas) || !statSync(berkas).isFile()) return next()
+
+    const jalurLogis = `${awalan}${namaBerkas}`
+    res.setHeader('Cache-Control', aturanCache(jalurLogis))
+    res.setHeader('Content-Type', tipeKonten(namaBerkas))
+    // Vary selalu diset: tanpa ini, cache perantara bisa menyajikan versi
+    // tanpa kompresi kepada klien yang mendukung gzip, atau sebaliknya.
+    res.setHeader('Vary', 'Accept-Encoding')
+
+    // --- kompresi: pakai .gz yang sudah disiapkan saat build ---
+    const menerimaGzip = /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''))
+    const berkasGz = `${berkas}.gz`
+    const dipakai = menerimaGzip && existsSync(berkasGz) ? berkasGz : berkas
+
+    if (dipakai === berkasGz) res.setHeader('Content-Encoding', 'gzip')
+    res.setHeader('Content-Length', String(statSync(dipakai).size))
+
+    // HEAD: header saja, tanpa badan
+    if (req.method === 'HEAD') return res.end()
+
+    // Dialirkan, bukan dibaca utuh ke memori — berkas OCR berukuran 3,8 MB.
+    // Galat setelah header terkirim tidak bisa lagi diubah jadi 500; yang
+    // benar adalah memutus koneksi supaya klien tahu unduhannya tidak utuh.
+    const aliran = createReadStream(dipakai)
+    aliran.on('error', () => res.destroy())
+    aliran.pipe(res)
+  }
+}
+
+/** Peta tipe konten minimal — tanpa dependensi tambahan. */
+function tipeKonten(nama) {
+  const ext = nama.slice(nama.lastIndexOf('.')).toLowerCase()
+  const peta = {
+    '.html': 'text/html; charset=utf-8',
+    '.js': 'text/javascript; charset=utf-8',
+    '.mjs': 'text/javascript; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.svg': 'image/svg+xml',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+    '.avif': 'image/avif',
+    '.woff2': 'font/woff2',
+    '.woff': 'font/woff',
+    '.wasm': 'application/wasm',
+    '.txt': 'text/plain; charset=utf-8',
+    '.xml': 'application/xml; charset=utf-8',
+    '.map': 'application/json; charset=utf-8',
+  }
+  return peta[ext] ?? 'application/octet-stream'
 }
 
 /**
