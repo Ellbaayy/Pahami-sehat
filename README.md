@@ -23,7 +23,8 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
 > | Riwayat obrolan | berjalan. Tersimpan di peramban (bukan server), maksimal **20 obrolan** (`MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan penghapusan **bisa dibatalkan**. **Tidak lagi ditampilkan di Beranda** — hanya lewat menu **Riwayat** |
 > | Berita kesehatan harian | berjalan. Pertanyaan seperti "berita terbaru hari ini" dijawab dari **RSS** (Detik Health, WHO, Google News) — bukan dari ensiklopedia, karena Wikipedia tidak punya berita harian. Setiap berita disebutkan **nama medianya** dan **umurnya**, dan lonceng pemberitahuan berbunyi kalau ada berita segar (diperiksa maksimal sekali sehari) |
-> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **303 kunci** kamus |
+> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **323 kunci** kamus. Judul tab peramban ikut halaman ("Tanya AI — Pahami Sehat"), bukan satu judul untuk semuanya |
+
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
 > 20 permintaan/menit per alamat IP (`app/server/batas.js`, angka di `LAJU` pada
@@ -704,33 +705,76 @@ Indonesia adalah 31–46% kata ≥3 suku kata.
 
 ## Menjalankan uji
 
-Semua uji di bawah ini berjalan tanpa jaringan dan tanpa API key, kecuali yang
-ditandai. Jalankan dari akar repo:
+**Satu perintah untuk semuanya:**
 
 ```bash
-node uji-batas.mjs        # 33 pemeriksaan: batas panjang & laju tiap rute
-node uji-ekstrak.mjs      # 8  pemeriksaan: penarikan konten dari HTML sumber
-node uji-kata-kunci.mjs   # 33 pemeriksaan: pencocokan kata kunci topik
-node uji-teks.mjs         # 16 pemeriksaan: perapian teks & pemotongan kalimat
-node uji-ocr.mjs          # 36 pemeriksaan: perapian teks & penandaan angka
-node uji-bahasa.mjs       # 25 pemeriksaan: kesehatan kamus id/en
-node uji-berita.mjs       # 102 pemeriksaan: deteksi berita, parser RSS, penetrasi
-node uji-jam.mjs          # 17 pemeriksaan: jam acuan dari header internet
-node uji-rotasi.mjs       # 22 pemeriksaan: rotasi daftar konten harian
-node uji-keterbacaan.mjs  # 38 pemeriksaan: alat ukur keterbacaan itu sendiri
-node uji-sumber.mjs       # 99 pemeriksaan: lapis sumber (tanpa jaringan)
-node uji-suara.mjs        # 90 pemeriksaan: ejaan singkatan & kestabilan nada
-node uji-sitasi.mjs       # 15 pemeriksaan: jejak sumber (butuh MariaDB)
-node uji-server.mjs       # 26 pemeriksaan: kompresi, 404 JSON, galat klien
+cd app && npm test
 ```
 
-**Total 560 pemeriksaan, semuanya lulus** — diukur 20 Okt 2026, setelah
-`uji-akun.mjs` dan `uji-google.mjs` ikut dihapus bersama fitur akun. Angka per
-berkas di atas dihitung dari keluaran uji itu sendiri, bukan dari ingatan;
-kalau uji bertambah, hitung ulang.
+Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
+berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
+memperbarui daftar di mana pun. Diukur 21 Okt 2026: **16 berkas, semua lulus,
+±6 detik**, tanpa jaringan dan tanpa API key.
 
-Dua skrip di bawah **butuh jaringan** dan hanya dipakai untuk memilih angka
-batas dari pengukuran, bukan untuk rutin:
+Daftar per berkas (jalankan langsung dari akar repo kalau sedang menelusuri satu
+uji tertentu):
+
+```bash
+node uji-batas.mjs        # batas panjang & laju tiap rute
+node uji-ekstrak.mjs      # penarikan konten dari HTML sumber
+node uji-kata-kunci.mjs   # pencocokan kata kunci topik
+node uji-teks.mjs         # perapian teks & pemotongan kalimat
+node uji-ocr.mjs          # perapian teks OCR & penandaan angka
+node uji-bahasa.mjs       # kesehatan kamus id/en (kunci seimbang, tak menganggur)
+node uji-berita.mjs       # deteksi berita, parser RSS, penetrasi
+node uji-jam.mjs          # jam acuan dari header internet
+node uji-rotasi.mjs       # rotasi daftar konten harian
+node uji-keterbacaan.mjs  # alat ukur keterbacaan itu sendiri
+node uji-sumber.mjs       # lapis sumber (tanpa jaringan)
+node uji-suara.mjs        # ejaan singkatan & kestabilan nada
+node uji-sitasi.mjs       # jejak sumber (butuh MariaDB; dilewati tanpa DB)
+node uji-server.mjs       # kompresi, 404 JSON, galat klien
+node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
+node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
+```
+
+### Lint — gerbang mutu kode
+
+```bash
+cd app && npm run lint      # atau: npm run lint:perbaiki
+```
+
+ESLint dipasang 21 Okt 2026 dan **langsung menemukan dua cacat nyata yang tidak
+tertangkap uji mana pun**:
+
+1. **`kuis.terjawabDari` tertulis DUA KALI** di `src/data/bahasa.js`, di kedua
+   blok bahasa. Literal objek JS diam-diam memakai nilai terakhir, jadi kunci
+   ganda tidak memunculkan galat dan tidak menggagalkan `uji-bahasa.mjs` —
+   persis seperti yang sudah diperingatkan di catatan proyek.
+2. **Balapan nyata di `server/rute.js`**: `/api/health` bisa memanggil layanan
+   model dan menyambung database berkali-kali untuk satu informasi yang sama
+   kalau permintaan datang bersamaan. Sekarang dijaga `sedangUkur`.
+
+Ditambah: `db()` bisa membuat **dua pool** dan meninggalkan salah satunya
+terbuka (kebocoran koneksi MariaDB) — sekarang dijaga `menyambung`. Dan beberapa
+variabel/import mati yang selama ini tidak terpakai ikut dibuang.
+
+Konfigurasi ini **tidak** mengatur gaya penulisan (indentasi, tanda kutip,
+urutan impor). Alasannya: proyek ini belum punya gaya baku, dan ratusan
+pelanggaran gaya sekaligus akan membuat gerbang ini dimatikan orang — gerbang
+yang dimatikan lebih buruk daripada tidak ada. Yang dijaga hanya kesalahan yang
+tidak terlihat dari build hijau.
+
+Kelonggaran yang disengaja, semuanya tertulis di `app/eslint.config.mjs`
+beserta alasannya: `require-atomic-updates` untuk empat berkas yang sudah
+punya penjaga janji (`konten.js`, `berita.js`, `cari.js`, `db.js`), dan
+`rules-of-hooks` untuk dua hook bernama Indonesia (`gunakanBahasa`,
+`gunakanSuara`) yang oleh aturan bawaan dianggap bukan hook.
+
+### Yang butuh jaringan
+
+Skrip di bawah **butuh jaringan** atau kuota model, dan hanya dipakai untuk
+memilih angka batas dari pengukuran, bukan untuk rutin:
 
 ```bash
 node ukur-konten.mjs      # berapa permintaan jaringan saat cache konten kosong
@@ -740,6 +784,7 @@ node ukur-tingkat.mjs     # 8 pertanyaan x 4 tingkat (butuh server lokal + key)
 node verifikasi-judul.mjs # buktikan setiap judul artikel Wikipedia benar-benar ADA
 node periksa-istilah.mjs  # periksa calon istilah baru sebelum masuk peta
 node uji-jawaban.mjs      # tembak /api/tanya server lokal, baca JAWABANNYA
+node uji-sumber.mjs --jaringan  # buktikan sumbernya benar-benar ada
 ```
 
 ### Lapisan server — hal yang salahnya tidak terlihat dari build hijau
@@ -870,14 +915,54 @@ et al., 2019) beserta terjemahan Indonesia yang tervalidasi — rinciannya di
 Inggris: menerjemahkan ulang membuat skornya tidak bisa dibandingkan dengan
 rujukan.
 
-Skor: tiap jawaban bernilai 0–3 (sangat sulit = 0 … sangat mudah = 3), jadi
-maksimum = 12 × 3 = 36. Persentase = `total / 36`, lalu tiga kategori:
-**≥ 70% Baik** · **≥ 45% Sedang** · **< 45% Perlu dukungan** — masing-masing
-dengan saran tindak lanjut. Seluruh perhitungan jalan di peramban; tidak ada
-jawaban yang dikirim ke mana pun.
+### Skor: indeks 0–50, empat kategori
 
-Aplikasi menyebut hasilnya apa adanya: *"Hasil ini alat bantu belajar, bukan
-diagnosis medis."*
+Skor memakai **rumus resmi instrumennya**, bukan persentase buatan sendiri:
+
+```
+indeks = (mean − 1) × (50/3)
+```
+
+`mean` = rata-rata nilai 12 item, tiap item 1–4 (sangat sulit = 1 … sangat
+mudah = 4). Hasilnya 0–50, dan kategorinya mengikuti HLS-EU Consortium —
+instrumen HLS-SF12 memakai rumus indeks yang sama dengan bentuk penuhnya:
+
+| Kategori | Rentang | Arti |
+|---|---|---|
+| **Inadequate** | 0–25 | literasi kesehatan kurang |
+| **Problematic** | >25–33 | bermasalah |
+| **Sufficient** | >33–42 | cukup |
+| **Excellent** | >42–50 | sangat baik |
+
+Skor 0–33 bersama-sama disebut **limited health literacy**.
+
+**Sebelum 21 Okt 2026 skornya SALAH SKALA**: yang ditampilkan persentase
+0–100% dengan ambang buatan (≥70 / ≥45 / <45, tiga kategori). Akibatnya hasil
+aplikasi ini **tidak bisa dibandingkan dengan rujukan mana pun** — paper
+validasinya melaporkan indeks 0–50, bukan persentase. Perhitungannya sekarang
+ada di `app/src/lib/skorHls.js` dan dijaga `uji-skor-hls.mjs` (35 pemeriksaan,
+termasuk angka yang dihitung tangan: mean 2,5 → indeks 25; mean 3 → 33,3).
+
+**Angka dari lima pernyataan lama, dan angka persentase sebelum 21 Okt 2026,
+TIDAK bisa dibandingkan dengan hasil sekarang.**
+
+### Yang dilakukan aplikasi setelah skor keluar
+
+Bukan sekadar menampilkan angka:
+
+- **Riwayat skor** tersimpan terpisah dari jawaban (`pahami-sehat:kuesioner-skor`),
+  maksimal 10 pengisian, dan hasil terbaru dibandingkan dengan pengisian
+  sebelumnya (*naik/turun N poin*). "Ulangi" TIDAK menghapus riwayat — membuang
+  riwayat punya tombolnya sendiri.
+- **Dua jalan pintas** muncul saat skor ≤ 33 (limited): *Sederhanakan teks*
+  membuka Tanya AI dengan mode Sederhanakan aktif, *Dengarkan jawaban* membuka
+  Tanya AI dengan mode Tanya. Sebelumnya saran di kartu hasil hanya **menyuruh**
+  pengguna menyalakan kedua fitur itu tanpa satu pun tombol yang melakukannya.
+
+Seluruh perhitungan dan penyimpanan jalan di peramban; tidak ada jawaban yang
+dikirim ke mana pun. Aplikasi menyebut hasilnya apa adanya: *"Hasil ini alat
+bantu belajar, bukan diagnosis medis."*
+
 
 ---
 
@@ -948,10 +1033,13 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
 | Batas pengambilan artikel | `app/server/konten.js` (`MAKS_DETAIL`) | 8, dari yang tadinya bisa sampai 40 |
 | Pembatas laju per IP | `app/server/batasInput.js` (`LAJU`) | 20 permintaan/menit (health/meta/berita 120) |
 | Simpanan hasil health | `batasInput.js` (`SIMPANAN_HEALTH_MS`) | 15 detik |
-| Kompresi gzip respons | `app/server/saji.js` | `/api/konten` 6.370 → 1.959 byte (**−69%**) |
+| Kompresi gzip respons API | `app/server/saji.js` | `/api/konten` 6.370 → 1.959 byte (**−69%**) |
 | Jam acuan tanpa permintaan tambahan | `app/server/jam.js` | memakai header `Date` respons yang sudah ada |
-| Cache aset ber-hash | `app/vercel.json` | 1 tahun, `immutable` |
-| Cache berkas ber-nama-tetap | `app/vercel.json` (`/app/ocr/`) | 1 hari + `stale-while-revalidate` |
+| Kompresi berkas statis | `app/scripts/mampatkan-dist.mjs` + `sajikanFolder` di `app/server/saji.js` | disiapkan **sekali saat build** (`.gz`), bukan per permintaan. Terukur: JS 402.486 → **123.163** byte (−69%), CSS 58.741 → **11.573** byte (−80%), halaman penjelasan 79.765 → **19.997** byte (−75%) |
+| Unduhan pertama aplikasi | `/app/` | **461.914 → 135.132 byte (−71%)** — diukur 21 Okt 2026 dari server lokal |
+| Cache aset ber-hash | `aturanCache` di `app/server/saji.js` | 1 tahun, `immutable` (nama ber-hash: isi berubah → nama berubah) |
+| Cache berkas ber-nama-tetap | `aturanCache` di `app/server/saji.js` | `/app/ocr/` 1 hari + `stale-while-revalidate` 7 hari; halaman penjelasan 5 menit |
+| Kerangka aplikasi (`/app/`) | `aturanCache` | `no-cache` — di dalamnya tertulis nama berkas ber-hash, jadi wajib selalu segar |
 | Pemindaian foto | `app/src/lib/ocr.js` | 0 permintaan server |
 
 **Yang belum selesai, disebut apa adanya:**
