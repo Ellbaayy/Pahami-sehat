@@ -39,6 +39,26 @@ import { fileURLToPath } from 'node:url'
 const AKAR = dirname(fileURLToPath(import.meta.url))
 const denganJaringan = process.argv.includes('--dengan-jaringan')
 
+/**
+ * Lingkungan untuk uji anak — SENGAJA dibersihkan dari rahasia.
+ *
+ * KENAPA: 21 Okt 2026 `uji-statis.mjs` LOLOS di lokal tapi MERAH di CI.
+ * Sebabnya shell pengembang kebetulan mengekspor `KENARI_API_KEY` yang asli,
+ * sedangkan runner GitHub tidak. Uji yang lulus hanya karena lingkungan
+ * kebetulan menyediakan rahasia adalah uji yang berbohong — dan kegagalan itu
+ * baru ketahuan setelah di-push.
+ *
+ * Dengan membuang `KENARI_API_KEY` di sini, `node uji-semua.mjs` menjalankan
+ * uji anak dengan syarat yang SAMA seperti CI: tanpa kunci, tanpa DB. Uji yang
+ * diam-diam butuh kunci akan langsung terlihat merah di laptop, bukan nanti.
+ *
+ * `--dengan-jaringan` TIDAK mengembalikan kunci ini: uji yang benar-benar
+ * butuh kunci (uji-jawaban.mjs) sengaja tidak ikut dijalankan di sini.
+ */
+const envAnak = { ...process.env }
+delete envAnak.KENARI_API_KEY
+envAnak.DB_MATI = '1'
+
 /** Uji yang butuh jaringan atau rahasia — tidak ikut secara bawaan. */
 const BUTUH_LUAR = new Set(['uji-jawaban.mjs'])
 
@@ -78,6 +98,7 @@ for (const f of berkas) {
   const r = spawnSync(process.execPath, [join(AKAR, f), ...argumen], {
     cwd: AKAR,
     stdio: 'inherit',
+    env: envAnak,
   })
   const ms = Date.now() - mulai
 

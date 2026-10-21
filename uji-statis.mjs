@@ -43,6 +43,38 @@ if (!existsSync(join(DIST, 'index.html'))) {
   process.exit(1)
 }
 
+/*
+ * ============================================================================
+ * KENAPA UJI INI MEMASANG KUNCI PALSU SENDIRI
+ * ============================================================================
+ *
+ * `app/server/config.js` menolak diimpor tanpa `KENARI_API_KEY` — ia melempar
+ * galat saat modul dibaca, bukan saat dipakai. Karena uji ini mengimpor server
+ * SUNGGUHAN (supaya yang diuji benar-benar kabel produksinya, bukan tiruan),
+ * uji ini ikut terkena aturan itu.
+ *
+ * Diukur 21 Okt 2026: lokal LOLOS, CI MERAH. Sebabnya shell pengembang
+ * kebetulan sudah mengekspor `KENARI_API_KEY` yang asli, sedangkan runner
+ * GitHub tidak punya. Uji yang lulus hanya karena lingkungan kebetulan
+ * menyediakan rahasia adalah uji yang berbohong.
+ *
+ * Yang dipasang di sini adalah KUNCI PALSU, dan itu disengaja: lapisan berkas
+ * statis tidak pernah memanggil layanan model, jadi nilainya tidak pernah
+ * dipakai untuk apa pun. Dengan begitu uji ini tetap memenuhi syarat CI —
+ * "tanpa jaringan dan tanpa rahasia" — sementara yang diuji tetap server asli.
+ *
+ * `DB_MATI=1` juga dipasang supaya uji tidak bergantung pada ada tidaknya
+ * MariaDB di mesin yang menjalankannya (lihat penjelasan `DIMATIKAN` di db.js).
+ *
+ * Nilainya DIPAKSA, bukan hanya diisi kalau kosong (`||=`): kalau kunci asli
+ * dibiarkan lewat, lokal dan CI menjalankan uji dengan lingkungan yang BEDA —
+ * dan persis itu yang membuat kegagalan ini tidak terlihat dari lokal.
+ *
+ * JANGAN pernah mengganti ini dengan kunci sungguhan.
+ */
+process.env.KENARI_API_KEY = 'uji-tanpa-kunci-asli'
+process.env.DB_MATI = '1'
+
 // Server dirakit langsung dari `app` Express yang sama dengan produksi,
 // di port acak — supaya uji tidak bergantung pada port 8787 yang mungkin
 // sedang dipakai server lain, dan tidak menabrak server pengembang.
