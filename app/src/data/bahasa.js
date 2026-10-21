@@ -26,6 +26,7 @@ const KAMUS = {
     'nav.kuesioner': 'Kuesioner',
     'nav.pengaturan': 'Pengaturan',
     'nav.kembali': 'Kembali ke situs',
+    'nav.tagline': 'Setiap jawaban wajib bersumber resmi — Anda dapat memeriksanya sendiri.',
     'nav.menu': 'Buka menu',
     'nav.tutupSidebar': 'Tutup sidebar',
     'nav.bukaSidebar': 'Buka sidebar',
@@ -50,7 +51,7 @@ const KAMUS = {
     'umum.kodeLokal': 'id-ID',
 
     /** Judul tab peramban — dipasang dari TopBar supaya ikut bahasa antarmuka. */
-    'app.judul': 'Dashboard — Pahami Sehat',
+    'app.judul': 'Pahami Sehat',
 
     // beranda
     'beranda.sapa': 'Halo!',
@@ -74,9 +75,11 @@ const KAMUS = {
     'tanya.belumAda': 'Belum ada percakapan',
     'tanya.belumAdaSub': 'Ajukan pertanyaan pertamamu — hasilnya akan muncul sebagai utas di sini.',
     'tanya.sedangMenyusun': 'Menyusun jawaban…',
-    'tanya.kamu': 'Kamu',
+    'tanya.hentikan': 'Hentikan',
+    'tanya.terhenti': 'Jawaban dihentikan sebelum selesai.',
+    'tanya.kamu': 'Anda',
     'tanya.terlaluPanjang': 'Teksnya melebihi batas Tanya. Pendekkan dulu, atau pilih mode Sederhanakan yang batasnya lebih longgar.',
-    'tanya.pindahCatatan': 'Setelah dikirim, kamu langsung pindah ke halaman Tanya AI.',
+    'tanya.pindahCatatan': 'Setelah dikirim, Anda langsung pindah ke halaman Tanya AI.',
 
     // mode di kotak isian Tanya AI
     'tanya.modeAria': 'Pilih cara memakai teks',
@@ -188,7 +191,7 @@ const KAMUS = {
     'pindai.privasiJudul': 'Apa yang terjadi pada fotomu',
     'pindai.privasi1': 'Foto dibaca di peramban memakai mesin WebAssembly yang disajikan situs ini sendiri — bukan dari CDN, jadi tidak ada permintaan keluar sama sekali.',
     'pindai.privasi2': 'Tidak ada foto, teks hasil, maupun riwayat pemindaian yang disimpan di server. Menutup halaman ini menghapus semuanya.',
-    'pindai.privasi3': 'Teks hanya dikirim ke server AI kalau kamu sendiri menekan “Sederhanakan” atau “Tanya AI soal ini”.',
+    'pindai.privasi3': 'Teks hanya dikirim ke server AI bila Anda sendiri menekan “Sederhanakan” atau “Tanya AI soal ini”.',
 
     // kuesioner
     'kuis.eyebrow': 'Kuesioner Kesehatan',
@@ -297,15 +300,41 @@ const KAMUS = {
       'Semakin mudah Anda memahami informasi kesehatan, semakin baik keputusan untuk kesehatan Anda.',
     'kuis.hasilTampil': 'Hasil akan tampil di sini',
     'kuis.hasilTampilSub': 'Jawab ke-12 pertanyaan di atas, lalu tekan Lihat hasil.',
-    'kuis.baik': 'Baik',
-    'kuis.sedang': 'Sedang',
-    'kuis.perluDukungan': 'Perlu dukungan',
-    'kuis.saranBaik': 'Kamu sudah nyaman mencari dan menilai informasi kesehatan. Pertahankan, dan bantu orang di sekitarmu yang masih kesulitan.',
-    'kuis.saranSedang': 'Sebagian besar sudah bisa, bagian menilai kebenaran informasi masih perlu diperkuat. Biasakan cek ke Kemenkes, WHO, atau BPOM sebelum percaya.',
-    'kuis.saranPerlu': 'Aktifkan penyederhanaan ke tingkat anak-anak dan mode suara agar informasi lebih mudah dijangkau. Bawa hasil ini ke tenaga kesehatan terdekat.',
     'kuis.catatan': 'Hasil ini alat bantu belajar, bukan diagnosis medis.',
     'kuis.belumDijawab': 'Masih ada {n} pernyataan yang belum dijawab.',
-    'kuis.terjawabDari': '{a} dari {b} terjawab',
+
+    // --- skor indeks 0–50 dan empat kategori resmi ---------------------
+    // Kategori dan batasnya mengikuti HLS-EU Consortium, bukan karangan:
+    // inadequate 0–25, problematic >25–33, sufficient >33–42, excellent >42–50.
+    'kuis.skorJudul': 'Indeks literasi kesehatan',
+    'kuis.skorSkala': 'dari 50',
+    'kuis.skorPenjelasan':
+      'Angka ini memakai skala baku HLS-SF12 (0–50). Semakin tinggi, semakin mudah informasi kesehatan dipahami.',
+    'kuis.katInadequate': 'Kurang',
+    'kuis.katProblematic': 'Bermasalah',
+    'kuis.katSufficient': 'Cukup',
+    'kuis.katExcellent': 'Sangat baik',
+    'kuis.saranInadequate':
+      'Informasi kesehatan saat ini terasa sulit dijangkau. Sebaiknya mulai dari bahasa paling sederhana dan dibacakan. Hasil ini juga perlu dibawa ke tenaga kesehatan terdekat.',
+    'kuis.saranProblematic':
+      'Sebagian informasi kesehatan masih terasa sulit, terutama saat menilai apakah isinya benar. Sebaiknya dibiasakan memeriksa sumber resmi sebelum mempercayai sesuatu.',
+    'kuis.saranSufficient':
+      'Sebagian besar informasi kesehatan sudah bisa dipahami dan dinilai. Yang bisa diperkuat adalah kebiasaan memeriksa sumber sebelum menyebarkan informasi.',
+    'kuis.saranExcellent':
+      'Informasi kesehatan sudah mudah dipahami dan dinilai. Yang bermanfaat berikutnya adalah membantu orang di sekitar yang masih kesulitan.',
+    'kuis.terbatasJudul': 'Termasuk literasi kesehatan terbatas',
+    'kuis.terbatasIsi':
+      'Skor 0–33 disebut literasi kesehatan terbatas. Aplikasi menyiapkan dua jalan pintas di bawah supaya informasi tetap terjangkau.',
+    'kuis.tindakLanjut': 'Lanjutkan dengan',
+    'kuis.keSederhanakan': 'Sederhanakan teks',
+    'kuis.keSuara': 'Dengarkan jawaban',
+    'kuis.riwayatJudul': 'Perkembangan skor',
+    'kuis.riwayatKosong': 'Skor sebelumnya akan tercatat di sini setelah kuesioner diisi lebih dari sekali.',
+    'kuis.riwayatNaik': 'naik {n} poin',
+    'kuis.riwayatTurun': 'turun {n} poin',
+    'kuis.riwayatSama': 'sama dengan sebelumnya',
+    'kuis.riwayatHapus': 'Hapus riwayat skor',
+    'kuis.riwayatDihapus': 'Riwayat skor dihapus.',
 
     // pengaturan (tambahan)
 
@@ -408,6 +437,7 @@ const KAMUS = {
     'nav.kuesioner': 'Questionnaire',
     'nav.pengaturan': 'Settings',
     'nav.kembali': 'Back to site',
+    'nav.tagline': 'Every answer must cite an official source — you can verify it yourself.',
     'nav.menu': 'Open menu',
     'nav.tutupSidebar': 'Collapse sidebar',
     'nav.bukaSidebar': 'Expand sidebar',
@@ -430,7 +460,7 @@ const KAMUS = {
     /** Dipakai untuk memilih format tanggal yang sesuai bahasa antarmuka. */
     'umum.kodeLokal': 'en-US',
 
-    'app.judul': 'Dashboard — Pahami Sehat',
+    'app.judul': 'Pahami Sehat',
 
     'beranda.sapa': 'Hello!',
     'beranda.tanya': 'How can we help?',
@@ -452,6 +482,8 @@ const KAMUS = {
     'tanya.belumAda': 'No conversation yet',
     'tanya.belumAdaSub': 'Ask your first question — the result will appear as a thread here.',
     'tanya.sedangMenyusun': 'Composing the answer…',
+    'tanya.hentikan': 'Stop',
+    'tanya.terhenti': 'Answer stopped before it finished.',
     'tanya.kamu': 'You',
     'tanya.terlaluPanjang': 'This text is over the Ask limit. Shorten it, or pick Simplify mode, which allows more.',
     'tanya.pindahCatatan': 'Once sent, you move straight to the Ask AI page.',
@@ -658,15 +690,40 @@ const KAMUS = {
       'The easier you understand health information, the better the decisions you make for your health.',
     'kuis.hasilTampil': 'Your result will appear here',
     'kuis.hasilTampilSub': 'Answer all 12 questions above, then press See result.',
-    'kuis.baik': 'Good',
-    'kuis.sedang': 'Moderate',
-    'kuis.perluDukungan': 'Needs support',
-    'kuis.saranBaik': 'You are already comfortable finding and judging health information. Keep it up, and help those around you who still struggle.',
-    'kuis.saranSedang': 'Most of it is fine; judging whether information is true still needs work. Get used to checking Kemenkes, WHO, or BPOM before believing anything.',
-    'kuis.saranPerlu': 'Turn on simplification to the children level and voice mode so information is easier to reach. Bring this result to the nearest health worker.',
     'kuis.catatan': 'This result is a learning aid, not a medical diagnosis.',
     'kuis.belumDijawab': '{n} statements are still unanswered.',
-    'kuis.terjawabDari': '{a} of {b} answered',
+
+    // --- 0–50 index score and the four official categories --------------
+    'kuis.skorJudul': 'Health literacy index',
+    'kuis.skorSkala': 'out of 50',
+    'kuis.skorPenjelasan':
+      'This number uses the HLS-SF12 standard scale (0–50). The higher it is, the easier health information is to understand.',
+    'kuis.katInadequate': 'Inadequate',
+    'kuis.katProblematic': 'Problematic',
+    'kuis.katSufficient': 'Sufficient',
+    'kuis.katExcellent': 'Excellent',
+    'kuis.saranInadequate':
+      'Health information currently feels hard to reach. It is best to start with the simplest language and have it read aloud. This result should also be taken to the nearest health worker.',
+    'kuis.saranProblematic':
+      'Some health information still feels difficult, especially judging whether it is true. It helps to check official sources before believing something.',
+    'kuis.saranSufficient':
+      'Most health information can already be understood and judged. What can be strengthened is the habit of checking the source before sharing information.',
+    'kuis.saranExcellent':
+      'Health information is already easy to understand and judge. What helps next is assisting the people around you who still struggle.',
+    'kuis.terbatasJudul': 'Counts as limited health literacy',
+    'kuis.terbatasIsi':
+      'A score of 0–33 is called limited health literacy. The application provides two shortcuts below so the information stays within reach.',
+    'kuis.tindakLanjut': 'Continue with',
+    'kuis.keSederhanakan': 'Simplify the text',
+    'kuis.keSuara': 'Listen to the answer',
+    'kuis.riwayatJudul': 'Score history',
+    'kuis.riwayatKosong': 'Previous scores will appear here once the questionnaire has been filled in more than once.',
+    'kuis.riwayatNaik': 'up {n} points',
+    'kuis.riwayatTurun': 'down {n} points',
+    'kuis.riwayatSama': 'same as before',
+    'kuis.riwayatHapus': 'Delete score history',
+    'kuis.riwayatDihapus': 'Score history deleted.',
+
 
     'notif.judul': 'Notifications',
     'notif.panel': 'Notifications',

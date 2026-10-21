@@ -536,6 +536,43 @@ export default function App() {
     [active, loading, sesiAktifId, settings.level, kodeBahasa, t, terjemahkanStatus],
   )
 
+  /**
+   * Hentikan jawaban yang sedang mengalir.
+   *
+   * KENAPA PERLU TOMBOLNYA: `AbortController`-nya sudah ada sejak awal
+   * (`batalRef`), tetapi TIDAK ADA satu pun kontrol di layar untuk
+   * memakainya. Pengguna yang terlanjur mengirim pertanyaan keliru, atau
+   * yang tidak ingin menunggu jawaban panjang, tidak punya jalan keluar
+   * selain memuat ulang halaman — dan itu menghapus utasan yang sedang
+   * berjalan.
+   *
+   * Yang dikirim ke utas adalah teks yang SUDAH terlihat, bukan dibuang
+   * seluruhnya: begitu dihentikan, apa yang sudah terbaca tetap jadi
+   * gelembung jawaban (ditandai terhenti) supaya pengguna tidak kehilangan
+   * bagian yang sudah sempat dibacanya.
+   */
+  const hentikan = useCallback(() => {
+    batalRef.current?.abort()
+    // `streamTeks` dibaca dari closure di sini. Aman karena tombol ini hanya
+    // bisa ditekan saat `loading` benar, dan nilai `streamTeks` terbaru sudah
+    // ikut dalam render itu.
+    const teks = (streamTeks ?? '').trim()
+    if (teks) {
+      setThread((prev) => [
+        ...prev,
+        {
+          id: `a${Date.now()}`,
+          role: 'ai',
+          text: teks,
+          terhenti: true,
+        },
+      ])
+    }
+    setLoading(false)
+    setStreamTeks('')
+    setStatusPesan('')
+  }, [streamTeks])
+
   const handleTopic = (id) => {
     if (!id) {
       setSelectedTopic(null)
@@ -685,6 +722,7 @@ export default function App() {
           <TopBar
           onOpenMenu={() => setDrawerOpen(true)}
           menuOpen={drawerOpen}
+          halaman={active}
           sidebarTerbuka={sidebarTerbuka}
           onToggleSidebar={() =>
             setSidebarTerbuka((v) => {
@@ -790,7 +828,6 @@ export default function App() {
                 sumberCari={sumberCari}
                 serverOnline={server.online}
                 serverMemuat={server.memuat}
-                bahasa={kodeBahasa}
                 mode={mode}
                 onModeChange={setMode}
                 tingkat={settings.level}
@@ -808,6 +845,7 @@ export default function App() {
                 onHapusSesi={() => hapusSesi([sesiAktifId])}
                 suaraBahasa={settings.suaraBahasa}
                 suaraJenis={settings.suaraJenis}
+                onHentikan={hentikan}
               />
             ) : null}
 
@@ -884,7 +922,22 @@ export default function App() {
                   </div>
                 }
               >
-                <QuizPanel t={t} />
+                <QuizPanel
+                  t={t}
+                  /* Dua jalan pintas dari hasil kuesioner. Sebelumnya saran di
+                     kartu hasil hanya MENYURUH pengguna menyalakan
+                     penyederhanaan dan suara tanpa satu pun tombol yang
+                     melakukannya — janji tanpa jalan. Sekarang keduanya
+                     benar-benar memindahkan pengguna ke tempat yang tepat. */
+                  onKeSederhanakan={() => {
+                    setMode('sederhanakan')
+                    navigate('tanya')
+                  }}
+                  onKeSuara={() => {
+                    setMode('tanya')
+                    navigate('tanya')
+                  }}
+                />
               </Suspense>
             ) : null}
             {active === 'pengaturan' ? (

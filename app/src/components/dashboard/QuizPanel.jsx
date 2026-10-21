@@ -11,9 +11,16 @@ import {
   Clock,
   Info,
   Lightbulb,
+  Wand2,
+  Volume2,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Trash2,
 } from 'lucide-react'
 import { Card, SectionHeading, Button, EmptyState } from '../ui/primitives'
 import { QUIZ_ITEMS } from '../../data/dummy'
+import { hitungIndeks, terbatas } from '../../lib/skorHls'
 import { cn } from '../../lib/cn'
 
 /**
@@ -27,6 +34,20 @@ import { cn } from '../../lib/cn'
  * "tidak ada jawaban yang dikirim ke mana pun".
  */
 const KUNCI_JAWABAN = 'pahami-sehat:kuesioner'
+
+/**
+ * Kunci penyimpanan riwayat skor.
+ *
+ * KENAPA DIPISAH dari jawaban: jawaban hanya menyimpan pengisian yang sedang
+ * berjalan (dan dikosongkan oleh "Ulangi"), sedangkan riwayat skor adalah
+ * catatan hasil yang sudah selesai. Kalau keduanya satu kunci, "Ulangi" akan
+ * menghapus riwayat — padahal justru riwayat itu yang membuat pengguna bisa
+ * melihat apakah kemampuannya membaik.
+ */
+const KUNCI_RIWAYAT = 'pahami-sehat:kuesioner-skor'
+
+/** Batas riwayat — angka kecil supaya tidak tumbuh tanpa batas di peramban. */
+const MAKS_RIWAYAT = 10
 
 /** Baca jawaban tersimpan. Nilai yang tidak sah dibuang, bukan dipercaya. */
 function bacaJawaban() {
@@ -52,6 +73,40 @@ function simpanJawaban(jawaban) {
     localStorage.setItem(KUNCI_JAWABAN, JSON.stringify(jawaban))
   } catch {
     /* penyimpanan diblokir — jawaban tetap jalan untuk sesi ini */
+  }
+}
+
+/**
+ * Baca riwayat skor.
+ *
+ * Nilai yang tidak masuk akal DIBUANG, bukan dipercaya: isi localStorage bisa
+ * disunting tangan, dan indeks di luar 0–50 akan membuat grafik serta
+ * perbandingannya bohong.
+ */
+function bacaRiwayat() {
+  try {
+    const isi = JSON.parse(localStorage.getItem(KUNCI_RIWAYAT) || '[]')
+    if (!Array.isArray(isi)) return []
+    return isi
+      .filter(
+        (e) =>
+          e &&
+          Number.isFinite(Number(e.indeks)) &&
+          Number(e.indeks) >= 0 &&
+          Number(e.indeks) <= 50 &&
+          typeof e.waktu === 'string',
+      )
+      .slice(0, MAKS_RIWAYAT)
+  } catch {
+    return []
+  }
+}
+
+function simpanRiwayat(daftar) {
+  try {
+    localStorage.setItem(KUNCI_RIWAYAT, JSON.stringify(daftar.slice(0, MAKS_RIWAYAT)))
+  } catch {
+    /* penyimpanan diblokir — riwayat tidak tersimpan, hasil tetap tampil */
   }
 }
 
@@ -97,10 +152,28 @@ const WARNA = {
   brand: 'bg-brand-100 text-brand-700',
 }
 
-export default function QuizPanel({ t = (k) => k }) {
+/**
+ * Kunci kamus untuk tiap kategori, ditulis EKSPLISIT.
+ *
+ * Sebelumnya di sini dipakai nama kunci yang dirangkai (`kuis.kat${...}`).
+ * Cara itu membuat `uji-bahasa.mjs` melaporkan seluruh kunci kategori sebagai
+ * "menganggur" — detektornya mencocokkan nama kunci secara harfiah, dan nama
+ * yang dirangkai tidak pernah muncul utuh di berkas mana pun. Peta eksplisit
+ * ini membuat pemakaiannya terlihat oleh uji sekaligus oleh orang yang membaca.
+ */
+const KUNCI_KATEGORI = {
+  inadequate: { label: 'kuis.katInadequate', saran: 'kuis.saranInadequate' },
+  problematic: { label: 'kuis.katProblematic', saran: 'kuis.saranProblematic' },
+  sufficient: { label: 'kuis.katSufficient', saran: 'kuis.saranSufficient' },
+  excellent: { label: 'kuis.katExcellent', saran: 'kuis.saranExcellent' },
+}
+
+export default function QuizPanel({ t = (k) => k, onKeSederhanakan, onKeSuara }) {
   const [answers, setAnswers] = useState(bacaJawaban)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
+  const [riwayat, setRiwayat] = useState(bacaRiwayat)
+  const [pesan, setPesan] = useState('')
   const /** Langkah yang sedang tampil, 0-based. */ [langkah, setLangkah] = useState(0)
 
   const TOTAL = QUIZ_ITEMS.length
@@ -146,26 +219,29 @@ export default function QuizPanel({ t = (k) => k }) {
   }
 
   const hitung = () => {
-    // Skala jawaban 0–3 (4 pilihan), jadi skor maksimum = jumlah item x 3.
-    // Sebelumnya dibagi (jumlah item - 1) x 4, sehingga 100% tidak pernah tercapai.
-    const total = QUIZ_ITEMS.reduce((sum, _, i) => sum + Number(answers[i]), 0)
-    const maks = TOTAL * 3
-    const pct = Math.round((total / maks) * 100)
+    // Skor memakai RUMUS RESMI HLS-SF12, bukan persentase buatan sendiri:
+    // index = (mean − 1) × (50/3), hasilnya 0–50 dengan empat kategori
+    // (inadequate / problematic / sufficient / excellent).
+    //
+    // Jawaban disimpan sebagai 0..3 (bentuk penyimpanan yang sudah ada di
+    // peramban pengguna), sedangkan instrumen aslinya 1..4 — konversinya
+    // dilakukan di `lib/skorHls.js`, dan di situ juga ada uji yang menjaga
+    // agar keduanya menghasilkan angka yang sama.
+    const s = hitungIndeks(answers, TOTAL, 'nol')
 
-    let kategori
-    let saran
-    if (pct >= 70) {
-      kategori = t('kuis.baik')
-      saran = t('kuis.saranBaik')
-    } else if (pct >= 45) {
-      kategori = t('kuis.sedang')
-      saran = t('kuis.saranSedang')
-    } else {
-      kategori = t('kuis.perluDukungan')
-      saran = t('kuis.saranPerlu')
+    // Simpan ke riwayat. Disimpan SEBELUM tampilan diperbarui supaya angka
+    // pembanding di bawah dihitung terhadap pengisian sebelumnya, bukan
+    // terhadap dirinya sendiri.
+    const sebelumnya = riwayat[0] ?? null
+    const catatan = {
+      indeks: s.indeks,
+      waktu: new Date().toISOString(),
     }
+    const baru = [catatan, ...riwayat].slice(0, MAKS_RIWAYAT)
+    setRiwayat(baru)
+    simpanRiwayat(baru)
 
-    setResult({ pct, kategori, saran })
+    setResult({ ...s, sebelumnya: sebelumnya?.indeks ?? null })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -176,8 +252,24 @@ export default function QuizPanel({ t = (k) => k }) {
     simpanJawaban({})
     setResult(null)
     setError('')
+    setPesan('')
     setLangkah(0)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  /**
+   * Hapus riwayat skor.
+   *
+   * Sengaja terpisah dari "Ulangi": mengulang kuesioner bukan alasan untuk
+   * membuang catatan hasil sebelumnya. Pengguna yang ingin membuang riwayat
+   * memilihnya sendiri, dan itu janji "kendali di tangan pengguna" yang
+   * disebut di README.
+   */
+  const hapusRiwayat = () => {
+    setRiwayat([])
+    simpanRiwayat([])
+    setResult((r) => (r ? { ...r, sebelumnya: null } : r))
+    setPesan(t('kuis.riwayatDihapus'))
   }
 
   const opsi = OPSI(t)
@@ -231,7 +323,13 @@ export default function QuizPanel({ t = (k) => k }) {
           </div>
         </div>
 
-        {/* --- kartu pertanyaan ------------------------------------------- */}
+        {/* --- kartu pertanyaan -------------------------------------------
+            Disembunyikan saat hasil sudah tampil. Alasannya dua: soal terakhir
+            yang sudah dijawab tidak perlu tetap memakan 371px layar di bawah
+            hasil, dan tanpa ini halaman kuesioner melanggar aturan "muat satu
+            layar" — terukur 1280x577: 645px sebelum diisi, 1043px sesudah
+            hasil muncul. "Ulangi" mengembalikan formulirnya. */}
+        {!result ? (
         <form onSubmit={maju} noValidate>
           {/* Di layar pendek kartu dipadatkan supaya satu soal + navigasinya
               muat satu layar tanpa scroll. */}
@@ -337,12 +435,16 @@ export default function QuizPanel({ t = (k) => k }) {
             </Button>
           </div>
         </form>
+        ) : null}
 
         {result ? (
           <Card
             className="rise flex flex-col items-center gap-5 p-[clamp(1.1rem,0.9rem+0.8vw,1.75rem)] sm:flex-row"
             aria-live="polite"
           >
+            {/* Cincin menunjukkan indeks pada skala 0–50, BUKAN persentase.
+                Skala ini yang dipakai instrumen resminya, jadi angka di sini
+                bisa langsung dibandingkan dengan rujukan. */}
             <svg viewBox="0 0 120 120" className="size-[130px] shrink-0 -rotate-90" aria-hidden="true">
               <circle cx="60" cy="60" r={R} fill="none" stroke="#e8eef5" strokeWidth="12" />
               <circle
@@ -354,27 +456,102 @@ export default function QuizPanel({ t = (k) => k }) {
                 strokeWidth="12"
                 strokeLinecap="round"
                 strokeDasharray={CIRC}
-                strokeDashoffset={CIRC - (CIRC * result.pct) / 100}
+                strokeDashoffset={CIRC - (CIRC * result.indeks) / 50}
                 style={{ transition: 'stroke-dashoffset .7s cubic-bezier(.22,.61,.36,1)' }}
               />
             </svg>
             <div className="min-w-0 flex-1 text-center sm:text-left">
+              <p className="text-[0.8rem] font-bold tracking-[0.1em] text-muted-500 uppercase">
+                {t('kuis.skorJudul')}
+              </p>
               <p className="text-[2rem] leading-none font-extrabold text-navy-900">
-                {result.pct}
-                <span className="text-[1.1rem] font-bold text-navy-500">%</span>
+                {result.indeks}
+                <span className="text-[1.1rem] font-bold text-navy-500"> / 50</span>
+              </p>
+              {/* Di layar pendek penjelasan skala disembunyikan: label "dari 50"
+                  di atas sudah menyebut skalanya, dan tanpa ini hasil kuesioner
+                  di HP melewati satu layar sepanjang 288px. */}
+              <p className="mt-0.5 hidden text-[0.8rem] text-muted-500 [@media(min-height:1200px)]:block">
+                {t('kuis.skorSkala')}
               </p>
               <p className="mt-1 text-[clamp(1rem,0.96rem+0.25vw,1.18rem)] font-bold text-brand-700">
-                {t('kuis.hasil')}: {result.kategori}
+                {t('kuis.hasil')}: {t(KUNCI_KATEGORI[result.kategori].label)}
               </p>
-              <p className="mt-2 max-w-[60ch] text-[0.92rem] leading-relaxed text-navy-700">
-                {result.saran}
+              <p className="mt-1 hidden max-w-[62ch] text-[0.84rem] leading-relaxed text-navy-600 [@media(min-height:1200px)]:block">
+                {t('kuis.skorPenjelasan')}
               </p>
-              <p className="mt-3 text-[0.82rem] text-muted-500">{t('kuis.catatan')}</p>
-              <div className="mt-4">
+              <p className="mt-2 max-w-[62ch] text-[0.92rem] leading-relaxed text-navy-700">
+                {t(KUNCI_KATEGORI[result.kategori].saran)}
+              </p>
+
+              {/* Perbandingan dengan pengisian sebelumnya. Ditampilkan hanya
+                  kalau memang ada pembandingnya — membandingkan dengan diri
+                  sendiri tidak berarti apa-apa. */}
+              {result.sebelumnya !== null ? (
+                <p className="mt-2 inline-flex items-center gap-1.5 text-[0.84rem] font-semibold text-navy-600">
+                  {result.indeks > result.sebelumnya ? (
+                    <TrendingUp className="size-4 text-emerald-600" aria-hidden="true" />
+                  ) : result.indeks < result.sebelumnya ? (
+                    <TrendingDown className="size-4 text-amber-600" aria-hidden="true" />
+                  ) : (
+                    <Minus className="size-4 text-navy-400" aria-hidden="true" />
+                  )}
+                  {result.indeks > result.sebelumnya
+                    ? t('kuis.riwayatNaik', { n: Math.round((result.indeks - result.sebelumnya) * 10) / 10 })
+                    : result.indeks < result.sebelumnya
+                      ? t('kuis.riwayatTurun', { n: Math.round((result.sebelumnya - result.indeks) * 10) / 10 })
+                      : t('kuis.riwayatSama')}
+                </p>
+              ) : null}
+
+              {/* Tindak lanjut. Sebelumnya saran di kartu ini hanya MENYURUH
+                  pengguna menyalakan penyederhanaan dan suara, tanpa satu pun
+                  tombol yang melakukannya. Sekarang benar-benar bisa diklik. */}
+              {terbatas(result.indeks) && (onKeSederhanakan || onKeSuara) ? (
+                <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50 p-3 text-left">
+                  <p className="text-[0.86rem] font-bold text-navy-900">{t('kuis.terbatasJudul')}</p>
+                  <p className="mt-1 text-[0.84rem] leading-relaxed text-navy-700">
+                    {t('kuis.terbatasIsi')}
+                  </p>
+                  <p className="mt-2.5 text-[0.78rem] font-bold tracking-[0.08em] text-muted-500 uppercase">
+                    {t('kuis.tindakLanjut')}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap gap-2">
+                    {onKeSederhanakan ? (
+                      <Button variant="primary" size="md" onClick={onKeSederhanakan}>
+                        <Wand2 className="size-4" aria-hidden="true" />
+                        {t('kuis.keSederhanakan')}
+                      </Button>
+                    ) : null}
+                    {onKeSuara ? (
+                      <Button variant="neutral" size="md" onClick={onKeSuara}>
+                        <Volume2 className="size-4" aria-hidden="true" />
+                        {t('kuis.keSuara')}
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              <p className="mt-3 hidden text-[0.82rem] text-muted-500 [@media(min-height:1200px)]:block">
+                {t('kuis.catatan')}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 <Button variant="neutral" size="md" onClick={ulangi}>
                   {t('kuis.ulangi')}
                 </Button>
+                {riwayat.length > 0 ? (
+                  <Button variant="neutral" size="md" onClick={hapusRiwayat}>
+                    <Trash2 className="size-4" aria-hidden="true" />
+                    {t('kuis.riwayatHapus')}
+                  </Button>
+                ) : null}
               </div>
+              {pesan ? (
+                <p role="status" className="mt-2 text-[0.82rem] font-semibold text-emerald-700">
+                  {pesan}
+                </p>
+              ) : null}
             </div>
           </Card>
         ) : null}
@@ -436,6 +613,37 @@ export default function QuizPanel({ t = (k) => k }) {
             {t('kuis.terjawabDari', { a: terjawab, b: TOTAL })}
           </p>
         </Card>
+
+        {/* Perkembangan skor. Ditampilkan hanya kalau ada minimal satu
+            pengisian selesai — kartu kosong hanya menambah tinggi.
+            Skalanya 0–50 (indeks HLS-SF12), bukan persentase. */}
+        {riwayat.length > 0 ? (
+          <Card className="hidden p-4 [@media(min-height:1200px)]:block lg:block">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="size-4 shrink-0 text-brand-700" aria-hidden="true" />
+              <h2 className="text-[0.92rem] font-bold text-navy-900">{t('kuis.riwayatJudul')}</h2>
+            </div>
+            <ul className="mt-2.5 space-y-1.5">
+              {riwayat.slice(0, 5).map((e, i) => (
+                <li
+                  key={`${e.waktu}-${i}`}
+                  className="flex items-baseline justify-between gap-2 text-[0.8rem] text-navy-600"
+                >
+                  <span className="tabular-nums">
+                    {new Date(e.waktu).toLocaleDateString(t('umum.kodeLokal'), {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </span>
+                  <span className="font-bold tabular-nums text-navy-900">{e.indeks} / 50</span>
+                </li>
+              ))}
+            </ul>
+            {riwayat.length === 1 ? (
+              <p className="mt-2 text-[0.78rem] leading-snug text-muted-500">{t('kuis.riwayatKosong')}</p>
+            ) : null}
+          </Card>
+        ) : null}
 
         <Card className="hidden p-4 [@media(min-height:1200px)]:block">
           <div className="flex items-center gap-2">
