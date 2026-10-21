@@ -54,7 +54,17 @@ function bacaKurangiGerak() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-/** Dampingkan preferensi pengguna atas gerak, termasuk saat berubah di tengah jalan. */
+/**
+ * Dampingkan preferensi pengguna atas gerak, termasuk saat berubah di tengah jalan.
+ *
+ * Berkas ini mengekspor satu komponen DAN satu hook kecil. Peringatan
+ * `react-refresh/only-export-components` memang benar secara aturan, tetapi
+ * memisahkannya ke berkas sendiri hanya akan membuat `bacaKurangiGerak()` —
+ * yang tidak dipakai di tempat lain — berpindah tanpa manfaat. Yang penting
+ * adalah keduanya berada di modul yang sama karena hook ini lahir dari
+ * kebutuhan komponen ilustrasi di atasnya.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useKurangiGerak() {
   const [kurang, setKurang] = useState(bacaKurangiGerak)
 

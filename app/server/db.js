@@ -54,8 +54,9 @@ const KONFIG = {
 const DIMATIKAN = process.env.DB_MATI === '1'
 
 let pool = null
-let siap = null
 let terakhirGagal = 0
+/** Janji penyambungan yang sedang berjalan — lihat penjelasan di `db()`. */
+let menyambung = null
 
 /** Jangan mencoba menyambung ulang lebih sering dari ini (milidetik). */
 const JEDA_COBA_MS = 30_000
@@ -74,22 +75,41 @@ export async function db() {
   // setiap permintaan pengguna akan menunggu timeout koneksi
   if (terakhirGagal && Date.now() - terakhirGagal < JEDA_COBA_MS) return null
 
-  try {
-    const mysql = require('mysql2/promise')
-    const p = mysql.createPool(KONFIG)
-    // uji benar-benar bisa dipakai, bukan cuma objeknya terbentuk
-    const c = await p.getConnection()
-    await c.ping()
-    c.release()
-    pool = p
-    siap = true
-    return pool
-  } catch {
-    terakhirGagal = Date.now()
-    pool = null
-    siap = false
-    return null
-  }
+  /*
+   * KUNCI PENYAMBUNGAN — ini bukan kerapian, ini mencegah kebocoran pool.
+   *
+   * Tanpa ini, dua permintaan yang datang bersamaan sama-sama melihat
+   * `pool === null`, sama-sama membuat pool, dan yang kalah menimpa variabel
+   * `pool` tanpa pernah menutup pool-nya sendiri. Setiap kejadian seperti itu
+   * meninggalkan satu pool berisi koneksi terbuka yang tidak pernah dipakai
+   * dan tidak pernah ditutup — di MariaDB itu terlihat sebagai koneksi
+   * menggantung sampai batas `max_connections` habis.
+   *
+   * `menyambung` menyimpan JANJI, bukan hasil: pemanggil kedua menunggu janji
+   * yang sama, jadi `createPool` hanya berjalan sekali.
+   */
+  if (menyambung) return menyambung
+
+  menyambung = (async () => {
+    try {
+      const mysql = require('mysql2/promise')
+      const p = mysql.createPool(KONFIG)
+      // uji benar-benar bisa dipakai, bukan cuma objeknya terbentuk
+      const c = await p.getConnection()
+      await c.ping()
+      c.release()
+      pool = p
+      return pool
+    } catch {
+      terakhirGagal = Date.now()
+      pool = null
+      return null
+    } finally {
+      menyambung = null
+    }
+  })()
+
+  return menyambung
 }
 
 /** Apakah database tersedia sekarang? Aman dipanggil kapan saja. */
@@ -487,6 +507,5 @@ export async function tutupDb() {
       /* sudah tertutup */
     }
     pool = null
-    siap = null
   }
 }

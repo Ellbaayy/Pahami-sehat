@@ -552,7 +552,14 @@ async function sambung(e) {
     } catch (err) {
       terakhir = err
       if (ke === COBA_ULANG || !layakDiulang(err)) throw err
-      await new Promise((r) => setTimeout(r, JEDA_ULANG_MS * ke))
+      // Badan panah ditulis dengan kurung kurawal, BUKAN ekspresi.
+      // `(r) => setTimeout(...)` mengembalikan nilai `setTimeout` dari fungsi
+      // executor Promise — nilai itu tidak pernah bisa dibaca siapa pun, dan
+      // ESLint menandainya `no-promise-executor-return`. Bentuk kurawal membuat
+      // maksudnya jelas: tunggu, lalu selesai tanpa nilai.
+      await new Promise((r) => {
+        setTimeout(r, JEDA_ULANG_MS * ke)
+      })
     }
   }
   throw terakhir
@@ -578,7 +585,9 @@ async function buatBagianTahan(e, kalimat, opsi) {
     } catch (err) {
       terakhir = err
       if (ke === COBA_ULANG || !layakDiulang(err)) throw err
-      await new Promise((r) => setTimeout(r, JEDA_ULANG_MS * ke))
+      await new Promise((r) => {
+        setTimeout(r, JEDA_ULANG_MS * ke)
+      })
       await sambung(e).catch(() => {
         /* dibiarkan — percobaan berikutnya akan melaporkan galatnya sendiri */
       })

@@ -29,9 +29,16 @@ export default class BatasGalat extends Component {
   }
 
   componentDidCatch(galat, info) {
-    // dicatat ke konsol peramban supaya bisa diperiksa saat mengembangkan.
+    // Dicatat ke konsol peramban supaya bisa diperiksa saat mengembangkan.
     // Sengaja tidak dikirim ke server: aplikasi ini menjanjikan tidak
     // mengirim data pengguna, dan jejak galat bisa memuat isi pertanyaan.
+    //
+    // Ini SATU-SATUNYA `console` yang diizinkan di kode peramban, dan
+    // alasannya: galat render yang tidak tercatat sama sekali akan hilang tanpa
+    // jejak — pengguna hanya melihat layar kosong. Aturan `no-console` tetap
+    // hidup di seluruh berkas lain, jadi `console.log` yang tertinggal saat
+    // mengembangkan tetap tertangkap.
+    // eslint-disable-next-line no-console
     console.error('[Pahami Sehat] galat render:', galat, info?.componentStack)
   }
 

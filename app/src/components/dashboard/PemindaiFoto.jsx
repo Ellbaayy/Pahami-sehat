@@ -46,7 +46,6 @@ export default function PemindaiFoto({
   onTutup,
   teksKomposer = '',
   serverOnline = true,
-  bahasa = 'id',
 }) {
   const [berkas, setBerkas] = useState(null)
   const [pratinjau, setPratinjau] = useState('')

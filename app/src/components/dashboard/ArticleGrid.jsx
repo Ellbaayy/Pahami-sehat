@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Syringe, Utensils, ArrowRight, Clock, ChevronDown, ChevronUp } from 'lucide-react'
+import { FileText, Syringe, Utensils, ArrowRight, Clock, ChevronUp } from 'lucide-react'
 import { Card, SectionHeading, Button } from '../ui/primitives'
 import { cn } from '../../lib/cn'
 

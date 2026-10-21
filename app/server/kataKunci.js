@@ -1110,7 +1110,7 @@ export const PETA_MEDLINEPLUS_BIDANG = {
   'kesehatan kerja': 'occupational health', k3: 'occupational health',
   // kata tunggal & frasa pendek
   berdenging: 'tinnitus', 'hidung mampet': 'nasal disorders',
-  'mata minus': 'eye diseases', 'air minum': 'drinking water',
+  'air minum': 'drinking water',
   lansia: 'older adult health', cedera: 'wounds and injuries',
   'sarang nyamuk': 'mosquito bites', 'mencuci tangan': 'handwashing',
   'kematian ibu': 'maternal health', 'kematian maternal': 'maternal health',

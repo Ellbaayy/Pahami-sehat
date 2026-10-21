@@ -207,7 +207,7 @@ async function daftarArtikel() {
   const html = await ambil(SUMBER)
   const kartu = [
     ...html.matchAll(
-      /<a[^>]+href="(https:\/\/ayosehat\.kemkes\.go\.id\/[a-z0-9\-]+)"[^>]*>([\s\S]{0,600}?)<\/a>/gi,
+      /<a[^>]+href="(https:\/\/ayosehat\.kemkes\.go\.id\/[a-z0-9-]+)"[^>]*>([\s\S]{0,600}?)<\/a>/gi,
     ),
   ]
 
@@ -488,6 +488,23 @@ export async function kontenHarian({ paksa = false } = {}) {
   // kalau ada pengambilan lain sedang jalan, ikut menunggu hasil yang sama
   if (sedangMengambil) return sedangMengambil
 
+  /*
+   * CATATAN soal `require-atomic-updates` di bawah.
+   *
+   * ESLint memperingatkan bahwa `diMemori` dan `bisaTulisBerkas` ditulis
+   * setelah `await`, sehingga "nilai lama bisa sudah basi". Peringatan itu
+   * tidak berlaku di sini, dan alasannya bisa diperiksa:
+   *
+   *   - Seluruh badan IIFE ini hanya berjalan SATU KALI pada satu waktu.
+   *     Penjaga `sedangMengambil` di atas mengembalikan janji yang sama untuk
+   *     pemanggil berikutnya, jadi tidak ada dua jalur yang menulis bersamaan.
+   *   - `simpanKeDisk` hanya menulis penanda boolean "boleh/tidak menulis
+   *     berkas", dan nilainya idempoten: menulis `true` dua kali sama saja.
+   *
+   * Kalau suatu saat penjaga `sedangMengambil` DIHAPUS, peringatan ini berubah
+   * menjadi bug nyata (rotasi `geser` bisa hilang dan sumber dipanggil
+   * berulang). Saat itu jangan matikan aturannya — pasang kunci yang benar.
+   */
   sedangMengambil = (async () => {
     try {
       // 2) Cari Informasi

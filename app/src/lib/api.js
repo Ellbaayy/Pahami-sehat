@@ -133,7 +133,9 @@ export async function tanyaStream({ pertanyaan, tingkat, bahasa }, { onStatus, o
       }
       if (!event) continue
 
-      let isi = null
+      // Tanpa nilai awal: `null` awal tidak pernah terbaca karena `catch`
+      // langsung `continue`, dan ESLint menandainya `no-useless-assignment`.
+      let isi
       try {
         isi = data ? JSON.parse(data) : null
       } catch {

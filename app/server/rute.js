@@ -24,10 +24,11 @@ import {
   TINGKAT_DEFAULT,
   deteksiSantai,
   promptBerita,
-  promptTanya,
+  // `promptTanya`/`promptSederhanakan`/`promptVerifikasi` (tanpa sumber) TIDAK
+  // diimpor: seluruh jalur jawaban di rute ini memakai versi `...DenganCari`,
+  // karena jawaban tanpa sumber tidak boleh dikirim ke pengguna. Versi tanpa
+  // sumber tetap diekspor prompts.js untuk dipakai uji prompt langsung.
   promptSantai,
-  promptSederhanakan,
-  promptVerifikasi,
   promptTanyaDenganCari,
   promptSederhanakanDenganCari,
   promptVerifikasiDenganCari,
@@ -345,6 +346,8 @@ function tolakKalauPanjang(res, nilai, maks, nama) {
  * sementara hujan permintaan tidak lagi membebani akun.
  */
 let simpananHealth = null
+/** Janji pengukuran kesehatan yang sedang berjalan — lihat rute /api/health. */
+let sedangUkur = null
 
 /**
  * Isi database — untuk membuktikan sambungannya benar-benar bekerja.
@@ -416,9 +419,37 @@ rute.get('/api/health', batasHealth, bungkus(async (_req, res) => {
     res.set('X-Health-Cache', 'hit')
     return res.json(simpananHealth.isi)
   }
-  const sehat = await cekSehat()
-  const isi = { server: 'ok', kenari: sehat, db: await keteranganDb(), ...safeInfo() }
-  simpananHealth = { waktu: sekarang, isi }
+
+  /*
+   * KUNCI PENGUKURAN — bukan sekadar memenuhi aturan lint.
+   *
+   * Tanpa ini, N permintaan yang datang bersamaan semuanya lolos pemeriksaan
+   * simpanan di atas, lalu semuanya memanggil `cekSehat()` dan `keteranganDb()`.
+   * Artinya: N kali permintaan jaringan ke layanan model, N kali percobaan
+   * sambung database, untuk satu informasi yang sama. Pada pemantauan yang
+   * menembak tiap detik, itu justru membebani yang sedang diukur.
+   *
+   * `sedangUkur` menyimpan JANJI: pemanggil kedua menunggu hasil yang sama,
+   * bukan memulai pengukuran baru.
+   */
+  if (sedangUkur) {
+    const isi = await sedangUkur
+    res.set('X-Health-Cache', 'tunggu')
+    return res.json(isi)
+  }
+
+  sedangUkur = (async () => {
+    try {
+      const sehat = await cekSehat()
+      const isi = { server: 'ok', kenari: sehat, db: await keteranganDb(), ...safeInfo() }
+      simpananHealth = { waktu: Date.now(), isi }
+      return isi
+    } finally {
+      sedangUkur = null
+    }
+  })()
+
+  const isi = await sedangUkur
   res.set('X-Health-Cache', 'miss')
   res.json(isi)
 }))
