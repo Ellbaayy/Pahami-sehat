@@ -21,3 +21,13 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Dump database — berisi hash kata sandi, nomor telepon, dan token sesi
+# dari uji coba akun. JANGAN pernah masuk repo. Kalau perlu dibagikan,
+# buang dulu tabel pengguna_baru / sesi / riwayat_pengguna.
+*.sql
+!docs/skema-database.sql
+
+# Berkas kerja sementara di akar repo (bukan bagian produk)
+/reference.png
+
