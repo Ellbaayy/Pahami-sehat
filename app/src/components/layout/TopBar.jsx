@@ -38,6 +38,7 @@ export default function TopBar({
   sidebarTerbuka = true,
   onToggleSidebar,
   notifikasi = [],
+  halaman = 'beranda',
   belumDibaca = false,
   onBaca,
   onBuka,
@@ -78,16 +79,27 @@ export default function TopBar({
   }
 
   /**
-   * Judul dokumen ikut bahasa antarmuka.
+   * Judul dokumen ikut bahasa antarmuka DAN halaman yang sedang dibuka.
    *
    * Dulu judulnya ditulis tetap di index.html ("Dashboard — Pahami Sehat"),
    * sehingga tab peramban tetap berbahasa Indonesia walau antarmukanya
    * Inggris. `index.html` tidak punya akses ke kamus, jadi yang menyesuaikan
    * adalah di sini — satu tempat, sama seperti atribut `lang` pada <html>.
+   *
+   * Halaman ikut disebut sejak 21 Okt 2026. Alasannya bukan kerapian: orang
+   * yang membuka Riwayat, Kuesioner, dan Tanya AI di beberapa tab sekaligus
+   * hanya melihat judul yang sama persis di semuanya, jadi tidak bisa
+   * membedakan tab tanpa membukanya satu per satu. Bentuknya
+   * "Tanya AI — Pahami Sehat".
    */
   useEffect(() => {
-    document.title = t('app.judul')
-  }, [t])
+    const nama = t(`nav.${halaman}`)
+    // `nav.<id>` selalu ada untuk keenam halaman (lihat nav.js). Kalau suatu
+    // saat id baru dipakai tanpa kunci kamus, `t()` mengembalikan nama
+    // kuncinya apa adanya — dan judul "nav.sesuatu — Pahami Sehat" akan
+    // langsung terlihat sebagai cacat, bukan diam-diam salah.
+    document.title = nama && nama !== `nav.${halaman}` ? `${nama} — ${t('app.judul')}` : t('app.judul')
+  }, [t, halaman])
 
   const labelSidebar = sidebarTerbuka ? t('nav.tutupSidebar') : t('nav.bukaSidebar')
 

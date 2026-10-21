@@ -106,7 +106,7 @@ export default function Sidebar({ active, onSelect, terbuka = true, t = (k) => k
               <Activity className="size-4" aria-hidden="true" />
             </span>
             <p className="text-[0.8rem] leading-snug font-medium text-navy-700">
-              Setiap jawaban wajib bersumber resmi — kamu boleh cek sendiri.
+              {t('nav.tagline')}
             </p>
           </div>
         ) : null}
