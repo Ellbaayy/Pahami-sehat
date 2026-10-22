@@ -35,6 +35,7 @@ import {
   pertanyaanLanjutan,
 } from './prompts.js'
 import { ambilBeritaKesehatan, menanyakanBerita, ringkasanBerita, jawabanBeritaDarurat } from './berita.js'
+import { saringKlaimTanpaSumber, teksSumber } from './klaim.js'
 import { cariInternet } from './cari.js'
 import { kataKunciPencarian, istilahKesehatan, PETA_MEDLINEPLUS, PETA_MEDLINEPLUS_BIDANG } from './kataKunci.js'
 import { batasi } from './batas.js'
@@ -141,6 +142,46 @@ function rapikanSesi(v) {
   const s = String(v ?? '').trim()
   if (!s || s.length > 64) return ''
   return /^[A-Za-z0-9_:.-]+$/.test(s) ? s : ''
+}
+
+/**
+ * Terapkan penyaring klaim ke sebuah hasil jawaban.
+ *
+ * ============================================================================
+ * KENAPA DI SINI, BUKAN DI PROMPT
+ * ============================================================================
+ * Diukur 22 Okt 2026: model menulis "banyak orang dengan satu ginjal tetap
+ * hidup normal" padahal tidak satu pun sumber memuatnya, lalu menyebutnya di
+ * `catatan` seolah sudah jujur. Aturan prompt sudah dipertegas dan putaran
+ * berikutnya melanggar lagi — jadi pengamannya dipindah ke kode, tempat ia
+ * tidak bisa "lupa".
+ *
+ * Yang dibuang HANYA klaim prognosis yang tidak punya dasar (lihat klaim.js).
+ * Kalau ada yang dibuang, `catatan` ikut menyebutkannya — pengguna berhak tahu
+ * bahwa sebagian jawaban dibuang, bukan menerima jawaban yang tampak utuh.
+ *
+ * Tidak pernah melempar: penyaring yang gagal tidak boleh menghilangkan
+ * jawaban yang sudah benar.
+ *
+ * @param {object} out - hasil bentukHasil()
+ * @param {Array<object>} hasilCari
+ * @returns {object} hasil yang sama, mungkin dengan jawaban yang disaring
+ */
+function saringHasil(out, hasilCari) {
+  if (!out?.ok || !out.jawaban) return out
+  try {
+    const r = saringKlaimTanpaSumber(out.jawaban, teksSumber(hasilCari))
+    if (!r.dibuang.length) return out
+    const catatanTambahan =
+      'Sebagian jawaban dihapus karena menyatakan prognosis yang tidak ada di sumber.'
+    return {
+      ...out,
+      jawaban: r.jawaban,
+      catatan: out.catatan ? `${out.catatan} ${catatanTambahan}` : catatanTambahan,
+    }
+  } catch {
+    return out
+  }
 }
 
 /**
@@ -774,7 +815,7 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
     maxTokens: MAKS_TOKEN.tanya,
   })
 
-  const out = bentukHasil(json, tingkat)
+  const out = saringHasil(bentukHasil(json, tingkat), hasilCari)
   res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage })
 
   // Simpan giliran percakapan supaya pertanyaan berikutnya punya konteks.
@@ -1041,7 +1082,7 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
       },
     })
 
-    let final = bentukHasil(ambilJson(hasil.text), tingkat)
+    let final = saringHasil(bentukHasil(ambilJson(hasil.text), tingkat), hasilCari)
     let usageFinal = hasil.usage
 
     // Sama seperti jalur berita: balasan terpotong / bukan JSON tidak boleh
@@ -1056,7 +1097,7 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
         maxTokens: MAKS_TOKEN.tanya,
       })
       usageFinal = ulang.usage ?? usageFinal
-      if (ulang.json) final = bentukHasil(ulang.json, tingkat)
+      if (ulang.json) final = saringHasil(bentukHasil(ulang.json, tingkat), hasilCari)
     }
 
     kirim('hasil', { ...final, hasilCari: ringkasHasilCari(hasilCari), usage: usageFinal })

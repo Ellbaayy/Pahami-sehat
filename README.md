@@ -466,6 +466,58 @@ Dijaga `uji-konteks.mjs` (**49 pemeriksaan**, tanpa jaringan/database/kunci).
 
 ---
 
+## Penyaring klaim prognosis (22 Okt 2026)
+
+Diukur 22 Okt 2026: model menulis **"banyak orang dengan satu ginjal tetap hidup
+normal"** padahal tidak satu pun sumber memuatnya — lalu menyebutkannya di
+`catatan` seolah sudah jujur. Pembaca tetap mempercayai kalimatnya. Aturan prompt
+sudah dipertegas, dan putaran berikutnya dengan pertanyaan yang sama melanggar
+lagi. **Aturan prompt tidak bisa dipercaya sebagai pengaman.**
+
+Karena itu pengamannya dipindah ke kode: `app/server/klaim.js`, dipanggil
+`saringHasil()` di **ketiga** titik jawaban `/api/tanya` (non-stream, stream,
+dan percobaan ulang).
+
+### Batas kemampuan yang diakui terbuka
+
+Percobaan pertama mencoba membandingkan **kata** jawaban dengan kata sumber. Itu
+**gagal dan sudah dibuang**: sumber MedlinePlus berbahasa **Inggris**, jawaban
+berbahasa **Indonesia** — "penyakit ginjal kronis" tidak akan pernah bertemu
+"chronic kidney disease", sehingga kalimat yang **benar** ikut terbuang. Positif
+palsu seperti itu lebih merugikan daripada tidak ada penyaring sama sekali.
+
+Yang dipakai sekarang hanya menangani **satu kelas klaim** yang bisa diperiksa
+tanpa mencocokkan kata lintas bahasa: **klaim prognosis** (harapan hidup, bisa
+hidup normal, aman bagi sekelompok orang). Pemeriksaannya tidak bergantung pada
+nama penyakitnya, melainkan pada satu pertanyaan:
+
+> Apakah sumber pada giliran ini **membahas prognosis sama sekali**?
+
+Kalau sumber tidak pernah menyebut harapan hidup / bertahan hidup / hidup normal
+(Indonesia maupun Inggris), klaim prognosis apa pun tidak punya dasar. Klaim lain
+(definisi, gejala, penanganan) **tidak disentuh**.
+
+### Empat pengaman agar tidak merusak jawaban yang benar
+
+| Pengaman | Kenapa |
+|---|---|
+| Hanya pola prognosis yang dinilai | klaim lain tidak pernah disentuh |
+| Kalimat meta/arahan/sapaan **dilindungi** | "sumber tidak memuat…", "periksa ke dokter", "aplikasi ini…" tidak pernah dibuang |
+| Sumber membahas prognosis → **tidak menyaring** | kelonggaran disengaja; lebih baik biarkan satu klaim lemah |
+| Semua kalimat terkena → **jawaban dikembalikan utuh** | jawaban kosong jauh lebih buruk bagi pengguna |
+
+Daftar berbutir juga dipecah lebih dulu (`daftarKalimat()`), supaya satu butir
+salah tidak membuang seluruh daftar.
+
+**Kalau ada yang dibuang, `catatan` menyebutkannya** — pengguna berhak tahu
+sebagian jawaban dihapus, bukan menerima jawaban yang tampak utuh.
+
+Dijaga `uji-klaim.mjs` (**43 pemeriksaan**). Perbandingan jumlah pemeriksaan
+sengaja condong ke "**TIDAK BOLEH DIBUANG**": penyaring yang salah kalibrasi
+lebih berbahaya daripada tidak ada penyaring.
+
+---
+
 ## Endpoint
 
 | Metode | Path | Isi |
@@ -1033,6 +1085,7 @@ dan Jejaknya** (`docs/prototipe/index.html`, `id="etika"`).
 | Jawaban kuesioner | Dihitung di peramban, disimpan di `localStorage`. Tidak pernah dikirim ke server. |
 | Riwayat obrolan | `localStorage` peramban. Bisa dihapus satu per satu atau sekaligus. |
 | Teks pertanyaan | **Hanya ini** yang dikirim ke server, karena model AI memang perlu membacanya. |
+| Teks percakapan (konteks) | Tabel `percakapan` di server aplikasi ini — **hanya teks**, tanpa nama, tanpa IP, tanpa akun. Dihapus otomatis setelah **7 hari**. Dipakai supaya pertanyaan lanjutan tidak kehilangan topiknya. |
 
 Batas yang jujur disebut: teks pertanyaan diproses oleh **layanan model AI pihak
 ketiga** (Kenari.id). Karena itu halaman penjelasan memperingatkan pengguna agar
