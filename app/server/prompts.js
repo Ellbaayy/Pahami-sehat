@@ -19,10 +19,10 @@ export const TINGKAT = {
     kata: 'Pakai kata yang dipakai anak sehari-hari di rumah dan di sekolah. Kalau ada kata yang lebih sederhana ATAU lebih pendek, pakai yang lebih sederhana ("dokter gigi" bukan "dokter spesialis kedokteran gigi"; "sakit" bukan "mengalami gangguan kesehatan"). Pilih kata asli Indonesia yang pendek daripada kata serapan yang panjang ("kuman" daripada "mikroorganisme", "tulang" daripada "struktur skeletal").',
     istilah:
       'Hindari istilah medis. Kalau tidak bisa dihindari, tulis istilahnya lalu jelaskan LANGSUNG di belakangnya dengan kata sederhana, contoh: "hipertensi (tekanan darah tinggi)". Jangan pernah memakai istilah medis tanpa penjelasan.',
-    nada: 'Tenang, ramah, seperti kakak yang menjelaskan. Boleh pakai perumpamaan dari benda yang dikenal anak (bola, air, mainan, makanan). Jangan menakut-nakuti. Kalau ada hal serius, sampaikan dengan tenang dan SELALU sertakan langkah berikutnya yang bisa anak lakukan.',
-    isi: 'Selalu sebutkan: apa itu dengan bahasa sendiri, apa yang bisa dilakukan sendiri di rumah, dan kapan harus bilang ke orang tua atau guru. Batas 8 kata berlaku PER KALIMAT, bukan untuk seluruh jawaban — kalau ada banyak hal yang perlu disampaikan, tambah jumlah kalimatnya sampai batas 150 kata untuk SELURUH jawaban. Jangan melewati 150 kata: pilih hal yang paling penting, bukan semuanya. (Diukur 15 Okt 2026: tanpa batas total yang disebut di sini, jawaban tingkat anak keluar 196 kata — 30% di atas batas.)',
+    nada: 'Tenang dan ramah, seperti kakak yang menjelaskan — BUKAN seperti orang dewasa yang bicara kepada balita. Pembacanya berumur 9–11 tahun: mereka sudah bisa mengikuti penjelasan sebab-akibat, sudah paham kata seperti "sebab", "akibat", "supaya", dan tidak perlu dipanggil dengan nada manja. Boleh pakai perumpamaan dari benda yang dikenal anak (saringan air, bola, makanan). Jangan menakut-nakuti. Kalau ada hal serius, sampaikan dengan tenang dan SELALU sertakan langkah berikutnya yang bisa anak lakukan. JANGAN membuka jawaban dengan menenangkan pengguna ("Tenang ya", "Tidak apa-apa", "Jangan takut") — itu terdengar seperti menghakimi perasaannya, dan tidak menjawab apa pun. JANGAN menutup kalimat dengan "ya" sebagai penghalus (mis. "Dokter yang memeriksa, ya.") — itu nada bicara ke balita, dan terbaca kaku bila diulang di setiap jawaban.',
+    isi: 'Selalu sebutkan: apa itu dengan bahasa sendiri, apa yang bisa dilakukan sendiri di rumah, dan kapan harus melibatkan orang dewasa. Batas 8 kata berlaku PER KALIMAT, bukan untuk seluruh jawaban — kalau ada banyak hal yang perlu disampaikan, tambah jumlah kalimatnya sampai batas 150 kata untuk SELURUH jawaban. Jangan melewati 150 kata: pilih hal yang paling penting, bukan semuanya. (Diukur 15 Okt 2026: tanpa batas total yang disebut di sini, jawaban tingkat anak keluar 196 kata — 30% di atas batas.)',
     larangan:
-      'JANGAN memakai kata yang menakutkan tanpa jalan keluar ("bisa mati", "fatal") tanpa langsung menyebut apa yang harus dilakukan. JANGAN memakai angka rumit atau rentang angka sekaligus. JANGAN berbicara seperti membacakan buku pelajaran.',
+      'JANGAN memakai kata yang menakutkan tanpa jalan keluar ("bisa mati", "fatal") tanpa langsung menyebut apa yang harus dilakukan. JANGAN memakai angka rumit atau rentang angka sekaligus. JANGAN berbicara seperti membacakan buku pelajaran. JANGAN memakai nada manja atau kata sapaan untuk balita ("adek", "sayang", "ya" di ujung kalimat). JANGAN mengulang-ulang nasihat yang sama dengan kalimat berbeda — sebutkan SEKALI, lalu pakai sisa ruang untuk hal yang benar-benar ditanyakan.',
     contoh:
       'Contoh nada: "Darah kita mengalir lewat pipa kecil namanya pembuluh. Kalau pipanya sempit, darah jadi susah lewat. Itu yang disebut tekanan darah tinggi."',
   },
@@ -351,7 +351,136 @@ FORMAT KELUARAN — balas HANYA JSON valid, tanpa teks pembuka, tanpa pagar kode
   }
 }
 
-/** Rubrik wajib — dipakai di setiap panggilan model. */
+/**
+ * Apakah pesan ini pertanyaan LANJUTAN yang bergantung pada percakapan sebelumnya?
+ *
+ * ============================================================================
+ * KENAPA PERLU DIDETEKSI, BUKAN DISERAHKAN PADA MODEL
+ * ============================================================================
+ *
+ * Pertanyaan lanjutan tidak menyebut topiknya lagi. "Terus gimana udah
+ * terlanjur nih" tidak memuat satu pun istilah kesehatan, jadi:
+ *
+ *   1. `kataKunciPencarian()` mengembalikan kata isi mentah
+ *      ("terus gimana udah") -> pencarian nol hasil -> jawaban generik.
+ *   2. `deteksiSantai()` bisa salah menilainya sebagai obrolan biasa.
+ *
+ * Konteks percakapan di prompt saja TIDAK cukup: model boleh tahu topiknya,
+ * tetapi BAHAAN pencariannya sudah diambil sebelum model dipanggil. Jadi
+ * topik terakhir harus dipakai sebagai bahan pencarian, dan itu harus
+ * diputuskan di sini — dengan aturan yang bisa diuji, bukan tebakan model.
+ *
+ * Ciri yang dipakai (sengaja sederhana dan bisa dijelaskan ke juri):
+ *   - dibuka kata penyambung ("terus", "lalu", "kalau begitu", "tadi", ...)
+ *   - ATAU memakai kata ganti penunjuk tanpa menyebut topik ("itu", "nya",
+ *     "tadi", "begitu", "hal itu")
+ *   - ATAU sangat pendek DAN tidak memuat istilah kesehatan
+ *
+ * Yang TIDAK dianggap lanjutan: pesan yang sudah menyebut istilah kesehatan
+ * sendiri ("kalau gagal ginjal akut bagaimana?"). Pesan seperti itu berdiri
+ * sendiri dan harus dicari dengan topiknya sendiri, bukan topik sebelumnya.
+ *
+ * @param {string} teks
+ * @param {boolean} adaIstilahKesehatan - hasil `menyentuhKesehatan()`
+ * @returns {boolean}
+ */
+export function pertanyaanLanjutan(teks, adaIstilahKesehatan) {
+  const asli = String(teks ?? '').trim()
+  const bersih = rapikan(asli)
+  if (!bersih) return false
+
+  // Sapaan murni TETAP sapaan, walaupun percakapan sudah berjalan. Tanpa
+  // pemeriksaan ini, "halo" di tengah obrolan akan dianggap pertanyaan
+  // lanjutan hanya karena pendek — dan pengguna yang menyapa malah menerima
+  // jawaban tentang ginjal.
+  if (POLA_SAPA.some((re) => re.test(asli) || re.test(bersih))) return false
+
+  // Sudah menyebut topik kesehatan sendiri -> berdiri sendiri.
+  if (adaIstilahKesehatan) return false
+
+  const kata = bersih.split(/\s+/).filter(Boolean)
+  if (kata.length > 24) return false
+
+  // 1) kata penyambung di awal
+  const PEMBUKA = /^(terus|lalu|trus|selanjutnya|kemudian|kalau begitu|kalo gitu|jadi|nah|tadi|tadi itu|trs)\b/i
+  if (PEMBUKA.test(bersih)) return true
+
+  // 2) kata ganti penunjuk yang menggantung pada konteks
+  const PENUNJUK = /\b(itu|nya|begitu|gitu|tadi|tersebut|hal itu|yang tadi|tadi itu|td|gimana sama|kalau yang)\b/i
+  if (PENUNJUK.test(bersih)) return true
+
+  // 3) sangat pendek dan tanpa istilah kesehatan -> hampir pasti lanjutan
+  //    ("udah terlanjur", "jadi gimana dong", "terus?").
+  if (kata.length <= 4) return true
+
+  return false
+}
+
+/* ==========================================================================
+   RIWAYAT PERCAKAPAN
+   ==========================================================================
+   Tanpa bagian ini, setiap pertanyaan dijawab sendirian. Pengguna yang
+   bertanya "gagal ginjal itu apa", lalu "apakah orang dengan 1 ginjal tidak
+   akan bertahan hidup lama?", lalu "terus gimana udah terlanjur nih"
+   menerima tiga jawaban yang masing-masing benar untuk dirinya sendiri —
+   tetapi terasa tidak nyambung sebagai percakapan, karena model tidak tahu
+   apa yang sedang dibicarakan.
+
+   ATURAN PENTING: riwayat adalah KONTEKS, bukan SUMBER.
+   Isi jawaban lama tidak boleh dijadikan dasar fakta baru, karena jawaban
+   lama bisa keliru. Fakta tetap harus datang dari hasil pencarian pada
+   giliran ini. Ini ditulis tegas di prompt karena model cenderung mengulang
+   jawaban sebelumnya sebagai "kebenaran".
+   ========================================================================== */
+
+/** Nama peran di dalam blok riwayat. */
+const NAMA_PERAN = { pengguna: 'Pengguna', aplikasi: 'Pahami Sehat' }
+
+/**
+ * Susun blok riwayat untuk prompt. Mengembalikan string KOSONG kalau tidak ada
+ * riwayat — dan pemanggil tidak boleh menambahkan bagian apa pun dalam hal itu,
+ * supaya prompt percakapan baru tetap persis seperti sebelumnya.
+ *
+ * @param {Array<{peran:string, teks:string}>} riwayat - urut LAMA -> BARU
+ * @param {{maksTeks?:number}} [opsi]
+ * @returns {string}
+ */
+export function blokRiwayat(riwayat = [], { maksTeks = 700 } = {}) {
+  const bersih = (riwayat ?? [])
+    .filter((g) => g && g.teks && NAMA_PERAN[g.peran])
+    .map((g) => ({
+      peran: g.peran,
+      teks: String(g.teks).replace(/\s+/g, ' ').trim().slice(0, maksTeks),
+    }))
+    .filter((g) => g.teks)
+
+  if (!bersih.length) return ''
+
+  const isi = bersih.map((g) => `${NAMA_PERAN[g.peran]}: ${g.teks}`).join('\n')
+
+  return `RIWAYAT PERCAKAPAN INI (urut lama ke baru — KONTEKS, BUKAN SUMBER):
+
+${isi}
+
+CARA MEMAKAI RIWAYAT:
+1. Pakai riwayat untuk memahami apa yang sedang dibicarakan. Pertanyaan terakhir
+   pengguna boleh saja tidak menyebut topiknya lagi ("terus gimana", "kalau yang
+   satu ginjal?", "itu berbahaya nggak?") — dalam hal itu, yang dimaksud adalah
+   topik yang sedang berjalan di riwayat.
+2. JANGAN mengulang jawaban sebelumnya. Pengguna sudah membacanya. Jawab HANYA
+   bagian yang baru ditanyakan.
+3. JANGAN menyapa ulang, jangan memperkenalkan diri lagi, dan jangan membuka
+   dengan "Halo" — percakapan ini sudah berjalan.
+4. JANGAN menganggap isi jawaban lama sebagai fakta yang benar. Fakta wajib
+   datang dari hasil pencarian pada giliran INI. Kalau jawaban lama keliru,
+   betulkan dengan tenang tanpa menyalahkan pengguna.
+5. JANGAN menyuruh pengguna mengulang pertanyaannya. Kalau pertanyaannya
+   merujuk pada sesuatu yang tidak ada di riwayat, katakan terus terang bagian
+   mana yang belum jelas, lalu jawab bagian yang sudah jelas.
+6. Kalau pengguna berganti topik sepenuhnya, ikuti topik baru dan tinggalkan
+   yang lama tanpa mengomentarinya.`
+}
+
 export const RUBRIK = `
 RUBRIK WAJIB (penuhi semuanya, dalam urutan ini):
 1. KELENGKAPAN — Pertahankan SEMUA poin kunci dari sumber. Jangan membuang
@@ -367,6 +496,10 @@ RUBRIK WAJIB (penuhi semuanya, dalam urutan ini):
    dipastikan.
 5. BATAS PERAN — Kamu bukan dokter. Jangan memberi diagnosis, resep, atau dosis
    obat tertentu. Selalu arahkan ke tenaga kesehatan untuk keluhan pribadi.
+   TENTANG SEBUTAN DIRI: sebut dirimu "aplikasi ini", bukan "aku" atau "saya".
+   Aplikasi ini dipakai juri dan pengguna umum; suara pribadi penulisnya tidak
+   boleh muncul. Contoh yang benar: "Aplikasi ini tidak bisa memeriksa tubuh
+   Anda." Contoh yang salah: "Aku tidak bisa memeriksa tubuhmu."
 6. FAKTOR RISIKO, BUKAN DIAGNOSIS — Kalau pengguna bertanya apakah DIRINYA
    mengidap suatu penyakit, atau seberapa besar risikonya, jawab dengan cara ini:
    a. Sebutkan faktor risiko yang benar-benar ada di sumber, sebagai FAKTA UMUM
@@ -382,6 +515,13 @@ RUBRIK WAJIB (penuhi semuanya, dalam urutan ini):
    utamakan langkah yang ada di sumber. Bedakan dengan jelas mana yang bisa
    dilakukan sendiri di rumah dan mana yang WAJIB lewat tenaga kesehatan.
    Selalu sebutkan tanda bahaya yang mengharuskan segera mencari bantuan medis.
+8. JAWAB YANG DITANYAKAN — Mulai dari jawaban langsung atas pertanyaannya,
+   baru sesudah itu hal lain yang perlu diketahui. JANGAN membuka dengan
+   memperkenalkan diri, menyapa, atau menjelaskan hal yang sudah jelas.
+   JANGAN mengulang nasihat umum yang sama di setiap jawaban (banyak istirahat,
+   makan bergizi, minum air, jangan merokok) — sebutkan SEKALI dan hanya bila
+   memang berkaitan dengan pertanyaannya. Jawaban yang isinya separuh nasihat
+   umum terbaca seperti daftar tempelan, bukan penjelasan.
 `.trim()
 
 const KELUARAN_JSON = `
@@ -516,8 +656,21 @@ Diukur 15 Okt 2026: perintah "maksimal ${batas} kata" tanpa pemeriksaan diri ini
 dilewati — jawaban tingkat anak sempat 196 kata dari batas ${batas}.`
 }
 
-/** Pertanyaan bebas dari user (fitur "Tanya AI"). */
-export function promptTanya({ pertanyaan, tingkat, bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
+/**
+ * Pertanyaan bebas dari user (fitur "Tanya AI").
+ *
+ * `riwayat` berisi giliran percakapan sebelumnya (urut lama -> baru). Kalau
+ * kosong, prompt yang dihasilkan PERSIS sama seperti sebelum fitur konteks
+ * ada — jadi percakapan baru tidak berubah perilakunya.
+ */
+export function promptTanya({
+  pertanyaan,
+  tingkat,
+  bahasa = 'Bahasa Indonesia',
+  kodeAsal = null,
+  riwayat = [],
+}) {
+  const blokRiwayatTeks = blokRiwayat(riwayat)
   return {
     system: `Kamu adalah mesin penyederhana informasi kesehatan untuk aplikasi "Pahami Sehat".
 
@@ -530,7 +683,7 @@ ${blokTingkat(tingkat)}
 
 ${blokBahasa(bahasa, kodeAsal)}
 ${batasPanjang(tingkat)}
-
+${blokRiwayatTeks ? `\n${blokRiwayatTeks}\n` : ''}
 ${KELUARAN_JSON}`,
     user: `PERTANYAAN PENGGUNA:\n${pertanyaan}`,
   }
@@ -562,7 +715,14 @@ ${KELUARAN_JSON}`,
 }
 
 /** Verifikasi klaim kesehatan (mis. broadcast WhatsApp). */
-export function promptVerifikasi({ klaim, tingkat, bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
+export function promptVerifikasi({
+  klaim,
+  tingkat,
+  bahasa = 'Bahasa Indonesia',
+  kodeAsal = null,
+  riwayat = [],
+}) {
+  const blokRiwayatTeks = blokRiwayat(riwayat)
   return {
     system: `Kamu adalah pemeriksa klaim kesehatan untuk aplikasi "Pahami Sehat".
 
@@ -580,7 +740,7 @@ ${blokTingkat(tingkat)}
 
 ${blokBahasa(bahasa, kodeAsal)}
 ${batasPanjang(tingkat)}
-
+${blokRiwayatTeks ? `\n${blokRiwayatTeks}\n` : ''}
 FORMAT KELUARAN — balas HANYA JSON valid, tanpa teks pembuka, tanpa pagar kode:
 {
   "verdict": "<didukung|tidak_didukung|tidak_bisa_dipastikan>",
@@ -607,7 +767,18 @@ HASIL PENCARIAN INTERNET (sumber nyata, bukan karangan):
 {konteks}
 
 CARA MEMAKAI HASIL PENCARIAN:
-1. Jawab HANYA berdasarkan hasil pencarian di atas. Jangan menambah fakta dari ingatanmu.
+1. Jawab HANYA berdasarkan hasil pencarian di atas. Jangan menambah fakta dari
+   ingatanmu.
+1b. KLAIM TANPA SUMBER TIDAK BOLEH MASUK KE JAWABAN SAMA SEKALI — bukan hanya
+   "disebut di catatan". Menyebut di catatan sambil tetap menuliskannya di
+   jawaban tetap membuat pembaca mempercayainya. Kalau sebuah kalimat tidak
+   bisa ditopang sumber di atas, HAPUS kalimat itu. Contoh nyata yang harus
+   dihindari: menulis "banyak orang dengan satu ginjal tetap hidup normal"
+   padahal tidak satu pun sumber di atas memuat pernyataan itu.
+1c. JAWAB PERTANYAANNYA DULU. Kalau pengguna bertanya "apakah X berbahaya",
+   kalimat pertama harus menjawab X itu — bukan mengulang penjelasan umum
+   tentang organ atau penyakitnya. Penjelasan umum hanya dipakai sejauh
+   diperlukan untuk menjawab.
 2. Cantumkan URL sumber untuk setiap klaim penting. Ambil URL persis dari daftar di atas.
 3. Utamakan sumber bertanda [SUMBER RESMI] (Kemenkes, WHO, BPOM) bila ada.
 4. Kalau hasil pencarian TIDAK memuat jawabannya, katakan terus terang bahwa
@@ -647,8 +818,15 @@ function rapikanBerita(berita = []) {
 }
 
 /** Prompt khusus saat pengguna menanyakan berita kesehatan terkini. */
-export function promptBerita({ pertanyaan, tingkat, berita = [], bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
-  const dasar = promptTanya({ pertanyaan, tingkat, bahasa, kodeAsal })
+export function promptBerita({
+  pertanyaan,
+  tingkat,
+  berita = [],
+  bahasa = 'Bahasa Indonesia',
+  kodeAsal = null,
+  riwayat = [],
+}) {
+  const dasar = promptTanya({ pertanyaan, tingkat, bahasa, kodeAsal, riwayat })
   return {
     system: `${dasar.system}
 
@@ -720,8 +898,15 @@ function rapikanHasil(hasil = []) {
 }
 
 /** Pertanyaan bebas + hasil pencarian. */
-export function promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
-  const dasar = promptTanya({ pertanyaan, tingkat, bahasa, kodeAsal })
+export function promptTanyaDenganCari({
+  pertanyaan,
+  tingkat,
+  hasilCari = [],
+  bahasa = 'Bahasa Indonesia',
+  kodeAsal = null,
+  riwayat = [],
+}) {
+  const dasar = promptTanya({ pertanyaan, tingkat, bahasa, kodeAsal, riwayat })
   return {
     system: `${dasar.system}
 
@@ -735,8 +920,15 @@ harus URL persis dari daftar.`,
 }
 
 /** Verifikasi klaim + hasil pencarian. */
-export function promptVerifikasiDenganCari({ klaim, tingkat, hasilCari = [], bahasa = 'Bahasa Indonesia', kodeAsal = null }) {
-  const dasar = promptVerifikasi({ klaim, tingkat, bahasa, kodeAsal })
+export function promptVerifikasiDenganCari({
+  klaim,
+  tingkat,
+  hasilCari = [],
+  bahasa = 'Bahasa Indonesia',
+  kodeAsal = null,
+  riwayat = [],
+}) {
+  const dasar = promptVerifikasi({ klaim, tingkat, bahasa, kodeAsal, riwayat })
   return {
     system: `${dasar.system}
 

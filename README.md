@@ -291,10 +291,11 @@ Yang ikut dihapus, bukan hanya disembunyikan:
 | Kunci kamus `set.akun*` dan `beranda.sapaNama` | dihapus; sapaan kembali "Halo!" |
 | Variabel `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `VITE_GOOGLE_CLIENT_ID` | dihapus dari `.env` dan `.env.example` |
 
-**Tidak ada data pengguna yang tersimpan di server.** Riwayat obrolan,
-jawaban kuesioner, dan setelan tinggal di `localStorage` peramban. Karena itu
-aplikasi sekarang bisa dipakai tanpa MariaDB sama sekali — database hanya
-menyimpan bahan (lihat bagian berikut).
+**Tidak ada IDENTITAS pengguna yang tersimpan di server.** Riwayat obrolan,
+jawaban kuesioner, dan setelan tinggal di `localStorage` peramban. Sejak
+22 Okt 2026 server menyimpan **teks percakapan** (tanpa nama, tanpa alamat IP,
+tanpa akun) selama **7 hari** sebagai konteks pertanyaan lanjutan — lihat
+tabel di bawah dan bagian **Konteks percakapan**.
 
 ### Di mana datanya disimpan
 
@@ -304,7 +305,7 @@ menyimpan bahan (lihat bagian berikut).
 | Jawaban kuesioner | `localStorage` | ya |
 | Setelan bahasa / tingkat baca / kontras / suara | `localStorage` (`pahami-sehat:setelan`) | ya |
 | Foto yang dipindai | **tidak disimpan ke mana pun** — dibaca di memori peramban | tidak |
-| Pertanyaan & jawaban pengguna | **tidak disimpan di server** — tidak ada tabel percakapan di jalur aplikasi | tidak |
+| Teks percakapan (konteks lanjutan) | tabel `percakapan` di MariaDB — **hanya teks, tanpa identitas**, dihapus otomatis setelah **7 hari** | ya, maksimal 7 hari |
 | Akun | **tidak ada** — tidak ada tabel akun, sesi, atau cookie | — |
 
 **Riwayat hanya ada di perangkat ini.** Tidak ada sinkronisasi lintas
@@ -314,9 +315,10 @@ peramban tidak memengaruhi peramban lain, karena keduanya tidak pernah
 terhubung.
 
 **Database bahan bersifat OPSIONAL, dan itu dijaga di kode.** MariaDB (lewat
-XAMPP) dipakai untuk menyimpan **bahan**, bukan percakapan pengguna. Kalau
-MariaDB mati, bahan tetap tersaji memakai berkas cache — `app/server/db.js`
-mengembalikan `null` alih-alih melempar galat.
+XAMPP) dipakai untuk menyimpan **bahan** dan **teks percakapan**. Kalau
+MariaDB mati, bahan tetap tersaji memakai berkas cache dan jawaban tetap
+diberikan tanpa konteks — `app/server/db.js` mengembalikan `null` alih-alih
+melempar galat.
 
 Dibuktikan ulang 20 Okt 2026 dengan `DB_MATI=1`:
 
@@ -369,8 +371,10 @@ Yang dijaga:
   tidak bisa diberi `UNIQUE` langsung — pengecekannya dilakukan di kode.)
 - **`kedaluwarsa` tetap ditegakkan** (30 hari untuk dokumen): baris yang sudah
   basi tidak ikut tersaji.
-- **Pertanyaan pengguna tidak ikut disimpan** — endpoint `/api/sitasi` sengaja
-  hanya menampilkan sumber mana dipakai untuk jenis jawaban apa, kapan.
+- **Pertanyaan pengguna tidak ikut masuk tabel sitasi** — endpoint `/api/sitasi`
+  sengaja hanya menampilkan sumber mana dipakai untuk jenis jawaban apa, kapan.
+  (Teks percakapan punya tabelnya sendiri, `percakapan`, dengan umur 7 hari —
+  lihat bagian **Konteks percakapan**.)
 
 Diuji `uji-sitasi.mjs` (**15 pemeriksaan**). Uji itu punya dua bagian: yang
 **murni** (tanpa jaringan/database — aturan penolakan URL) dan yang
@@ -411,6 +415,54 @@ lewat `PETA_MEDLINEPLUS`), salah tangkap topik ("luka" pernah tersimpan sebagai
 penjelasan cedera **bahu**), dan URL artikel yang ternyata ada di **atribut**
 tag XML — kesalahan itu sempat membuat semua tautan menunjuk halaman depan
 `medlineplus.gov`.
+
+---
+
+## Konteks percakapan (22 Okt 2026)
+
+Tanpa konteks, setiap pertanyaan dijawab **sendirian**. Akibatnya pertanyaan
+lanjutan yang tidak menyebut topiknya lagi — *"terus gimana udah terlanjur
+nih"* — dicari memakai kata sambungnya sendiri (`terus gimana udah`), tidak
+menemukan sumber apa pun, lalu dijawab dengan kalimat generik. Bagi pengguna
+itu terbaca sebagai percakapan yang **tidak nyambung**, padahal setiap jawaban
+benar untuk pertanyaannya masing-masing.
+
+Empat sebabnya, dan semuanya diperbaiki:
+
+| Sebab | Perbaikan |
+|---|---|
+| Pertanyaan lanjutan tidak dikenali | `pertanyaanLanjutan()` di `prompts.js` — aturan yang bisa diuji, bukan tebakan model |
+| Bahan pencarian memakai kata sambung | Kalau pertanyaannya lanjutan, yang dicari adalah **topik terakhir** (`topikTerakhir()` di `rute.js`) |
+| Riwayat tidak pernah masuk prompt | `blokRiwayat()` — riwayat dikirim sebagai **konteks, bukan sumber** |
+| Nada tingkat anak seperti bicara ke balita | Nada & larangan `TINGKAT.anak` diperbaiki |
+
+**Riwayat adalah KONTEKS, bukan SUMBER.** Isi jawaban lama tidak boleh menjadi
+dasar fakta baru, karena jawaban lama bisa keliru. Fakta tetap harus datang
+dari hasil pencarian pada giliran itu — aturan ini ditulis tegas di prompt
+(`blokRiwayat()`), karena model cenderung mengulang jawaban sebelumnya sebagai
+"kebenaran".
+
+### Batas yang disengaja
+
+| Hal | Nilai | Alasan |
+|---|---|---|
+| Yang disimpan | **hanya teks** giliran percakapan | tanpa nama, tanpa IP, tanpa akun |
+| `id_sesi` | penanda acak `s<timestamp>` dari peramban | mengelompokkan giliran, **bukan** identitas orang |
+| Umur simpan | **7 hari** (`MAKS_UMUR_HARI`) | ini konteks, bukan arsip |
+| Konteks yang dipakai | **8 giliran** terakhir (`MAKS_GILIRAN_KONTEKS`) | lebih dari itu mengaburkan topik |
+| Database mati | jawaban tetap diberikan, **tanpa konteks** | konteks hilang ≠ aplikasi rusak |
+
+Pembersihan berjalan **sekali saat server mulai, lalu tiap 6 jam**
+(`bersihkanPercakapan()` di `db.js`, dipanggil dari `index.js`). Tidak
+di-`await` dan timernya `unref()` — aplikasi harus siap menerima permintaan
+walau pembersihan lambat.
+
+**Sapaan tetap sapaan.** `pertanyaanLanjutan()` memeriksa pola sapaan lebih
+dulu, jadi "halo" di tengah percakapan tidak dianggap pertanyaan lanjutan
+hanya karena pendek. Tanpa penjagaan itu, pengguna yang menyapa akan menerima
+jawaban tentang ginjal.
+
+Dijaga `uji-konteks.mjs` (**49 pemeriksaan**, tanpa jaringan/database/kunci).
 
 ---
 

@@ -70,28 +70,35 @@ export const ambilHealth = () => minta('/health')
  */
 export const ambilKonten = (signal) => minta('/konten', { signal })
 
-export const tanya = ({ pertanyaan, tingkat, bahasa }, signal) =>
-  minta('/tanya', { method: 'POST', body: { pertanyaan, tingkat, bahasa }, signal })
+export const tanya = ({ pertanyaan, tingkat, bahasa, idSesi }, signal) =>
+  minta('/tanya', { method: 'POST', body: { pertanyaan, tingkat, bahasa, idSesi }, signal })
 
-export const sederhanakan = ({ teks, tingkat, bahasa }, signal) =>
-  minta('/sederhanakan', { method: 'POST', body: { teks, tingkat, bahasa }, signal })
+export const sederhanakan = ({ teks, tingkat, bahasa, idSesi }, signal) =>
+  minta('/sederhanakan', { method: 'POST', body: { teks, tingkat, bahasa, idSesi }, signal })
 
-export const verifikasi = ({ klaim, tingkat, bahasa }, signal) =>
-  minta('/verifikasi', { method: 'POST', body: { klaim, tingkat, bahasa }, signal })
+export const verifikasi = ({ klaim, tingkat, bahasa, idSesi }, signal) =>
+  minta('/verifikasi', { method: 'POST', body: { klaim, tingkat, bahasa, idSesi }, signal })
 
 /**
  * Streaming jawaban lewat SSE.
- * @param {{pertanyaan: string, tingkat: string}} param
- * @param {{onStatus?: Function, onDelta?: Function, onHasil?: Function, signal?: AbortSignal}} cb
+ *
+ * `idSesi` WAJIB ikut terkirim supaya server bisa memakai percakapan
+ * sebelumnya sebagai konteks. Tanpa itu, setiap pertanyaan dijawab sendirian
+ * dan pertanyaan lanjutan ("terus gimana") kehilangan topiknya. Penanda ini
+ * dibuat di peramban (`s<timestamp>`) dan hanya dipakai untuk mengelompokkan
+ * giliran percakapan — bukan identitas orang.
+ *
+ * @param {{pertanyaan: string, tingkat: string, idSesi?: string}} param
+ * @param {{onStatus?: Function, onDelta?: Function, onHasil?: Function, onSumber?: Function, signal?: AbortSignal}} cb
  * @returns {Promise<object>} hasil final
  */
-export async function tanyaStream({ pertanyaan, tingkat, bahasa }, { onStatus, onDelta, onHasil, onSumber, signal } = {}) {
+export async function tanyaStream({ pertanyaan, tingkat, bahasa, idSesi }, { onStatus, onDelta, onHasil, onSumber, signal } = {}) {
   let res
   try {
     res = await fetch(`${BASE}/tanya/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-      body: JSON.stringify({ pertanyaan, tingkat, bahasa }),
+      body: JSON.stringify({ pertanyaan, tingkat, bahasa, idSesi }),
       signal,
     })
   } catch (e) {

@@ -53,6 +53,27 @@ const KONFIG = {
  */
 const DIMATIKAN = process.env.DB_MATI === '1'
 
+/* ==========================================================================
+ * BATAS PERCAKAPAN TERSIMPAN
+ * ==========================================================================
+ * Angka-angka ini menentukan berapa banyak "ingatan" yang dipakai saat
+ * menjawab pertanyaan lanjutan. Semuanya SENGAJA kecil: yang dibutuhkan
+ * hanyalah topik beberapa giliran terakhir, bukan seluruh riwayat obrolan.
+ *
+ *   MAKS_UMUR_HARI       — sesudah ini, baris dihapus. Konteks percakapan
+ *                          bukan arsip; menyimpan lebih lama hanya menambah
+ *                          risiko tanpa manfaat apa pun bagi jawaban.
+ *   MAKS_GILIRAN_KONTEKS — 8 giliran = 4 pertanyaan + 4 jawaban terakhir.
+ *                          Lebih dari itu membuat prompt panjang, lambat, dan
+ *                          justru mengaburkan topik yang sedang dibahas.
+ *   MAKS_TEKS_GILIRAN    — jawaban panjang dipotong. Yang diambil untuk
+ *                          konteks hanya bagian AWAL (topiknya), karena di
+ *                          situlah subjek percakapan dinyatakan.
+ * ========================================================================== */
+export const MAKS_UMUR_HARI = 7
+export const MAKS_GILIRAN_KONTEKS = 8
+export const MAKS_TEKS_GILIRAN = 2000
+
 let pool = null
 let terakhirGagal = 0
 /** Janji penyambungan yang sedang berjalan — lihat penjelasan di `db()`. */
@@ -481,6 +502,104 @@ export async function ambilPengetahuan(topik, batas = 3) {
       LIMIT ?`,
     [`%${String(topik)}%`, Number(batas) || 3],
   )
+}
+
+/* ==========================================================================
+ * PERCAKAPAN — konteks untuk pertanyaan lanjutan
+ * ======================================================================== */
+
+/**
+ * Simpan satu giliran percakapan (pertanyaan pengguna + jawaban aplikasi).
+ *
+ * ============================================================================
+ * KENAPA INI ADA, DAN BATASNYA
+ * ============================================================================
+ *
+ * Sebelum ini, server sama sekali tidak menyimpan percakapan: setiap
+ * pertanyaan dijawab sendirian. Akibatnya pertanyaan lanjutan seperti
+ * "terus gimana udah terlanjur nih" dicari dengan kata kunci "terus gimana
+ * udah", tidak menemukan sumber apa pun, dan dijawab dengan kalimat generik.
+ * Pengguna melihat percakapan yang "tidak nyambung" padahal jawabannya benar
+ * untuk pertanyaan yang BERDIRI SENDIRI.
+ *
+ * Batas yang disengaja, dan tidak boleh dilonggarkan tanpa keputusan sadar:
+ *
+ *   1. YANG DISIMPAN HANYA TEKS PERCAKAPAN. Tidak ada nama, tidak ada alamat
+ *      IP, tidak ada sidik peramban, tidak ada akun. `id_sesi` adalah tanda
+ *      pengenal acak yang dibuat peramban pengguna sendiri.
+ *   2. UMURNYA PENDEK dan dihapus otomatis (lihat `MAKS_UMUR_HARI`). Ini
+ *      konteks percakapan, bukan arsip.
+ *   3. DATABASE OPSIONAL — kalau mati, semua fungsi di sini mengembalikan
+ *      null/kosong dan aplikasi tetap menjawab seperti sebelumnya. Konteks
+ *      yang hilang membuat jawaban kurang nyambung, BUKAN membuat aplikasi
+ *      rusak. Jangan pernah melempar galat dari sini.
+ *
+ * @param {{idSesi:string, peran:'pengguna'|'aplikasi', teks:string}} g
+ * @returns {Promise<number|null>}
+ */
+export async function simpanGiliran({ idSesi, peran, teks } = {}) {
+  const p = await db()
+  if (!p || !idSesi || !teks) return null
+  const isi = String(teks).trim()
+  if (!isi) return null
+  try {
+    const [hasil] = await p.query(
+      `INSERT INTO percakapan (id_sesi, peran, teks, dibuat)
+       VALUES (?, ?, ?, NOW())`,
+      [
+        String(idSesi).slice(0, 64),
+        peran === 'aplikasi' ? 'aplikasi' : 'pengguna',
+        isi.slice(0, MAKS_TEKS_GILIRAN),
+      ],
+    )
+    return hasil?.insertId ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Ambil giliran percakapan terakhir sebuah sesi, URUT LAMA → BARU.
+ *
+ * Dipakai untuk menyusun konteks prompt. `maks` dihitung dalam GILIRAN
+ * (satu pertanyaan + satu jawaban = 2 giliran), bukan dalam karakter.
+ *
+ * @param {string} idSesi
+ * @param {number} maks
+ * @returns {Promise<Array<{peran:string, teks:string}>>}
+ */
+export async function ambilGiliran(idSesi, maks = MAKS_GILIRAN_KONTEKS) {
+  if (!idSesi) return []
+  const n = Math.min(Math.max(Number(maks) || MAKS_GILIRAN_KONTEKS, 1), 40)
+  const baris = await tanya(
+    `SELECT peran, teks FROM (
+       SELECT peran, teks, dibuat, id
+         FROM percakapan
+        WHERE id_sesi = ? AND dibuat > DATE_SUB(NOW(), INTERVAL ? DAY)
+        ORDER BY id DESC
+        LIMIT ?
+     ) AS terakhir
+     ORDER BY id ASC`,
+    [String(idSesi).slice(0, 64), MAKS_UMUR_HARI, n],
+  )
+  return (baris ?? []).map((b) => ({ peran: b.peran, teks: b.teks }))
+}
+
+/**
+ * Hapus percakapan yang sudah lewat umur simpan.
+ *
+ * Dipanggil sesekali (bukan setiap permintaan) supaya tabel tidak tumbuh
+ * selamanya. Sengaja TIDAK dipanggil saat start: aplikasi harus tetap bisa
+ * menyala walau database sedang sibuk.
+ *
+ * @returns {Promise<number|null>} jumlah baris terhapus, atau null
+ */
+export async function bersihkanPercakapan() {
+  const baris = await tanya(
+    `DELETE FROM percakapan WHERE dibuat < DATE_SUB(NOW(), INTERVAL ? DAY)`,
+    [MAKS_UMUR_HARI],
+  )
+  return baris?.affectedRows ?? null
 }
 
 /* ==========================================================================

@@ -32,6 +32,7 @@ import {
   promptTanyaDenganCari,
   promptSederhanakanDenganCari,
   promptVerifikasiDenganCari,
+  pertanyaanLanjutan,
 } from './prompts.js'
 import { ambilBeritaKesehatan, menanyakanBerita, ringkasanBerita, jawabanBeritaDarurat } from './berita.js'
 import { cariInternet } from './cari.js'
@@ -55,6 +56,8 @@ import {
   ambilKonten,
   ambilPengetahuan,
   catatSumberDikutip,
+  simpanGiliran,
+  ambilGiliran,
   tanya,
 } from './db.js'
 import { bahasaJawaban } from './bahasa.js'
@@ -122,6 +125,22 @@ function bentukHasil(mentah, tingkat, { verdictKey = null } = {}) {
 /** Bahasa jawaban: 'id' (default) atau 'en'. */
 function rapikanBahasa(v) {
   return String(v ?? '').toLowerCase().startsWith('en') ? 'en' : 'id'
+}
+
+/**
+ * Rapikan penanda sesi percakapan.
+ *
+ * Batasnya 64 karakter (sama dengan lebar kolom `id_sesi`) dan hanya huruf,
+ * angka, titik dua, garis bawah, serta tanda hubung. Penanda ini dibuat
+ * peramban pengguna, jadi bentuknya diperiksa — bukan dipercaya begitu saja.
+ *
+ * @param {unknown} v
+ * @returns {string} penanda yang sah, atau '' kalau tidak ada/tidak sah
+ */
+function rapikanSesi(v) {
+  const s = String(v ?? '').trim()
+  if (!s || s.length > 64) return ''
+  return /^[A-Za-z0-9_:.-]+$/.test(s) ? s : ''
 }
 
 /**
@@ -207,6 +226,69 @@ function ringkasBerita(berita = []) {
     umurHari: b.umurHari ?? null,
     linkTidakBisaDibuka: Boolean(b.linkTidakBisaDibuka),
   }))
+}
+
+/**
+ * Ambil konteks percakapan untuk sebuah permintaan.
+ *
+ * ============================================================================
+ * KENAPA TIDAK PERNAH MELEMPAR GALAT
+ * ============================================================================
+ * Database OPSIONAL (lihat db.js). Kalau ia mati, fungsi ini mengembalikan
+ * riwayat kosong dan aplikasi menjawab seperti sebelum fitur ini ada.
+ * Konteks yang hilang membuat jawaban kurang nyambung — BUKAN membuat
+ * pengguna menerima galat. Jangan mengubah sifat ini.
+ *
+ * @param {string} idSesi
+ * @returns {Promise<Array<{peran:string, teks:string}>>}
+ */
+async function konteksSesi(idSesi) {
+  if (!idSesi) return []
+  try {
+    return await ambilGiliran(idSesi)
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Simpan giliran ke database — tanpa pernah menahan respons.
+ *
+ * Sengaja TIDAK di-`await` di jalur respons: penyimpanan konteks bukan
+ * bagian dari jawaban, dan pengguna tidak boleh menunggu lebih lama hanya
+ * karena database lambat. Kegagalannya juga tidak boleh terlihat.
+ *
+ * @param {string} idSesi
+ * @param {'pengguna'|'aplikasi'} peran
+ * @param {string} teks
+ */
+function catatKonteks(idSesi, peran, teks) {
+  if (!idSesi || !teks) return
+  simpanGiliran({ idSesi, peran, teks }).catch(() => null)
+}
+
+/**
+ * Topik yang sedang berjalan di percakapan — dipakai sebagai bahan pencarian
+ * saat pertanyaannya tidak menyebut topiknya sendiri.
+ *
+ * Diambil dari giliran PENGGUNA terakhir yang MENYEBUT istilah kesehatan,
+ * bukan dari jawaban aplikasi: jawaban panjang memuat banyak istilah, dan
+ * memakainya sebagai kata kunci cenderung melebar ke topik lain.
+ *
+ * @param {Array<{peran:string, teks:string}>} riwayat
+ * @returns {string} teks pertanyaan bertopik terakhir, atau ''
+ */
+function topikTerakhir(riwayat = []) {
+  for (let i = riwayat.length - 1; i >= 0; i--) {
+    const g = riwayat[i]
+    if (g?.peran !== 'pengguna') continue
+    try {
+      if (istilahKesehatan(g.teks)) return g.teks
+    } catch {
+      /* riwayat rusak tidak boleh menghentikan jawaban */
+    }
+  }
+  return ''
 }
 
 /**
@@ -583,6 +665,13 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
   const bhs = pilihBahasa(pertanyaan, rapikanBahasa(req.body?.bahasa))
+  const idSesi = rapikanSesi(req.body?.idSesi)
+
+  // Konteks percakapan: dipakai supaya pertanyaan lanjutan ("terus gimana",
+  // "kalau yang satu ginjal?") tetap nyambung dengan topik yang sedang dibahas.
+  // Kosong kalau ini percakapan baru atau database mati — dan dalam hal itu
+  // perilakunya persis seperti sebelum fitur konteks ada.
+  const riwayat = await konteksSesi(idSesi)
 
   // Pertanyaan soal BERITA kesehatan terkini: pakai jalur berita (RSS),
   // bukan Wikipedia — karena yang ditanyakan memang kabar harian, bukan
@@ -594,7 +683,7 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
   // tercapai. Permintaan berita yang jelas harus menang atas mode santai.
   if (menanyakanBerita(pertanyaan)) {
     const berita = await ambilBeritaKesehatan({ maks: 8 })
-    const p = promptBerita({ pertanyaan, tingkat, berita, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
+    const p = promptBerita({ pertanyaan, tingkat, berita, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal, riwayat })
     const { json, usage } = await mintaJson({
       messages: [
         { role: 'system', content: p.system },
@@ -628,12 +717,19 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
     }
 
     const out = bentukHasil(json, tingkat)
+    catatKonteks(idSesi, 'pengguna', pertanyaan)
+    catatKonteks(idSesi, 'aplikasi', out.jawaban)
     return res.json({ ...out, berita: true, hasilCari: ringkasBerita(berita), usage })
   }
 
   // Obrolan biasa (sapaan / basa-basi) tidak perlu dicari di internet dan
   // tidak perlu menampilkan daftar sumber — tidak ada yang diverifikasi.
-  if (deteksiSantai(pertanyaan)) {
+  //
+  // KECUALI kalau ini pertanyaan LANJUTAN di tengah percakapan: "terus gimana"
+  // atau "jadi gimana dong" memang tidak memuat istilah kesehatan, tetapi
+  // maksudnya merujuk pada topik yang sedang dibahas. Menjawabnya sebagai
+  // sapaan adalah persis keluhan "tidak nyambung" yang harus dihindari.
+  if (deteksiSantai(pertanyaan) && !pertanyaanLanjutan(pertanyaan, false)) {
     const ps = promptSantai({ pertanyaan, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
     const { json, usage } = await mintaJson({
       messages: [
@@ -643,13 +739,33 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
       maxTokens: MAKS_TOKEN.tanya,
     })
     const santai = bentukHasil(json, tingkat)
+    catatKonteks(idSesi, 'pengguna', pertanyaan)
+    catatKonteks(idSesi, 'aplikasi', santai.jawaban)
     return res.json({ ...santai, santai: true, hasilCari: [], usage })
   }
 
   // cari di internet dulu supaya jawabannya berbasis sumber nyata
-  const { hasil: hasilCari } = await cariDenganCadangan(pertanyaan)
+  //
+  // BAHAN PENCARIAN untuk pertanyaan lanjutan: kalau pertanyaannya tidak
+  // menyebut topiknya sendiri ("terus gimana udah terlanjur nih"), yang dicari
+  // adalah TOPIK TERAKHIR yang sedang dibahas. Tanpa ini, pencarian memakai
+  // kata sambung belaka, tidak menemukan apa pun, dan jawabannya jadi generik
+  // — persis keluhan "tidak nyambung".
+  const topik = pertanyaanLanjutan(pertanyaan, Boolean(istilahKesehatan(pertanyaan)))
+    ? topikTerakhir(riwayat)
+    : ''
+  const bahanCari = topik || pertanyaan
 
-  const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
+  const { hasil: hasilCari } = await cariDenganCadangan(bahanCari)
+
+  const p = promptTanyaDenganCari({
+    pertanyaan,
+    tingkat,
+    hasilCari,
+    bahasa: bhs.nama,
+    kodeAsal: bhs.kodeAsal,
+    riwayat,
+  })
   const { json, usage } = await mintaJson({
     messages: [
       { role: 'system', content: p.system },
@@ -660,6 +776,11 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
 
   const out = bentukHasil(json, tingkat)
   res.json({ ...out, hasilCari: ringkasHasilCari(hasilCari), usage })
+
+  // Simpan giliran percakapan supaya pertanyaan berikutnya punya konteks.
+  // OPSIONAL dan tidak ditunggu — lihat catatKonteks().
+  catatKonteks(idSesi, 'pengguna', pertanyaan)
+  catatKonteks(idSesi, 'aplikasi', out.jawaban)
 
   // Catat sumber yang benar-benar DIKUTIP model ke tabel sitasi — OPSIONAL,
   // dan sengaja SETELAH respons dikirim supaya pengguna tidak ikut menunggu.
@@ -747,6 +868,13 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
 
   const tingkat = rapikanTingkat(req.body?.tingkat)
   const bhs = pilihBahasa(pertanyaan, rapikanBahasa(req.body?.bahasa))
+  const idSesi = rapikanSesi(req.body?.idSesi)
+
+  // Konteks percakapan diambil SEBELUM header SSE dikirim: kalau database
+  // lambat, penundaan itu terjadi sebelum pengguna melihat apa pun — bukan
+  // di tengah aliran jawaban. Kalau database mati, hasilnya array kosong dan
+  // perilakunya sama seperti sebelum fitur konteks ada.
+  const riwayat = await konteksSesi(idSesi)
 
   res.set({
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -781,7 +909,7 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
       kirim('sumber', { hasil: ringkasBerita(berita) })
 
       kirim('status', { pesan: 'Menyiapkan jawaban…' })
-      const p = promptBerita({ pertanyaan, tingkat, berita, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
+      const p = promptBerita({ pertanyaan, tingkat, berita, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal, riwayat })
       const ekstrakBerita = buatEkstrak('jawaban')
 
       const hasilBerita = await chatStream({
@@ -827,12 +955,15 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
       }
 
       kirim('hasil', { ...finalBerita, berita: true, hasilCari: ringkasBerita(berita), usage: usageBerita })
+      catatKonteks(idSesi, 'pengguna', pertanyaan)
+      catatKonteks(idSesi, 'aplikasi', finalBerita.jawaban)
       res.write('event: selesai\ndata: {}\n\n')
       return
     }
 
     // Obrolan biasa: langsung jawab tanpa mencari dan tanpa daftar sumber.
-    if (deteksiSantai(pertanyaan)) {
+    // KECUALI pertanyaan lanjutan — lihat penjelasan di /api/tanya.
+    if (deteksiSantai(pertanyaan) && !pertanyaanLanjutan(pertanyaan, false)) {
       kirim('status', { pesan: 'Menyiapkan jawaban…' })
       const ps = promptSantai({ pertanyaan, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
       const ekstrakSantai = buatEkstrak('jawaban')
@@ -865,18 +996,35 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
             tingkat,
           )
       kirim('hasil', { ...santaiFinal, santai: true, hasilCari: [], usage: h.usage })
+      catatKonteks(idSesi, 'pengguna', pertanyaan)
+      catatKonteks(idSesi, 'aplikasi', santaiFinal.jawaban)
       res.write('event: selesai\ndata: {}\n\n')
       return
     }
 
     // 1) cari di internet dulu
+    //
+    // Bahan pencarian memakai TOPIK TERAKHIR kalau pertanyaannya tidak
+    // menyebut topiknya sendiri — lihat penjelasan di /api/tanya.
+    const topik = pertanyaanLanjutan(pertanyaan, Boolean(istilahKesehatan(pertanyaan)))
+      ? topikTerakhir(riwayat)
+      : ''
+    const bahanCari = topik || pertanyaan
+
     kirim('status', { pesan: 'Mencari sumber terpercaya…' })
-    const { hasil: hasilCari } = await cariDenganCadangan(pertanyaan)
+    const { hasil: hasilCari } = await cariDenganCadangan(bahanCari)
     kirim('sumber', { hasil: ringkasHasilCari(hasilCari) })
 
     // 2) baru minta model menyusun jawaban dari hasil itu
     kirim('status', { pesan: 'Menyiapkan jawaban…' })
-    const p = promptTanyaDenganCari({ pertanyaan, tingkat, hasilCari, bahasa: bhs.nama, kodeAsal: bhs.kodeAsal })
+    const p = promptTanyaDenganCari({
+      pertanyaan,
+      tingkat,
+      hasilCari,
+      bahasa: bhs.nama,
+      kodeAsal: bhs.kodeAsal,
+      riwayat,
+    })
 
     // hanya alirkan isi field "jawaban", bukan JSON mentahnya
     const ekstrak = buatEkstrak('jawaban')
@@ -912,6 +1060,8 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
     }
 
     kirim('hasil', { ...final, hasilCari: ringkasHasilCari(hasilCari), usage: usageFinal })
+    catatKonteks(idSesi, 'pengguna', pertanyaan)
+    catatKonteks(idSesi, 'aplikasi', final.jawaban)
     res.write('event: selesai\ndata: {}\n\n')
     catatSumberDikutip('tanya', final.sumber).catch(() => null)
   } catch (e) {
