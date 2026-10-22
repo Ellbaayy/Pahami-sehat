@@ -501,7 +501,7 @@ export default function App() {
       if (modeKirim === 'sederhanakan') {
         setStatusPesan(t('sed.proses'))
         jalan = sederhanakan(
-          { teks: text, tingkat: settings.level, bahasa: kodeBahasa },
+          { teks: text, tingkat: settings.level, bahasa: kodeBahasa, idSesi },
           ac.signal,
         ).then((h) => {
           catatHasil(h)
@@ -510,7 +510,7 @@ export default function App() {
       } else {
         setStatusPesan(t('tanya.menyiapkan'))
         jalan = tanyaStream(
-          { pertanyaan: text, tingkat: settings.level, bahasa: kodeBahasa },
+          { pertanyaan: text, tingkat: settings.level, bahasa: kodeBahasa, idSesi },
           {
             signal: ac.signal,
             onStatus: (p) => setStatusPesan(terjemahkanStatus(p)),

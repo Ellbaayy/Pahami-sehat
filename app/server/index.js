@@ -22,7 +22,7 @@ import { config, safeInfo } from './config.js'
 import { pasangKepala } from './kepala.js'
 import { pasangSaji, pasang404Api, sajikanFolder } from './saji.js'
 import rute from './rute.js'
-import { keteranganDb, tutupDb } from './db.js'
+import { keteranganDb, tutupDb, bersihkanPercakapan } from './db.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
@@ -165,6 +165,28 @@ if (dijalankanLangsung) {
     const dbInfo = await keteranganDb().catch(() => ({ aktif: false, alasan: 'gagal diperiksa' }))
     console.log(`  database: ${dbInfo.aktif ? `tersambung (${dbInfo.database}@${dbInfo.host}:${dbInfo.port})` : `TIDAK AKTIF — ${dbInfo.alasan}`}`)
     console.log(`  alamat  : ${existsSync(APP_DIST) ? `http://127.0.0.1:${config.port}/app/` : 'belum dibuild'}\n`)
+
+    /*
+     * Bersihkan percakapan lama — SEKALI SAAT MULAI, lalu berkala.
+     *
+     * Percakapan hanya dipakai sebagai konteks beberapa giliran terakhir, jadi
+     * menyimpannya lebih lama tidak berguna dan hanya menambah risiko. Tabel
+     * `percakapan` karena itu dipangkas setiap 6 jam.
+     *
+     * Kenapa TIDAK di-`await`: aplikasi harus siap menerima permintaan walau
+     * pembersihan ini lambat atau database sedang sibuk. Kenapa `unref()`:
+     * timer ini tidak boleh menahan proses tetap hidup saat server dimatikan.
+     */
+    const pangkas = () => {
+      bersihkanPercakapan()
+        .then((n) => {
+          if (n) console.log(`  percakapan lama dibersihkan: ${n} baris`)
+        })
+        .catch(() => null)
+    }
+    pangkas()
+    const pembersih = setInterval(pangkas, 6 * 60 * 60 * 1000)
+    pembersih.unref?.()
   })
 
   /**

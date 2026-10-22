@@ -848,12 +848,13 @@
     <div class="grid-2">
       <article class="card reveal">
         <h3>1 · Privasi — data apa yang keluar dari perangkat</h3>
-        <p style="margin-top:.6rem">Aplikasi ini tidak punya akun dan tidak meminta identitas siapa pun, serta tidak menyimpan percakapan di server. Yang perlu diketahui pengguna adalah <strong>data mana yang pergi ke mana</strong>:</p>
+        <p style="margin-top:.6rem">Aplikasi ini tidak punya akun dan tidak meminta identitas siapa pun. Yang perlu diketahui pengguna adalah <strong>data mana yang pergi ke mana</strong>:</p>
         <ul class="f-list" style="margin-top:.9rem">
           <li><strong>Foto yang dipindai</strong> — dibaca di peramban memakai mesin WebAssembly yang disajikan situs ini sendiri, bukan dari CDN. Tidak ada permintaan keluar sama sekali.</li>
           <li><strong>Jawaban kuesioner</strong> — dihitung di peramban. Tidak pernah dikirim ke server, karena aplikasi ini tidak punya tempat menyimpannya.</li>
           <li><strong>Riwayat obrolan</strong> — tersimpan di <code>localStorage</code> peramban sendiri, dan bisa dihapus satu per satu atau sekaligus.</li>
           <li><strong>Teks yang benar-benar ditanyakan</strong> — hanya ini yang dikirim ke server, karena AI-nya memang perlu membacanya.</li>
+          <li><strong>Konteks percakapan</strong> — supaya pertanyaan lanjutan tidak kehilangan topiknya, teks pertanyaan dan jawaban terakhir disimpan di server aplikasi ini <strong>tanpa nama, tanpa alamat IP, dan tanpa akun</strong>, lalu <strong>dihapus otomatis setelah 7 hari</strong>. Tidak ada yang menautkannya ke orang tertentu.</li>
         </ul>
         <p class="note-box">Batas yang jujur disebut: teks pertanyaan <strong>diproses oleh layanan model AI pihak ketiga</strong>. Jadi pengguna sebaiknya tidak menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah di dalam pertanyaan. Peringatan ini juga tampil di dalam aplikasi.</p>
       </article>

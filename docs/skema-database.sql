@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS pengetahuan (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------
--- 7. TIDAK ADA TABEL AKUN / SESI
+-- 7. TIDAK ADA TABEL AKUN
 --    Aplikasi ini tidak punya akun, tidak punya halaman masuk, dan tidak
 --    menyimpan identitas siapa pun. Riwayat obrolan, jawaban kuesioner, dan
 --    setelan tinggal di localStorage peramban pengguna.
@@ -151,14 +151,44 @@ CREATE TABLE IF NOT EXISTS pengetahuan (
 --    Kalau database di komputer ini masih menyimpannya dari pemasangan
 --    sebelumnya, ketiga perintah di bawah membersihkannya. Aman dijalankan
 --    berulang kali; tidak menyentuh tabel bahan (sumber, dokumen, sitasi,
---    konten, berita, pengetahuan).
+--    konten, berita, pengetahuan) MAUPUN tabel percakapan di nomor 8.
 -- ---------------------------------------------------------------------------
 DROP TABLE IF EXISTS riwayat;
 DROP TABLE IF EXISTS setelan;
 DROP TABLE IF EXISTS pengguna;
 
 -- ---------------------------------------------------------------------------
--- 8. ISI AWAL — daftar sumber resmi (dari cari.js)
+-- 8. PERCAKAPAN — konteks untuk pertanyaan lanjutan
+--    ⚠️  TABEL INI MEMUAT TEKS YANG DIKETIK PENGGUNA. Baca batasnya dulu.
+--
+--    KENAPA ADA: tanpa konteks, pertanyaan lanjutan seperti "terus gimana
+--    udah terlanjur nih" dicari dengan kata kuncinya sendiri, tidak menemukan
+--    sumber, dan dijawab generik — percakapan terasa tidak nyambung.
+--
+--    BATAS YANG DISENGAJA:
+--      - HANYA teks giliran percakapan. Tidak ada nama, tidak ada alamat IP,
+--        tidak ada sidik peramban, tidak ada akun.
+--      - `id_sesi` adalah tanda pengenal ACAK yang dibuat peramban pengguna
+--        sendiri, bukan identitas orang.
+--      - UMURNYA PENDEK: baris lebih tua dari 7 hari dihapus oleh
+--        `bersihkanPercakapan()` di db.js. Ini konteks, bukan arsip.
+--      - TIDAK ADA kolom `kedaluwarsa` di sini, dan itu bukan kelalaian:
+--        aturan `kedaluwarsa` berlaku untuk INFORMASI MEDIS yang bisa basi.
+--        Percakapan bukan bahan medis — ia hanya dipakai sebagai konteks
+--        percakapan, dan jawaban tetap disusun dari sumber yang diambil segar.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS percakapan (
+  id        BIGINT AUTO_INCREMENT PRIMARY KEY,
+  id_sesi   VARCHAR(64)  NOT NULL,
+  peran     ENUM('pengguna','aplikasi') NOT NULL,
+  teks      MEDIUMTEXT   NOT NULL,
+  dibuat    DATETIME     NOT NULL,
+  KEY idx_percakapan_sesi (id_sesi, id),
+  KEY idx_percakapan_dibuat (dibuat)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- 9. ISI AWAL — daftar sumber resmi (dari cari.js)
 -- ---------------------------------------------------------------------------
 INSERT INTO sumber (domain, nama, jenis, resmi) VALUES
   ('kemkes.go.id',                'Kementerian Kesehatan RI',       'pemerintah', 1),
