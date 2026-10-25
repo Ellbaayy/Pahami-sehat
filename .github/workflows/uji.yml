@@ -30,9 +30,19 @@ jobs:
     name: Uji tanpa jaringan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # v7, bukan v4 (dinaikkan 25 Okt 2026). Runner sudah menandai v4 karena
+      # masih menargetkan Node 20 yang deprecated, dan memaksanya jalan di
+      # Node 24 — peringatan itu akan berubah jadi kegagalan suatu hari.
+      # Diperiksa sebelum naik: `using: node24` di kedua action, dan semua
+      # input yang dipakai di bawah (node-version, cache, cache-dependency-path)
+      # masih ada di action.yml v7.
+      #
+      # `package-manager-cache` di setup-node v7 menyala otomatis HANYA kalau
+      # package.json punya `packageManager`/`devEngines` — `app/package.json`
+      # tidak punya keduanya, jadi tidak ada cache ganda dengan `cache: npm`.
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
