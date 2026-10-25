@@ -14,6 +14,32 @@ const TINTS = {
 
 const ICONS = { Literasi: FileText, Vaksinasi: Syringe, Gizi: Utensils }
 
+/**
+ * Tanggal terbit artikel, dari sumber Kemenkes apa adanya.
+ *
+ * KENAPA INI PENTING (25 Okt 2026): sumbernya sudah lama tidak menerbitkan
+ * apa pun — artikel termuda saat itu terbit 05 May 2026, tertua 24 Nov 2023.
+ * Tanpa tanggal, pembaca mengira semuanya baru. Dengan tanggal, kebaruannya
+ * bisa diperiksa sendiri, dan aplikasi tidak perlu mengaku-aku.
+ *
+ * `tanggalTerbitISO` null = sumbernya tidak mencantumkan tanggal. Dalam hal itu
+ * TIDAK ditampilkan apa-apa — bukan tanggal hari ini, bukan tanggal pengambilan.
+ */
+function TanggalTerbit({ article, t, className }) {
+  if (!article.tanggalTerbitISO) return null
+  const lokal = t('umum.kodeLokal') === 'en-US' ? 'en-US' : 'id-ID'
+  const teks = new Date(article.tanggalTerbitISO).toLocaleDateString(lokal, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  return (
+    <time dateTime={article.tanggalTerbitISO} className={className}>
+      {teks}
+    </time>
+  )
+}
+
 function ArticleCard({ article, t, ringkas = false }) {
   const [open, setOpen] = useState(false)
   const Icon = ICONS[article.category] ?? FileText
@@ -38,6 +64,11 @@ function ArticleCard({ article, t, ringkas = false }) {
           <p className="mt-0.5 line-clamp-1 text-[0.82rem] leading-snug text-navy-500">
             {article.excerpt}
           </p>
+          <TanggalTerbit
+            article={article}
+            t={t}
+            className="mt-0.5 block text-[0.78rem] font-medium text-muted-500"
+          />
         </div>
         <span className="inline-flex shrink-0 items-center gap-1.5 text-[0.82rem] font-medium text-muted-500">
           <Clock className="size-3.5" aria-hidden="true" />
@@ -122,6 +153,11 @@ function ArticleCard({ article, t, ringkas = false }) {
       </div>
 
       <div className="flex flex-1 flex-col p-[clamp(0.9rem,0.8rem+0.4vw,1.25rem)]">
+        <TanggalTerbit
+          article={article}
+          t={t}
+          className="mb-1 block text-[0.78rem] font-medium text-muted-500"
+        />
         <h3 className="text-[clamp(0.98rem,0.94rem+0.2vw,1.08rem)] leading-snug font-bold text-navy-900 transition-colors group-hover:text-brand-700">
           {article.title}
         </h3>

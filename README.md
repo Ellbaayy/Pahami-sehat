@@ -833,6 +833,7 @@ node uji-bahasa.mjs       # kesehatan kamus id/en (kunci seimbang, tak menganggu
 node uji-berita.mjs       # deteksi berita, parser RSS, penetrasi
 node uji-jam.mjs          # jam acuan dari header internet
 node uji-rotasi.mjs       # rotasi daftar konten harian
+node uji-tanggal-konten.mjs  # tanggal terbit: parser, urutan, jendela rotasi
 node uji-keterbacaan.mjs  # alat ukur keterbacaan itu sendiri
 node uji-sumber.mjs       # lapis sumber (tanpa jaringan)
 node uji-suara.mjs        # ejaan singkatan & kestabilan nada
@@ -1134,7 +1135,10 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
 | Kendali | Di mana | Angka |
 |---|---|---|
 | Cache konten kesehatan | `app/server/konten.js` (`BERLAKU_MS`) | 24 jam sekali sehari |
-| Rotasi daftar konten | `app/server/konten.js` (`susun()`, `geser`) | urutan bergeser supaya artikel yang tampil tidak itu-itu saja |
+| Rotasi daftar konten | `app/server/konten.js` (`susun()`, `geser`, `JENDELA_ROTASI`) | urutan bergeser supaya artikel yang tampil tidak itu-itu saja — **tapi hanya di dalam 8 artikel terbaru**; artikel di luar jendela tidak pernah dipamerkan sebagai bacaan utama |
+| Urutan artikel | `app/server/konten.js` (`urutkanTerbaru()`) | diurutkan menurut tanggal terbit dari sumber, terbaru dulu, SEBELUM diputar |
+| Tanggal terbit artikel | `app/server/konten.js` (`bacaTanggalTerbit()`) | dibaca dari `itemprop="datePublished"` di halaman artikel; `null` kalau sumber tidak mencantumkan — tidak pernah ditebak |
+| Ambang bentuk simpanan | `app/server/konten.js` (`VERSI_BENTUK`) | naikkan kalau bentuk data artikel berubah, supaya artikel lama diambil ulang |
 | Batas pengambilan artikel | `app/server/konten.js` (`MAKS_DETAIL`) | 8, dari yang tadinya bisa sampai 40 |
 | Pembatas laju per IP | `app/server/batasInput.js` (`LAJU`) | 20 permintaan/menit (health/meta/berita 120) |
 | Simpanan hasil health | `batasInput.js` (`SIMPANAN_HEALTH_MS`) | 15 detik |
@@ -1271,6 +1275,54 @@ Disebut di sini supaya tidak ada yang mengira lebih dari kenyataannya:
 - Angka akurasi OCR berasal dari tiga foto uji, bukan pengukuran besar.
 - Belum ada uji otomatis untuk mesin OCR, pengenalan suara, pemutaran suara,
   papan klip, dan tampilan mode Inggris — semuanya masih diuji manual.
+
+### Konten harian: setua apa isinya, dan kenapa
+
+**Sumbernya tidak menerbitkan artikel baru.** Diukur 25 Okt 2026 dari
+`itemprop="datePublished"` setiap halaman artikel di halaman depan
+ayosehat.kemkes.go.id:
+
+| Tanggal terbit | Umur saat diukur | Artikel |
+|---|---|---|
+| 05 May 2026 | 173 hari | Cara Membaca Label Gizi Pada Kemasan |
+| 24 Jun 2025 | 488 hari | Diabetes Ancaman Nyata Generasi Muda |
+| 13 Oct 2024 | 742 hari | Kesehatan Jiwa |
+| 28 May 2024 | 880 hari | Rokok Membuat Hidup Jadi Redup |
+| 22 May 2024 | 886 hari | Cegah Stunting · Pemeriksaan Penunjang Kardiovaskular |
+| 16 May 2024 | 892 hari | Apa itu Malaria |
+| 02 May 2024 | 906 hari | Cara Menjaga Kesehatan Jantung |
+| 06 Apr 2024 | 932 hari | Gangguan Kesehatan Mental |
+| 24 Nov 2023 | 1066 hari | Manfaat Ajaib Menyusui Bayi |
+| *(tidak dicantumkan)* | — | Perangkat Ajar Kesehatan |
+
+**Artikel termuda pun 173 hari.** Karena itu aplikasi ini tidak pernah mengaku
+punya berita baru — yang dilakukannya adalah **menampilkan tanggal terbit
+aslinya** di setiap kartu artikel, supaya pembaca bisa menilai sendiri.
+
+Tiga cacat yang ditemukan dan diperbaiki 25 Okt 2026:
+
+1. **Label "Diperbarui 12 Oktober 2026" menyesatkan.** Tanggal itu adalah kapan
+   DAFTAR artikel dari sumber pertama kali berubah (sidik isi), bukan tanggal
+   terbit apa pun. Sekarang labelnya berbunyi *"Artikel terbaru terbit 5 Mei
+   2026 · Terakhir dicek 25 Oktober 2026 · konten ditarik 12 Oktober 2026"* —
+   tiga hal berbeda, disebut berbeda.
+2. **Tanggal terbit tidak pernah diambil.** `isiArtikel()` membuangnya, jadi
+   urutan tampil tidak punya hubungan dengan kebaruan: artikel 2025 bisa berada
+   di atas artikel 2026. Sekarang `bacaTanggalTerbit()` mengambilnya dari
+   `itemprop="datePublished"` (tidak ada `<time>`, tidak ada
+   `article:published_time` — itu satu-satunya penanda yang tersedia).
+3. **Rotasi bisa mengangkat artikel 2023 ke depan.** Diukur: dengan 9 artikel,
+   `geser` 6–8 menaruh artikel 2023 dan 2024 di baris pertama. Sekarang
+   `susun()` mengurutkan menurut tanggal **lebih dulu**, lalu memutar hanya di
+   dalam `JENDELA_ROTASI` (8 artikel terbaru). Diuji 40 putaran: artikel 2023
+   tidak pernah tampil sama sekali.
+
+**Batas yang diakui:** aplikasi ini **tidak bisa** menampilkan konten yang
+terbit hari ini, karena sumbernya tidak menerbitkan apa pun sejak 5 Mei 2026.
+Jalur lain sudah dicoba dan gagal: `/artikel` dan `/berita` (fetch gagal),
+`/rss` (200 tapi `<item>` = 0, isinya HTML biasa), `/feed` (fetch gagal),
+`kemkes.go.id/berita` (404), `sehatnegeriku.kemkes.go.id/feed/` (fetch gagal),
+`upk.kemkes.go.id/new/feed/` (403).
 
 ---
 

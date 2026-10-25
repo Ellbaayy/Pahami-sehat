@@ -112,7 +112,19 @@ cek('string 100rb karakter cepat (<1s)', (() => {
 
 console.log('== parseRss — feed jahat / tidak wajar:')
 const feed = (items) => `<?xml version="1.0"?><rss><channel>${items}</channel></rss>`
-const item = (j, l, d = '', tgl = 'Thu, 15 Oct 2026 08:00:00 GMT') =>
+/*
+ * Tanggal item HARUS relatif terhadap sekarang, bukan tanggal tetap.
+ *
+ * KENAPA (25 Okt 2026): dulu di sini tertulis `Thu, 15 Oct 2026`. Begitu tanggal
+ * itu lebih tua dari MAKS_HARI (7) di berita.js, SEMUA item tersaring sebelum
+ * diperiksa dan 7 pemeriksaan gagal sekaligus — padahal parser-nya benar. Uji
+ * yang bergantung pada "hari ini" adalah bom waktu: ia hijau saat ditulis lalu
+ * merah sendiri tanpa ada kode yang berubah.
+ *
+ * Satu jam lalu dipakai supaya tetap segar walau uji dijalankan tengah malam.
+ */
+const satuJamLalu = new Date(Date.now() - 3600 * 1000).toUTCString()
+const item = (j, l, d = '', tgl = satuJamLalu) =>
   `<item><title>${j}</title><link>${l}</link><pubDate>${tgl}</pubDate><description>${d}</description></item>`
 
 // injeksi prompt lewat judul & deskripsi — harus lolos parse utuh sebagai DATA

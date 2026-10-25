@@ -271,6 +271,7 @@ export default function App() {
     dariServer: false,
     diperbarui: null,
     diperiksa: null,
+    tanggalArtikelTerbaru: null,
   })
 
   useEffect(() => {
@@ -285,6 +286,7 @@ export default function App() {
           dariServer: true,
           diperbarui: d.diperbarui ?? null,
           diperiksa: d.diperiksa ?? null,
+          tanggalArtikelTerbaru: d.tanggalArtikelTerbaru ?? null,
         })
       })
       .catch(() => {
@@ -344,7 +346,17 @@ export default function App() {
       id: 'konten',
       jenis: 'konten',
       judul: t('notif.kontenJudul'),
-      isi: t('notif.kontenIsi'),
+      // `konten.diperbarui` = kapan DAFTAR artikel berubah, BUKAN tanggal
+      // terbit. Isi notifikasinya harus menyebut tanggal terbit artikel
+      // terbaru supaya tidak terbaca sebagai "ada tulisan baru hari ini".
+      isi: konten.tanggalArtikelTerbaru
+        ? t('notif.kontenIsiTerbit', {
+            tanggal: new Date(konten.tanggalArtikelTerbaru).toLocaleDateString(
+              t('umum.kodeLokal'),
+              { day: 'numeric', month: 'long', year: 'numeric' },
+            ),
+          })
+        : t('notif.kontenIsi'),
       // tanggal mengikuti bahasa antarmuka, bukan selalu Indonesia
       waktu: new Date(konten.diperbarui).toLocaleDateString(t('umum.kodeLokal'), {
         day: 'numeric',
@@ -804,6 +816,7 @@ export default function App() {
                   onSelect={handleTopic}
                   diperbarui={konten.diperbarui}
                   diperiksa={konten.diperiksa}
+                  tanggalArtikelTerbaru={konten.tanggalArtikelTerbaru}
                   t={t}
                 />
                 <HealthTip tip={konten.tips} t={t} />
