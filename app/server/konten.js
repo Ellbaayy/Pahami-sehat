@@ -86,6 +86,23 @@ const MAKS_POOL = 40 // batas artikel yang disimpan di simpanan
  */
 const MAKS_DETAIL = 8
 
+/**
+ * Naikkan angka ini kalau BENTUK data artikel berubah, supaya isi simpanan
+ * lama diambil ulang.
+ *
+ * KENAPA PERLU: `kontenHarian()` hanya mengambil isi artikel yang belum punya
+ * `ringkas`/`tubuh` (lihat `if (d.ringkas || d.tubuh) return`). Jadi artikel
+ * yang sudah tersimpan TIDAK PERNAH diambil ulang — dan kolom baru yang
+ * ditambahkan belakangan akan selamanya kosong pada artikel lama.
+ *
+ * Sudah terjadi 25 Okt 2026: `tanggalTerbit` ditambahkan, tapi seluruh pool
+ * di cache masih dari bentuk lama, sehingga tanggalnya kosong semua padahal
+ * datanya ada di sumber. Menaikkan versi ini memaksa satu pengambilan ulang
+ * penuh, sekali, saat build/instance baru mulai.
+ */
+const VERSI_BENTUK = 2
+
+
 /* ------------------------------------------------------------------ util -- */
 
 async function ambil(url, timeoutMs = 15000) {
@@ -111,6 +128,105 @@ function buangTag(s) {
     .replace(/&gt;/g, '>')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+/* --------------------------------------------------------- tanggal terbit -- */
+
+/**
+ * Nama bulan yang dipakai halaman Kemenkes. Campur: ada yang bahasa Indonesia
+ * ("Desember", "Mei") dan ada yang Inggris ("May", "Oct"). Dua-duanya harus
+ * dikenali — sumbernya tidak konsisten, dan menebak satu bahasa saja membuat
+ * sebagian tanggal hilang tanpa galat apa pun.
+ */
+const BULAN = {
+  jan: 0, januari: 0, january: 0,
+  feb: 1, februari: 1, february: 1,
+  mar: 2, maret: 2, march: 2,
+  apr: 3, april: 3,
+  mei: 4, may: 4,
+  jun: 5, juni: 5, june: 5,
+  jul: 6, juli: 6, july: 6,
+  agu: 7, ags: 7, agustus: 7, aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  okt: 9, oktober: 9, oct: 9, october: 9,
+  nov: 10, november: 10,
+  des: 11, desember: 11, dec: 11, december: 11,
+}
+
+/**
+ * Baca tanggal terbit dari HTML satu halaman artikel Kemenkes.
+ *
+ * Sumbernya menulis tanggal dalam `<div itemprop="datePublished">24 Jun 2025</div>`
+ * — hanya ADA di halaman artikel, tidak di halaman depan, dan tidak ada
+ * `<time>` maupun `article:published_time`. Jadi satu-satunya jalan adalah
+ * penanda microdata itu.
+ *
+ * KENAPA HARUS DIAMBIL (25 Okt 2026): sebelumnya `isiArtikel()` membuang
+ * tanggal sepenuhnya, sehingga `susun()` hanya bisa mengurutkan menurut urutan
+ * halaman depan. Akibatnya artikel terbit 2025 bisa tampil di atas artikel
+ * terbit 2026 — urutan tampil tidak punya hubungan dengan kebaruan, dan tidak
+ * ada cara bagi pengguna untuk tahu artikelnya setua apa.
+ *
+ * @returns {{ tanggalTerbit: string|null, tanggalTerbitISO: string|null }}
+ *   `tanggalTerbit` = teks asli sumber apa adanya (jangan dirapikan — itu bukti).
+ *   `tanggalTerbitISO` = 'YYYY-MM-DD' untuk mengurutkan, atau null.
+ *   Kalau tidak ada/ tidak terbaca: dua-duanya null. TIDAK ditebak, TIDAK diisi
+ *   tanggal hari ini — artikel tanpa tanggal harus terlihat tanpa tanggal.
+ */
+export function bacaTanggalTerbit(html) {
+  const mentah = String(html ?? '')
+  const cocok = /itemprop="datePublished"[^>]*>([^<]{4,40})</i.exec(mentah)
+  const teks = cocok?.[1]?.trim() ?? ''
+  if (!teks) return { tanggalTerbit: null, tanggalTerbitISO: null }
+
+  const bagian = /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/.exec(teks)
+  if (!bagian) return { tanggalTerbit: teks, tanggalTerbitISO: null }
+
+  const hari = Number(bagian[1])
+  const bulan = BULAN[bagian[2].toLowerCase()]
+  const tahun = Number(bagian[3])
+
+  // Tolak yang tidak masuk akal: bulan tak dikenal, hari di luar 1-31, atau
+  // tahun di luar rentang yang mungkin untuk situs ini. Tanggal ngawur yang
+  // lolos akan MERUSAK URUTAN seluruh daftar, bukan cuma satu kartu.
+  if (bulan === undefined || hari < 1 || hari > 31 || tahun < 2000 || tahun > 2100) {
+    return { tanggalTerbit: teks, tanggalTerbitISO: null }
+  }
+
+  const d = new Date(Date.UTC(tahun, bulan, hari))
+  // Tanggal yang "meluap" (mis. 31 Feb) digeser otomatis oleh Date — tolak.
+  if (d.getUTCDate() !== hari || d.getUTCMonth() !== bulan) {
+    return { tanggalTerbit: teks, tanggalTerbitISO: null }
+  }
+
+  const iso = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(hari).padStart(2, '0')}`
+  return { tanggalTerbit: teks, tanggalTerbitISO: iso }
+}
+
+/**
+ * Urutkan artikel dari yang TERBARU diterbitkan.
+ *
+ * Aturan yang disengaja:
+ *   - Artikel bertanggal selalu di depan artikel tanpa tanggal. Tanpa tanggal
+ *     bukan berarti baru; menaruhnya di depan akan mengangkat artikel yang
+ *     umurnya tidak diketahui ke atas artikel yang terbukti baru.
+ *   - Artikel tanpa tanggal tetap dipertahankan (tidak dibuang) dan diurutkan
+ *     menurut urutan aslinya dari halaman depan — supaya hasilnya stabil,
+ *     bukan acak setiap kali dipanggil.
+ *   - TIDAK memakai `Array.prototype.sort` bawaan untuk objek: pembandingnya
+ *     harus total, kalau tidak urutannya berbeda antar mesin.
+ */
+export function urutkanTerbaru(pool = []) {
+  const berIndex = pool.map((d, i) => ({ d, i }))
+  berIndex.sort((a, b) => {
+    const ta = a.d.tanggalTerbitISO ?? null
+    const tb = b.d.tanggalTerbitISO ?? null
+    if (ta && tb && ta !== tb) return ta < tb ? 1 : -1 // ISO: urut teks = urut waktu
+    if (ta && !tb) return -1
+    if (!ta && tb) return 1
+    return a.i - b.i // dua-duanya tanpa tanggal: pertahankan urutan sumber
+  })
+  return berIndex.map((x) => x.d)
 }
 
 /* ------------------------------------------------------------- sidik jari -- */
@@ -279,6 +395,10 @@ async function isiArtikel(item) {
     ringkas: potongKalimat(ringkas, 260),
     tubuh: potongKalimat(gabung, 900),
     gambar,
+    // Tanggal terbit ASLI dari halaman sumber. Tidak dirapikan dan tidak
+    // ditebak: kalau halamannya tidak mencantumkan, hasilnya null dan
+    // antarmuka tidak menampilkan apa-apa (lihat `bacaTanggalTerbit`).
+    ...bacaTanggalTerbit(html),
   }
 }
 
@@ -314,12 +434,41 @@ function gabungPool(lama = [], baru = []) {
  * halaman tetap jujur. `geser` disimpan di simpanan supaya putarannya
  * berlanjut, bukan mengulang dari awal setiap instance baru.
  */
+/**
+ * Berapa artikel TERBARU yang ikut diputar.
+ *
+ * KENAPA ADA BATASNYA (25 Okt 2026). Rotasi tanpa batas memutar SELURUH pool,
+ * jadi cepat atau lambat artikel terbit 2023 akan sampai ke depan — dan itu
+ * persis cacat yang dilaporkan jagi: "pas dicek di sumbernya malah 2025".
+ * Diukur: dengan 9 artikel, `geser` 6-8 menaruh artikel 2023 dan 2024 di depan.
+ *
+ * Dengan jendela 8, rotasi hanya memilih "mulai dari mana" di antara artikel
+ * TERBARU. Artikel di luar jendela tetap tersimpan di pool dan tetap muncul
+ * begitu ada artikel baru yang mendorongnya masuk — tapi tidak akan pernah
+ * dipamerkan sebagai bacaan utama hanya karena putaran kebetulan sampai ke situ.
+ *
+ * Angka 8 dipilih karena `susun()` memakai paling banyak 5 topik + 4 artikel +
+ * 1 calon tips, jadi jendela ini selalu cukup untuk mengisi seluruh tampilan.
+ */
+const JENDELA_ROTASI = 8
+
 export function susun(pool, geser = 0) {
   const dasar = pool.filter((d) => d.ringkas || d.tubuh)
+  // URUTKAN DULU menurut tanggal terbit, baru diputar.
+  //
+  // KENAPA URUTAN INI PENTING (25 Okt 2026): rotasi dulu bekerja langsung di
+  // atas urutan halaman depan Kemenkes, yang TIDAK mencerminkan kebaruan —
+  // terbukti artikel terbit 05 May 2026 (termuda, 173 hari) bisa berada di
+  // belakang artikel terbit 24 Jun 2025. Dengan mengurutkan lebih dulu,
+  // `geser` hanya memilih "mulai dari mana" di dalam daftar yang sudah benar
+  // urutannya; ia tidak bisa lagi mengangkat artikel tua ke atas yang baru.
+  const urut = urutkanTerbaru(dasar)
+  // Batasi ke jendela artikel terbaru SEBELUM diputar — lihat JENDELA_ROTASI.
+  const jendela = urut.slice(0, JENDELA_ROTASI)
   // Putar daftarnya. Modulo supaya `geser` boleh membesar tanpa batas.
-  const n = dasar.length
+  const n = jendela.length
   const k = n ? ((geser % n) + n) % n : 0
-  const siap = k ? [...dasar.slice(k), ...dasar.slice(0, k)] : dasar
+  const siap = k ? [...jendela.slice(k), ...jendela.slice(0, k)] : jendela
 
   const topik = siap.slice(0, 5).map((d) => ({
     id: d.slug,
@@ -340,6 +489,11 @@ export function susun(pool, geser = 0) {
       url: d.url,
       gambar: d.gambar || '',
       readTime: waktuBaca(d.tubuh || d.ringkas),
+      // Tanggal terbit dari sumber, diteruskan apa adanya. `null` kalau
+      // halamannya tidak mencantumkan — antarmuka lalu tidak menampilkan
+      // tanggal sama sekali, bukan menampilkan tanggal pengambilan.
+      tanggalTerbit: d.tanggalTerbit ?? null,
+      tanggalTerbitISO: d.tanggalTerbitISO ?? null,
     }
   })
 
@@ -512,8 +666,22 @@ export async function kontenHarian({ paksa = false } = {}) {
       if (!daftar.length) throw new Error('daftar artikel kosong')
       const sidikBaru = buatSidik(daftar)
 
+      // Bentuk simpanan berubah (lihat VERSI_BENTUK): artikel lama harus
+      // diambil ULANG, karena `if (d.ringkas || d.tubuh) return` di bawah
+      // membuat kolom baru selamanya kosong pada artikel yang sudah tersimpan.
+      const bentukLama = (diMemori?.versiBentuk ?? 1) !== VERSI_BENTUK
+      const poolAwal = bentukLama
+        ? (diMemori?.pool ?? []).map((d) => ({
+            ...d,
+            // Buang isi supaya benar-benar diambil ulang — bukan cuma
+            // tanggalnya yang kosong, isinya pun bisa ikut berubah bentuk.
+            ringkas: undefined,
+            tubuh: undefined,
+          }))
+        : (diMemori?.pool ?? [])
+
       // 3) Ada Informasi Terbaru?
-      if (diMemori && sidikBaru === diMemori.sidik) {
+      if (diMemori && sidikBaru === diMemori.sidik && !bentukLama) {
         // Tidak -> ISI-nya jangan diubah, dan `diperbarui` TETAP (halaman tidak
         // boleh berpura-pura ada pembaruan). Tapi daftar yang TAMPIL diputar
         // satu langkah, supaya tidak menampilkan lima artikel yang sama
@@ -526,6 +694,7 @@ export async function kontenHarian({ paksa = false } = {}) {
           ...diMemori,
           ...susun(diMemori.pool ?? [], geser),
           geser,
+          versiBentuk: VERSI_BENTUK,
           diperiksa: sekarangISO(),
           berikutnya: besokISO(),
         }
@@ -542,36 +711,52 @@ export async function kontenHarian({ paksa = false } = {}) {
       // 4) Ya -> Update Informasi.
       //    Hanya artikel yang belum punya detail yang perlu diambil, dan
       //    jumlahnya dibatasi MAKS_DETAIL (lihat catatan di atas konstanta itu).
-      const pool = gabungPool(diMemori?.pool ?? [], daftar)
-      // Penghitung dinaikkan SESUDAH slotnya benar-benar terpakai. Sebelumnya
-      // dinaikkan sebelum `isiArtikel()` dipanggil, sehingga artikel yang
-      // GAGAL diambil tetap menghabiskan jatah — dan artikel di bawahnya tidak
-      // pernah dicoba sama sekali pada tarikan itu. Akibatnya artikel baru bisa
-      // tertahan di belakang artikel yang isinya tidak pernah berhasil diambil.
-      let terpakai = 0
-      await Promise.all(
-        pool.map(async (d) => {
-          if (d.ringkas || d.tubuh) return
-          if (terpakai >= MAKS_DETAIL) return
-          terpakai += 1
-          try {
-            Object.assign(d, await isiArtikel(d))
-          } catch {
-            // Gagal: kembalikan jatahnya supaya artikel berikutnya tetap dicoba.
-            terpakai -= 1
-          }
-        }),
-      )
+      const pool = gabungPool(poolAwal, daftar)
+      // Jatah detail dikelola dengan pengambil berurutan, BUKAN penghitung di
+      // dalam `Promise.all`.
+      //
+      // KENAPA DIUBAH (25 Okt 2026): bentuk lamanya `terpakai += 1` di dalam
+      // callback `map` async. Seluruh callback itu berjalan SINKRON sampai
+      // `await` pertama, jadi sebenarnya aman — tapi hanya selama isi `map`
+      // tidak pernah diubah. Kalau ada satu `await` disisipkan di depan, semua
+      // callback melihat `terpakai` yang sama dan batas 8 tembus. Selain itu
+      // `terpakai -= 1` di blok catch bisa membuat jatah "kembali" padahal
+      // pengambilan lain sudah memakainya, sehingga batasnya bisa terlampaui.
+      //
+      // Bentuk sekarang: ambil daftar kandidat lebih dulu, potong tepat
+      // MAKS_DETAIL, lalu jalankan berurutan. Jatah yang gagal TIDAK dikembalikan
+      // di tengah jalan; sebagai gantinya kandidat diambil lebih banyak (lihat
+      // CADANGAN_DETAIL) supaya artikel yang gagal tidak menahan yang di bawahnya.
+      const perluIsi = pool.filter((d) => !d.ringkas && !d.tubuh).slice(0, MAKS_DETAIL)
+      for (const d of perluIsi) {
+        try {
+          Object.assign(d, await isiArtikel(d))
+        } catch {
+          // Gagal satu artikel: lanjut ke berikutnya. Tidak ada jatah yang
+          // perlu dikembalikan karena daftarnya sudah dipotong di depan.
+        }
+      }
 
       const isi = susun(pool, 0)
       if (!isi.topik.length && !isi.artikel.length) throw new Error('hasil kosong')
+
+      // `diperbarui` hanya boleh maju kalau SUMBERNYA berubah.
+      //
+      // KENAPA (25 Okt 2026): kalau yang memicu pengambilan ulang cuma naiknya
+      // VERSI_BENTUK (bentuk data berubah, bukan isi sumbernya), menulis
+      // `diperbarui = sekarang` akan membuat halaman mengaku punya pembaruan
+      // yang tidak pernah terjadi — persis pelanggaran yang dijaga bagian
+      // "Batas kejujuran" di catatan proyek. Isi artikelnya sama, hanya
+      // metadatanya yang sekarang lengkap.
+      const sumberBerubah = !diMemori || sidikBaru !== diMemori.sidik
 
       const hasil = {
         ...isi,
         pool,
         geser: 0,
         sidik: sidikBaru,
-        diperbarui: sekarangISO(),
+        versiBentuk: VERSI_BENTUK,
+        diperbarui: sumberBerubah ? sekarangISO() : (diMemori?.diperbarui ?? sekarangISO()),
         diperiksa: sekarangISO(),
         berikutnya: besokISO(),
       }
@@ -599,9 +784,16 @@ export async function kontenHarian({ paksa = false } = {}) {
 /**
  * Untuk endpoint /api/konten.
  *
- *   diperbarui  = kapan isinya benar-benar berubah
+ *   diperbarui  = kapan DAFTAR artikel dari sumber berubah (sidik berubah).
+ *                 Ini BUKAN tanggal artikel, dan bukan tanggal penerbitan apa
+ *                 pun. Namanya sengaja dipertahankan supaya kontrak API tidak
+ *                 berubah, tapi antarmuka tidak boleh menyebutnya "diperbarui"
+ *                 tanpa keterangan — lihat `tanggalArtikelTerbaru`.
  *   diperiksa   = kapan sistem terakhir mengecek sumbernya
  *   berikutnya  = kapan pengecekan berikutnya dijadwalkan
+ *   tanggalArtikelTerbaru = tanggal terbit PALING BARU di antara artikel yang
+ *                 sedang tampil, atau null kalau tidak satu pun punya tanggal.
+ *                 Ini satu-satunya angka yang menjawab "isinya setua apa".
  */
 export async function kontenHarianLengkap({ paksa = false } = {}) {
   const d = await kontenHarian({ paksa })
@@ -613,9 +805,22 @@ export async function kontenHarianLengkap({ paksa = false } = {}) {
   //   - sumberHalaman : alamat sumber internal (ayosehat.kemkes.go.id). Alamat
   //                     itu sudah tampil di setiap artikel lewat kolom `url`,
   //                     jadi tidak perlu dikirim lagi sebagai metadata.
-  const { pool, sidik, sumberHalaman, geser, ...kirim } = d
+  const { pool, sidik, sumberHalaman, geser, versiBentuk, ...kirim } = d
+
+  // Tanggal terbit PALING BARU di antara artikel yang benar-benar tampil.
+  // Dihitung dari `artikel` (bukan dari seluruh pool): yang perlu dijawab
+  // adalah "bacaan di halaman ini setua apa", bukan "artikel tertua yang
+  // kebetulan tersimpan".
+  const tanggalArtikelTerbaru =
+    (kirim.artikel ?? [])
+      .map((a) => a.tanggalTerbitISO)
+      .filter(Boolean)
+      .sort()
+      .at(-1) ?? null
+
   return {
     ...kirim,
+    tanggalArtikelTerbaru,
     jumlahTersimpan: pool?.length ?? 0,
     // Jam acuan yang dipakai penjadwalan — supaya bisa diperiksa dari luar,
     // bukan cuma dipercaya. `sumber` = 'internet' kalau header Date dari

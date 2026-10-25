@@ -7,13 +7,19 @@ import { SectionHeading } from '../ui/primitives'
  * - tablet  : chip wrap ke baris berikutnya
  * - mobile  : rail chip bisa digeser horizontal (tanpa overflow halaman)
  *
- * Isinya berasal dari konten harian (server/konten.js). Dua tanggalnya
- * dibedakan dengan sengaja:
- *   - "Diperbarui"    -> kapan isinya benar-benar berubah
- *   - "Terakhir dicek"-> kapan sistem mengecek sumbernya (bisa tiap hari,
- *                        walau isinya belum tentu berubah)
+ * Isinya berasal dari konten harian (server/konten.js). Tiga tanggalnya
+ * dibedakan dengan sengaja — jangan disatukan lagi:
+ *   - "ditarik"  -> kapan DAFTAR artikel dari sumber berubah. Ini BUKAN tanggal
+ *                   terbit artikel mana pun. Dulu kalimatnya berbunyi
+ *                   "Diperbarui 12 Oktober 2026" dan pembaca wajar menyimpulkan
+ *                   isinya baru — padahal artikel termuda saat itu terbit
+ *                   05 May 2026. Kalimatnya sudah diganti (25 Okt 2026).
+ *   - "dicek"    -> kapan sistem mengecek sumbernya (bisa tiap hari walau isinya
+ *                   belum berubah)
+ *   - "terbit"   -> tanggal terbit artikel TERBARU yang sedang tampil. Ini
+ *                   satu-satunya angka yang menjawab "isinya setua apa".
  * Jadi kalau belum ada artikel baru, halaman tidak berpura-pura memperbarui
- * apa pun — yang tampil apa adanya adalah tanggal pengecekannya.
+ * apa pun.
  *
  * Label topiknya sendiri (mis. "Cegah Stunting") TIDAK diterjemahkan — itu
  * judul artikel dari sumber Kemenkes, bukan teks antarmuka.
@@ -24,6 +30,7 @@ export default function TopicChips({
   onSelect,
   diperbarui,
   diperiksa,
+  tanggalArtikelTerbaru = null,
   t = (k) => k,
 }) {
   // Tanggal mengikuti bahasa antarmuka, supaya "12 Oktober 2026" tidak muncul
@@ -38,9 +45,32 @@ export default function TopicChips({
         })
       : null
 
-  const tglDiperbarui = tgl(diperbarui)
+  const tglDitarik = tgl(diperbarui)
   const tglDiperiksa = tgl(diperiksa)
-  const belumBerubah = tglDiperbarui && tglDiperiksa && tglDiperbarui === tglDiperiksa
+  const tglTerbit = tgl(tanggalArtikelTerbaru)
+
+  // Kalimat tanggal: yang disebut lebih dulu adalah yang PALING berguna bagi
+  // pembaca — tanggal terbit artikel terbaru. Tanggal penarikan/pengecekan
+  // hanya pelengkap, supaya tidak terbaca sebagai "isinya baru".
+  //
+  // Kalau tidak satu pun artikel punya tanggal (sumber tidak mencantumkannya),
+  // itu DINYATAKAN — jangan diamkan, karena diam membuat pembaca mengira
+  // artikelnya baru.
+  const keterangan = tglTerbit
+    ? t('topik.terbaruTerbit', { tanggal: tglTerbit })
+    : tglDiperiksa
+      ? t('topik.dicek', { tanggal: tglDiperiksa })
+      : null
+
+  // Baris kedua: penarikan + pengecekan, atau pernyataan bahwa sumber tidak
+  // mencantumkan tanggal sama sekali.
+  const pelengkap = tglDitarik
+    ? tglDiperiksa
+      ? t('topik.dicekDitarik', { dicek: tglDiperiksa, ditarik: tglDitarik })
+      : t('topik.ditarik', { tanggal: tglDitarik })
+    : !tglTerbit && tglDiperiksa
+      ? t('topik.tanpaTanggal')
+      : null
 
   return (
     <section aria-labelledby="topik-title">
@@ -49,11 +79,17 @@ export default function TopicChips({
         title={t('topik.judul')}
         description={t('topik.sub')}
         action={
-          tglDiperiksa ? (
+          keterangan || pelengkap ? (
             <p className="text-[0.8125rem] font-medium text-muted-600">
-              {belumBerubah
-                ? t('topik.diperbaruiPada', { tanggal: tglDiperbarui })
-                : t('topik.dicekDiperbarui', { dicek: tglDiperiksa, diperbarui: tglDiperbarui })}
+              {keterangan}
+              {keterangan && pelengkap ? (
+                <span className="text-muted-500">
+                  {' · '}
+                  {pelengkap}
+                </span>
+              ) : (
+                pelengkap
+              )}
             </p>
           ) : null
         }

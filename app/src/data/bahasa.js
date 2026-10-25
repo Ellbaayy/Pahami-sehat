@@ -277,8 +277,16 @@ const KAMUS = {
     'topik.judul': 'Topik populer',
     'topik.sub': 'Ketuk salah satu untuk langsung bertanya.',
     'topik.aria': 'Pilih topik kesehatan',
-    'topik.diperbaruiPada': 'Diperbarui {tanggal}',
-    'topik.dicekDiperbarui': 'Terakhir dicek {dicek} · diperbarui {diperbarui}',
+    // Kalimat ini TIDAK boleh berbunyi "Diperbarui ..." saja.
+    // KENAPA (25 Okt 2026): `diperbarui` = kapan DAFTAR artikel dari sumber
+    // berubah, bukan tanggal terbit artikel mana pun. Selama 13 hari halaman
+    // menampilkan "Diperbarui 12 Oktober 2026" padahal tidak ada satu pun
+    // artikel yang terbit tanggal itu — pembaca wajar menyimpulkan isinya baru.
+    'topik.ditarik': 'Konten ditarik {tanggal}',
+    'topik.dicek': 'Terakhir dicek {tanggal}',
+    'topik.dicekDitarik': 'Terakhir dicek {dicek} · konten ditarik {ditarik}',
+    'topik.terbaruTerbit': 'Artikel terbaru terbit {tanggal}',
+    'topik.tanpaTanggal': 'Tanggal terbit tidak dicantumkan sumber',
 
     // tips kesehatan
     'tips.label': 'Tips Kesehatan Hari Ini',
@@ -345,8 +353,12 @@ const KAMUS = {
     'notif.kosong': 'Belum ada pemberitahuan.',
     'notif.lonceng': 'Pemberitahuan, {n} butir',
     'notif.loncengBaru': 'Pemberitahuan, {n} butir, ada yang belum dibaca',
-    'notif.kontenJudul': 'Konten harian diperbarui',
+    'notif.kontenJudul': 'Konten harian dari Kemenkes',
     'notif.kontenIsi': 'Topik populer dan artikel sudah memakai terbitan terbaru.',
+    // KENAPA ADA (25 Okt 2026): `diperbarui` = kapan DAFTAR artikel berubah,
+    // bukan tanggal terbit. Notifikasi yang tidak menyebut tanggal terbit
+    // membuat pembaca mengira ada tulisan baru hari itu.
+    'notif.kontenIsiTerbit': 'Artikel terbaru dari sumber terbit {tanggal}.',
     'notif.serverJudul': 'Server tidak terhubung',
     'notif.serverIsi': 'Jawaban AI belum bisa dibuat. Periksa koneksi lalu muat ulang.',
     'notif.obrolanJudul': '{n} obrolan tersimpan',
@@ -671,8 +683,11 @@ const KAMUS = {
     'topik.judul': 'Popular topics',
     'topik.sub': 'Tap one to ask about it right away.',
     'topik.aria': 'Choose a health topic',
-    'topik.diperbaruiPada': 'Updated {tanggal}',
-    'topik.dicekDiperbarui': 'Last checked {dicek} · updated {diperbarui}',
+    'topik.ditarik': 'Content fetched {tanggal}',
+    'topik.dicek': 'Last checked {tanggal}',
+    'topik.dicekDitarik': 'Last checked {dicek} · content fetched {ditarik}',
+    'topik.terbaruTerbit': 'Newest article published {tanggal}',
+    'topik.tanpaTanggal': 'Publication date not provided by the source',
 
     'tips.label': 'Health Tip of the Day',
     'tips.selengkapnya': 'Read more',
@@ -731,8 +746,9 @@ const KAMUS = {
     'notif.kosong': 'No notifications yet.',
     'notif.lonceng': 'Notifications, {n} items',
     'notif.loncengBaru': 'Notifications, {n} items, unread ones present',
-    'notif.kontenJudul': 'Daily content updated',
+    'notif.kontenJudul': 'Daily content from the Ministry of Health',
     'notif.kontenIsi': 'Popular topics and articles now use the latest release.',
+    'notif.kontenIsiTerbit': 'The newest article from the source was published {tanggal}.',
     'notif.serverJudul': 'Server not connected',
     'notif.serverIsi': 'AI answers cannot be produced yet. Check your connection and reload.',
     'notif.obrolanJudul': '{n} conversations saved',
