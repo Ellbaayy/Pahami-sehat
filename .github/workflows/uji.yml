@@ -106,6 +106,19 @@ jobs:
         # artikel yang memang ada di pool (tidak ada yang dikarang).
         run: node uji-rotasi.mjs
 
+      - name: Uji tanggal terbit konten (tanpa jaringan)
+        # KENAPA ADA (25 Okt 2026): dua keluhan nyata. (1) Halaman menampilkan
+        # "Diperbarui 12 Oktober 2026" — itu kapan DAFTAR artikel berubah, bukan
+        # tanggal terbit apa pun. (2) Artikel 2025 tampil di atas artikel 2026
+        # karena tanggal terbitnya tidak pernah diambil dari sumber.
+        #
+        # Uji ini menjaga: parser `itemprop="datePublished"` (bulan Indonesia DAN
+        # Inggris — sumbernya campur), tanggal ngawur DITOLAK bukan ditebak,
+        # artikel tanpa tanggal tidak pernah di depan, dan rotasi hanya berputar
+        # di dalam jendela artikel terbaru (diukur: tanpa jendela, `geser` 6-8
+        # mengangkat artikel 2023 ke baris pertama).
+        run: node uji-tanggal-konten.mjs
+
       - name: Uji alat ukur keterbacaan
         # Alat ukur yang salah menghasilkan kesimpulan yang salah dengan sangat
         # meyakinkan. Uji ini memakai kata yang jumlah suku katanya bisa
