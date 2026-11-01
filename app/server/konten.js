@@ -1,10 +1,14 @@
 /**
  * Konten harian: topik populer, artikel, dan tips kesehatan.
  *
- * Sumber: ayosehat.kemkes.go.id — kanal edukasi resmi Kemenkes RI.
- * Dipilih karena isinya sudah berupa artikel kesehatan berbahasa Indonesia,
- * judulnya bersih (bukan berita politik), setiap artikel punya tautan asli
- * yang bisa dibuka pengguna, dan gambarnya tersedia.
+ * Sumber (sejak 1 Nov 2026): kanal **rilis berita** Kemenkes RI
+ * (`kemkes.go.id/id/category/rilis-berita`) dan kanal kesehatan **CNN
+ * Indonesia** (`cnnindonesia.com/gaya-hidup/kesehatan`). Keduanya berbahasa
+ * Indonesia, menerbitkan rutin, setiap artikel punya tautan asli yang bisa
+ * dibuka pengguna, dan gambarnya tersedia.
+ *
+ * Sumber sebelumnya `ayosehat.kemkes.go.id` berhenti menerbitkan (artikel
+ * termuda 05 May 2026) — lihat catatan di konstanta `SUMBER`.
  *
  * Kenapa tidak memakai "artikel terpopuler" Wikipedia: uji coba menunjukkan
  * daftar teratas Wikipedia Indonesia didominasi hiburan dan politik, dan
@@ -61,8 +65,29 @@ import { simpanKonten } from './db.js'
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
 
-const SUMBER = 'https://ayosehat.kemkes.go.id'
+/**
+ * Sumber konten harian.
+ *
+ * KENAPA BERGANTI (1 Nov 2026). Sumber lama `ayosehat.kemkes.go.id` berhenti
+ * menerbitkan: artikel termudanya 05 May 2026, dan halaman depannya tidak
+ * pernah berubah lagi. Akibatnya kartu artikel dan lonceng pemberitahuan
+ * menampilkan "terbit 5 Mei 2026" berbulan-bulan — padahal kanal rilis berita
+ * Kemenkes pada tanggal yang sama sudah menerbitkan sampai 30 Okt 2026.
+ * Diukur 1 Nov 2026: `kemkes.go.id/id/category/rilis-berita` menjawab HTTP 200
+ * (catatan lama menyebut 404 — sudah tidak berlaku), lengkap dengan
+ * `<time datetime>`, thumbnail, dan paginasi.
+ *
+ * Sumber kedua CNN Indonesia ditambahkan 1 Nov 2026 supaya kartu artikel ikut
+ * berita kesehatan terkini, bukan hanya siaran pers resmi. Alamat yang BENAR
+ * adalah `/gaya-hidup/kesehatan` — `/kesehatan` dan `/kesehatan/rss` menjawab
+ * 404.
+ */
+const SUMBER = 'https://kemkes.go.id/id/category/rilis-berita'
+const SUMBER_CNN = 'https://www.cnnindonesia.com/gaya-hidup/kesehatan'
 const PENERBIT = 'Kemenkes RI'
+const PENERBIT_CNN = 'CNN Indonesia'
+/** Jumlah halaman daftar rilis berita yang diambil (tiap halaman ±9 butir). */
+const HALAMAN_SUMBER = 2
 const BERLAKU_MS = 24 * 60 * 60 * 1000 // sekali sehari
 const MAKS_POOL = 40 // batas artikel yang disimpan di simpanan
 
@@ -79,12 +104,15 @@ const MAKS_POOL = 40 // batas artikel yang disimpan di simpanan
  * Pengukuran: 12 permintaan pada cache kosong (1 daftar + 11 isi artikel).
  * Angka itu naik terus seiring pool bertambah, sampai batas atas 40.
  *
- * Angka 8 dipilih dari kebutuhan nyata `susun()`: 5 topik + 4 artikel
+ * Angka 12 dipilih dari kebutuhan nyata `susun()`: 5 topik + 4 artikel
  * (beririsan) + 1 calon tips, ditambah cadangan untuk artikel yang gagal
- * diambil. Karena `gabungPool()` menaruh artikel terbaru di depan, delapan
- * yang diambil selalu yang paling baru — jadi kesegaran isi tetap terjaga.
+ * diambil. Kandidatnya DIURUTKAN MENURUT TANGGAL TERBIT lebih dulu, jadi
+ * jatah ini selalu jatuh ke artikel terbaru dari SEMUA sumber — bukan hanya
+ * sumber yang kebetulan diambil pertama. Tanpa pengurutan itu, 8 jatah habis
+ * oleh satu sumber saja dan sumber kedua tidak pernah punya isi (lalu
+ * tersaring habis oleh `susun()`).
  */
-const MAKS_DETAIL = 8
+const MAKS_DETAIL = 12
 
 /**
  * Naikkan angka ini kalau BENTUK data artikel berubah, supaya isi simpanan
@@ -100,7 +128,7 @@ const MAKS_DETAIL = 8
  * datanya ada di sumber. Menaikkan versi ini memaksa satu pengambilan ulang
  * penuh, sekali, saat build/instance baru mulai.
  */
-const VERSI_BENTUK = 2
+const VERSI_BENTUK = 3
 
 
 /* ------------------------------------------------------------------ util -- */
@@ -154,7 +182,31 @@ const BULAN = {
 }
 
 /**
- * Baca tanggal terbit dari HTML satu halaman artikel Kemenkes.
+ * Apakah 'YYYY-MM-DD' menunjuk tanggal yang benar-benar ada?
+ *
+ * Dipakai untuk bentuk ISO. Tanggal ngawur (31 Feb, bulan 13, tahun di luar
+ * rentang) harus DITOLAK — sama seperti pada bentuk teks. Satu tanggal ngawur
+ * yang lolos merusak urutan seluruh daftar, bukan cuma satu kartu.
+ */
+function tanggalSah(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso ?? ''))
+  if (!m) return false
+  const [tahun, bulan, hari] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  if (tahun < 2000 || tahun > 2100 || bulan < 1 || bulan > 12 || hari < 1 || hari > 31) return false
+  const d = new Date(Date.UTC(tahun, bulan - 1, hari))
+  return d.getUTCFullYear() === tahun && d.getUTCMonth() === bulan - 1 && d.getUTCDate() === hari
+}
+
+/** Nama bulan gaya sumber Kemenkes: "30 Oct 2026". Dipakai kalau sumber hanya memberi ISO. */
+const BULAN_PENDEK = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function teksTanggal(iso) {
+  const [tahun, bulan, hari] = String(iso).split('-')
+  return `${hari} ${BULAN_PENDEK[Number(bulan) - 1] ?? bulan} ${tahun}`
+}
+
+/**
+ * Baca tanggal terbit dari HTML satu halaman artikel.
  *
  * Sumbernya menulis tanggal dalam `<div itemprop="datePublished">24 Jun 2025</div>`
  * — hanya ADA di halaman artikel, tidak di halaman depan, dan tidak ada
@@ -175,6 +227,33 @@ const BULAN = {
  */
 export function bacaTanggalTerbit(html) {
   const mentah = String(html ?? '')
+
+  // --- Bentuk 1: tanggal ISO langsung ------------------------------------
+  //
+  // Dua sumber yang dipakai sekarang sama-sama mencantumkan tanggal ISO:
+  //   kemkes.go.id  : <time datetime="2026-10-30"><em>30 Oct 2026</em></time>
+  //   cnnindonesia  : "datePublished":"2026-11-01T08:10:02+07:00" (JSON-LD)
+  //
+  // Tanggal ISO diambil apa adanya karena tidak perlu ditafsirkan: tidak ada
+  // nama bulan yang bisa salah dikenali. Teks yang DITAMPILKAN tetap diambil
+  // dari isi <time> kalau ada (itu tulisan sumbernya sendiri); kalau tidak ada
+  // (JSON-LD), teksnya disusun dari ISO supaya kartu tetap punya keterangan.
+  const isoWaktu = /<time[^>]*datetime="(\d{4}-\d{2}-\d{2})[^"]*"[^>]*>([\s\S]{0,60}?)<\/time>/i.exec(
+    mentah,
+  )
+  if (isoWaktu) {
+    const iso = isoWaktu[1]
+    const teks = buangTag(isoWaktu[2])
+    const sah = tanggalSah(iso)
+    if (sah) return { tanggalTerbit: teks || teksTanggal(iso), tanggalTerbitISO: iso }
+  }
+
+  const isoJson = /"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})/i.exec(mentah)?.[1]
+  if (isoJson && tanggalSah(isoJson)) {
+    return { tanggalTerbit: teksTanggal(isoJson), tanggalTerbitISO: isoJson }
+  }
+
+  // --- Bentuk 2: teks "24 Jun 2025" (ayosehat, masih dipakai sebagai cadangan)
   const cocok = /itemprop="datePublished"[^>]*>([^<]{4,40})</i.exec(mentah)
   const teks = cocok?.[1]?.trim() ?? ''
   if (!teks) return { tanggalTerbit: null, tanggalTerbitISO: null }
@@ -254,11 +333,22 @@ function buatSidik(daftar) {
 
 /** Ubah judul jadi label topik yang pendek dan enak dibaca. */
 function jadiLabel(judul) {
-  let t = String(judul).split(/[:(]/)[0].trim()
+  const asli = String(judul ?? '').trim()
+
+  // Urutannya penting. Prefiks lembaga dibuang DULU, baru dipotong di tanda
+  // titik dua/kurung. Kalau dibalik, "Menkes: Perluasan Akses …" terpotong
+  // jadi "Menkes" lalu prefiksnya ikut terbuang — hasilnya label KOSONG.
+  let t = asli.replace(
+    /^(kemenkes|menkes|wamenkes|pemerintah|kementerian kesehatan)\b\s*:?\s*/i,
+    '',
+  )
 
   // buang pembuka yang tidak perlu
   t = t.replace(/^(kenali|mengenal|cara|tips|yuk|mari|waspadai|hati-hati)\s+/i, '')
   t = t.replace(/^(apa itu|apa sih|apa yang dimaksud dengan)\s+/i, '')
+
+  // potong subjudul ("Judul: keterangan", "Judul (edisi …)")
+  t = t.split(/[:(]/)[0].trim()
 
   // ambil frasa sebelum kata sambung, supaya labelnya utuh dan tidak menggantung
   const inti = t.split(/\s+(?:dengan|pada|untuk|agar|dan|serta|yang|di|ke)\s+/i)[0].trim()
@@ -271,6 +361,11 @@ function jadiLabel(judul) {
     const spasi = potong.lastIndexOf(' ')
     t = (spasi > 14 ? potong.slice(0, spasi) : potong).trim()
   }
+
+  // Jaring pengaman: label kosong tidak boleh sampai ke antarmuka — chip tanpa
+  // tulisan terlihat seperti kerusakan. Jatuh ke awal judul aslinya.
+  if (!t) t = asli.split(/[:(]/)[0].trim().slice(0, 30) || asli.slice(0, 30)
+
   return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
@@ -316,39 +411,166 @@ function layakSebagaiRingkasan(p) {
   return true
 }
 
-/* ----------------------------------------------- LANGKAH: Cari Informasi -- */
+/* -------------------------------------------- pengurai daftar per sumber -- */
 
-/** Daftar artikel dari halaman depan ayosehat. */
-async function daftarArtikel() {
-  const html = await ambil(SUMBER)
+/**
+ * Urai halaman daftar "Rilis Berita" Kemenkes jadi daftar artikel.
+ *
+ * Bentuk kartunya (diukur 1 Nov 2026):
+ *
+ *   <a href="/id/slug-artikel" class="link">
+ *     <div class="card">
+ *       <div class="image-rect"><img src="/app_asset/image_content/….jpg"></div>
+ *       <div class="card-body">
+ *         <h4 class="text-20">Judul</h4>
+ *         <time datetime="2026-10-30"><em>30 Oct 2026</em></time>
+ *
+ * Dipisah jadi fungsi murni (tanpa jaringan) supaya bisa diuji langsung dengan
+ * contoh HTML — lihat `uji-sumber-konten.mjs`.
+ */
+export function uraiDaftarKemkes(html) {
+  const hasil = []
+  const sudah = new Set()
   const kartu = [
-    ...html.matchAll(
-      /<a[^>]+href="(https:\/\/ayosehat\.kemkes\.go\.id\/[a-z0-9-]+)"[^>]*>([\s\S]{0,600}?)<\/a>/gi,
+    ...String(html ?? '').matchAll(
+      /<a href="(\/id\/[a-z0-9-]{6,})"\s+class="link"[^>]*>([\s\S]{0,2000}?)<\/a>/gi,
     ),
   ]
 
-  const hasil = []
-  const sudah = new Set()
-
   for (const m of kartu) {
-    const url = m[1]
+    const jalur = m[1]
     const isi = m[2]
-    const slug = url.replace(`${SUMBER}/`, '')
+
+    // tautan paginasi & kategori ikut tertangkap polanya, tapi bukan artikel
+    if (/^\/id\/(category|home|media|profil)\b/i.test(jalur)) continue
+
+    const judul = buangTag(/<h4[^>]*>([\s\S]*?)<\/h4>/i.exec(isi)?.[1] ?? '')
+    if (!judul || judul.length < 12 || judul.length > 200) continue
+
+    const slug = `kemkes:${jalur.replace('/id/', '')}`
     if (sudah.has(slug)) continue
 
-    const judul = buangTag(isi)
-    if (!judul || judul.length < 12 || judul.length > 160) continue
-
-    // buang halaman non-artikel
-    if (/^(cek kesehatan gratis|kampanye|kontak|tentang|kebijakan)/i.test(judul)) continue
-
-    const img = isi.match(
-      /src="(\/\/ayosehat\.kemkes\.go\.id\/imagex\/content\/[^"]+\.(?:webp|jpg|jpeg|png))"/i,
+    const src = /<img[^>]+src="([^"]+\.(?:jpg|jpeg|png|webp))"/i.exec(isi)?.[1] ?? ''
+    const waktu = /<time[^>]*datetime="(\d{4}-\d{2}-\d{2})[^"]*"[^>]*>([\s\S]{0,60}?)<\/time>/i.exec(
+      isi,
     )
+    const iso = waktu?.[1] && tanggalSah(waktu[1]) ? waktu[1] : null
+
     sudah.add(slug)
-    hasil.push({ slug, url, judul, gambar: img ? `https:${img[1]}` : '' })
+    hasil.push({
+      slug,
+      url: `https://kemkes.go.id${jalur}`,
+      judul,
+      gambar: src ? (src.startsWith('http') ? src : `https://kemkes.go.id${src}`) : '',
+      penerbit: PENERBIT,
+      tanggalTerbit: iso ? buangTag(waktu[2]) || teksTanggal(iso) : null,
+      tanggalTerbitISO: iso,
+    })
   }
 
+  return hasil
+}
+
+/**
+ * Urai halaman kanal kesehatan CNN Indonesia jadi daftar artikel.
+ *
+ * URL CNN memuat cap waktu terbitnya sendiri:
+ *   /gaya-hidup/20261101121607-255-1421965/judul-artikel
+ *                  ^^^^^^^^^^^^^^ YYYYMMDDHHMMSS
+ * Jadi tanggal terbitnya dibaca dari situ — bukan ditebak dari urutan tampil.
+ * Halaman artikelnya juga punya JSON-LD `datePublished`; kalau terambil, nilai
+ * itu yang dipakai (lihat `isiArtikel`).
+ */
+export function uraiDaftarCnn(html) {
+  const hasil = []
+  const sudah = new Set()
+  const kartu = [
+    ...String(html ?? '').matchAll(
+      /<a\b([^>]*?)href="(https:\/\/www\.cnnindonesia\.com\/gaya-hidup\/(\d{14})-\d+-\d+\/[^"]+)"([^>]*)>([\s\S]{0,3000}?)<\/a>/gi,
+    ),
+  ]
+
+  for (const m of kartu) {
+    const url = m[2]
+    const capWaktu = m[3]
+    const isi = m[5]
+
+    const judul = buangTag(
+      /dtr-ttl="([^"]+)"/i.exec(m[1] + m[4])?.[1] ??
+        /<h[234][^>]*>([\s\S]*?)<\/h[234]>/i.exec(isi)?.[1] ??
+        /<span class="[^"]*text-(?:2xl|base)[^"]*">([\s\S]*?)<\/span>/i.exec(isi)?.[1] ??
+        '',
+    )
+    if (!judul || judul.length < 15 || judul.length > 200) continue
+
+    const slug = `cnn:${url.split('/').pop()}`
+    if (sudah.has(slug)) continue
+
+    const iso = `${capWaktu.slice(0, 4)}-${capWaktu.slice(4, 6)}-${capWaktu.slice(6, 8)}`
+    if (!tanggalSah(iso)) continue
+
+    const src = /<img[^>]+src="([^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i.exec(isi)?.[1] ?? ''
+
+    sudah.add(slug)
+    hasil.push({
+      slug,
+      url,
+      judul,
+      gambar: src,
+      penerbit: PENERBIT_CNN,
+      tanggalTerbit: teksTanggal(iso),
+      tanggalTerbitISO: iso,
+    })
+  }
+
+  return hasil
+}
+
+/* ----------------------------------------------- LANGKAH: Cari Informasi -- */
+
+/** Daftar artikel dari halaman-halaman "Rilis Berita" Kemenkes. */
+async function daftarKemkes() {
+  const hasil = []
+  for (let hal = 1; hal <= HALAMAN_SUMBER; hal++) {
+    const alamat = hal === 1 ? SUMBER : `${SUMBER}/${hal}`
+    let html
+    try {
+      html = await ambil(alamat)
+    } catch {
+      break // halaman berikutnya tidak ada / sedang mati: pakai yang sudah ada
+    }
+    const butir = uraiDaftarKemkes(html)
+    if (!butir.length) break
+    hasil.push(...butir)
+  }
+  return hasil
+}
+
+/** Daftar artikel dari kanal kesehatan CNN Indonesia. */
+async function daftarCnn() {
+  const html = await ambil(SUMBER_CNN)
+  return uraiDaftarCnn(html)
+}
+
+/**
+ * Daftar artikel dari SEMUA sumber.
+ *
+ * Kalau satu sumber mati, sumber lain tetap dipakai — kegagalan satu kanal
+ * tidak boleh mengosongkan seluruh halaman. Baru kalau SEMUANYA gagal, galat
+ * dilempar supaya `kontenHarian` memakai simpanan lama.
+ */
+async function daftarArtikel() {
+  const [kemkes, cnn] = await Promise.allSettled([daftarKemkes(), daftarCnn()])
+  const hasil = []
+  if (kemkes.status === 'fulfilled') hasil.push(...kemkes.value)
+  if (cnn.status === 'fulfilled') hasil.push(...cnn.value)
+  if (!hasil.length) {
+    const sebab = [kemkes, cnn]
+      .map((x) => (x.status === 'rejected' ? x.reason?.message : null))
+      .filter(Boolean)
+      .join(' · ')
+    throw new Error(`semua sumber konten gagal: ${sebab || 'tidak diketahui'}`)
+  }
   return hasil
 }
 
@@ -362,19 +584,34 @@ async function isiArtikel(item) {
       '',
   )
 
-  // gambar: halaman depan tidak selalu memuat gambarnya, jadi kalau kosong
+  // gambar: halaman daftar tidak selalu memuat gambarnya, jadi kalau kosong
   // ambil dari og:image halaman artikelnya sendiri
   let gambar = item.gambar || ''
   if (!gambar) {
-    const og = html.match(/(?:property|name)="og:image"[^>]*content="([^"]*imagex[^"]*)"/i)?.[1]
+    const og = html.match(
+      /(?:property|name)="og:image"[^>]*content="([^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i,
+    )?.[1]
     if (og) gambar = og.startsWith('//') ? `https:${og}` : og
   }
 
-  const isiUtama =
-    html.match(/<(?:article|main)[^>]*>([\s\S]*?)<\/(?:article|main)>/i)?.[1] ?? html
-  const paragraf = [...isiUtama.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
-    .map((p) => buangTag(p[1]))
-    .filter((p) => p.length > 70 && !/^(baca juga|sumber|referensi|penulis|editor)/i.test(p))
+  // Isi utama: coba wadah artikel dulu, lalu jatuh ke seluruh halaman.
+  // KENAPA PERLU CADANGAN: pada sebagian halaman (mis. CNN) elemen <article>
+  // pertama yang muncul bisa berisi blok "rekomendasi", bukan badan tulisan.
+  // Kalau wadah itu tidak menghasilkan paragraf yang cukup, pakai seluruh HTML.
+  const wadah = html.match(/<(?:article|main)[^>]*>([\s\S]*?)<\/(?:article|main)>/i)?.[1]
+  const kumpulParagraf = (sumber) =>
+    [...String(sumber).matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+      .map((p) => buangTag(p[1]))
+      .filter(
+        (p) =>
+          p.length > 70 &&
+          !/^(baca juga|sumber|referensi|penulis|editor|simak|lihat juga)/i.test(p) &&
+          !/^\[?gambas/i.test(p) &&
+          !/^(advertisement|scroll untuk melanjutkan)/i.test(p),
+      )
+
+  let paragraf = wadah ? kumpulParagraf(wadah) : []
+  if (paragraf.length < 2) paragraf = kumpulParagraf(html)
 
   // Ringkasan: kandidatnya deskripsi resmi halaman itu, lalu paragraf-paragraf
   // awalnya. Dipilih yang pertama lolos saringan — karena ada kalanya deskripsi
@@ -391,6 +628,10 @@ async function isiArtikel(item) {
   // `tubuh` dipotong di batas kalimat, bukan di tengah kata seperti slice()
   // mentah — kalimat yang menggantung lalu lolos jadi "butir" tips.
   const gabung = paragraf.slice(0, 2).join(' ')
+  // Tanggal dari halaman artikel HANYA menimpa tanggal dari halaman daftar
+  // kalau memang terbaca. Kalau tidak terbaca, tanggal yang sudah dipegang
+  // daftar (mis. dari cap waktu URL CNN) dipertahankan — bukan dikosongkan.
+  const dariHalaman = bacaTanggalTerbit(html)
   return {
     ringkas: potongKalimat(ringkas, 260),
     tubuh: potongKalimat(gabung, 900),
@@ -398,7 +639,8 @@ async function isiArtikel(item) {
     // Tanggal terbit ASLI dari halaman sumber. Tidak dirapikan dan tidak
     // ditebak: kalau halamannya tidak mencantumkan, hasilnya null dan
     // antarmuka tidak menampilkan apa-apa (lihat `bacaTanggalTerbit`).
-    ...bacaTanggalTerbit(html),
+    tanggalTerbit: dariHalaman.tanggalTerbit ?? item.tanggalTerbit ?? null,
+    tanggalTerbitISO: dariHalaman.tanggalTerbitISO ?? item.tanggalTerbitISO ?? null,
   }
 }
 
@@ -485,7 +727,7 @@ export function susun(pool, geser = 0) {
       title: d.judul,
       excerpt: d.ringkas || potongKalimat(d.tubuh, 160),
       body: d.tubuh || d.ringkas,
-      source: PENERBIT,
+      source: d.penerbit ?? PENERBIT,
       url: d.url,
       gambar: d.gambar || '',
       readTime: waktuBaca(d.tubuh || d.ringkas),
@@ -514,14 +756,19 @@ export function susun(pool, geser = 0) {
         // teks lanjutan untuk tombol "Baca selengkapnya" — tetap dari sumber,
         // bukan tulisan tetap di dalam komponen
         selengkapnya: potongKalimat(d.tubuh, 900),
-        source: PENERBIT,
+        source: d.penerbit ?? PENERBIT,
         url: d.url,
       }
       break
     }
   }
 
-  return { topik, artikel, tips, penerbit: PENERBIT, sumberHalaman: SUMBER }
+  // Penerbit yang benar-benar muncul di kartu — bukan satu label tetap.
+  // Sejak sumbernya dua (Kemenkes + CNN Indonesia), menyebut satu nama saja
+  // akan membuat kartu CNN berlabel "Kemenkes RI" — itu klaim yang salah.
+  const penerbit = [...new Set(artikel.map((a) => a.source))].join(' & ')
+
+  return { topik, artikel, tips, penerbit, sumberHalaman: [SUMBER, SUMBER_CNN] }
 }
 
 /* ------------------------------------------------------------- simpanan -- */
@@ -727,7 +974,10 @@ export async function kontenHarian({ paksa = false } = {}) {
       // MAKS_DETAIL, lalu jalankan berurutan. Jatah yang gagal TIDAK dikembalikan
       // di tengah jalan; sebagai gantinya kandidat diambil lebih banyak (lihat
       // CADANGAN_DETAIL) supaya artikel yang gagal tidak menahan yang di bawahnya.
-      const perluIsi = pool.filter((d) => !d.ringkas && !d.tubuh).slice(0, MAKS_DETAIL)
+      const perluIsi = urutkanTerbaru(pool.filter((d) => !d.ringkas && !d.tubuh)).slice(
+        0,
+        MAKS_DETAIL,
+      )
       for (const d of perluIsi) {
         try {
           Object.assign(d, await isiArtikel(d))
@@ -802,9 +1052,10 @@ export async function kontenHarianLengkap({ paksa = false } = {}) {
   //   - geser         : hitungan putaran internal (urutan tampil sudah jadi)
   //   - sidik         : sidik jari internal isi sumber; tidak ada gunanya bagi
   //                     pengguna dan membocorkan cara kerja pengecekan
-  //   - sumberHalaman : alamat sumber internal (ayosehat.kemkes.go.id). Alamat
-  //                     itu sudah tampil di setiap artikel lewat kolom `url`,
-  //                     jadi tidak perlu dikirim lagi sebagai metadata.
+  //   - sumberHalaman : alamat sumber internal (rilis berita Kemenkes + kanal
+  //                     kesehatan CNN Indonesia). Alamat itu sudah tampil di
+  //                     setiap artikel lewat kolom `url`, jadi tidak perlu
+  //                     dikirim lagi sebagai metadata.
   const { pool, sidik, sumberHalaman, geser, versiBentuk, ...kirim } = d
 
   // Tanggal terbit PALING BARU di antara artikel yang benar-benar tampil.

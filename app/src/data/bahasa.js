@@ -353,7 +353,7 @@ const KAMUS = {
     'notif.kosong': 'Belum ada pemberitahuan.',
     'notif.lonceng': 'Pemberitahuan, {n} butir',
     'notif.loncengBaru': 'Pemberitahuan, {n} butir, ada yang belum dibaca',
-    'notif.kontenJudul': 'Konten harian dari Kemenkes',
+    'notif.kontenJudul': 'Konten harian kesehatan',
     'notif.kontenIsi': 'Topik populer dan artikel sudah memakai terbitan terbaru.',
     // KENAPA ADA (25 Okt 2026): `diperbarui` = kapan DAFTAR artikel berubah,
     // bukan tanggal terbit. Notifikasi yang tidak menyebut tanggal terbit
@@ -746,7 +746,7 @@ const KAMUS = {
     'notif.kosong': 'No notifications yet.',
     'notif.lonceng': 'Notifications, {n} items',
     'notif.loncengBaru': 'Notifications, {n} items, unread ones present',
-    'notif.kontenJudul': 'Daily content from the Ministry of Health',
+    'notif.kontenJudul': 'Daily health content',
     'notif.kontenIsi': 'Popular topics and articles now use the latest release.',
     'notif.kontenIsiTerbit': 'The newest article from the source was published {tanggal}.',
     'notif.serverJudul': 'Server not connected',

@@ -129,6 +129,15 @@ jobs:
         # mengangkat artikel 2023 ke baris pertama).
         run: node uji-tanggal-konten.mjs
 
+      - name: Uji pengurai sumber konten
+        # Sumber konten harian berganti 1 Nov 2026 (rilis berita Kemenkes +
+        # kanal kesehatan CNN Indonesia), dan kedua bentuk HTML-nya tidak
+        # memakai `itemprop="datePublished"` lagi. Uji ini menjaga: judul,
+        # tautan, thumbnail, dan tanggal kedua sumber terbaca; tautan paginasi
+        # tidak ikut jadi artikel; tanggal ngawur (termasuk bentuk ISO 31 Feb)
+        # tetap ditolak; dan kartu CNN tidak pernah berlabel "Kemenkes RI".
+        run: node uji-sumber-konten.mjs
+
       - name: Uji alat ukur keterbacaan
         # Alat ukur yang salah menghasilkan kesimpulan yang salah dengan sangat
         # meyakinkan. Uji ini memakai kata yang jumlah suku katanya bisa

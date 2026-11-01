@@ -26,34 +26,45 @@ export default function HealthTip({ tip, t = (k) => k }) {
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-amber-500 ring-1 ring-amber-100">
           <Lightbulb className="size-5" aria-hidden="true" />
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
           <p className="text-[0.8125rem] font-bold tracking-[0.14em] uppercase text-brand-700">
             {t('tips.label')}
           </p>
-          <h3 className="mt-0.5 text-[clamp(1.02rem,0.96rem+0.35vw,1.28rem)] font-extrabold tracking-tight text-navy-900">
-            {tip.title}
-          </h3>
-          <p className="mt-1.5 max-w-[68ch] text-[clamp(0.88rem,0.85rem+0.15vw,0.96rem)] leading-relaxed text-navy-700">
-            {tip.body}
-          </p>
 
-          {open && lanjutan ? (
-            <div className="rise mt-3 max-w-[68ch] rounded-xl bg-white/80 p-3.5 ring-1 ring-brand-100">
-              <p className="text-[0.87rem] leading-relaxed text-navy-700">{lanjutan}</p>
-            </div>
-          ) : null}
+          {/* ZONA TEKS DENGAN BATAS TINGGI TETAP (1 Nov 2026).
+              Judul, ringkasan, dan butir semuanya datang dari internet dan
+              panjangnya berganti setiap hari. Tanpa batas, satu judul berita
+              yang panjang cukup untuk mendorong halaman Cek Klaim melewati satu
+              layar — terukur 708 px di layar 700 px sesudah sumber konten
+              berganti ke berita terkini. Batas ini membuat tinggi kartu TIDAK
+              bergantung pada isi, sementara baris tombol di bawahnya selalu
+              utuh dan bisa diklik. Batas dilepas di layar sangat tinggi. */}
+          <div className="max-h-[8rem] overflow-hidden [@media(min-height:1200px)]:max-h-none">
+            <h3 className="mt-0.5 line-clamp-2 text-[clamp(1.02rem,0.96rem+0.35vw,1.28rem)] font-extrabold tracking-tight text-navy-900 [@media(min-height:1200px)]:line-clamp-none">
+              {tip.title}
+            </h3>
+            <p className="mt-1.5 line-clamp-2 max-w-[68ch] text-[clamp(0.88rem,0.85rem+0.15vw,0.96rem)] leading-relaxed text-navy-700 [@media(min-height:1200px)]:line-clamp-none">
+              {tip.body}
+            </p>
 
-          <ul className="mt-2.5 flex flex-wrap gap-2">
-            {tip.bullets.map((b) => (
-              <li
-                key={b}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.82rem] font-semibold text-navy-700 ring-1 ring-brand-100"
-              >
-                <Check className="size-3.5 text-brand-700" aria-hidden="true" />
-                {b}
-              </li>
-            ))}
-          </ul>
+            {open && lanjutan ? (
+              <div className="rise mt-3 max-w-[68ch] rounded-xl bg-white/80 p-3.5 ring-1 ring-brand-100">
+                <p className="text-[0.87rem] leading-relaxed text-navy-700">{lanjutan}</p>
+              </div>
+            ) : null}
+
+            <ul className="mt-2.5 flex flex-wrap gap-2">
+              {tip.bullets.slice(0, 2).map((b) => (
+                <li
+                  key={b}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[0.82rem] font-semibold text-navy-700 ring-1 ring-brand-100"
+                >
+                  <Check className="size-3.5 text-brand-700" aria-hidden="true" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-3">
             {/* Sumber bisa dibuka supaya pembaca bisa memeriksa sendiri */}

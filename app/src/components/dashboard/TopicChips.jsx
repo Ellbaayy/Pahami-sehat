@@ -13,7 +13,9 @@ import { SectionHeading } from '../ui/primitives'
  *                   terbit artikel mana pun. Dulu kalimatnya berbunyi
  *                   "Diperbarui 12 Oktober 2026" dan pembaca wajar menyimpulkan
  *                   isinya baru — padahal artikel termuda saat itu terbit
- *                   05 May 2026. Kalimatnya sudah diganti (25 Okt 2026).
+ *                   05 May 2026. Kalimatnya sudah diganti (25 Okt 2026), dan
+ *                   sumbernya diganti ke kanal rilis berita + CNN Indonesia
+ *                   (1 Nov 2026) supaya isinya benar-benar terkini.
  *   - "dicek"    -> kapan sistem mengecek sumbernya (bisa tiap hari walau isinya
  *                   belum berubah)
  *   - "terbit"   -> tanggal terbit artikel TERBARU yang sedang tampil. Ini

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Syringe, Utensils, ArrowRight, Clock, ChevronUp } from 'lucide-react'
+import { FileText, Syringe, Utensils, ArrowRight, Clock, ChevronUp, Newspaper } from 'lucide-react'
 import { Card, SectionHeading, Button } from '../ui/primitives'
 import { cn } from '../../lib/cn'
 
@@ -15,12 +15,15 @@ const TINTS = {
 const ICONS = { Literasi: FileText, Vaksinasi: Syringe, Gizi: Utensils }
 
 /**
- * Tanggal terbit artikel, dari sumber Kemenkes apa adanya.
+ * Tanggal terbit artikel, dari sumbernya apa adanya.
  *
- * KENAPA INI PENTING (25 Okt 2026): sumbernya sudah lama tidak menerbitkan
- * apa pun — artikel termuda saat itu terbit 05 May 2026, tertua 24 Nov 2023.
+ * KENAPA INI PENTING (25 Okt 2026): sumber lama (ayosehat.kemkes.go.id) sudah
+ * lama tidak menerbitkan apa pun — artikel termuda saat itu terbit 05 May 2026.
  * Tanpa tanggal, pembaca mengira semuanya baru. Dengan tanggal, kebaruannya
  * bisa diperiksa sendiri, dan aplikasi tidak perlu mengaku-aku.
+ *
+ * Sejak 1 Nov 2026 sumbernya kanal rilis berita Kemenkes + CNN Indonesia, yang
+ * memang rutin menerbitkan; tanggal di kartu kini mengikuti terbitan terbaru.
  *
  * `tanggalTerbitISO` null = sumbernya tidak mencantumkan tanggal. Dalam hal itu
  * TIDAK ditampilkan apa-apa — bukan tanggal hari ini, bukan tanggal pengambilan.
@@ -114,6 +117,12 @@ function ArticleCard({ article, t, ringkas = false }) {
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
             decoding="async"
+            /* `no-referrer` WAJIB: kemkes.go.id menolak permintaan gambar yang
+               membawa header Referer dari domain lain — diukur 1 Nov 2026,
+               HTTP 403 untuk Referer localhost sementara 200 tanpa Referer.
+               Tanpa atribut ini thumbnail artikel Kemenkes selalu kosong di
+               peramban, padahal URL-nya benar. */
+            referrerPolicy="no-referrer"
             onError={(e) => {
               // gambar gagal dimuat: sembunyikan, latar warna tetap tampil
               e.currentTarget.style.display = 'none'
@@ -184,9 +193,20 @@ function ArticleCard({ article, t, ringkas = false }) {
         ) : null}
 
         <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
-          <span className="inline-flex items-center gap-1.5 text-[0.82rem] font-medium text-muted-500">
-            <Clock className="size-3.5" aria-hidden="true" />
-            {article.readTime}
+          <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.82rem] font-medium text-muted-500">
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="size-3.5" aria-hidden="true" />
+              {article.readTime}
+            </span>
+            {/* Sumber ditampilkan di kartu, bukan hanya setelah dibuka. Sejak
+                kontennya berasal dari dua kanal (Kemenkes RI & CNN Indonesia),
+                pembaca harus bisa melihat asalnya tanpa mengklik apa pun. */}
+            {article.source ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Newspaper className="size-3.5" aria-hidden="true" />
+                {t('art.sumber')}: {article.source}
+              </span>
+            ) : null}
           </span>
           <Button variant="soft" size="sm" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
             {open ? t('art.tutup') : t('art.baca')}

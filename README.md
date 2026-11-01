@@ -336,7 +336,7 @@ Dibuktikan ulang 20 Okt 2026 dengan `DB_MATI=1`:
 | Tabel | Isi | Padanan sebelumnya |
 |---|---|---|
 | `berita` | judul berita RSS, `sidik` UNIQUE mencegah duplikat | `.cache-berita.json` |
-| `konten` | artikel & tips harian dari Kemenkes | `.cache-konten.json` |
+| `konten` | artikel & tips harian dari Kemenkes RI dan CNN Indonesia | `.cache-konten.json` |
 | `pengetahuan` | **331 topik medis** dari sumber resmi, salinan berlabel tanggal | (baru) |
 | `sumber` | lembaga resmi (Kemenkes, WHO, BPOM, NIH, CDC, …) — **12 baris di skema**, bertambah saat panen | (baru) |
 | `dokumen` + `sitasi` | **jejak sumber yang dikutip** — klaim "jawaban ini dari WHO" jadi bisa **dilacak**, bukan cuma ditulis | (baru) |
@@ -1312,11 +1312,30 @@ Disebut di sini supaya tidak ada yang mengira lebih dari kenyataannya:
 - Belum ada uji otomatis untuk mesin OCR, pengenalan suara, pemutaran suara,
   papan klip, dan tampilan mode Inggris — semuanya masih diuji manual.
 
-### Konten harian: setua apa isinya, dan kenapa
+### Konten harian: sumbernya, dan setua apa isinya
 
-**Sumbernya tidak menerbitkan artikel baru.** Diukur 25 Okt 2026 dari
-`itemprop="datePublished"` setiap halaman artikel di halaman depan
-ayosehat.kemkes.go.id:
+**Diperbarui 1 Nov 2026 — sumbernya sudah berganti.** Sumber lama
+(`ayosehat.kemkes.go.id`) ternyata **berhenti menerbitkan**: artikel termudanya
+terbit 5 Mei 2026, sehingga kartu artikel dan lonceng pemberitahuan menampilkan
+tanggal yang sama berbulan-bulan. Sekarang konten diambil dari **dua kanal**:
+
+| Sumber | Alamat | Catatan |
+|---|---|---|
+| Kemenkes RI | `kemkes.go.id/id/category/rilis-berita` (2 halaman) | Siaran pers resmi. Tanggal dari `<time datetime>`, thumbnail dari `app_asset`. |
+| CNN Indonesia | `cnnindonesia.com/gaya-hidup/kesehatan` | Berita kesehatan terkini. Tanggal dari cap waktu di URL, lalu dipastikan ulang dari JSON-LD halaman artikelnya. |
+
+Setiap kartu menyebut **penerbitnya sendiri** (Kemenkes RI atau CNN Indonesia)
+dan tanggal terbitnya. Kalau salah satu kanal mati, kanal lain tetap dipakai —
+kegagalan satu sumber tidak mengosongkan halaman.
+
+Diukur 1 Nov 2026: 41 artikel terbaca (12 + 12 dari dua halaman Kemenkes, 17
+dari CNN), **semuanya bertanggal dan semuanya punya thumbnail**, terbitan
+terbaru 1 Nov 2026.
+
+#### Catatan sejarah: keadaan sebelum 1 Nov 2026
+
+Diukur 25 Okt 2026 dari `itemprop="datePublished"` setiap halaman artikel di
+halaman depan ayosehat.kemkes.go.id:
 
 | Tanggal terbit | Umur saat diukur | Artikel |
 |---|---|---|
@@ -1353,12 +1372,15 @@ Tiga cacat yang ditemukan dan diperbaiki 25 Okt 2026:
    dalam `JENDELA_ROTASI` (8 artikel terbaru). Diuji 40 putaran: artikel 2023
    tidak pernah tampil sama sekali.
 
-**Batas yang diakui:** aplikasi ini **tidak bisa** menampilkan konten yang
-terbit hari ini, karena sumbernya tidak menerbitkan apa pun sejak 5 Mei 2026.
-Jalur lain sudah dicoba dan gagal: `/artikel` dan `/berita` (fetch gagal),
-`/rss` (200 tapi `<item>` = 0, isinya HTML biasa), `/feed` (fetch gagal),
-`kemkes.go.id/berita` (404), `sehatnegeriku.kemkes.go.id/feed/` (fetch gagal),
-`upk.kemkes.go.id/new/feed/` (403).
+**Batas yang diakui (diperbarui 1 Nov 2026):** aplikasi **tidak** menjamin
+selalu ada artikel yang terbit hari itu — tergantung kanal sumbernya. Yang
+dijamin: setiap kartu menyebut tanggal terbit aslinya, dan lonceng
+pemberitahuan menyebut tanggal terbit artikel terbaru (bukan tanggal sistem
+mengecek). Kanal yang dulu dicoba dan gagal — `/artikel`, `/rss` (200 tapi
+`<item>` = 0), `/feed`, `kemkes.go.id/berita` (404),
+`sehatnegeriku.kemkes.go.id/feed/`, `upk.kemkes.go.id/new/feed/` (403) —
+**tidak** dipakai lagi; penggantinya `kemkes.go.id/id/category/rilis-berita`
+yang diukur menjawab 200 pada 1 Nov 2026.
 
 ---
 
