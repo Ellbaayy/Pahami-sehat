@@ -114,7 +114,7 @@ export default function VerifikasiPanel({
                 setHasil(null)
                 setError(null)
               }}
-              className="text-[0.8rem] font-semibold text-brand-700 hover:text-brand-700"
+              className="ml-auto inline-flex min-h-11 items-center text-[0.8rem] font-semibold text-brand-700 hover:text-brand-700"
             >
               {t('umum.pakaiContoh')}
             </button>

@@ -33,7 +33,8 @@ Kalau dibuka lewat server Express (`npm start` di `app/`), halaman ini menempati
 
 ```
 docs/prototipe/
-├── index.html          # seluruh section halaman
+├── index.html          # seluruh section halaman penjelasan
+├── privasi.html        # halaman kebijakan privasi tersendiri (halaman statis kedua)
 ├── css/
 │   ├── fonts.css       # @font-face Plus Jakarta Sans (vendored)
 │   └── style.css       # design tokens + gaya + responsif (mobile first)

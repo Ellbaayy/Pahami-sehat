@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kebijakan Privasi — Pahami Sehat</title>
+<meta name="description" content="Kebijakan privasi Pahami Sehat: data apa yang diproses, di mana disimpan, berapa lama, pihak ketiga yang terlibat, hak pengguna menurut UU PDP No. 27/2022, dan kanal kontak untuk permintaan penghapusan data.">
+<link rel="icon" type="image/png" href="assets/logo-mark.png">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#konten">Lompat ke konten utama</a>
+
+<header class="navbar" id="navbar">
+  <div class="container nav-inner">
+    <a class="brand" href="./" aria-label="Pahami Sehat — halaman penjelasan">
+      <img src="assets/logo-mark.png" alt="Logo Pahami Sehat" class="brand-mark" width="43" height="39">
+      <span class="brand-text">
+        <strong>Pahami Sehat</strong>
+        <small>Informasi Kesehatan untuk Semua</small>
+      </span>
+    </a>
+
+    <nav class="nav-links" id="navLinks" aria-label="Navigasi utama">
+      <a href="./">Halaman Penjelasan</a>
+      <a href="#ringkasan">Ringkasan</a>
+      <a href="#pihak-ketiga">Pihak Ketiga</a>
+      <a href="#hak">Hak Anda</a>
+      <a href="#kontak">Kontak</a>
+      <a href="/app/" class="btn btn-primary btn-sm nav-cta">Coba Aplikasinya</a>
+    </nav>
+  </div>
+</header>
+
+<main id="konten">
+
+<section class="section" id="ringkasan">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Kebijakan Privasi</span>
+      <h1 class="p-h1">Data apa yang diproses, di mana disimpan, dan bagaimana menghapusnya</h1>
+      <p>Halaman ini menjelaskan pemrosesan data pada aplikasi Pahami Sehat secara terbuka, termasuk batas yang belum dapat dipenuhi. Halaman ini bukan janji umum: setiap pernyataan di bawah dapat diperiksa pada kode sumber aplikasi di repositori publik proyek ini.</p>
+      <p class="p-meta">Berlaku sejak 1 November 2026 · Versi 1.0 · Pengendali data: tim Pahami Sehat</p>
+    </div>
+
+    <div class="grid-2">
+      <article class="card">
+        <h2 class="card-h">Ringkasan dalam lima poin</h2>
+        <ul class="f-list" style="margin-top:.9rem">
+          <li><strong>Tidak ada akun.</strong> Aplikasi tidak meminta nama, alamat surel, nomor telepon, atau kata sandi.</li>
+          <li><strong>Riwayat obrolan, jawaban kuesioner, dan setelan</strong> disimpan di peramban Anda sendiri melalui <code>localStorage</code>, bukan di server.</li>
+          <li><strong>Yang dikirim ke server hanya teks pertanyaan</strong> — dan teks jawaban pada saat Anda menekan tombol dengar untuk diubah menjadi suara.</li>
+          <li><strong>Konteks percakapan di server tidak bertaut ke identitas</strong> dan dihapus otomatis setelah 7 hari.</li>
+          <li><strong>Tidak ada cookie, tidak ada pelacak iklan, dan tidak ada analitik pihak ketiga.</strong></li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2 class="card-h">Data yang TIDAK diambil</h2>
+        <ul class="f-list" style="margin-top:.9rem">
+          <li>Nama lengkap, NIK, nomor rekam medis, alamat rumah, atau tanggal lahir.</li>
+          <li>Akun, kata sandi, atau token masuk — fitur akun memang tidak ada.</li>
+          <li>Lokasi perangkat (GPS maupun perkiraan dari alamat jaringan).</li>
+          <li>Daftar kontak, kamera secara langsung, mikrofon secara langsung, atau isi berkas di perangkat.</li>
+          <li>Riwayat penjelajahan, sidik jari peramban, atau profil iklan.</li>
+        </ul>
+        <p class="note-box">Mikrofon dan kamera hanya aktif ketika Anda sendiri menekan tombolnya, dan hasilnya masuk lebih dahulu ke kotak isian agar dapat Anda periksa sebelum dikirim.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="data">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Rincian</span>
+      <h2>Setiap data, tujuannya, dan tempat penyimpanannya</h2>
+      <p>Kolom “berapa lama” adalah batas yang benar-benar diterapkan oleh kode, bukan perkiraan.</p>
+    </div>
+
+    <div class="grid-2">
+      <article class="card">
+        <h3>1 · Teks pertanyaan</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Tujuan:</strong> mencari sumber resmi dan menyusun jawaban.</li>
+          <li><strong>Ke mana:</strong> server aplikasi, lalu ke penyedia model AI pihak ketiga (lihat bagian Pihak Ketiga).</li>
+          <li><strong>Disimpan di:</strong> tabel <code>percakapan</code> pada basis data server aplikasi.</li>
+          <li><strong>Isi yang disimpan:</strong> teks pertanyaan dan teks jawaban, ditambah kode sesi acak yang dibuat peramban. Tidak ada nama, alamat IP, atau akun pada baris tersebut.</li>
+          <li><strong>Berapa lama:</strong> paling lama 7 hari. Penghapusan berjalan otomatis saat server dinyalakan dan setiap 6 jam setelahnya.</li>
+          <li><strong>Dipakai untuk apa:</strong> hanya sebagai konteks agar pertanyaan lanjutan tidak kehilangan topik. Maksimal 8 giliran terakhir yang dibaca.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>2 · Teks yang dibacakan</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Tujuan:</strong> mengubah jawaban menjadi suara natural.</li>
+          <li><strong>Ke mana:</strong> server aplikasi, lalu ke layanan suara Microsoft.</li>
+          <li><strong>Disimpan di:</strong> tidak disimpan. Berkas suara hasilnya dikirim kembali ke peramban.</li>
+          <li><strong>Berapa lama:</strong> tidak ada penyimpanan tetap di sisi aplikasi.</li>
+        </ul>
+        <p class="note-box">Fitur suara bersifat pilihan. Anda dapat memakai aplikasi tanpa pernah menekan tombol dengar.</p>
+      </article>
+
+      <article class="card">
+        <h3>3 · Kata kunci pencarian sumber</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Tujuan:</strong> menemukan bahan jawaban dari lembaga resmi.</li>
+          <li><strong>Ke mana:</strong> MedlinePlus (Perpustakaan Kedokteran Nasional Amerika Serikat), Wikipedia bahasa Indonesia, dan saluran resmi Kementerian Kesehatan RI.</li>
+          <li><strong>Isi yang dikirim:</strong> kata kunci topik, bukan seluruh pertanyaan dan bukan identitas Anda.</li>
+          <li><strong>Disimpan di:</strong> tautan halaman yang dikutip dicatat pada tabel <code>dokumen</code> dan <code>sitasi</code> agar klaim dapat diperiksa.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>4 · Foto yang dipindai</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Tujuan:</strong> mengubah tulisan pada foto menjadi teks yang bisa diolah.</li>
+          <li><strong>Di mana diproses:</strong> sepenuhnya di peramban Anda, memakai mesin pengenal tulisan berbasis WebAssembly yang disajikan situs ini sendiri.</li>
+          <li><strong>Ke mana:</strong> tidak ke mana-mana. Tidak ada permintaan keluar selama pemindaian.</li>
+          <li><strong>Disimpan di:</strong> tidak disimpan; hasil teksnya masuk ke kotak isian untuk Anda periksa.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>5 · Riwayat obrolan, jawaban kuesioner, dan setelan</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Disimpan di:</strong> <code>localStorage</code> peramban Anda, dengan kunci berawalan <code>pahami-sehat:</code>.</li>
+          <li><strong>Di server:</strong> tidak ada. Aplikasi ini tidak memiliki tempat menyimpan riwayat per pengguna.</li>
+          <li><strong>Berapa lama:</strong> sampai Anda menghapusnya sendiri melalui tombol hapus di halaman Riwayat, tombol ulangi pada kuesioner, atau dengan membersihkan data situs di peramban.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>6 · Alamat IP</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Tujuan:</strong> membatasi laju permintaan agar layanan tidak dipakai berlebihan.</li>
+          <li><strong>Disimpan di:</strong> hanya di memori proses server sebagai kunci penghitung.</li>
+          <li><strong>Berapa lama:</strong> hilang saat server berhenti. Tidak pernah ditulis ke basis data dan tidak pernah dicatat ke berkas log.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pihak-ketiga">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Keterbukaan</span>
+      <h2>Pihak ketiga yang menerima data</h2>
+      <p>Aplikasi ini tidak dapat bekerja tanpa layanan di luar dirinya. Karena itu, pihak berikut disebut lengkap beserta data yang benar-benar dikirim.</p>
+    </div>
+
+    <div class="grid-2">
+      <article class="card">
+        <h3>Penyedia model AI</h3>
+        <p style="margin-top:.6rem">Teks pertanyaan dikirim ke gerbang model <strong>kenari.id</strong> untuk disusun menjadi jawaban. Karena itu, hindari menuliskan nama lengkap, NIK, nomor rekam medis, atau alamat rumah di dalam pertanyaan. Peringatan yang sama tampil di dalam aplikasi.</p>
+        <p class="note-box">Konsekuensi yang diterima terbuka: teks pertanyaan Anda diproses oleh layanan di luar kendali tim Pahami Sehat.</p>
+      </article>
+
+      <article class="card">
+        <h3>Layanan suara</h3>
+        <p style="margin-top:.6rem">Hanya ketika Anda menekan tombol dengar, teks jawaban dikirim ke layanan suara <strong>Microsoft</strong> untuk diubah menjadi berkas audio. Tidak ada data lain yang ikut dikirim.</p>
+        <p class="note-box">Jika layanan suara tidak dapat dihubungi, aplikasi memakai suara bawaan peramban; teks tetap dapat dibaca tanpa fitur ini.</p>
+      </article>
+
+      <article class="card">
+        <h3>Sumber informasi kesehatan</h3>
+        <p style="margin-top:.6rem">Kata kunci topik dikirim ke <strong>MedlinePlus (NIH)</strong>, <strong>Wikipedia bahasa Indonesia</strong>, dan saluran resmi <strong>Kementerian Kesehatan RI</strong>. Ketiganya dipakai untuk mengambil bahan jawaban, bukan untuk mengenali pengguna.</p>
+      </article>
+
+      <article class="card">
+        <h3>Yang tidak ada sama sekali</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li>Tanpa Google Analytics, tanpa pelacak iklan, tanpa piksel media sosial.</li>
+          <li>Tanpa cookie — termasuk cookie sesi maupun cookie pelacak.</li>
+          <li>Tanpa penyimpanan iklan pihak ketiga di situs ini.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="hak">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Kendali Anda</span>
+      <h2>Hak pengguna menurut UU PDP No. 27/2022</h2>
+      <p>Undang-Undang Pelindungan Data Pribadi memberi sejumlah hak. Berikut bentuk nyatanya di aplikasi ini — termasuk dua yang tidak dapat dipenuhi sepenuhnya, dan alasannya.</p>
+    </div>
+
+    <div class="grid-2">
+      <article class="card">
+        <h3>Yang dapat Anda lakukan sendiri, sekarang</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Menghapus riwayat obrolan</strong> — satu per satu atau seluruhnya, dari halaman Riwayat.</li>
+          <li><strong>Menghapus jawaban kuesioner</strong> — tombol ulangi mengosongkan jawaban yang tersimpan.</li>
+          <li><strong>Menghapus seluruh data situs</strong> — pengaturan peramban, menu data situs, hapus semua.</li>
+          <li><strong>Memakai aplikasi tanpa mengirim pertanyaan</strong> — membaca halaman penjelasan dan mengisi kuesioner tidak mengirim apa pun ke server.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>Batas yang disebut apa adanya</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Permintaan akses per orang tidak dapat dipenuhi.</strong> Karena tidak ada akun dan tidak ada identitas pada baris percakapan, tim Pahami Sehat tidak punya cara menautkan sebuah baris kepada seseorang. Permintaan “tampilkan data saya” karena itu tidak dapat dijalankan.</li>
+          <li><strong>Permintaan penghapusan lebih cepat dari 7 hari juga tidak dapat dipenuhi secara per orang</strong>, dengan alasan yang sama. Yang menjamin penghapusan adalah batas waktu otomatis 7 hari yang berjalan di server.</li>
+          <li><strong>Yang tetap bisa dilakukan:</strong> menghapus data di perangkat Anda sendiri seketika, dan melaporkan keberadaan baris yang tidak seharusnya tersimpan melalui kanal kontak untuk ditindaklanjuti secara umum.</li>
+        </ul>
+        <p class="note-box">Ini keterbatasan nyata dari rancangan tanpa akun — disebut di sini supaya tidak tampak seperti janji yang tidak ada isinya.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="keamanan">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Keamanan</span>
+      <h2>Pengamanan, dan batasnya</h2>
+    </div>
+
+    <div class="grid-2">
+      <article class="card">
+        <h3>Yang sudah terpasang</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Tidak ada kata sandi yang dapat dicuri</strong>, karena tidak ada akun.</li>
+          <li><strong>Koneksi terenkripsi</strong> ketika aplikasi dibuka melalui alamat HTTPS.</li>
+          <li><strong>Basis data hanya dapat diakses dari server aplikasi</strong> pada mesin yang sama, tidak terbuka ke jaringan luar.</li>
+          <li><strong>Pembatas laju per alamat IP</strong> untuk menahan penyalahgunaan dan menjaga biaya tetap terukur.</li>
+          <li><strong>Batas panjang masukan</strong>, sehingga permintaan berukuran sangat besar ditolak.</li>
+          <li><strong>Penyaring di sisi server</strong> yang menghapus klaim prognosis yang tidak ada di sumber, sebelum jawaban dikirim ke pengguna.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>Batas yang perlu Anda ketahui</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Tidak ada jaminan ketersediaan.</strong> Aplikasi ini dijalankan pada satu server milik pengembang, bukan pada penyedia awan dengan jaminan layanan.</li>
+          <li><strong>Bukan tempat menyimpan rekam medis.</strong> Jangan menuliskan data medis pribadi yang sensitif di dalam pertanyaan.</li>
+          <li><strong>Alamat aplikasi bersifat sementara</strong> pada saat demonstrasi dan dapat berubah setiap kali dijalankan.</li>
+          <li><strong>Aplikasi ini bukan alat diagnosis.</strong> Untuk keluhan kesehatan, tetap periksa ke tenaga kesehatan.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="anak">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Kelompok khusus</span>
+      <h2>Anak-anak dan pendampingan</h2>
+    </div>
+
+    <div class="card">
+      <p>Aplikasi ini menyediakan tingkat baca anak-anak, jadi dapat dipakai oleh pembaca muda. Aplikasi tetap tidak meminta identitas siapa pun, termasuk tanggal lahir, nama sekolah, atau nama orang tua.</p>
+      <p class="note-box">Untuk pemakaian oleh anak, sebaiknya ada pendampingan orang tua atau wali, terutama ketika anak akan menekan tombol kirim atau tombol dengar.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="perubahan">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Riwayat</span>
+      <h2>Perubahan kebijakan ini</h2>
+    </div>
+
+    <div class="grid-2">
+      <article class="card">
+        <h3>Cara perubahan dicatat</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li>Setiap perubahan pada halaman ini disertai tanggal berlaku yang baru di bagian atas.</li>
+          <li>Karena kode dan kebijakan tersimpan pada repositori publik, riwayat perubahannya dapat diperiksa langsung dari catatan revisi proyek.</li>
+          <li>Perubahan yang menambah jenis data yang diproses akan dituliskan sebagai bagian baru, bukan diselipkan diam-diam.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>Versi</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>1.0 — 1 November 2026.</strong> Versi pertama. Menjelaskan pemrosesan teks pertanyaan, konteks percakapan 7 hari, pemindaian foto di peramban, layanan suara, pihak ketiga, dan kanal kontak.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="kontak">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Menghubungi</span>
+      <h2>Kanal kontak resmi</h2>
+      <p>Kanal berikut dipakai untuk pertanyaan tentang privasi, laporan data yang tidak seharusnya tersimpan, dan permintaan penghapusan data.</p>
+    </div>
+
+    <div class="grid-2">
+      <article class="card">
+        <h3>Repositori publik proyek</h3>
+        <p style="margin-top:.6rem">Permintaan dapat disampaikan melalui halaman masalah (<em>issues</em>) pada repositori resmi proyek:</p>
+        <p><a class="btn btn-primary btn-sm" href="https://github.com/Ellbaayy/Pahami-sehat/issues" rel="noopener" target="_blank">Buka kanal kontak</a></p>
+        <p class="note-box">Halaman itu bersifat publik. Jangan menuliskan data pribadi di sana — cukup jelaskan masalah atau permintaannya. Balasan diberikan melalui halaman yang sama.</p>
+      </article>
+
+      <article class="card">
+        <h3>Yang perlu disebutkan</h3>
+        <ul class="f-list" style="margin-top:.6rem">
+          <li><strong>Untuk laporan konten:</strong> alamat halaman atau teks yang bermasalah.</li>
+          <li><strong>Untuk masalah privasi:</strong> bagian mana dari halaman ini yang tidak sesuai dengan perilaku aplikasi.</li>
+          <li><strong>Untuk permintaan penghapusan:</strong> jenis data yang dimaksud (misalnya konteks percakapan). Data tidak dicari berdasarkan nama, karena nama memang tidak pernah disimpan.</li>
+          <li><strong>Jangan menyertakan:</strong> NIK, nomor rekam medis, hasil laboratorium, atau data kesehatan pribadi lain.</li>
+        </ul>
+        <p class="note-box">Belum ada alamat surel resmi. Kanal di samping adalah satu-satunya jalur kontak yang berlaku saat ini, dan tidak ada pihak lain yang mewakili proyek ini.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a class="brand" href="./">
+        <img src="assets/logo-mark.png" alt="Logo Pahami Sehat" width="43" height="39">
+        <span class="brand-text"><strong>Pahami Sehat</strong><small>Informasi Kesehatan untuk Semua</small></span>
+      </a>
+      <p>Kebijakan privasi ini menjelaskan pemrosesan data pada aplikasi Pahami Sehat, termasuk batas yang belum dapat dipenuhi.</p>
+    </div>
+
+    <nav class="footer-col" aria-label="Navigasi kebijakan privasi">
+      <h4>Kebijakan ini</h4>
+      <a href="#ringkasan">Ringkasan</a>
+      <a href="#data">Rincian data</a>
+      <a href="#pihak-ketiga">Pihak ketiga</a>
+      <a href="#hak">Hak Anda</a>
+      <a href="#keamanan">Keamanan</a>
+      <a href="#kontak">Kontak</a>
+    </nav>
+
+    <nav class="footer-col" aria-label="Navigasi situs">
+      <h4>Situs</h4>
+      <a href="./">Halaman penjelasan</a>
+      <a href="/app/">Buka aplikasinya</a>
+      <a href="./#etika">Privasi &amp; Etika AI di halaman penjelasan</a>
+    </nav>
+
+    <div class="footer-col">
+      <h4>Berlaku</h4>
+      <p class="footer-note">Versi 1.0 · berlaku sejak 1 November 2026. Halaman ini merupakan bagian dari situs statis Pahami Sehat dan tidak memuat data pengguna.</p>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© 2026 Pahami Sehat — Informasi Kesehatan untuk Semua</span>
+    <span>Created by NØCTURNE · aksesibel &amp; responsif</span>
+  </div>
+</footer>
+
+</body>
+</html>

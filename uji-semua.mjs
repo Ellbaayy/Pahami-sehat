@@ -60,7 +60,14 @@ delete envAnak.KENARI_API_KEY
 envAnak.DB_MATI = '1'
 
 /** Uji yang butuh jaringan atau rahasia — tidak ikut secara bawaan. */
-const BUTUH_LUAR = new Set(['uji-jawaban.mjs'])
+const BUTUH_LUAR = new Set([
+  'uji-jawaban.mjs',
+  // Butuh server lokal yang hidup DAN Chrome/Chromium terpasang. Dijalankan
+  // terpisah: `node uji-peramban.mjs` (atau `cd app && npm run uji:peramban`).
+  // Kalau dimasukkan ke sini, gerbang `npm test` jadi bergantung pada keadaan
+  // mesin — persis yang ingin dihindari uji tanpa jaringan ini.
+  'uji-peramban.mjs',
+])
 
 /** Uji yang memeriksa hasil build; hanya jalan kalau `dist/` ada. */
 const BUTUH_BUILD = new Set(['uji-statis.mjs'])

@@ -60,7 +60,14 @@ export function SectionHeading({ eyebrow, title, description, action, id, ilustr
         ) : null}
       </div>
       {action || ilustrasi ? (
-        <div className="flex shrink-0 items-center gap-3 self-center">
+        /* `shrink` (bukan `shrink-0`) di layar sempit: aksi judul bisa berupa
+           satu baris teks panjang — mis. "Artikel terbaru terbit 5 Mei 2026 ·
+           Terakhir dicek 25 Oktober 2026" di Beranda. Dengan shrink-0 baris itu
+           menolak menyusut sehingga lebar tata letak halaman ikut melebar
+           (terukur: 612px di layar 375px, bukan 375px). Mulai `sm` perilaku
+           lama dipakai lagi supaya tombol aksi tidak pernah ikut menyusut
+           berdampingan dengan judul. */
+        <div className="flex min-w-0 shrink items-center gap-3 self-center sm:shrink-0">
           {action}
           {ilustrasi ? (
             /* kotak berukuran tetap + object-contain, supaya semua ilustrasi

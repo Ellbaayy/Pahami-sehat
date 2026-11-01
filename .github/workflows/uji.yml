@@ -177,3 +177,31 @@ jobs:
         # skor tidak diam-diam kembali menjadi persentase buatan sendiri.
         run: node uji-skor-hls.mjs
 
+      - name: Uji peramban otomatis (6 halaman × 2 bahasa)
+        # Satu-satunya uji yang memeriksa LAYAR, bukan kode: judul halaman
+        # tampil, tepat satu h1, tanpa luapan horizontal di 1280x800 dan
+        # 375x812, tanpa galat runtime — untuk 6 halaman × 2 bahasa.
+        #
+        # Butuh server hidup dan Chrome. Runner ubuntu-latest sudah membawa
+        # google-chrome-stable, jadi langkah ini benar-benar menguji. Kunci
+        # model DIPALSUKAN dan DB dimatikan: uji ini tidak pernah memanggil
+        # model maupun database, jadi tidak boleh bergantung pada rahasia.
+        #
+        # Kalau server gagal siap, langkah ini SENGAJA exit 1 (bukan membiarkan
+        # uji melaporkan DILEWATI) — di CI, "dilewati" berarti hijau palsu.
+        run: |
+          cd app
+          KENARI_API_KEY=uji-tanpa-kunci-asli DB_MATI=1 nohup node server/index.js > /tmp/srv.log 2>&1 &
+          siap=0
+          for i in $(seq 1 40); do
+            if curl -sf -o /dev/null http://127.0.0.1:8787/app/; then siap=1; break; fi
+            sleep 1
+          done
+          if [ "$siap" != "1" ]; then
+            echo "Server tidak siap untuk uji peramban:"
+            tail -40 /tmp/srv.log
+            exit 1
+          fi
+          cd ..
+          node uji-peramban.mjs
+

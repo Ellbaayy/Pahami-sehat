@@ -137,6 +137,7 @@ Laporan lengkapnya ada di `docs/verifikasi-klaim-kesehatan.md`,
 |---|---|
 | `/` | halaman penjelasan — yang muncul pertama kali dibuka |
 | `/app/` | aplikasi yang bisa dipakai |
+| `/privasi.html` | kebijakan privasi tersendiri: data yang diproses, pihak ketiga, hak pengguna, kanal kontak |
 | `/prototipe/` | salinan halaman penjelasan (tautan lama tetap hidup) |
 | `/api/...` | backend |
 
@@ -817,8 +818,8 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 21 Okt 2026: **16 berkas, semua lulus,
-±6 detik**, tanpa jaringan dan tanpa API key.
+memperbarui daftar di mana pun. Diukur 1 Nov 2026: **19 berkas, semua lulus,
+±4 detik**, tanpa jaringan dan tanpa API key.
 
 Daftar per berkas (jalankan langsung dari akar repo kalau sedang menelusuri satu
 uji tertentu):
@@ -841,7 +842,38 @@ node uji-sitasi.mjs       # jejak sumber (butuh MariaDB; dilewati tanpa DB)
 node uji-server.mjs       # kompresi, 404 JSON, galat klien
 node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
+node uji-peramban.mjs     # peramban sungguhan: 6 halaman × 2 bahasa (butuh server + Chrome)
 ```
+
+### Uji peramban otomatis — 6 halaman × 2 bahasa
+
+Satu-satunya hal yang tidak bisa dibuktikan dari build hijau adalah perilaku di
+layar. `uji-peramban.mjs` mengendalikan Chrome lewat protokol DevTools **tanpa
+dependensi baru**, lalu memeriksa untuk setiap halaman dan setiap bahasa:
+judul halaman tampil, tepat satu `h1`, tidak ada luapan horizontal di
+1280×800 maupun 375×812, tidak ada galat runtime, dan — untuk halaman fitur
+(Tanya AI, Riwayat, Kuesioner) — isinya **muat satu layar** di 1366×700 dan
+375×812.
+
+```bash
+cd app && npm run server     # terminal lain; dist/ harus sudah dibuild
+cd .. && node uji-peramban.mjs   # 90 pemeriksaan, ±30 detik
+```
+
+Uji ini **tidak** ikut `npm test` — ia butuh server hidup dan peramban, jadi
+menjalankannya di dalam gerbang tanpa jaringan akan membuat hasilnya
+bergantung pada mesin. Kalau server mati atau Chrome tidak ada, ia berhenti
+dengan keterangan **DILEWATI** (exit 0), bukan gagal.
+
+Satu pengecualian disebut terbuka: **Cek Klaim perlu digulir di HP 375×812**
+(terukur 1.182 px isi untuk 812 px layar). Halaman itu memuat kotak isian,
+deretan contoh, dan area hasil sekaligus; memaksanya muat satu layar di HP akan
+mengorbankan keterbacaan. Yang diuji untuk halaman itu adalah versi laptop.
+
+> Uji inilah yang menemukan Beranda melebar ke **612 px** di layar 375 px,
+> padahal halaman lain rapi: satu baris teks panjang di kepala bagian Topik
+> (`Artikel terbaru terbit … · Terakhir dicek …`) dibungkus `shrink-0` sehingga
+> menolak menyusut. Diperbaiki 1 Nov 2026 di `SectionHeading`.
 
 ### Lint — gerbang mutu kode
 
@@ -1158,8 +1190,12 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
   global diperlukan penyimpanan bersama (mis. Redis/Upstash) — belum dipasang.
 - Aplikasi ini **belum mengukur emisi karbonnya sendiri**, jadi tidak ada angka
   jejak karbon yang diklaim di mana pun.
-- Belum ada halaman kebijakan privasi tersendiri dan alamat kontak resmi untuk
-  permintaan penghapusan data.
+- Halaman kebijakan privasi tersendiri **sudah ada** di `/privasi.html`, beserta
+  kanal kontak resmi (halaman masalah pada repositori publik). Batas yang masih
+  berlaku disebut di sana: karena tidak ada akun dan tidak ada identitas pada
+  baris percakapan, data **tidak dapat dicari per orang**, sehingga permintaan
+  penghapusan per orang tidak dapat dijalankan; yang menjamin penghapusan adalah
+  batas otomatis 7 hari.
 
 ### Kepatuhan UU PDP No. 27/2022 dalam praktik
 
@@ -1168,7 +1204,7 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
 | Minimalisasi data | Yang diambil hanya teks pertanyaan. Tidak ada nama lengkap, NIK, alamat, email, atau kata sandi yang diminta — tidak ada formulir yang memintanya. |
 | Kendali di tangan subjek data | Riwayat dan jawaban kuesioner disimpan di perangkat pengguna dan bisa dihapus pengguna kapan saja. |
 | Keterbukaan | Perpindahan data dijelaskan sebelum pengguna memakainya (panel Pengaturan), bukan disembunyikan. |
-| Hak penghapusan | Terpenuhi secara teknis (tombol hapus riwayat), **belum** terpenuhi secara prosedural (belum ada kanal kontak resmi). |
+| Hak penghapusan | Terpenuhi secara teknis (tombol hapus riwayat, tombol ulangi kuesioner) dan tersedia kanal kontak resmi di `/privasi.html`. **Tidak dapat dicari per orang** karena tidak ada akun; penghapusan dijamin oleh batas otomatis 7 hari pada konteks percakapan di server. |
 
 ---
 
