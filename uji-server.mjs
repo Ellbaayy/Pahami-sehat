@@ -145,31 +145,49 @@ cek('menyebut alamat yang diminta', /tidak-ada-sama-sekali/.test(hilang.teks), t
 console.log('\n=== KOMPRESI: respons besar harus di-gzip ===')
 
 // Lewat HTTP MENTAH — fetch Node menambah dan membatalkan kompresi sendiri.
-const tanpa = await ambilMentah('/api/konten')
-const dengan = await ambilMentah('/api/konten', { 'Accept-Encoding': 'gzip' })
+//
+// RUTE UJINYA /api/meta, BUKAN /api/konten. Alasan (terjadi 1 Nov 2026): /api/konten
+// mengambil RSS Kemenkes dari internet. Di runner CI sumber itu menjawab 503,
+// sehingga balasannya menjadi JSON galat yang KECIL dan tidak dikompresi — uji
+// merah padahal lapisan kompresinya benar. Uji tanpa jaringan tidak boleh
+// bergantung pada layanan pihak ketiga. /api/meta tetap 1.238 byte, tidak
+// menyentuh jaringan, dan melewati middleware yang sama.
+const BESAR = '/api/meta'
+const tanpa = await ambilMentah(BESAR)
+const dengan = await ambilMentah(BESAR, { 'Accept-Encoding': 'gzip' })
 
+console.log(`        ukuran mentah /api/meta: ${tanpa.buf.length}B`)
+cek('respons uji memang cukup besar (>500 B)', tanpa.buf.length > 500, true)
 cek('tanpa Accept-Encoding: tidak dikompresi', tanpa.headers['content-encoding'], undefined)
 cek('dengan Accept-Encoding: di-gzip', dengan.headers['content-encoding'], 'gzip')
 cek('ada Vary: Accept-Encoding (wajib untuk cache)', /accept-encoding/i.test(dengan.headers.vary ?? ''), true)
 
 // Yang penting bukan "ada header gzip", tapi isinya BENAR-BENAR mengecil dan
 // bisa dibaca kembali setelah dibongkar. Header saja tidak membuktikan apa pun.
-const kembali = JSON.parse(gunzipSync(dengan.buf).toString('utf8'))
-cek('isi setelah dibongkar sama dengan aslinya', kembali.ok, true)
+//
+// `gunzipSync` dibungkus try/catch: kalau server lupa mengompresi, galat zlib
+// yang dilempar MENGHENTIKAN seluruh uji dan menyamarkan cacat sebagai kerusakan
+// uji — persis yang terjadi di CI 1 Nov 2026. Pemeriksaan header di atas sudah
+// melaporkan cacatnya dengan jelas, jadi di sini cukup dilaporkan sebagai gagal.
+let kembali = null
+try {
+  kembali = JSON.parse(gunzipSync(dengan.buf).toString('utf8'))
+} catch (e) {
+  console.log(`        gagal membongkar: ${e?.message ?? e}`)
+}
+// Pembandingnya badan TANPA kompresi dari rute yang sama — bukan kunci tertentu,
+// supaya uji ini tidak ikut merah hanya karena bentuk /api/meta berubah.
+const asli = JSON.parse(tanpa.buf.toString('utf8'))
+cek('isi setelah dibongkar sama dengan aslinya', JSON.stringify(kembali) === JSON.stringify(asli), true)
 cek('benar-benar lebih kecil', dengan.buf.length < tanpa.buf.length, true)
 console.log(`        tanpa: ${tanpa.buf.length}B · gzip: ${dengan.buf.length}B (hemat ${Math.round((1 - dengan.buf.length / tanpa.buf.length) * 100)}%)`)
 
 // Respons kecil tidak perlu dikompresi — header gzip bisa lebih besar dari
 // hematannya. Dipakai rute yang memang kecil dan TIDAK berubah ukurannya
-// (/api/health ~300 byte), bukan /api/meta: sejak daftar suara diumumkan,
-// /api/meta menjadi 1.238 byte sehingga memang WAJAR dikompresi.
+// (/api/health ~300 byte), bukan /api/meta yang 1.238 byte (memang wajar dikompresi).
 const kecil = await ambilMentah('/api/health', { 'Accept-Encoding': 'gzip' })
 cek('respons kecil dibiarkan apa adanya', kecil.headers['content-encoding'], undefined)
 cek('ukurannya memang di bawah ambang', kecil.buf.length < 500, true)
-
-// Dan sebaliknya: yang sudah besar memang dikompresi.
-const meta = await ambilMentah('/api/meta', { 'Accept-Encoding': 'gzip' })
-cek('/api/meta (1.238B) dikompresi', meta.headers['content-encoding'], 'gzip')
 
 /* ============================================ 4. SSE JANGAN DIKOMPRESI == */
 
