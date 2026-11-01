@@ -184,7 +184,6 @@ ke aplikasi.
 
 ---
 
-
 ## Arsitektur
 
 ```mermaid
