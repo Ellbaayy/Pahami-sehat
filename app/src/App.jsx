@@ -144,7 +144,7 @@ function simpanSetelan(s) {
 /**
  * Sidebar desktop/tablet: terbuka (penuh) atau tertutup (rail ikon).
  *
- * Disimpan di peramban supaya pilihan jagi tidak kembali tertutup setiap
+ * Disimpan di peramban supaya pilihan pengguna tidak kembali tertutup setiap
  * halaman dimuat ulang. Bawaannya TERBUKA — halaman yang baru pertama dibuka
  * harus langsung memperlihatkan navigasi lengkap, bukan rail ikon.
  */
@@ -826,7 +826,7 @@ export default function App() {
                 <HealthTip tip={konten.tips} t={t} />
                 <ArticleGrid articles={konten.artikel} t={t} />
                 {/* Bagian "Obrolan Terakhir" sengaja TIDAK dirender di Beranda
-                    (keputusan jagi, 18 Okt 2026). Riwayat obrolan tetap
+                    (keputusan, 18 Okt 2026). Riwayat obrolan tetap
                     tersimpan dan bisa dibuka lewat menu Riwayat. */}
               </div>
             ) : null}

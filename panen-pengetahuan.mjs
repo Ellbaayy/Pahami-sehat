@@ -6,7 +6,7 @@
  * KENAPA SKRIP INI TIDAK MENYURUH AI MENGARANG
  * ============================================================================
  *
- * Jagi meminta (15 Okt 2026): "cari data sumber-sumber dan update terbaru soal
+ * Diminta (15 Okt 2026): "cari data sumber-sumber dan update terbaru soal
  * kesehatan, penyakit, hal yang luas soal medis, lalu simpan di database, agar
  * AI punya banyak pengetahuan."
  *

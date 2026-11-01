@@ -292,7 +292,7 @@ const PENANDA_WAKTU =
 /**
  * Pertanyaan "apa yang baru?" tanpa kata 'berita' atau 'kesehatan'.
  *
- * KENAPA PERLU (16 Okt 2026 — keluhan jagi): "apa yang baru hari ini" dijawab
+ * KENAPA PERLU (16 Okt 2026 — keluhan pengguna): "apa yang baru hari ini" dijawab
  * dengan "hasil pencarian kosong". Penyebabnya DIUKUR: kalimat itu TIDAK
  * terdeteksi sebagai pertanyaan berita, jadi jatuh ke jalur pencarian
  * Wikipedia — dan Wikipedia tidak punya apa-apa untuk "apa yang baru hari
@@ -369,7 +369,7 @@ export function menanyakanBerita(teks) {
   // "apa yang baru hari ini" tidak memuat kata 'berita' maupun topik
   // kesehatan — dua syarat yang dipakai aturan berikutnya. Tanpa cabang ini,
   // pertanyaannya jatuh ke pencarian Wikipedia dan dijawab "hasil pencarian
-  // kosong" (keluhan jagi, 16 Okt 2026).
+  // kosong" (keluhan pengguna, 16 Okt 2026).
   //
   // PENGECUALIAN yang penting: kalau pertanyaannya menyebut topik yang JELAS
   // bukan kesehatan ("ada apa dengan bola malam ini"), itu bukan urusan
@@ -428,7 +428,7 @@ export function jawabanBeritaDarurat(berita = [], kode = 'id') {
 
 /* ================================================== ringkasan harian + lonceng ==
  *
- * Jagi meminta (15 Okt 2026): berita WAJIB diperbarui minimal sehari sekali,
+ * Diminta (15 Okt 2026): berita WAJIB diperbarui minimal sehari sekali,
  * dan kalau ada yang baru, lonceng pemberitahuan di aplikasi harus berbunyi.
  *
  * Cara kerjanya — pola yang sama seperti konten.js:
@@ -444,7 +444,7 @@ export function jawabanBeritaDarurat(berita = [], kode = 'id') {
  * Kenapa tidak fetch tiap permintaan: RSS Detik 100 item — menembaknya di
  * setiap buka aplikasi hanya untuk lonceng adalah pemborosan dan berisiko
  * membuat IP kita dibatasi. Lonceng tidak butuh detik-akurat; sehari sekali
- * sesuai permintaan jagi.
+ * sesuai permintaan.
  * ========================================================================== */
 
 const __dirnameBerita = dirname(fileURLToPath(import.meta.url))

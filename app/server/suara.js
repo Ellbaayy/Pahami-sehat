@@ -55,7 +55,7 @@
  * percobaan ulang ini; mengukur sekali lalu menyimpulkan "rusak" juga salah —
  * 429 itu sementara dan pulih dalam ~1 detik.
  *
- * KEPUTUSAN JAGI (14 Okt 2026) — HANYA JALUR MICROSOFT.
+ * KEPUTUSAN (14 Okt 2026) — HANYA JALUR MICROSOFT.
  * Dulu ada jalur kedua lewat Kenari (`POST /audio/speech`) yang dicoba LEBIH
  * DULU di server biasa. Jalur itu dibuang karena selalu merugikan:
  *   - saldo akun Kenari Rp 0, jadi setiap permintaan ditolak `402
@@ -64,7 +64,7 @@
  *   - penantian itu murni pemborosan: /api/suara jadi 20 detik lebih lambat
  *     untuk setiap kalimat tanpa pernah menghasilkan audio.
  * Jadi sekarang Microsoft adalah satu-satunya jalur di server biasa. Jangan
- * hidupkan kembali jalur Kenari tanpa perintah jagi.
+ * hidupkan kembali jalur Kenari tanpa perintah pengguna.
  *
  * CATATAN LISENSI: suara ini milik Microsoft dan diakses lewat layanan
  * Read Aloud, yang izin komersialnya belum dinyatakan tertulis. Aman untuk
@@ -225,7 +225,7 @@ export function tentukanBahasa(teks, diminta = '') {
  *
  * Diukur 16 Okt 2026: 5 dari 10 kalimat kesehatan berbahasa INDONESIA
  * dinyatakan Jawa, sehingga jawaban Indonesia dibacakan dengan suara Jawa.
- * Itu keluhan yang disampaikan jagi, dan penyebabnya persis ini.
+ * Itu keluhan yang disampaikan pengguna, dan penyebabnya persis ini.
  *
  * Perbaikannya dua lapis:
  *   1. Pencocokan memakai BATAS KATA (`\b`), jadi 'iku' tidak lagi cocok di
@@ -284,7 +284,7 @@ export function tebakBahasaDaerah(teks) {
  * DIUKUR 15 OKT 2026 — KENAPA NADANYA DIBUAT SEDATAR INI
  * ============================================================================
  *
- * Keluhan jagi: "suara kadang masih naik turun". Penyebabnya diukur, bukan
+ * Keluhan pengguna: "suara kadang masih naik turun". Penyebabnya diukur, bukan
  * ditebak. Satu kalimat yang SAMA dibacakan dengan beberapa pitch, lalu nada
  * dasarnya (f0) dihitung dari audionya:
  *
@@ -601,7 +601,7 @@ async function buatBagianTahan(e, kalimat, opsi) {
  * Hasilkan audio MP3 dari teks, dengan nada mengikuti isi tiap kalimat.
  *
  * Memakai suara neural Microsoft (`msedge-tts`, WebSocket) — satu-satunya
- * jalur yang dipakai sekarang, lihat "KEPUTUSAN JAGI" di kepala berkas.
+ * jalur yang dipakai sekarang, lihat "KEPUTUSAN" di kepala berkas.
  *
  * Di serverless (Vercel) WebSocket tidak bisa hidup, jadi fungsi ini menyerah
  * lebih awal dengan pesan yang jujur daripada menunggu batas waktu habis.

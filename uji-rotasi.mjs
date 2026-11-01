@@ -1,7 +1,7 @@
 /**
  * Uji rotasi daftar konten (susun) — tanpa jaringan.
  *
- * KENAPA ADA (permintaan jagi, 16 Okt 2026): "Topik populer / Tips Kesehatan
+ * KENAPA ADA (permintaan, 16 Okt 2026): "Topik populer / Tips Kesehatan
  * Hari Ini / Artikel kesehatan kok tidak update-update ya?"
  *
  * Penyebabnya BUKAN bug: halaman depan Kemenkes memang belum menerbitkan

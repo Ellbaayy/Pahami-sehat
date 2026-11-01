@@ -24,8 +24,27 @@ const UA =
 /** Umur simpanan. Katalog boleh lebih jarang disegarkan daripada Beranda. */
 const TTL_MS = 3 * 60 * 60 * 1000
 
-/** Batas jumlah butir yang diambil per lembaga/jurnal. */
-const MAKS_ITEM = 4
+/**
+ * Versi bentuk simpanan.
+ *
+ * Dinaikkan saat 12 butir per lembaga (1 Nov 2026): simpanan lama masih berisi
+ * 4 butir, dan tanpa ini pengguna yang sudah membuka halaman akan tetap
+ * melihat daftar pendek sampai simpanannya kedaluwarsa 3 jam.
+ */
+const VERSI_CACHE = 2
+
+/** Umur simpanan saat ADA kanal yang gagal — supaya cepat dicoba lagi. */
+const TTL_GAGAL_MS = 5 * 60 * 1000
+
+/**
+ * Batas jumlah butir yang diambil per lembaga/jurnal.
+ *
+ * Dinaikkan dari 4 menjadi 12 supaya halaman katalog benar-benar berisi banyak
+ * bahan bacaan — bukan sekadar contoh. 12 dipilih karena halaman rilis berita
+ * Kemenkes memuat tepat 12 kartu per halaman, jadi satu permintaan saja sudah
+ * memberi isi penuh tanpa memanggil halaman berikutnya.
+ */
+const MAKS_ITEM = 12
 
 /* ------------------------------------------------------------ definisi -- */
 
@@ -284,7 +303,15 @@ async function ambil(url, timeoutMs = 20000, percobaan = 3) {
       return await ambilSekali(url, timeoutMs)
     } catch (e) {
       terakhir = e
-      if (!/HTTP (429|5\d\d)/.test(String(e?.message))) break
+      const pesan = String(e?.message ?? '')
+      // Dua jenis yang layak diulang:
+      //   1. batas laju / galat sementara server (429, 5xx)
+      //   2. galat JARINGAN — ditandai dengan tidak adanya kode HTTP sama
+      //      sekali ("fetch failed"). Diukur 1 Nov 2026: NCBI sesekali
+      //      memutus koneksi saat katalog diambil, dan tanpa aturan ini satu
+      //      jurnal langsung tampil "gagal" padahal detik berikutnya normal.
+      const sementara = /HTTP (429|5\d\d)/.test(pesan) || !/^HTTP \d{3}\b/.test(pesan)
+      if (!sementara) break
       await jeda(700 * (i + 1))
     }
   }
@@ -478,7 +505,7 @@ async function ambilKemkes(sumber) {
 async function ambilCrossref(jurnal) {
   const url =
     `https://api.crossref.org/journals/${jurnal.issn}/works` +
-    '?rows=4&sort=published&order=desc&select=title,published,DOI,container-title,author,URL'
+    `?rows=${MAKS_ITEM}&sort=published&order=desc&select=title,published,DOI,container-title,author,URL`
   const teks = await crossref(url)
   const item = uraiCrossref(teks)
   if (!item.length) throw new Error('Crossref tidak mengembalikan butir')
@@ -488,7 +515,7 @@ async function ambilCrossref(jurnal) {
 async function ambilPubmed(jurnal) {
   const kueri = encodeURIComponent(jurnal.kueri)
   const cari = await ncbi(
-    `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=4&sort=date&term=${kueri}&tool=pahami-sehat`,
+    `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=${MAKS_ITEM}&sort=date&term=${kueri}&tool=pahami-sehat`,
   )
   let ids
   try {
@@ -566,7 +593,8 @@ async function bacaDariDisk() {
     const { readFile } = await import('node:fs/promises')
     const teks = await readFile(berkasCache(), 'utf8')
     const data = JSON.parse(teks)
-    return data && Array.isArray(data.sumber) ? data : null
+    // Bentuk lama diabaikan, bukan dipakai apa adanya: lihat VERSI_CACHE.
+    return data && Array.isArray(data.sumber) && data.versi === VERSI_CACHE ? data : null
   } catch {
     return null
   }
@@ -585,7 +613,12 @@ async function simpanKeDisk(data) {
 function segar(data) {
   if (!data?.diperiksa) return false
   const umur = Date.now() - new Date(data.diperiksa).getTime()
-  return Number.isFinite(umur) && umur >= 0 && umur < TTL_MS
+  if (!Number.isFinite(umur) || umur < 0) return false
+  // Katalog yang memuat kanal gagal TIDAK dikunci 3 jam. Kalau dikunci, satu
+  // gangguan jaringan sesaat membuat jurnal tampil "gagal" sepanjang sore —
+  // padahal pengambilan berikutnya biasanya berhasil.
+  const adaGagal = [...(data.sumber ?? []), ...(data.jurnal ?? [])].some((x) => x.status === 'gagal')
+  return umur < (adaGagal ? TTL_GAGAL_MS : TTL_MS)
 }
 
 /** Susun daftar: satu bagian untuk sumber resmi, satu untuk jurnal. */
@@ -595,6 +628,7 @@ async function ambilSemua() {
     Promise.all(JURNAL.map((j) => ambilSatu(j, 'jurnal'))),
   ])
   return {
+    versi: VERSI_CACHE,
     diperiksa: new Date().toISOString(),
     sumber: sumber.sort((a, b) => {
       // nasional dulu, lalu internasional; di dalamnya sesuai urutan definisi

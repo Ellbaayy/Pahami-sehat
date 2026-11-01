@@ -2,7 +2,7 @@
 /**
  * Uji tanggal terbit konten harian — tanpa jaringan.
  *
- * KENAPA ADA (25 Okt 2026). Dua keluhan jagi, dua-duanya terbukti:
+ * KENAPA ADA (25 Okt 2026). Dua keluhan pengguna, dua-duanya terbukti:
  *
  *   1. "Konten harian terakhir di update 12 Oktober 2026." Tanggal itu adalah
  *      kapan DAFTAR artikel pertama kali berubah, bukan tanggal terbit apa pun.
@@ -209,7 +209,7 @@ for (let g = 1; g <= 8; g++) {
     ids.every((id) => jendela8.has(id)), ids.join(','))
 }
 
-// Cacat yang dilaporkan jagi: artikel 2023 (1066 hari) tampil sebagai bacaan
+// Cacat yang dilaporkan pengguna: artikel 2023 (1066 hari) tampil sebagai bacaan
 // utama. Dengan jendela rotasi, itu tidak boleh terjadi pada putaran mana pun.
 let dilanggar = 0
 let totalTampil = 0

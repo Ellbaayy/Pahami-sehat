@@ -132,7 +132,7 @@ function simpanRiwayat(daftar) {
  * Empat pilihan jawaban.
  *
  * Label dan subteksnya lewat kamus karena ini teks antarmuka, bukan teks
- * instrumen. (Subteksnya sendiri menyalin persis rancangan yang diminta jagi.)
+ * instrumen. (Subteksnya sendiri menyalin persis rancangan yang diminta.)
  *
  * Skor mengikuti HLS-SF12: sangat sulit = 0 … sangat mudah = 3, jadi makin
  * rendah berarti makin sedikit yang sanggup dilakukan pengguna.

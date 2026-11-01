@@ -20,7 +20,7 @@ import { waktuRelatif, ringkasSesi, jumlahTanya } from '../../lib/sesi'
  * utasannya, dan bisa dilanjutkan bertanya.
  *
  * Bentuk `ringkas` (daftar 4 obrolan terakhir di Beranda) SUDAH DIHAPUS
- * (keputusan jagi, 18 Okt 2026) — Beranda tidak lagi menampilkan obrolan
+ * (18 Okt 2026) — Beranda tidak lagi menampilkan obrolan
  * terakhir. Komponen ini kini hanya dipakai di halaman Riwayat, jadi kotak
  * centang, bagikan, dan hapus per baris selalu tampil.
  *

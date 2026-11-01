@@ -59,11 +59,19 @@ export default function JurnalPanel({ t }) {
                 </h2>
                 <p className="text-[0.76rem] leading-snug text-muted-500">{j.penerbit}</p>
               </div>
+              {j.item.length ? (
+                <span className="shrink-0 rounded-full border border-line-200 bg-surface-100 px-2 py-0.5 text-[0.72rem] font-semibold text-navy-700">
+                  {t('jur.butir', { n: j.item.length })}
+                </span>
+              ) : null}
             </div>
 
             {j.item.length ? (
               <ul className="mt-2.5 flex-1 space-y-2 border-t border-line-200 pt-2.5">
-                {j.item.slice(0, 3).map((a) => (
+                {/* Semua tulisan ditampilkan (server membatasi 12 per jurnal).
+                    Memotongnya di sini membuat halaman hanya jadi contoh,
+                    padahal tujuannya jadi bahan bacaan. */}
+                {j.item.map((a) => (
                   <li key={a.tautan || a.judul}>
                     <a
                       href={a.tautan}

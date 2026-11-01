@@ -710,7 +710,7 @@ function gabungPool(lama = [], baru = []) {
  *
  * `geser` = berapa posisi daftarnya diputar. Ini yang membuat halaman tidak
  * menampilkan artikel yang sama terus-menerus selama sumbernya belum berubah
- * (permintaan jagi, 16 Okt 2026 — "Topik populer / Tips / Artikel kok tidak
+ * (permintaan, 16 Okt 2026 — "Topik populer / Tips / Artikel kok tidak
  * update-update ya?").
  *
  * KENAPA PERLU: halaman depan Kemenkes hanya memuat ~11 artikel dan `susun()`
@@ -729,7 +729,7 @@ function gabungPool(lama = [], baru = []) {
  *
  * KENAPA ADA BATASNYA (25 Okt 2026). Rotasi tanpa batas memutar SELURUH pool,
  * jadi cepat atau lambat artikel terbit 2023 akan sampai ke depan — dan itu
- * persis cacat yang dilaporkan jagi: "pas dicek di sumbernya malah 2025".
+ * persis cacat yang dilaporkan pengguna: "pas dicek di sumbernya malah 2025".
  * Diukur: dengan 9 artikel, `geser` 6-8 menaruh artikel 2023 dan 2024 di depan.
  *
  * Dengan jendela 8, rotasi hanya memilih "mulai dari mana" di antara artikel

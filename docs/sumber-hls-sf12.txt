@@ -30,6 +30,6 @@ KLAIM TIDAK DIBUAT SENDIRI
   UI sebagai pilihan radio, sehingga yang tersimpan tinggal
   "Seberapa mudah bagi Anda untuk ...?" — maknanya tidak berubah.
 - Subteks tiap opsi jawaban (mis. "Saya hampir tidak mengerti sama sekali.")
-  = salinan literal dari rancangan screenshot yang diminta jagi. Itu teks
-  antarmuka, BAGIAN dari instrumen HLS-SF12.
+  = salinan literal dari rancangan antarmuka. Itu teks antarmuka, BAGIAN dari
+  instrumen HLS-SF12.
 - 5 pernyataan lama di QUIZ_ITEMS BUKAN item HLS-SF12 dan sudah diganti.

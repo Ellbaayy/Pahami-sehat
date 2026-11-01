@@ -1,7 +1,7 @@
 /**
  * Hook: ringkasan berita harian untuk lonceng pemberitahuan.
  *
- * Jagi meminta (15 Okt 2026): berita WAJIB segar minimal sehari sekali, dan
+ * Diminta (15 Okt 2026): berita WAJIB segar minimal sehari sekali, dan
  * lonceng harus berbunyi kalau ada yang baru.
  *
  * Cara kerja:

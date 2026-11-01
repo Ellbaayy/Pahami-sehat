@@ -37,7 +37,7 @@ for (const t of [
   'any news about the flu vaccine?',
   'health news this week',
   // TANPA kata "kesehatan" — di dalam aplikasi kesehatan, maksudnya sudah jelas.
-  // Diuji 15 Okt 2026: jagi menulis persis "berita terbaru hari ini" dan
+  // Diuji 15 Okt 2026: pengguna menulis persis "berita terbaru hari ini" dan
   // jawabannya berbunyi "saya tidak bisa menyebutkan berita terbaru" — karena
   // (a) tidak dikenali sebagai permintaan berita, lalu (b) dicari ke Wikipedia
   // dan mendapat artikel "Berita" (definisi), bukan berita.
@@ -50,7 +50,7 @@ for (const t of [
   'news today',
   // --- bentuk TANYA tanpa kata 'berita'/'kabar' ---------------------------
   //
-  // Keluhan jagi 16 Okt 2026: "apa yang baru hari ini" dijawab "hasil
+  // Keluhan pengguna 16 Okt 2026: "apa yang baru hari ini" dijawab "hasil
   // pencarian kosong". Penyebabnya diukur: kalimat itu tidak memuat kata
   // 'berita' maupun topik kesehatan, jadi TIDAK dikenali sebagai permintaan
   // berita — lalu dicari ke Wikipedia yang memang tidak punya jawabannya.

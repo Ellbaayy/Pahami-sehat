@@ -3,7 +3,7 @@
  * uji-suara.mjs — uji ejaan & kestabilan nada pada fitur suara.
  *
  * KENAPA SKRIP INI ADA
- * Dua keluhan jagi (15 Okt 2026):
+ * Dua keluhan pengguna (15 Okt 2026):
  *   1. "speech-nya belum bisa mengeja huruf atau kata yang seharusnya dieja"
  *   2. "suara kadang masih naik turun"
  *
@@ -123,7 +123,7 @@ cek('kosong -> kosong', pecahKalimat('').length, 0)
 
 console.log('\n=== BUG: kalimat INDONESIA tidak boleh dinyatakan Jawa/Sunda ===')
 /*
- * Keluhan jagi: "aku nanya pakai bahasa indonesia, dijawab dalam bahasa
+ * Keluhan pengguna: "aku nanya pakai bahasa indonesia, dijawab dalam bahasa
  * indonesia, tapi pas pakai speech dibacain pakai bahasa jawa".
  *
  * Penyebabnya DIUKUR: pencocokan memakai POTONGAN KATA, sehingga kata daerah

@@ -207,7 +207,7 @@ console.log('=== UJI JALUR BERITA (pertanyaan berita harus dijawab dari RSS) ===
  * model sungguhan. uji-berita.mjs dipakai di CI dan tidak boleh bergantung
  * pada jaringan atau server.
  *
- * Ditaruh 15 Okt 2026 setelah jagi menemukan "berita terbaru hari ini" dijawab
+ * Ditaruh 15 Okt 2026 setelah ditemukan "berita terbaru hari ini" dijawab
  * "saya tidak bisa menyebutkan berita terbaru": pertanyaannya TIDAK dikenali
  * sebagai permintaan berita (tidak memuat kata "kesehatan"), lalu dicari ke
  * Wikipedia dan mendapat artikel "Berita" yang isinya cuma definisi.

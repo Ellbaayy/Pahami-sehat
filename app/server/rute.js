@@ -646,7 +646,7 @@ rute.get('/api/meta', batasMeta, (_req, res) => {
 /**
  * Ringkasan berita harian untuk lonceng pemberitahuan.
  *
- * Jagi meminta (15 Okt 2026): berita WAJIB segar minimal sehari sekali, dan
+ * Diminta (15 Okt 2026): berita WAJIB segar minimal sehari sekali, dan
  * lonceng harus berbunyi kalau ada yang baru. Endpoint ini yang dibaca hook
  * `useBerita` di aplikasi: jumlah berita segar (<= 1 hari), 3 judul teratas,
  * tanggal diperbarui, dan sidik jari daftarnya.

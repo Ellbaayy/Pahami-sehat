@@ -134,6 +134,14 @@ cek('tautan bentuk Atom terbaca', hasilAtom[0]?.tautan === 'https://contoh.test/
 cek('tanggal ISO dari <updated>', hasilAtom[0]?.tanggal === '2026-10-29', hasilAtom[0]?.tanggal)
 cek('batas jumlah butir dihormati', uraiRss(rssBmj, 1).length === 1)
 
+// Batas bawaan harus memberi BANYAK bahan bacaan (12), bukan 4 seperti versi
+// pertama. Halaman katalog memang dipakai untuk membaca, bukan contoh.
+const banyak = `<rss><channel>${Array.from(
+  { length: 20 },
+  (_, i) => `<item><title>Judul ${i}</title><link>https://contoh.test/${i}</link></item>`,
+).join('')}</channel></rss>`
+cek('umpan 20 butir dipotong di 12 (batas bawaan)', uraiRss(banyak).length === 12, `dapat ${uraiRss(banyak).length}`)
+
 console.log('\n== pengurai Crossref ==')
 const crossref = {
   message: {

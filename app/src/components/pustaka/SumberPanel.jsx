@@ -127,12 +127,22 @@ function KartuSumber({ sumber, t }) {
           <p className="text-[0.92rem] font-bold text-navy-900">{sumber.singkat}</p>
           <p className="text-[0.78rem] leading-snug text-muted-500">{sumber.nama}</p>
         </div>
-        <Lencana status={sumber.status} t={t} />
+        <div className="flex shrink-0 items-center gap-2">
+          {sumber.item.length ? (
+            <span className="text-[0.74rem] font-semibold text-muted-500">
+              {t('sum.butir', { n: sumber.item.length })}
+            </span>
+          ) : null}
+          <Lencana status={sumber.status} t={t} />
+        </div>
       </div>
 
       {sumber.item.length ? (
         <ul className="mt-2.5 space-y-1.5 border-t border-line-200 pt-2.5">
-          {sumber.item.slice(0, 2).map((a) => (
+          {/* SEMUA butir ditampilkan, bukan dipotong: halaman ini memang untuk
+              bahan bacaan, jadi memotong daftar hanya membuang isi yang sudah
+              diambil. Batasnya ada di server (12 per lembaga). */}
+          {sumber.item.map((a) => (
             <li key={a.tautan || a.judul}>
               <a
                 href={a.tautan}

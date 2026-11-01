@@ -207,7 +207,10 @@ lima internasional. Status setiap lembaga ditampilkan apa adanya:
 
 Empat lembaga yang tidak punya jalur mesin **tidak dikarang isinya**: kartunya
 menampilkan sebabnya masing-masing dan tautan ke situs resminya. Yang berstatus
-terhubung menampilkan dua kabar terbaru beserta tanggal terbit aslinya.
+terhubung menampilkan **sampai 12 kabar terbaru** beserta tanggal terbit
+aslinya — halaman ini memang disiapkan sebagai bahan bacaan, bukan contoh.
+Diukur 1 Nov 2026: **118 butir** terkumpul dari lima lembaga yang terhubung dan
+enam jurnal, tanpa satu pun kanal gagal.
 
 **Jurnal** memuat enam basis publikasi ilmiah. Kanalnya berbeda karena
 kemampuannya berbeda — dan itu diukur, bukan dipilih sembarangan:
@@ -225,7 +228,7 @@ Judul publikasi ditampilkan **dalam bahasa aslinya** — menerjemahkan judul
 karya ilmiah lalu menampilkannya sebagai judul asli akan menyesatkan. Setiap
 butir menautkan ke DOI atau rekam PubMed-nya.
 
-Dijaga `uji-pustaka.mjs` (**41 pemeriksaan**, tanpa jaringan): kelengkapan
+Dijaga `uji-pustaka.mjs` (**42 pemeriksaan**, tanpa jaringan): kelengkapan
 sepuluh platform dan enam jurnal, syarat tiap kanal (URL/ISSN/kueri), serta
 pengurai RSS, Crossref, dan PubMed — termasuk bahwa tanggal yang tidak terbaca
 menjadi `null`, bukan diganti tanggal hari ini.

@@ -48,6 +48,7 @@ const KAMUS = {
     'sum.galat':
       'Kabar terbaru belum dapat dimuat. Tautan resmi setiap lembaga tetap tersedia di bawah.',
     'sum.diperiksa': 'Diperiksa',
+    'sum.butir': '{n} kabar',
     'sum.kosong': 'Belum ada butir yang dapat ditampilkan.',
 
     // jurnal & publikasi ilmiah
@@ -59,6 +60,7 @@ const KAMUS = {
     'jur.galat': 'Tulisan terbaru belum dapat dimuat. Tautan ke setiap jurnal tetap tersedia.',
     'jur.buka': 'Buka jurnal',
     'jur.diperiksa': 'Diperiksa',
+    'jur.butir': '{n} tulisan',
     'jur.tanpaTanggal': 'Tanggal tidak dicantumkan',
     'jur.kosong': 'Belum ada tulisan yang dapat ditampilkan.',
     'jur.doi': 'Buka dokumen resminya',
@@ -503,6 +505,7 @@ const KAMUS = {
     'sum.galat':
       'The latest updates could not be loaded. Each institution’s official link is still available below.',
     'sum.diperiksa': 'Checked',
+    'sum.butir': '{n} updates',
     'sum.kosong': 'No items can be displayed yet.',
 
     // journals & scientific publications
@@ -514,6 +517,7 @@ const KAMUS = {
     'jur.galat': 'Recent papers could not be loaded. Links to each journal are still available.',
     'jur.buka': 'Open journal',
     'jur.diperiksa': 'Checked',
+    'jur.butir': '{n} papers',
     'jur.tanpaTanggal': 'No date provided',
     'jur.kosong': 'No papers can be displayed yet.',
     'jur.doi': 'Open the official record',

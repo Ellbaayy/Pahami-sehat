@@ -1,7 +1,7 @@
 /**
  * Jam acuan untuk penjadwalan "sekali sehari".
  *
- * KENAPA PAKAI JAM INTERNET (permintaan jagi, 16 Okt 2026): jadwal penyegaran
+ * KENAPA PAKAI JAM INTERNET (permintaan, 16 Okt 2026): jadwal penyegaran
  * dulu memakai jam mesin (`Date.now()`). Jam mesin bisa meleset, dan di
  * serverless setiap instance bisa punya jam berbeda — akibatnya pengecekan
  * bisa terjadi dua kali sehari atau justru terlewat.
