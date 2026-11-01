@@ -186,7 +186,14 @@ jobs:
         # skor tidak diam-diam kembali menjadi persentase buatan sendiri.
         run: node uji-skor-hls.mjs
 
-      - name: Uji peramban otomatis (6 halaman × 2 bahasa)
+      - name: Uji katalog sumber & jurnal (pengurai tanpa jaringan)
+        # Tanpa jaringan. Yang dijaga: 10 platform kesehatan + 6 jurnal ada
+        # dan lengkap syarat kanalnya, serta pengurai RSS/Crossref/PubMed
+        # membaca judul, tanggal, dan tautan dengan benar. Tanggal yang tidak
+        # terbaca HARUS menjadi null, bukan diganti tanggal hari ini.
+        run: node uji-pustaka.mjs
+
+      - name: Uji peramban otomatis (8 halaman × 2 bahasa)
         # Satu-satunya uji yang memeriksa LAYAR, bukan kode: judul halaman
         # tampil, tepat satu h1, tanpa luapan horizontal di 1280x800 dan
         # 375x812, tanpa galat runtime — untuk 6 halaman × 2 bahasa.

@@ -50,6 +50,7 @@ import {
   teksDari,
 } from './batasInput.js'
 import { kontenHarianLengkap } from './konten.js'
+import { pustakaLengkap } from './pustaka.js'
 import {
   keteranganDb,
   ambilBerita,
@@ -601,6 +602,19 @@ rute.get('/api/konten', batasKonten, bungkus(async (req, res) => {
   const paksa = Boolean(rahasia) && diminta === rahasia
   const data = await kontenHarianLengkap({ paksa })
   res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400')
+  res.json({ ok: true, ...data })
+}))
+
+/**
+ * Katalog sumber resmi + jurnal ilmiah.
+ *
+ * Dipisah dari `/api/konten` karena sifatnya berbeda: konten harian dirotasi
+ * sekali sehari untuk Beranda, sedangkan katalog ini daftar lembaga/penerbit
+ * yang isinya berganti menurut terbitan masing-masing (disimpan 3 jam).
+ */
+rute.get('/api/pustaka', batasKonten, bungkus(async (_req, res) => {
+  const data = await pustakaLengkap()
+  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600')
   res.json({ ok: true, ...data })
 }))
 

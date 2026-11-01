@@ -69,9 +69,15 @@ const HALAMAN = [
      sudah diperiksa: bukan akibat perubahan ukuran sentuh. Yang diuji untuk
      halaman ini adalah versi laptop, tempat juri melihatnya. */
   { indeks: 2, nama: 'Cek Klaim', muatSatuLayar: 'laptop' },
-  { indeks: 3, nama: 'Riwayat', muatSatuLayar: 'semua' },
-  { indeks: 4, nama: 'Kuesioner', muatSatuLayar: 'semua' },
-  { indeks: 5, nama: 'Pengaturan' },
+  /* Sumber Resmi & Jurnal adalah katalog panjang (10 lembaga, 6 jurnal), jadi
+     sengaja TIDAK dituntut muat satu layar — isinya memang banyak. Yang
+     diperiksa untuk keduanya: halaman tampil, tanpa luapan horizontal, dan
+     tanpa galat runtime. */
+  { indeks: 3, nama: 'Sumber Resmi' },
+  { indeks: 4, nama: 'Jurnal' },
+  { indeks: 5, nama: 'Riwayat', muatSatuLayar: 'semua' },
+  { indeks: 6, nama: 'Kuesioner', muatSatuLayar: 'semua' },
+  { indeks: 7, nama: 'Pengaturan' },
 ]
 
 const BAHASA = ['id', 'en']
@@ -456,7 +462,14 @@ async function main() {
       cek(`[${bahasa}] <html lang> = ${bahasa}`, langHtml === bahasa, `terbaca "${langHtml}"`)
 
       const jumlahMenu = await evaluasi(cdp, `document.querySelectorAll('#sidebar-utama nav button').length`)
-      cek(`[${bahasa}] menu sidebar berisi 6 butir`, jumlahMenu === 6, `terbaca ${jumlahMenu}`)
+      // Dihitung dari daftar HALAMAN, bukan angka mati: dulu tertulis 6 dan
+      // gagal palsu begitu dua menu katalog ditambahkan. Jumlah menu harus
+      // sama dengan NAV_ITEMS, dan HALAMAN sudah menyusul urutannya.
+      cek(
+        `[${bahasa}] menu sidebar berisi ${HALAMAN.length} butir`,
+        jumlahMenu === HALAMAN.length,
+        `terbaca ${jumlahMenu}`,
+      )
 
       for (const h of HALAMAN) {
         galat.length = 0

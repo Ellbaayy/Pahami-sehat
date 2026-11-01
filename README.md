@@ -184,12 +184,58 @@ ke aplikasi.
 
 ---
 
+## Sumber resmi & jurnal ilmiah (1 Nov 2026)
+
+Dua halaman katalog, keduanya membaca langsung dari kanal resmi pemilik datanya
+lewat `GET /api/pustaka` (simpanan 3 jam di server).
+
+**Sumber Resmi** memuat sepuluh platform kesehatan, dibagi lima nasional dan
+lima internasional. Status setiap lembaga ditampilkan apa adanya:
+
+| Lembaga | Kanal yang dipakai | Status terukur 1 Nov 2026 |
+|---|---|---|
+| Kemenkes | halaman rilis berita (HTML) | terhubung, 12 kartu per halaman |
+| BPOM | — | tautan resmi; nama domainnya **tidak ditemukan di DNS** |
+| BKPK | — | tautan resmi; delegasi DNS-nya **tidak menjawab** |
+| BRIN | — | tautan resmi; daftar berita dirakit JavaScript |
+| SATUSEHAT | — | tautan resmi; gerbang layanan berbasis JavaScript |
+| WHO | RSS `news-english.xml` | terhubung |
+| CDC | RSS `tools.cdc.gov` | terhubung |
+| NIH | — | tautan resmi; situs menjawab **403** untuk permintaan otomatis |
+| ECDC | RSS `taxonomy/term/1307/feed` | terhubung |
+| NHS | RSS `england.nhs.uk/feed/` | terhubung |
+
+Empat lembaga yang tidak punya jalur mesin **tidak dikarang isinya**: kartunya
+menampilkan sebabnya masing-masing dan tautan ke situs resminya. Yang berstatus
+terhubung menampilkan dua kabar terbaru beserta tanggal terbit aslinya.
+
+**Jurnal** memuat enam basis publikasi ilmiah. Kanalnya berbeda karena
+kemampuannya berbeda — dan itu diukur, bukan dipilih sembarangan:
+
+| Jurnal | Kanal | Catatan |
+|---|---|---|
+| PubMed | E-utilities NCBI (`esearch` + `esummary`) | permintaan diantrekan; tanpa antrean, permintaan beruntun dijawab **429** |
+| The Lancet | Crossref (`ISSN 0140-6736`) | situsnya menolak permintaan otomatis (403) |
+| Nature Medicine | RSS `nature.com/nm.rss` | tanggal ada di dalam isi umpan, bukan di `<pubDate>` |
+| The BMJ | RSS `bmj.com/rss/recent.xml` | — |
+| JAMA Network | Crossref (`ISSN 0098-7484`) | — |
+| Cochrane Library | E-utilities NCBI, kueri `"Cochrane Database Syst Rev"[jour]` | ISSN-nya di Crossref hanya memuat 3 catatan, jadi PubMed yang dipakai |
+
+Judul publikasi ditampilkan **dalam bahasa aslinya** — menerjemahkan judul
+karya ilmiah lalu menampilkannya sebagai judul asli akan menyesatkan. Setiap
+butir menautkan ke DOI atau rekam PubMed-nya.
+
+Dijaga `uji-pustaka.mjs` (**41 pemeriksaan**, tanpa jaringan): kelengkapan
+sepuluh platform dan enam jurnal, syarat tiap kanal (URL/ISSN/kueri), serta
+pengurai RSS, Crossref, dan PubMed — termasuk bahwa tanggal yang tidak terbaca
+menjadi `null`, bukan diganti tanggal hari ini.
+
 ## Arsitektur
 
 ```mermaid
 flowchart TB
   subgraph Peramban["Peramban — React 19 + Vite 8 + Tailwind 4"]
-    UI["Antarmuka<br/>Beranda · Tanya AI · Cek Klaim · Riwayat · Kuesioner · Pengaturan"]
+    UI["Antarmuka<br/>Beranda · Tanya AI · Cek Klaim · Sumber Resmi · Jurnal · Riwayat · Kuesioner · Pengaturan"]
     OCR["Mesin OCR<br/>tesseract.js / WebAssembly"]
     LS[("localStorage<br/>sesi · kuesioner · setelan")]
   end
@@ -526,6 +572,7 @@ lebih berbahaya daripada tidak ada penyaring.
 | GET | `/api/health` | status server, key & model, status database |
 | GET | `/api/meta` | tingkat baca + model aktif + daftar suara |
 | GET | `/api/konten` | topik populer, artikel, tips harian |
+| GET | `/api/pustaka` | 10 platform kesehatan + 6 jurnal ilmiah, beserta status kanalnya |
 | GET | `/api/berita/ringkas` | ringkasan berita untuk lonceng |
 | GET | `/api/db` | hitungan + contoh baris (bukan seluruh isi tabel) |
 | GET | `/api/sitasi` | sumber mana dipakai untuk jenis jawaban apa |
@@ -842,10 +889,10 @@ node uji-sitasi.mjs       # jejak sumber (butuh MariaDB; dilewati tanpa DB)
 node uji-server.mjs       # kompresi, 404 JSON, galat klien
 node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
-node uji-peramban.mjs     # peramban sungguhan: 6 halaman × 2 bahasa (butuh server + Chrome)
+node uji-peramban.mjs     # peramban sungguhan: 8 halaman × 2 bahasa (butuh server + Chrome)
 ```
 
-### Uji peramban otomatis — 6 halaman × 2 bahasa
+### Uji peramban otomatis — 8 halaman × 2 bahasa
 
 Satu-satunya hal yang tidak bisa dibuktikan dari build hijau adalah perilaku di
 layar. `uji-peramban.mjs` mengendalikan Chrome lewat protokol DevTools **tanpa
@@ -857,7 +904,7 @@ judul halaman tampil, tepat satu `h1`, tidak ada luapan horizontal di
 
 ```bash
 cd app && npm run server     # terminal lain; dist/ harus sudah dibuild
-cd .. && node uji-peramban.mjs   # 90 pemeriksaan, ±30 detik
+cd .. && node uji-peramban.mjs   # 113 pemeriksaan, ±40 detik
 ```
 
 Uji ini **tidak** ikut `npm test` — ia butuh server hidup dan peramban, jadi

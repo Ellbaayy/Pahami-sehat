@@ -187,6 +187,8 @@ export default [
      *   - `cari.js`        : `lewatAntrean()` — SEMUA pemanggilan lewat rantai
      *                        `antrean` yang sama, jadi `terakhirPanggil` hanya
      *                        disentuh satu tugas pada satu waktu
+     *   - `pustaka.js`     : `sedangMengambil` (janji) — badan IIFE jalan sekali,
+     *                        dan `simpanKeDisk` idempoten seperti di konten.js
      *   - `db.js` (tutupDb): hanya dipanggil saat proses berhenti, satu kali
      *
      * Penanda boolean (`bisaTulisBerkas`, `ringkasBisaTulis`) idempoten —
@@ -201,7 +203,7 @@ export default [
      * ini dan pasang kunci yang benar. Jangan biarkan kelonggarannya menutupi
      * bug sungguhan.
      */
-    files: ['server/konten.js', 'server/berita.js', 'server/cari.js', 'server/db.js'],
+    files: ['server/konten.js', 'server/berita.js', 'server/cari.js', 'server/pustaka.js', 'server/db.js'],
     rules: {
       'require-atomic-updates': 'off',
     },

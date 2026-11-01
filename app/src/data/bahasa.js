@@ -24,12 +24,44 @@ const KAMUS = {
     'nav.verifikasi': 'Cek Klaim',
     'nav.riwayat': 'Riwayat',
     'nav.kuesioner': 'Kuesioner',
+    'nav.sumber': 'Sumber Resmi',
+    'nav.jurnal': 'Jurnal',
     'nav.pengaturan': 'Pengaturan',
     'nav.kembali': 'Kembali ke situs',
     'nav.tagline': 'Setiap jawaban wajib bersumber resmi — Anda dapat memeriksanya sendiri.',
     'nav.menu': 'Buka menu',
     'nav.tutupSidebar': 'Tutup sidebar',
     'nav.bukaSidebar': 'Buka sidebar',
+
+    // sumber resmi (platform kesehatan)
+    'sum.eyebrow': 'Rujukan',
+    'sum.judul': 'Sumber Resmi Kesehatan',
+    'sum.deskripsi':
+      'Aplikasi membaca kabar terbaru langsung dari kanal resmi sepuluh lembaga kesehatan. Setiap butir menyebut lembaganya dan menautkan ke tulisan aslinya.',
+    'sum.nasional': 'Platform Kesehatan Indonesia',
+    'sum.internasional': 'Platform Kesehatan Internasional',
+    'sum.terhubung': 'Terhubung',
+    'sum.tautan': 'Tautan resmi',
+    'sum.gagal': 'Belum dapat diambil',
+    'sum.buka': 'Buka situs resmi',
+    'sum.memuat': 'Mengambil kabar terbaru…',
+    'sum.galat':
+      'Kabar terbaru belum dapat dimuat. Tautan resmi setiap lembaga tetap tersedia di bawah.',
+    'sum.diperiksa': 'Diperiksa',
+    'sum.kosong': 'Belum ada butir yang dapat ditampilkan.',
+
+    // jurnal & publikasi ilmiah
+    'jur.eyebrow': 'Ilmiah',
+    'jur.judul': 'Jurnal & Publikasi Ilmiah',
+    'jur.deskripsi':
+      'Tulisan terbaru dari enam jurnal dan basis publikasi ilmiah bidang kedokteran serta kesehatan masyarakat. Judul ditampilkan dalam bahasa aslinya, lengkap dengan tanggal terbit dan tautan ke dokumen resminya.',
+    'jur.memuat': 'Mengambil tulisan terbaru…',
+    'jur.galat': 'Tulisan terbaru belum dapat dimuat. Tautan ke setiap jurnal tetap tersedia.',
+    'jur.buka': 'Buka jurnal',
+    'jur.diperiksa': 'Diperiksa',
+    'jur.tanpaTanggal': 'Tanggal tidak dicantumkan',
+    'jur.kosong': 'Belum ada tulisan yang dapat ditampilkan.',
+    'jur.doi': 'Buka dokumen resminya',
 
     // umum
     'umum.terhubung': 'Terhubung',
@@ -447,12 +479,44 @@ const KAMUS = {
     'nav.verifikasi': 'Check Claim',
     'nav.riwayat': 'History',
     'nav.kuesioner': 'Questionnaire',
+    'nav.sumber': 'Official sources',
+    'nav.jurnal': 'Journals',
     'nav.pengaturan': 'Settings',
     'nav.kembali': 'Back to site',
     'nav.tagline': 'Every answer must cite an official source — you can verify it yourself.',
     'nav.menu': 'Open menu',
     'nav.tutupSidebar': 'Collapse sidebar',
     'nav.bukaSidebar': 'Expand sidebar',
+
+    // official health sources
+    'sum.eyebrow': 'References',
+    'sum.judul': 'Official Health Sources',
+    'sum.deskripsi':
+      'The application reads the latest updates directly from the official channels of ten health institutions. Every item names its institution and links to the original publication.',
+    'sum.nasional': 'Indonesian Health Platforms',
+    'sum.internasional': 'International Health Platforms',
+    'sum.terhubung': 'Connected',
+    'sum.tautan': 'Official link',
+    'sum.gagal': 'Not retrievable yet',
+    'sum.buka': 'Open official site',
+    'sum.memuat': 'Fetching the latest updates…',
+    'sum.galat':
+      'The latest updates could not be loaded. Each institution’s official link is still available below.',
+    'sum.diperiksa': 'Checked',
+    'sum.kosong': 'No items can be displayed yet.',
+
+    // journals & scientific publications
+    'jur.eyebrow': 'Scientific',
+    'jur.judul': 'Journals & Scientific Publications',
+    'jur.deskripsi':
+      'Recent papers from six medical and public-health journals and publication databases. Titles are shown in their original language, with the publication date and a link to the official record.',
+    'jur.memuat': 'Fetching recent papers…',
+    'jur.galat': 'Recent papers could not be loaded. Links to each journal are still available.',
+    'jur.buka': 'Open journal',
+    'jur.diperiksa': 'Checked',
+    'jur.tanpaTanggal': 'No date provided',
+    'jur.kosong': 'No papers can be displayed yet.',
+    'jur.doi': 'Open the official record',
 
     'umum.terhubung': 'Connected',
     'umum.memeriksa': 'Checking server…',
