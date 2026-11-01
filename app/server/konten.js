@@ -127,8 +127,13 @@ const MAKS_DETAIL = 12
  * di cache masih dari bentuk lama, sehingga tanggalnya kosong semua padahal
  * datanya ada di sumber. Menaikkan versi ini memaksa satu pengambilan ulang
  * penuh, sekali, saat build/instance baru mulai.
+ *
+ * 1 Nov 2026 — naik ke 4: `uraiParagrafArtikel()` sekarang membuang paragraf
+ * yang bukan prosa (tempelan skrip & keterangan gambar). Tanpa kenaikan versi,
+ * teks kotor "URL berhasil disalin Ilustrasi." tetap tersimpan di cache dan
+ * tetap tampil di kartu.
  */
-const VERSI_BENTUK = 3
+const VERSI_BENTUK = 4
 
 
 /* ------------------------------------------------------------------ util -- */
@@ -574,6 +579,60 @@ async function daftarArtikel() {
   return hasil
 }
 
+/**
+ * Ambil paragraf PROSA saja dari sebuah halaman artikel.
+ *
+ * KENAPA DISARING KETAT: halaman berita menyisipkan teks yang bukan bagian
+ * tulisan, dan sebagian di antaranya berbentuk `<p>`:
+ *   - tempelan skrip: `<p>Komentar URL berhasil disalin document.addEventListener(...)</p>`
+ *     (diukur di cnnindonesia.com, 1 Nov 2026 — 1.740 karakter sekali jalan)
+ *   - label antarmuka: "URL berhasil disalin", "Bagikan", "Komentar"
+ *   - keterangan gambar: "Ilustrasi. …" (biasanya <figcaption>, tapi kadang <p>)
+ *
+ * Paragraf seperti itu dulu lolos karena saringannya hanya memeriksa panjang.
+ * Akibatnya butir tips dan ringkasan kartu berisi "URL berhasil disalin
+ * Ilustrasi." — terbaca sebagai kerusakan aplikasi, padahal asalnya dari
+ * halaman sumbernya.
+ *
+ * Untungnya prosa Indonesia hampir tidak pernah memuat `{ } ; = < >`, jadi
+ * kepadatan tanda itu dipakai sebagai penanda "ini bukan tulisan".
+ */
+export function uraiParagrafArtikel(html) {
+  return [...String(html).matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+    .map((p) => buangTag(p[1]))
+    .filter((p) => !bukanProsa(p))
+}
+
+function bukanProsa(p) {
+  if (!p || p.length <= 70) return true
+  // sisa skrip / potongan HTML yang ikut terbaca sebagai teks
+  if (sampahAntarmuka(p)) return true
+  // paragraf berita tidak sepanjang ini; yang lebih panjang biasanya tempelan
+  if (p.length > 1200) return true
+  // saringan buatan situs sumber
+  if (/^(baca juga|sumber|referensi|penulis|editor|simak|lihat juga)/i.test(p)) return true
+  if (/^\[?gambas/i.test(p)) return true
+  if (/^(advertisement|scroll untuk melanjutkan)/i.test(p)) return true
+  // kepadatan tanda kode: prosa normal jauh di bawah 2%
+  const tanda = (p.match(/[{};=<>]/g) ?? []).length
+  if (tanda / p.length > 0.02) return true
+  return false
+}
+
+/**
+ * Teks milik antarmuka situs sumber, bukan tulisan artikel.
+ *
+ * Dipisah dari `bukanProsa` karena butir tips memang kalimat pendek (sering
+ * di bawah 70 karakter), jadi tidak boleh disaring dengan ambang panjang
+ * paragraf — dulu salah dan seluruh butir tips ikut hilang.
+ */
+function sampahAntarmuka(teks) {
+  const t = String(teks ?? '').trim()
+  if (!t) return true
+  if (/url berhasil disalin|document\.addEventListener|querySelector|getElementById|\bfunction\s*\(/i.test(t)) return true
+  return /^(ilustrasi\.|komentar\b|bagikan\b|iklan\b|baca juga\b)/i.test(t)
+}
+
 /** Ringkasan resmi + paragraf pembuka satu artikel. */
 async function isiArtikel(item) {
   const html = await ambil(item.url, 15000)
@@ -599,19 +658,8 @@ async function isiArtikel(item) {
   // pertama yang muncul bisa berisi blok "rekomendasi", bukan badan tulisan.
   // Kalau wadah itu tidak menghasilkan paragraf yang cukup, pakai seluruh HTML.
   const wadah = html.match(/<(?:article|main)[^>]*>([\s\S]*?)<\/(?:article|main)>/i)?.[1]
-  const kumpulParagraf = (sumber) =>
-    [...String(sumber).matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
-      .map((p) => buangTag(p[1]))
-      .filter(
-        (p) =>
-          p.length > 70 &&
-          !/^(baca juga|sumber|referensi|penulis|editor|simak|lihat juga)/i.test(p) &&
-          !/^\[?gambas/i.test(p) &&
-          !/^(advertisement|scroll untuk melanjutkan)/i.test(p),
-      )
-
-  let paragraf = wadah ? kumpulParagraf(wadah) : []
-  if (paragraf.length < 2) paragraf = kumpulParagraf(html)
+  let paragraf = wadah ? uraiParagrafArtikel(wadah) : []
+  if (paragraf.length < 2) paragraf = uraiParagrafArtikel(html)
 
   // Ringkasan: kandidatnya deskripsi resmi halaman itu, lalu paragraf-paragraf
   // awalnya. Dipilih yang pertama lolos saringan — karena ada kalanya deskripsi
@@ -746,7 +794,10 @@ export function susun(pool, geser = 0) {
     // Artikel yang isinya masih kepotong (ditandai "…") tidak layak jadi tips:
     // butirnya cuma kalimat sisa.
     if (/…$/.test(d.tubuh ?? '')) continue
-    const butir = butirDari(d.tubuh, 3)
+    // Jaring pengaman kedua: walaupun paragrafnya sudah disaring, kalimat
+    // sisa label antarmuka bisa tetap ikut. Butir seperti "URL berhasil
+    // disalin" tidak boleh tampil sebagai tips kesehatan.
+    const butir = butirDari(d.tubuh, 3).filter((b) => !sampahAntarmuka(b) && b.length > 20)
     if (butir.length >= 2) {
       tips = {
         label: 'Tips Kesehatan Hari Ini',
@@ -877,8 +928,18 @@ export async function kontenHarian({ paksa = false } = {}) {
   // pastikan simpanan sudah dibaca
   if (!diMemori) diMemori = await bacaDariDisk()
 
+  // Bentuk simpanan berubah (lihat VERSI_BENTUK)? Kalau ya, pengecekan HARUS
+  // jalan sekarang juga, tanpa menunggu jadwal harian.
+  //
+  // KENAPA (1 Nov 2026): dulu keputusan ini hanya diperiksa DI DALAM badan
+  // pengambilan, sementara gerbang di bawah sudah mengembalikan simpanan lama
+  // lebih dulu. Akibatnya menaikkan VERSI_BENTUK tidak berefek apa pun sampai
+  // pengecekan besok — teks kotor dari pengurai lama tetap tampil sehari penuh
+  // walaupun kodenya sudah diperbaiki.
+  const bentukLama = (diMemori?.versiBentuk ?? 1) !== VERSI_BENTUK
+
   // 1) Waktunya Pencarian Berikutnya? -> Tidak: pakai yang sudah ada
-  if (!paksa && diMemori && !waktunyaCek(diMemori)) {
+  if (!paksa && !bentukLama && diMemori && !waktunyaCek(diMemori)) {
     // Sinkronkan ke database di sini juga. Ini JALUR YANG PALING SERING DILEWATI
     // (cache masih segar), jadi tanpa sinkronisasi di titik ini database hampir
     // tidak pernah terisi — sudah pernah terjadi dan sempat membingungkan.
@@ -916,7 +977,8 @@ export async function kontenHarian({ paksa = false } = {}) {
       // Bentuk simpanan berubah (lihat VERSI_BENTUK): artikel lama harus
       // diambil ULANG, karena `if (d.ringkas || d.tubuh) return` di bawah
       // membuat kolom baru selamanya kosong pada artikel yang sudah tersimpan.
-      const bentukLama = (diMemori?.versiBentuk ?? 1) !== VERSI_BENTUK
+      // `bentukLama` sudah dihitung sebelum gerbang jadwal — lihat catatan
+      // di `kontenHarian()`.
       const poolAwal = bentukLama
         ? (diMemori?.pool ?? []).map((d) => ({
             ...d,

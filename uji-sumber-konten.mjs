@@ -22,7 +22,7 @@
  * 1 Nov 2026 (dipendekkan, tapi strukturnya sama).
  */
 
-import { uraiDaftarKemkes, uraiDaftarCnn, bacaTanggalTerbit, susun } from './app/server/konten.js'
+import { uraiDaftarKemkes, uraiDaftarCnn, bacaTanggalTerbit, susun, uraiParagrafArtikel } from './app/server/konten.js'
 
 let lulus = 0
 let gagal = 0
@@ -298,6 +298,32 @@ cek(
   'prefiks "Wamenkes" tidak ikut jadi label',
   !/^wamenkes/i.test(labelHasil.topik[1]?.label ?? ''),
   labelHasil.topik[1]?.label,
+)
+
+/* ---------------------------------------- saringan paragraf bukan-prosa -- */
+
+// Bentuk yang diukur di cnnindonesia.com (1 Nov 2026). Paragraf pertama itu
+// NYATA ada di halaman: tempelan skrip 1.740 karakter yang dulu lolos karena
+// saringannya hanya memeriksa panjang. Akibatnya kartu menampilkan butir
+// "URL berhasil disalin Ilustrasi." — terlihat seperti aplikasi rusak.
+const halamanKotor = `
+  <p>Komentar URL berhasil disalin document.addEventListener("DOMContentLoaded", function () { var navTitleBar = document.getElementById("navbar-article-title"); var t = 1; });</p>
+  <p>Stevia sudah lama dipakai sebagai pemanis pengganti gula pasir. Tanaman ini berasal dari Amerika Selatan dan telah diteliti sejak puluhan tahun lalu.</p>
+  <p>Ilustrasi. Stevia kerap dianggap lebih sehat daripada gula pasir.</p>
+  <p>URL berhasil disalin</p>
+  <p>Bagikan</p>
+  <p>Konsumsi stevia dalam jumlah wajar tidak dilaporkan menimbulkan efek samping berarti pada orang dewasa yang sehat.</p>
+`
+const bersih = uraiParagrafArtikel(halamanKotor)
+cek('paragraf tempelan skrip dibuang', !bersih.some((p) => /addEventListener|querySelector/i.test(p)))
+cek('label "URL berhasil disalin" dibuang', !bersih.some((p) => /url berhasil disalin/i.test(p)))
+cek('keterangan gambar "Ilustrasi." dibuang', !bersih.some((p) => /^ilustrasi\./i.test(p)))
+cek('label "Bagikan" dibuang', !bersih.some((p) => /^bagikan$/i.test(p)))
+cek('paragraf prosa tetap dipertahankan', bersih.length === 2, `dapat ${bersih.length}: ${JSON.stringify(bersih.map((p) => p.slice(0, 30)))}`)
+cek(
+  'butir hasil saringan bukan sampah antarmuka',
+  bersih.every((p) => !/berhasil disalin|^ilustrasi\./i.test(p)),
+  JSON.stringify(bersih),
 )
 
 /* ------------------------------------------------------------------ tutup -- */
