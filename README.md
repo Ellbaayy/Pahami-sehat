@@ -525,7 +525,7 @@ lebih berbahaya daripada tidak ada penyaring.
 |---|---|---|
 | GET | `/api/health` | status server, key & model, status database |
 | GET | `/api/meta` | tingkat baca + model aktif + daftar suara |
-| GET | `/api/konten` | topik populer, artikel, tips harian |
+| GET | `/api/konten` | 5 topik populer, 18 kartu artikel, tips harian |
 | GET | `/api/berita/ringkas` | ringkasan berita untuk lonceng |
 | GET | `/api/db` | hitungan + contoh baris (bukan seluruh isi tabel) |
 | GET | `/api/sitasi` | sumber mana dipakai untuk jenis jawaban apa |
@@ -1167,7 +1167,7 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
 | Kendali | Di mana | Angka |
 |---|---|---|
 | Cache konten kesehatan | `app/server/konten.js` (`BERLAKU_MS`) | 24 jam sekali sehari |
-| Rotasi daftar konten | `app/server/konten.js` (`susun()`, `geser`, `JENDELA_ROTASI`) | urutan bergeser supaya artikel yang tampil tidak itu-itu saja — **tapi hanya di dalam 8 artikel terbaru**; artikel di luar jendela tidak pernah dipamerkan sebagai bacaan utama |
+| Rotasi daftar konten | `app/server/konten.js` (`susun()`, `geser`, `JENDELA_ROTASI`) | urutan bergeser supaya artikel yang tampil tidak itu-itu saja — **tapi hanya di dalam 48 artikel terbaru**; artikel di luar jendela tidak pernah dipamerkan sebagai bacaan utama |
 | Urutan artikel | `app/server/konten.js` (`urutkanTerbaru()`) | diurutkan menurut tanggal terbit dari sumber, terbaru dulu, SEBELUM diputar |
 | Tanggal terbit artikel | `app/server/konten.js` (`bacaTanggalTerbit()`) | dibaca dari `itemprop="datePublished"` di halaman artikel; `null` kalau sumber tidak mencantumkan — tidak pernah ditebak |
 | Ambang bentuk simpanan | `app/server/konten.js` (`VERSI_BENTUK`) | naikkan kalau bentuk data artikel berubah, supaya artikel lama diambil ulang |
@@ -1369,7 +1369,7 @@ Tiga cacat yang ditemukan dan diperbaiki 25 Okt 2026:
 3. **Rotasi bisa mengangkat artikel 2023 ke depan.** Diukur: dengan 9 artikel,
    `geser` 6–8 menaruh artikel 2023 dan 2024 di baris pertama. Sekarang
    `susun()` mengurutkan menurut tanggal **lebih dulu**, lalu memutar hanya di
-   dalam `JENDELA_ROTASI` (8 artikel terbaru). Diuji 40 putaran: artikel 2023
+   dalam `JENDELA_ROTASI` (48 artikel terbaru). Diuji 60 putaran: artikel 2023
    tidak pernah tampil sama sekali.
 
 **Batas yang diakui (diperbarui 1 Nov 2026):** aplikasi **tidak** menjamin

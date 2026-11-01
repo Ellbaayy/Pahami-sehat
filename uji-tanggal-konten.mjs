@@ -184,8 +184,12 @@ const pool = [
 const nol = susun(pool, 0)
 cek('geser 0 -> artikel termuda tampil pertama',
   nol.artikel[0].id === 'label-gizi', `dapat ${nol.artikel[0]?.id}`)
-cek('geser 0 -> artikel tertua tidak tampil',
-  !nol.artikel.some((a) => a.id === 'menyusui'))
+// Artikel tertua (2023) pada pool KECIL masih masuk jendela 48, jadi ia boleh
+// tampil di urutan bawah — tapi TIDAK PERNAH di depan. Jaminan "tidak pernah
+// tampil sama sekali" diuji terpisah dengan pool 60 artikel di bawah, karena
+// hanya di sana jendela 48 benar-benar memotong sesuatu.
+cek('geser 0 -> artikel tertua bukan yang pertama',
+  nol.artikel[0].id !== 'menyusui', nol.artikel[0]?.id)
 cek('tanggalTerbit ikut terkirim ke antarmuka',
   nol.artikel[0].tanggalTerbitISO === '2026-05-05', `dapat ${nol.artikel[0]?.tanggalTerbitISO}`)
 cek('tanggalTerbitISO dan tanggalTerbit dua-duanya ada',
@@ -193,41 +197,53 @@ cek('tanggalTerbitISO dan tanggalTerbit dua-duanya ada',
 
 // Rotasi TETAP membalik urutan — itu tujuannya, jangan diuji sebagai monoton.
 // Yang WAJIB dijaga: semua yang tampil berasal dari JENDELA artikel terbaru.
-// Jendela = 8 artikel termuda (lihat JENDELA_ROTASI di konten.js). Pool uji ini
-// berisi 9 artikel, jadi tepat satu artikel (tertua, 2023) berada di luar.
-const jendela8 = new Set(
-  [...pool]
+// JENDELA_ROTASI = 48 (dinaikkan 1 Nov 2026 bersama kartu 18). Pool uji ini
+// sengaja diisi 60 artikel supaya jendelanya benar-benar teruji — dengan pool
+// 9 artikel, seluruh pool masuk jendela dan pemeriksaan ini tidak membuktikan
+// apa-apa lagi.
+const poolBesar = [
+  ...Array.from({ length: 59 }, (_, i) =>
+    // 59 artikel "baru" (2025-2026), lalu satu artikel tua di bawah.
+    buat(`baru-${i + 1}`, `2026-${String((i % 12) + 1).padStart(2, '0')}-01`),
+  ),
+  buat('menyusui', '2023-11-24'), // TER TUA
+]
+const jendela48 = new Set(
+  [...poolBesar]
     .sort((a, b) => (a.tanggalTerbitISO < b.tanggalTerbitISO ? 1 : -1))
-    .slice(0, 8)
+    .slice(0, 48)
     .map((x) => x.slug),
 )
 for (let g = 1; g <= 8; g++) {
-  const h = susun(pool, g)
+  const h = susun(poolBesar, g)
   const ids = h.artikel.map((a) => a.id)
-  cek(`geser ${g}: 4 artikel`, h.artikel.length === 4, ids.join(','))
-  cek(`geser ${g}: semuanya dari jendela 8 terbaru`,
-    ids.every((id) => jendela8.has(id)), ids.join(','))
+  cek(`geser ${g}: maksimal 18 artikel`, ids.length <= 18, `${ids.length}`)
+  cek(`geser ${g}: semuanya dari jendela 48 terbaru`,
+    ids.every((id) => jendela48.has(id)), ids.join(','))
 }
 
 // Cacat yang dilaporkan pengguna: artikel 2023 (1066 hari) tampil sebagai bacaan
 // utama. Dengan jendela rotasi, itu tidak boleh terjadi pada putaran mana pun.
+// Diuji pada pool 60 artikel: hanya di situ jendela 48 benar-benar memotong,
+// sehingga jaminannya benar-benar terbukti.
 let dilanggar = 0
 let totalTampil = 0
-for (let g = 0; g < 40; g++) {
-  const h = susun(pool, g)
+for (let g = 0; g < 60; g++) {
+  const h = susun(poolBesar, g)
   totalTampil += h.artikel.length
   if (h.artikel.some((a) => a.id === 'menyusui')) dilanggar += 1
 }
-cek('geser 0..39: artikel 2023 tidak pernah tampil sama sekali', dilanggar === 0, `${dilanggar} kali`)
-cek('geser 0..39: tetap ada artikel yang tampil (tidak kosong)', totalTampil > 0)
+cek('geser 0..59 pada pool 60: artikel 2023 tidak pernah tampil sama sekali', dilanggar === 0, `${dilanggar} kali`)
+cek('geser 0..59 pada pool 60: tetap ada artikel yang tampil (tidak kosong)', totalTampil > 0)
 
 // Rotasi harus benar-benar memutar di dalam jendela — kalau tidak, jendela
 // ini sama saja mematikan fitur rotasi yang sudah ada.
-const awal = susun(pool, 0).artikel.map((a) => a.id).join(',')
-const putar = susun(pool, 1).artikel.map((a) => a.id).join(',')
+// Jendela 48, jadi kembali ke awal setelah 48 putaran (dulu 8).
+const awal = susun(poolBesar, 0).artikel.map((a) => a.id).join(',')
+const putar = susun(poolBesar, 1).artikel.map((a) => a.id).join(',')
 cek('rotasi masih memutar (geser 1 beda dari geser 0)', awal !== putar, `${awal} vs ${putar}`)
-cek('rotasi kembali ke awal setelah 8 putaran',
-  susun(pool, 8).artikel.map((a) => a.id).join(',') === awal)
+cek('rotasi kembali ke awal setelah 48 putaran',
+  susun(poolBesar, 48).artikel.map((a) => a.id).join(',') === awal)
 
 console.log('\n== artikel tanpa tanggal tidak pernah di depan ==')
 const campur = [
@@ -254,7 +270,7 @@ cek('geser 8 == geser 0', susun(tanpaTgl, 8).topik.map((t) => t.id).join(',') ==
   susun(tanpaTgl, 0).topik.map((t) => t.id).join(','))
 cek('geser negatif aman', susun(tanpaTgl, -1).topik.length === 5)
 
-console.log('\n== pool campuran tanggal & tanpa tanggal tetap 5/4/1 ==')
+console.log('\n== pool campuran tanggal & tanpa tanggal tetap 5 topik / artikel / tips ==')
 const campurBanyak = [
   ...tanpaTgl.slice(0, 3),
   buat('a', '2026-01-01'),
@@ -265,7 +281,9 @@ const campurBanyak = [
 ]
 const h3 = susun(campurBanyak, 2)
 cek('5 topik', h3.topik.length === 5)
-cek('4 artikel', h3.artikel.length === 4)
+// Kartu artikel diperbanyak 1 Nov 2026: batasnya MAKS_TAMPIL (18), bukan 4.
+cek('artikel terisi penuh dari pool campuran', h3.artikel.length === campurBanyak.length,
+  `${h3.artikel.length} dari ${campurBanyak.length}`)
 cek('ada tips', Boolean(h3.tips))
 
 console.log(`\n${lulus} lulus, ${gagal} gagal`)

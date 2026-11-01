@@ -14,20 +14,20 @@
  *   1. Daftar benar-benar bergeser (artikel ke-6/7/8 ikut muncul).
  *   2. Semua yang tampil tetap dari pool — tidak ada yang dikarang.
  *   3. `geser` berputar penuh dan kembali ke awal (modulo), tidak meleset.
- *   4. Jumlahnya tetap 5 topik / 4 artikel / 1 tips.
+ *   4. Jumlahnya tetap 5 topik / SEMUA artikel pool (maks 18) / 1 tips.
  */
 
 import { susun } from './app/server/konten.js'
 
 let lulus = 0
 let gagal = 0
-const cek = (nama, syarat) => {
+const cek = (nama, syarat, catatan = '') => {
   if (syarat) {
     lulus += 1
     console.log('  ok    ' + nama)
   } else {
     gagal += 1
-    console.log('  GAGAL ' + nama)
+    console.log('  GAGAL ' + nama + (catatan ? ` -> ${catatan}` : ''))
   }
 }
 
@@ -53,7 +53,10 @@ const dasar = buatPool(8)
 console.log('== geser 0: sama seperti sebelumnya (tidak mengubah perilaku lama) ==')
 const nol = susun(dasar, 0)
 cek('5 topik', nol.topik.length === 5)
-cek('4 artikel', nol.artikel.length === 4)
+// Kartu artikel diperbanyak 1 Nov 2026 (4 -> sampai 18). Dengan pool 8,
+// yang tampil adalah seluruh pool — bukan lagi dipotong 4.
+cek('artikel tampil = seluruh pool (8)', nol.artikel.length === 8, nol.artikel.length)
+cek('artikel tidak lebih dari batas tampil (18)', nol.artikel.length <= 18)
 cek('ada tips', Boolean(nol.tips))
 cek('topik pertama = artikel-1', judulTopik(nol)[0] === 'artikel-1')
 cek('urutan asli', judulTopik(nol).join(',') === 'artikel-1,artikel-2,artikel-3,artikel-4,artikel-5')

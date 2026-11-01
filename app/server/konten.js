@@ -87,32 +87,55 @@ const SUMBER_CNN = 'https://www.cnnindonesia.com/gaya-hidup/kesehatan'
 const PENERBIT = 'Kemenkes RI'
 const PENERBIT_CNN = 'CNN Indonesia'
 /** Jumlah halaman daftar rilis berita yang diambil (tiap halaman ±9 butir). */
-const HALAMAN_SUMBER = 2
+const HALAMAN_SUMBER = 4
 const BERLAKU_MS = 24 * 60 * 60 * 1000 // sekali sehari
-const MAKS_POOL = 40 // batas artikel yang disimpan di simpanan
+
+/**
+ * Batas artikel yang disimpan di simpanan.
+ *
+ * Dinaikkan dari 40 ke 120 (1 Nov 2026) karena kartu artikel di Beranda
+ * diperbanyak: pembaca dari berbagai kalangan butuh pilihan bacaan yang lebih
+ * banyak, bukan empat judul yang berputar-putar. Empat halaman rilis berita
+ * Kemenkes (~12 kartu/halaman) + kanal CNN memberi sekitar 65-70 artikel,
+ * jadi 120 menyisakan ruang untuk terbitan berikutnya.
+ */
+const MAKS_POOL = 120
 
 /**
  * Berapa artikel yang diambil ISI-nya (bukan cuma judul) setiap kali
  * menyegarkan.
  *
  * KENAPA DIBATASI: dulu SELURUH pool diambil isinya sekaligus — sampai 40
- * permintaan ke situs Kemenkes dalam satu tarikan. Padahal tampilan hanya
- * memakai 5 topik, 4 artikel, dan 1 tips (lihat `susun()`). Di serverless ini
- * terasa sekali: berkas cache tidak bisa ditulis (lihat catatan di
- * `simpanKeDisk`), jadi setiap instance baru mengulang pengambilan itu.
+ * permintaan ke situs Kemenkes dalam satu tarikan. Di serverless ini terasa
+ * sekali: berkas cache tidak bisa ditulis (lihat catatan di `simpanKeDisk`),
+ * jadi setiap instance baru mengulang pengambilan itu.
  *
- * Pengukuran: 12 permintaan pada cache kosong (1 daftar + 11 isi artikel).
- * Angka itu naik terus seiring pool bertambah, sampai batas atas 40.
+ * DINAIKKAN KE 40 pada 1 Nov 2026 karena Beranda sekarang menampilkan 18
+ * kartu (`MAKS_TAMPIL`), dan `susun()` hanya memakai artikel yang punya
+ * `ringkas`/`tubuh`. Dengan jatah 12, 18 kartu itu tidak akan pernah terisi
+ * penuh — sisa kartunya kosong atau kembali ke daftar contoh.
  *
- * Angka 12 dipilih dari kebutuhan nyata `susun()`: 5 topik + 4 artikel
- * (beririsan) + 1 calon tips, ditambah cadangan untuk artikel yang gagal
- * diambil. Kandidatnya DIURUTKAN MENURUT TANGGAL TERBIT lebih dulu, jadi
- * jatah ini selalu jatuh ke artikel terbaru dari SEMUA sumber — bukan hanya
+ * Kandidatnya DIURUTKAN MENURUT TANGGAL TERBIT lebih dulu, jadi jatah ini
+ * selalu jatuh ke artikel terbaru dari SEMUA sumber — bukan hanya
  * sumber yang kebetulan diambil pertama. Tanpa pengurutan itu, 8 jatah habis
  * oleh satu sumber saja dan sumber kedua tidak pernah punya isi (lalu
  * tersaring habis oleh `susun()`).
  */
-const MAKS_DETAIL = 12
+const MAKS_DETAIL = 40
+
+/**
+ * Berapa kartu artikel yang DITAMPILKAN di Beranda.
+ *
+ * Dipisah dari MAKS_DETAIL sejak 1 Nov 2026: dulu tampilan 4 artikel, dan itu
+ * terbaca sebagai "hanya contoh". Sekarang 18 kartu supaya pembaca bisa
+ * memilih bacaan sesuai kebutuhan (anak, remaja, dewasa, lansia) dan literasi
+ * kesehatan tidak berhenti di empat judul.
+ *
+ * 18 dipilih dari kelipatan grid 3 kolom di laptop dan 2 di ponsel, dan karena
+ * 18 kartu bisa dipenuhi isi aslinya tanpa memaksa mengambil isi artikel
+ * sebanyak itu (lihat `MAKS_DETAIL` dan catatan di bawah).
+ */
+const MAKS_TAMPIL = 18
 
 /**
  * Naikkan angka ini kalau BENTUK data artikel berubah, supaya isi simpanan
@@ -132,8 +155,12 @@ const MAKS_DETAIL = 12
  * yang bukan prosa (tempelan skrip & keterangan gambar). Tanpa kenaikan versi,
  * teks kotor "URL berhasil disalin Ilustrasi." tetap tersimpan di cache dan
  * tetap tampil di kartu.
+ *
+ * 1 Nov 2026 — naik ke 5: jumlah kartu artikel naik dari 4 ke 18 dan jendela
+ * rotasi 8 -> 48. Artikel lama di simpanan belum punya `ringkas`/`tubuh` yang
+ * cukup, jadi harus diambil ulang supaya 18 kartu benar-benar berisi.
  */
-const VERSI_BENTUK = 4
+const VERSI_BENTUK = 5
 
 
 /* ------------------------------------------------------------------ util -- */
@@ -739,8 +766,14 @@ function gabungPool(lama = [], baru = []) {
  *
  * Angka 8 dipilih karena `susun()` memakai paling banyak 5 topik + 4 artikel +
  * 1 calon tips, jadi jendela ini selalu cukup untuk mengisi seluruh tampilan.
+ *
+ * DINAIKKAN KE 48 pada 1 Nov 2026 bersama bertambahnya kartu artikel menjadi
+ * 18. Jendela harus lebih besar daripada yang ditampilkan, kalau tidak
+ * `geser` tidak mengubah apa pun — 18 kartu dari jendela 8 berarti rotasinya
+ * cuma menggeser urutan yang itu-itu saja. 48 tetap menjaga janji lama:
+ * hanya artikel TERBARU yang pernah tampil di depan.
  */
-const JENDELA_ROTASI = 8
+const JENDELA_ROTASI = 48
 
 export function susun(pool, geser = 0) {
   const dasar = pool.filter((d) => d.ringkas || d.tubuh)
@@ -766,7 +799,7 @@ export function susun(pool, geser = 0) {
     tanya: `Apa yang perlu saya ketahui tentang ${jadiLabel(d.judul).toLowerCase()}?`,
   }))
 
-  const artikel = siap.slice(0, 4).map((d) => {
+  const artikel = siap.slice(0, MAKS_TAMPIL).map((d) => {
     const { category, tint } = tebakKategori(d.judul)
     return {
       id: d.slug,
@@ -1033,20 +1066,34 @@ export async function kontenHarian({ paksa = false } = {}) {
       // pengambilan lain sudah memakainya, sehingga batasnya bisa terlampaui.
       //
       // Bentuk sekarang: ambil daftar kandidat lebih dulu, potong tepat
-      // MAKS_DETAIL, lalu jalankan berurutan. Jatah yang gagal TIDAK dikembalikan
-      // di tengah jalan; sebagai gantinya kandidat diambil lebih banyak (lihat
-      // CADANGAN_DETAIL) supaya artikel yang gagal tidak menahan yang di bawahnya.
+      // MAKS_DETAIL, lalu jalankan berkelompok (paralel dibatasi 6). Jatah yang
+      // gagal TIDAK dikembalikan di tengah jalan; sebagai gantinya kandidat
+      // diambil lebih banyak (lihat CADANGAN_DETAIL) supaya artikel yang gagal
+      // tidak menahan yang di bawahnya.
       const perluIsi = urutkanTerbaru(pool.filter((d) => !d.ringkas && !d.tubuh)).slice(
         0,
         MAKS_DETAIL,
       )
-      for (const d of perluIsi) {
-        try {
-          Object.assign(d, await isiArtikel(d))
-        } catch {
-          // Gagal satu artikel: lanjut ke berikutnya. Tidak ada jatah yang
-          // perlu dikembalikan karena daftarnya sudah dipotong di depan.
-        }
+      // Ambil isi secara PARALEL dengan batas, bukan satu per satu.
+      //
+      // KENAPA (1 Nov 2026): berurutan berarti 40 permintaan x ~3,5 detik =
+      // terukur 140 detik untuk cache kosong — halaman Beranda menggantung
+      // selama itu. Dengan 6 permintaan sekaligus waktunya turun ke puluhan
+      // detik tanpa membebani situs sumber (6 jauh di bawah batas lazim).
+      // Batasnya sengaja TIDAK lebih besar: tiap artikel memuat HTML penuh.
+      const ukuranKelompok = 6
+      for (let i = 0; i < perluIsi.length; i += ukuranKelompok) {
+        const kelompok = perluIsi.slice(i, i + ukuranKelompok)
+        await Promise.all(
+          kelompok.map(async (d) => {
+            try {
+              Object.assign(d, await isiArtikel(d))
+            } catch {
+              // Gagal satu artikel: lanjut ke berikutnya. Tidak ada jatah yang
+              // perlu dikembalikan karena daftarnya sudah dipotong di depan.
+            }
+          }),
+        )
       }
 
       const isi = susun(pool, 0)
