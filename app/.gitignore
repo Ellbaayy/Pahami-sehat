@@ -16,9 +16,3 @@ public/prototipe
 
 # Simpanan ringkasan berita harian (dibuat ulang otomatis oleh server/berita.js)
 .cache-berita.json
-
-# Simpanan katalog sumber resmi & jurnal (dibuat ulang otomatis oleh
-# server/pustaka.js). Isinya bergantung pada isi internet saat itu, jadi tidak
-# layak masuk repo — dan bisa memuat judul yang sudah tidak berlaku.
-.cache-pustaka.json
-

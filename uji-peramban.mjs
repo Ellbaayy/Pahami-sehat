@@ -69,15 +69,9 @@ const HALAMAN = [
      sudah diperiksa: bukan akibat perubahan ukuran sentuh. Yang diuji untuk
      halaman ini adalah versi laptop, tempat juri melihatnya. */
   { indeks: 2, nama: 'Cek Klaim', muatSatuLayar: 'laptop' },
-  /* Sumber Resmi & Jurnal adalah katalog panjang (10 lembaga, 6 jurnal), jadi
-     sengaja TIDAK dituntut muat satu layar — isinya memang banyak. Yang
-     diperiksa untuk keduanya: halaman tampil, tanpa luapan horizontal, dan
-     tanpa galat runtime. */
-  { indeks: 3, nama: 'Sumber Resmi' },
-  { indeks: 4, nama: 'Jurnal' },
-  { indeks: 5, nama: 'Riwayat', muatSatuLayar: 'semua' },
-  { indeks: 6, nama: 'Kuesioner', muatSatuLayar: 'semua' },
-  { indeks: 7, nama: 'Pengaturan' },
+  { indeks: 3, nama: 'Riwayat', muatSatuLayar: 'semua' },
+  { indeks: 4, nama: 'Kuesioner', muatSatuLayar: 'semua' },
+  { indeks: 5, nama: 'Pengaturan' },
 ]
 
 const BAHASA = ['id', 'en']
