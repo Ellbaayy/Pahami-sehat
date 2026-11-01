@@ -115,6 +115,27 @@ function cek(nama, kondisi, keterangan = '') {
 
 const tidur = (ms) => new Promise((r) => setTimeout(r, ms))
 
+/**
+ * Klasifikasikan satu entri `Log.entryAdded` dari peramban.
+ *
+ * Dua hal yang terlihat mirip di log sebenarnya berbeda jauh:
+ *   - `source: 'network'` — permintaan yang gagal (mis. /api/konten menjawab 500
+ *     karena runner CI tidak punya internet). BUKAN cacat tata letak.
+ *   - selain itu — galat JavaScript sungguhan (TypeError, promise ditolak,
+ *     pelanggaran keamanan). Ini yang harus menggagalkan uji.
+ *
+ * Dipisah jadi fungsi sendiri supaya bisa diuji tanpa peramban: perilaku Chrome
+ * di CI (500 → entri level error) sulit ditiru di laptop, jadi tanpa uji
+ * klasifikasi ini jalan itu tidak pernah terbukti.
+ *
+ * @param {{level?: string, source?: string, text?: string}|undefined} entry
+ * @returns {'jaringan'|'galat'|null}
+ */
+function klasifikasiLog(entry) {
+  if (entry?.level !== 'error' || !entry.text) return null
+  return entry.source === 'network' ? 'jaringan' : 'galat'
+}
+
 /* --------------------------------------------------------------- chrome --- */
 
 function cariChrome() {
@@ -294,6 +315,18 @@ async function main() {
     return { dilewati: true }
   }
 
+  /* 3) klasifikasi entri log — diuji tanpa peramban, karena kondisi CI sulit ditiru */
+  console.log('\n--- klasifikasi galat (tanpa peramban) ---')
+  cek(
+    'permintaan jaringan gagal TIDAK dihitung galat runtime',
+    klasifikasiLog({ level: 'error', source: 'network', text: 'Failed to load resource: 500' }) === 'jaringan',
+  )
+  cek(
+    'galat JavaScript DIHITUNG galat runtime',
+    klasifikasiLog({ level: 'error', source: 'javascript', text: 'Uncaught TypeError: x' }) === 'galat',
+  )
+  cek('entri yang bukan error diabaikan', klasifikasiLog({ level: 'info', source: 'network', text: 'ok' }) === null)
+
   const profil = mkdtempSync(join(tmpdir(), 'uji-peramban-'))
   const anak = spawn(
     chrome,
@@ -353,14 +386,36 @@ async function main() {
     await cdp.kirim('Runtime.enable')
     await cdp.kirim('Log.enable')
 
+    /*
+     * UJI_BLOKIR — hanya untuk MEMBUKTIKAN jalur "permintaan jaringan gagal".
+     *
+     * Di runner CI tidak ada internet, sehingga /api/konten (RSS Kemenkes)
+     * menjawab 500 dan muncul sebagai galat level error. Tanpa cara menirunya
+     * di laptop, jalur itu tidak pernah teruji sampai CI merah — dan itulah
+     * yang terjadi 1 Nov 2026. Contoh pemakaian: UJI_BLOKIR=/api/konten
+     * (pola URL untuk CDP). Yang harus muncul adalah baris "catat", BUKAN
+     * kegagalan.
+     */
+    if (process.env.UJI_BLOKIR) {
+      const pola = process.env.UJI_BLOKIR.split(',').map((s) => s.trim()).filter(Boolean)
+      await cdp.kirim('Network.enable')
+      await cdp.kirim('Network.setBlockedURLs', { urls: pola })
+      console.log(`(UJI_BLOKIR aktif: ${pola.join(' ')})`)
+    }
+
     /** Galat runtime dikumpulkan per halaman; direset sebelum tiap pengukuran. */
     const galat = []
+    /** Permintaan jaringan yang gagal — DICATAT, tidak menggagalkan uji. */
+    const jaringan = []
     cdp.on('Runtime.exceptionThrown', (p) => {
       const d = p?.exceptionDetails?.exception?.description ?? p?.exceptionDetails?.text ?? 'exception'
       galat.push(String(d).split('\n')[0])
     })
     cdp.on('Log.entryAdded', (p) => {
-      if (p?.entry?.level === 'error' && p?.entry?.text) galat.push(p.entry.text)
+      const e = p?.entry
+      const jenis = klasifikasiLog(e)
+      if (jenis === 'jaringan') jaringan.push(e.text)
+      else if (jenis === 'galat') galat.push(e.text)
     })
 
     const buka = async (url) => {
@@ -405,6 +460,7 @@ async function main() {
 
       for (const h of HALAMAN) {
         galat.length = 0
+        jaringan.length = 0
 
         await aturLayar(cdp, 1280, 800)
         await evaluasi(cdp, `document.querySelectorAll('#sidebar-utama nav button')[${h.indeks}].click()`)
@@ -454,6 +510,9 @@ async function main() {
         }
 
         cek(`[${bahasa}] ${h.nama}: tanpa galat runtime`, galat.length === 0, galat.slice(0, 2).join(' | '))
+        if (jaringan.length) {
+          console.log(`  catat  [${bahasa}] ${h.nama}: ${jaringan.length} permintaan jaringan gagal (tidak menggagalkan uji)`)
+        }
       }
     }
 
