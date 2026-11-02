@@ -152,7 +152,35 @@ const dijalankanLangsung =
 let server = null
 
 if (dijalankanLangsung) {
+  /*
+   * Penangan galat `listen` SEBELUM mendengarkan.
+   *
+   * Tanpa ini, port yang sudah dipakai proses lain tidak pernah terlihat:
+   * `server/berita.js` punya listener 'error' sendiri yang menelan galat
+   * `listen`, jadi tidak ada yang mencetak apa pun — dan terminal diam saja
+   * seperti server berhasil dijalankan, padahal yang menjawab di port itu
+   * adalah proses LAIN (mungkin kode lama, mungkin milik orang lain).
+   *
+   * Terukur 4 Nov 2026: `npm run server` dijalankan saat port 8787 sudah
+   * dipegang proses lain, dan perintahnya tidak memberi tanda apa pun —
+   * pengguna mengira servernya jalan, padahal jawaban yang diterima berasal
+   * dari proses yang lebih dulu ada.
+   */
   server = app.listen(config.port, '127.0.0.1', async () => {
+    /*
+     * CALLBACK INI JUGA DIPANGGIL SAAT BIND GAGAL.
+     *
+     * Diukur 4 Nov 2026 dengan Express di Node 26: ketika port sudah dipakai,
+     * callback `listen` TETAP dijalankan sementara `server.listening === false`
+     * dan `server.address() === null`. Tanpa penjagaan ini, banner "server
+     * siap" tercetak untuk server yang sebenarnya TIDAK berjalan — dan
+     * pengguna mengira aplikasinya jalan padahal yang menjawab di port itu
+     * adalah proses lain. Itu persis kebingungan yang dilaporkan.
+     *
+     * Penangan 'error' di bawah yang melaporkan kegagalannya dan keluar.
+     */
+    if (!server.listening) return
+
     const info = safeInfo()
     console.log(`\n  Pahami Sehat — server siap`)
     console.log(`  http://127.0.0.1:${config.port}`)
@@ -200,6 +228,27 @@ if (dijalankanLangsung) {
      * untuk kota yang belum tentu dipakai.
      */
     jalankanPemanasan({ log: (baris) => console.log(`  ${baris}`) })
+  })
+
+  /*
+   * GAGAL MENDENGARKAN HARUS DILAPORKAN DAN MENGHENTIKAN PROSES.
+   *
+   * Dipasang SESUDAH `listen()` dipanggil tetapi tetap menangkap galatnya,
+   * karena galat listen selalu datang asinkron.
+   */
+  server.on('error', (e) => {
+    if (e?.code === 'EADDRINUSE') {
+      console.error(
+        `\n  GAGAL: port ${config.port} sudah dipakai proses lain.` +
+          `\n  Server TIDAK berjalan. Yang menjawab di port itu adalah proses lain.` +
+          `\n  Periksa:  ss -ltnp | grep ${config.port}` +
+          `\n  Hentikan proses itu, atau jalankan dengan PORT lain:` +
+          `\n            PORT=8790 npm run server\n`,
+      )
+    } else {
+      console.error(`\n  GAGAL menjalankan server: ${e?.code ?? ''} ${e?.message ?? e}\n`)
+    }
+    process.exit(1)
   })
 
   /**

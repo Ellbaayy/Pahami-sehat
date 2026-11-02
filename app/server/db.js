@@ -76,6 +76,8 @@ export const MAKS_TEKS_GILIRAN = 2000
 
 let pool = null
 let terakhirGagal = 0
+/** Sebab kegagalan sambungan terakhir, untuk ditampilkan apa adanya. */
+let alasanGagal = null
 /** Janji penyambungan yang sedang berjalan — lihat penjelasan di `db()`. */
 let menyambung = null
 
@@ -121,9 +123,20 @@ export async function db() {
       c.release()
       pool = p
       return pool
-    } catch {
+    } catch (e) {
       terakhirGagal = Date.now()
       pool = null
+      /*
+       * SEBAB KEGAGALAN DISIMPAN, bukan ditelan.
+       *
+       * Dulu `catch {}` membuang galatnya, jadi layar start hanya bisa menulis
+       * "tidak tersambung" — kalimat yang tidak memberi tahu apa yang harus
+       * dilakukan. Padahal sebabnya menentukan tindakannya: ECONNREFUSED
+       * berarti servis MariaDB memang belum dinyalakan (`/opt/lampp/lampp
+       * startmysql`), sedangkan ER_ACCESS_DENIED berarti kredensialnya salah.
+       */
+      const kode = e?.code ?? e?.errno ?? ''
+      alasanGagal = [kode, e?.message].filter(Boolean).join(' — ').slice(0, 160) || 'tidak diketahui'
       return null
     } finally {
       menyambung = null
@@ -148,7 +161,12 @@ export async function dbSiap() {
 export async function keteranganDb() {
   if (DIMATIKAN) return { aktif: false, alasan: 'dimatikan lewat DB_MATI=1' }
   const p = await db()
-  if (!p) return { aktif: false, alasan: 'tidak tersambung' }
+  if (!p) {
+    return {
+      aktif: false,
+      alasan: alasanGagal ? `tidak tersambung (${alasanGagal})` : 'tidak tersambung',
+    }
+  }
   return { aktif: true, host: KONFIG.host, port: KONFIG.port, database: KONFIG.database }
 }
 
