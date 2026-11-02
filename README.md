@@ -159,7 +159,7 @@ pahami-sehat/
 │   ├── .env.example
 │   ├── public/ocr/            ← mesin OCR: worker, core WASM, data bahasa (17 MB)
 │   ├── scripts/               ← salin-prototipe.mjs (prebuild)
-│   ├── server/                ← backend Express (19 berkas)
+│   ├── server/                ← backend Express (20 berkas)
 │   ├── src/                   ← frontend React: App.jsx, lib/, data/, components/
 │   ├── api/index.js           ← pintu masuk serverless Vercel
 │   ├── index.html
@@ -396,6 +396,28 @@ VALUES ('uji','penyakit','x',1,'http://x',NOW());
 Alasannya bukan kerapian, tapi keselamatan: menyajikan panduan medis yang sudah
 kadaluwarsa bukan bug teknis, itu risiko kesehatan. Baris yang basi **tidak
 tersaji** — aplikasi harus mengambil ulang dari sumber resmi.
+
+#### Domain yang dianggap "sumber resmi" — dan bug yang pernah ada di daftarnya
+
+Penanda `[SUMBER RESMI]` ditentukan oleh daftar `RESMI` di `app/server/cari.js`.
+Daftar itu diperiksa lewat `resmikah()` yang menentukan **prioritas** dokumen:
+dokumen lembaga resmi didahulukan dan ditandai, yang lain tidak.
+
+Diukur 2 Nov 2026 ditemukan salah ketik yang berdampak nyata: daftar berisi
+`pom.go.id`, **domain yang tidak ada**; domain BPOM yang sebenarnya
+`bpom.go.id`. Akibatnya `resmikah('https://www.bpom.go.id/…')` mengembalikan
+`false`, sehingga tautan BPOM yang ditautkan pada artikel rujukan **tidak
+pernah** diberi tanda resmi — padahal halaman penjelasan menjanjikan BPOM
+sebagai salah satu sumbernya. Sudah diperbaiki, dan `resmikah()` sekarang
+diekspor supaya bisa diuji: `uji-sumber.mjs` memeriksa 6 URL yang harus
+dianggap resmi dan 4 yang tidak boleh (termasuk penyusup
+`bpom.go.id.penipu.test` — pencocokan domain tidak boleh asal "mengandung").
+
+Yang benar-benar dipanggil saat menjawab: **Wikipedia bahasa Indonesia** (isi
+artikel) dan **MedlinePlus / NIH** (`wsearch.nlm.nih.gov`). Dokumen resmi lain
+— Kemenkes, WHO, BPOM, NIH, CDC — masuk sebagai **tautan eksternal yang ada di
+dalam artikel rujukan itu**, lalu difilter `resmikah()`; aplikasi tidak mencari
+langsung ke situs masing-masing lembaga.
 
 #### Asal 331 topik itu — dan kenapa bukan karangan AI
 
@@ -818,8 +840,8 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 1 Nov 2026: **19 berkas, semua lulus,
-±4 detik**, tanpa jaringan dan tanpa API key.
+memperbarui daftar di mana pun. Diukur 2 Nov 2026: **23 berkas, semua lulus,
+±6 detik**, tanpa jaringan dan tanpa API key.
 
 Daftar per berkas (jalankan langsung dari akar repo kalau sedang menelusuri satu
 uji tertentu):
@@ -835,8 +857,11 @@ node uji-berita.mjs       # deteksi berita, parser RSS, penetrasi
 node uji-jam.mjs          # jam acuan dari header internet
 node uji-rotasi.mjs       # rotasi daftar konten harian
 node uji-tanggal-konten.mjs  # tanggal terbit: parser, urutan, jendela rotasi
+node uji-sumber-konten.mjs   # pengurai dua sumber konten (Kemenkes & CNN)
 node uji-keterbacaan.mjs  # alat ukur keterbacaan itu sendiri
-node uji-sumber.mjs       # lapis sumber (tanpa jaringan)
+node uji-sumber.mjs       # lapis sumber + penanda domain resmi (tanpa jaringan)
+node uji-klaim.mjs        # penyaring klaim prognosis
+node uji-konteks.mjs      # konteks percakapan & pertanyaan lanjutan
 node uji-suara.mjs        # ejaan singkatan & kestabilan nada
 node uji-sitasi.mjs       # jejak sumber (butuh MariaDB; dilewati tanpa DB)
 node uji-server.mjs       # kompresi, 404 JSON, galat klien
@@ -970,7 +995,7 @@ penghitung suku katanya diuji dengan kata yang jumlahnya bisa dihitung manusia
 ("hipertensi" = 4, "pantai" = 2 karena diftong), dan daftar berbutir dipastikan
 TIDAK dihitung sebagai satu kalimat raksasa.
 
-`uji-sumber.mjs` juga berjalan tanpa jaringan (99 pemeriksaan). Versi
+`uji-sumber.mjs` juga berjalan tanpa jaringan (**109 pemeriksaan**). Versi
 `--jaringan` menambahkan pemeriksaan bahwa setiap judul artikel Wikipedia yang
 dipetakan benar-benar ada.
 
@@ -978,10 +1003,18 @@ dipetakan benar-benar ada.
 
 `.github/workflows/uji.yml` menjalankan seluruh uji di atas ditambah
 `node --check` dan `npm run build` pada setiap push dan pull request ke `main`.
-Diukur 20 Okt 2026 lewat `gh run view <id> --json jobs --jq '.jobs[].steps[]'`:
-**23 langkah** (termasuk `Set up job`, dua `Post …`, dan `Complete job`), dan
-semuanya `success` pada commit `8ada582`. Sebelum fitur akun dihapus angkanya
-25 — dua langkah `uji-akun.mjs` dan `uji-google.mjs` ikut hilang.
+Jumlah langkahnya naik setiap kali ada uji baru — **hitung ulang** dengan
+`gh run view <id> --json jobs --jq '.jobs[].steps[]'`, jangan dikutip dari sini.
+Diukur pada commit `251e1d9` (1 Nov 2026): **29 langkah**, semuanya `success`.
+
+**Dua uji yang dulu tertinggal, sekarang sudah masuk CI** (2 Nov 2026):
+`uji-klaim.mjs` (43 pemeriksaan) dan `uji-konteks.mjs` (49). Keduanya sudah
+lama ada dan selalu hijau di laptop, tetapi tidak pernah terdaftar di workflow —
+jadi **92 pemeriksaan penjaga penyaring klaim dan konteks percakapan tidak
+pernah dijalankan di runner**. Ini jenis hijau palsu yang sama dengan yang
+pernah terjadi pada `uji-tanggal-konten.mjs`. Aturannya tetap: **setiap
+`uji-*.mjs` baru wajib ditambahkan sebagai langkah di `uji.yml`** — `npm test`
+menemukan berkas uji dari folder, CI tidak.
 
 Dua hal yang **tidak** dijalankan di CI, dan alasannya disebut apa adanya:
 `uji-jawaban.mjs` butuh `KENARI_API_KEY` (rahasia tidak boleh jadi penentu pada
