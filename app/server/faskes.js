@@ -28,6 +28,10 @@
  * dikirim sebagai null — TIDAK diisi tebakan.
  */
 
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 const UA =
   'PahamiSehat/1.0 (pendidikan kesehatan; +https://github.com/Ellbaayy/Pahami-sehat)'
 
@@ -505,9 +509,90 @@ async function ambilCermin(cermin, query, batasMs = TIMEOUT_MS) {
 
 const simpanan = new Map()
 
+/**
+ * Berkas simpanan di disk.
+ *
+ * KENAPA ADA: Overpass publik butuh 40–50 detik untuk satu pencarian. Kalau
+ * simpanan hanya di memori, setiap kali server dijalankan ulang (dan itu
+ * terjadi setiap kali kode diubah, dan sekali sebelum demo) pengguna pertama
+ * membayar 50 detik itu lagi. Dengan berkas di disk, hasil yang sudah pernah
+ * diambil dipakai lagi tanpa menyentuh jaringan sama sekali.
+ *
+ * Berkasnya gitignored dan boleh dihapus kapan saja — kalau rusak atau tidak
+ * ada, server cukup mengambil ulang.
+ */
+const BERKAS_SIMPANAN = join(dirname(fileURLToPath(import.meta.url)), '..', '.cache-faskes.json')
+
+function bacaSimpananDisk() {
+  try {
+    if (!existsSync(BERKAS_SIMPANAN)) return
+    const isi = JSON.parse(readFileSync(BERKAS_SIMPANAN, 'utf8'))
+    if (!isi || typeof isi !== 'object') return
+    for (const [kunci, nilai] of Object.entries(isi)) {
+      if (nilai?.waktu && nilai?.data && Date.now() - nilai.waktu <= CACHE_MS) {
+        simpanan.set(kunci, nilai)
+      }
+    }
+  } catch {
+    // Berkas rusak bukan masalah: lebih baik mulai kosong daripada gagal start.
+  }
+}
+
+let penulisanTertunda = null
+
+function tulisSimpananDisk() {
+  // Tulis digabung: satu penulisan per 2 detik, bukan satu per pencarian.
+  if (penulisanTertunda) return
+  penulisanTertunda = setTimeout(() => {
+    penulisanTertunda = null
+    try {
+      const isi = Object.fromEntries(simpanan)
+      writeFileSync(BERKAS_SIMPANAN, JSON.stringify(isi))
+    } catch {
+      // Gagal menulis (mis. folder read-only) tidak boleh menjatuhkan server;
+      // fitur tetap jalan dengan simpanan di memori.
+    }
+  }, 2000)
+  penulisanTertunda.unref?.()
+}
+
+bacaSimpananDisk()
+
 function kunciCache(lat, lon, radius) {
   // Grid ~1 km supaya geseran kecil tetap memakai hasil yang sama.
   return `${lat.toFixed(2)},${lon.toFixed(2)},${radius}`
+}
+
+/**
+ * Cari hasil tersimpan yang MENCAKUP permintaan ini.
+ *
+ * Radius yang diminta lebih kecil dari yang tersimpan -> datanya sudah ada di
+ * dalamnya, cukup disaring. Ini yang membuat memperkecil radius seketika dan
+ * membuat pemanasan radius 5 km berguna untuk permintaan 1 km.
+ */
+function cariTersimpanCakupan(lat, lon, radius) {
+  const langsung = bacaCache(kunciCache(lat, lon, radius))
+  if (langsung) return { data: langsung, persis: true }
+
+  let terbaik = null
+  for (const [kunci, isi] of simpanan) {
+    if (Date.now() - isi.waktu > CACHE_MS) continue
+    const [plat, plon, pradius] = kunci.split(',')
+    if (Number(pradius) < radius) continue
+    if (Math.abs(Number(plat) - lat) > 0.02 || Math.abs(Number(plon) - lon) > 0.02) continue
+    if (!terbaik || Number(pradius) < Number(terbaik.kunci.split(',')[2])) {
+      terbaik = { data: isi.data, kunci, persis: false }
+    }
+  }
+  if (!terbaik) return null
+
+  const fasilitas = (terbaik.data.fasilitas ?? []).filter((f) => f.jarakM <= radius)
+  const perKategori = {}
+  for (const f of fasilitas) perKategori[f.kategori] = (perKategori[f.kategori] ?? 0) + 1
+  return {
+    data: { ...terbaik.data, radius, fasilitas, jumlah: fasilitas.length, perKategori },
+    persis: false,
+  }
 }
 
 function bacaCache(kunci) {
@@ -527,6 +612,7 @@ function tulisCache(kunci, data) {
     if (tertua) simpanan.delete(tertua[0])
   }
   simpanan.set(kunci, { waktu: Date.now(), data })
+  tulisSimpananDisk()
 }
 
 /** Hanya untuk uji: kosongkan simpanan. */
@@ -552,9 +638,11 @@ export async function faskesSekitar({ lat, lon, radius = 5000 } = {}) {
   }
   const r = Math.min(Math.max(Number(radius) || 5000, 500), RADIUS_MAKS_M)
 
-  const kunci = kunciCache(a, b, r)
-  const tersimpan = bacaCache(kunci)
-  if (tersimpan) return { ...tersimpan, dariSimpanan: true }
+  // Simpanan diperiksa dua lapis: yang PERSIS sama, lalu yang MENCAKUP
+  // (radius lebih besar di titik yang sama) — hasilnya disaring ke radius yang
+  // diminta. Tanpa lapis kedua, pemanasan 5 km tidak menolong permintaan 1 km.
+  const tersimpan = cariTersimpanCakupan(a, b, r)
+  if (tersimpan) return { ...tersimpan.data, dariSimpanan: true, persis: tersimpan.persis }
 
   const query = queryOverpass(a, b, r)
   const keadaan = []
@@ -650,8 +738,76 @@ export async function faskesSekitar({ lat, lon, radius = 5000 } = {}) {
     ],
   }
 
-  tulisCache(kunci, data)
+  tulisCache(kunciCache(a, b, r), data)
   return { ...data, dariSimpanan: false }
+}
+
+/* ------------------------------------------------------------ pemanasan -- */
+
+/**
+ * Pemanasan: ambil data untuk satu titik di latar belakang.
+ *
+ * KENAPA: muat pertama butuh 40–50 detik karena Overpass publik. Kalau
+ * pengguna pertama menunggu, itu terasa seperti aplikasi macet — dan saat demo
+ * lomba, pengguna pertama adalah juri.
+ *
+ * YANG TIDAK DILAKUKAN: fungsi ini TIDAK mengarang fasilitas, TIDAK memakai
+ * koordinat karangan, dan TIDAK menandai lokasi pengguna. Yang disiapkan hanya
+ * simpanan untuk titik yang memang diminta lewat `PEMANASAN_TITIK`, dan
+ * pengguna tetap harus memberi izin lokasi sendiri. Kalau pemanasan gagal,
+ * tidak ada yang rusak — permintaan pengguna akan mengambil seperti biasa.
+ */
+export async function panaskanTitik({ lat, lon, radius = 5000 } = {}) {
+  try {
+    const hasil = await faskesSekitar({ lat, lon, radius })
+    return { ok: true, jumlah: hasil.jumlah, dariSimpanan: hasil.dariSimpanan }
+  } catch (e) {
+    return { ok: false, alasan: String(e?.message ?? 'gagal') }
+  }
+}
+
+/**
+ * Titik yang dipanaskan saat server mulai.
+ *
+ * KOSONG SECARA BAWAAN — ini keputusan yang disengaja. Mengisi daftar ini
+ * dengan kota tertentu berarti aplikasi menyiapkan data untuk pengguna yang
+ * belum tentu ada di sana, dan itu pemborosan yang diam-diam. Untuk demo,
+ * isi lewat variabel lingkungan, mis.:
+ *
+ *   PEMANASAN_TITIK="-6.1754,106.8272" npm run server
+ *
+ * Format: `lat,lon` dipisah titik koma untuk beberapa titik. Radius memakai
+ * PEMANASAN_RADIUS (bawaan 5000).
+ */
+export function titikPemanasan(nilai = process.env.PEMANASAN_TITIK) {
+  if (!nilai) return []
+  return String(nilai)
+    .split(';')
+    .map((bagian) => bagian.trim())
+    .filter(Boolean)
+    .map((bagian) => {
+      const [lat, lon] = bagian.split(',').map((x) => Number(x.trim()))
+      return { lat, lon }
+    })
+    .filter((t) => koordinatSah(t.lat, t.lon))
+}
+
+/** Jalankan pemanasan untuk semua titik yang dikonfigurasi. Tidak di-await. */
+export function jalankanPemanasan({ log = () => {} } = {}) {
+  const titik = titikPemanasan()
+  if (!titik.length) return 0
+  const radius = Number(process.env.PEMANASAN_RADIUS) || 5000
+  for (const t of titik) {
+    // Sengaja tidak di-await: server harus siap menerima permintaan lebih dulu.
+    panaskanTitik({ ...t, radius }).then((h) => {
+      log(
+        h.ok
+          ? `[pemanasan] ${t.lat},${t.lon} r=${radius} m -> ${h.jumlah} fasilitas`
+          : `[pemanasan] ${t.lat},${t.lon} gagal: ${h.alasan}`,
+      )
+    })
+  }
+  return titik.length
 }
 
 /** Daftar kategori untuk antarmuka (tanpa fungsi internal). */

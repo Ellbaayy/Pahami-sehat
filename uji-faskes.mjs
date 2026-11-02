@@ -37,6 +37,7 @@ import {
   queryOverpass,
   daftarKategori,
   faskesSekitar,
+  titikPemanasan,
   _kosongkanSimpanan,
 } from './app/server/faskes.js'
 
@@ -234,7 +235,18 @@ cek('menyertakan healthcare (puskesmas/lab/igd)', q.includes('nwr["healthcare"]'
 cek('menyertakan optik & alkes', q.includes('optician|medical_supply'))
 cek('memakai out center untuk way', q.includes('out center'))
 
-/* ------------------------------------------------- pemanggilan jaringan -- */
+/* ------------------------------------------------- pemanasan (tanpa jaringan) -- */
+
+console.log('\n== pemanasan: hanya titik yang diminta ==')
+cek('tanpa PEMANASAN_TITIK -> tidak ada titik', titikPemanasan(undefined).length === 0)
+cek('string kosong -> tidak ada titik', titikPemanasan('').length === 0)
+cek('satu titik terbaca',
+  titikPemanasan('-6.1754,106.8272').length === 1 &&
+    titikPemanasan('-6.1754,106.8272')[0].lat === -6.1754)
+cek('dua titik dipisah titik koma', titikPemanasan('-6.17,106.82;-6.9,107.6').length === 2)
+cek('koordinat rusak DIBUANG', titikPemanasan('0,0;-6.17,106.82').length === 1)
+cek('bukan angka dibuang', titikPemanasan('abc,def').length === 0)
+cek('spasi berlebih tetap terbaca', titikPemanasan(' -6.17 , 106.82 ').length === 1)
 
 console.log('\n== penolakan masukan (tanpa jaringan) ==')
 _kosongkanSimpanan()

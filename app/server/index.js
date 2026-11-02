@@ -23,6 +23,7 @@ import { pasangKepala } from './kepala.js'
 import { pasangSaji, pasang404Api, sajikanFolder } from './saji.js'
 import rute from './rute.js'
 import { keteranganDb, tutupDb, bersihkanPercakapan } from './db.js'
+import { jalankanPemanasan } from './faskes.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
@@ -187,6 +188,18 @@ if (dijalankanLangsung) {
     pangkas()
     const pembersih = setInterval(pangkas, 6 * 60 * 60 * 1000)
     pembersih.unref?.()
+
+    /*
+     * Pemanasan fasilitas kesehatan — hanya kalau titiknya diminta lewat
+     * `PEMANASAN_TITIK`. Muat pertama dari Overpass publik butuh 40–50 detik,
+     * dan pengguna pertama saat demo adalah juri; pemanasan memindahkan
+     * penantian itu ke saat server dinyalakan, sebelum siapa pun membuka
+     * halamannya. Tidak di-`await`: server harus siap lebih dulu.
+     *
+     * Kosong secara bawaan supaya tidak ada data yang disiapkan diam-diam
+     * untuk kota yang belum tentu dipakai.
+     */
+    jalankanPemanasan({ log: (baris) => console.log(`  ${baris}`) })
   })
 
   /**

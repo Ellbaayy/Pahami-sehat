@@ -65,11 +65,11 @@ const KAMUS = {
     'faskes.urutan': 'Urutan',
     'faskes.darurat': 'Darurat',
     'faskes.memuat': 'Mengambil data fasilitas…',
-        'faskes.gagalMuat': 'Data fasilitas belum berhasil diambil',
+    'faskes.gagalMuat': 'Data fasilitas belum berhasil diambil',
     'faskes.dipotong':
       'Menampilkan 600 fasilitas terdekat dari {n} fasilitas yang ditemukan dalam radius ini.',
-'faskes.memuatLama':
-      'Pengambilan pertama memerlukan waktu karena data diambil langsung dari OpenStreetMap. Hasil berikutnya dimuat dari simpanan dan jauh lebih cepat.',
+    'faskes.memuatLama':
+      'Pengambilan pertama untuk lokasi baru memerlukan waktu karena data diambil langsung dari OpenStreetMap. Lokasi yang sudah pernah dibuka dimuat dari simpanan.',
     'faskes.jumlah': '{n} fasilitas ditemukan',
     'faskes.dariSimpanan': 'dari simpanan',
     'faskes.kosong': 'Tidak ada fasilitas yang cocok dengan pencarian dan filter Anda.',
@@ -574,8 +574,8 @@ const KAMUS = {
         'faskes.gagalMuat': 'Facility data could not be retrieved',
     'faskes.dipotong':
       'Showing the 600 nearest facilities out of {n} found within this radius.',
-'faskes.memuatLama':
-      'The first load takes a while because data is fetched directly from OpenStreetMap. Later results come from cache and are much faster.',
+    'faskes.memuatLama':
+      'The first load for a new location takes a while because data is fetched directly from OpenStreetMap. Locations already opened are loaded from cache.',
     'faskes.jumlah': '{n} facilities found',
     'faskes.dariSimpanan': 'from cache',
     'faskes.kosong': 'No facilities match your search and filters.',

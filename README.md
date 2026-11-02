@@ -1121,11 +1121,27 @@ sendiri, supaya tidak terlihat seperti kelalaian.
 - **IGD dan 24 jam hanya dilaporkan bila datanya ada** (`emergency=yes`,
   `opening_hours=24/7`, atau "IGD" pada nama). Tidak ada data berarti
   "Tidak diketahui", bukan "tidak ada IGD".
-- **Muat pertama lambat: 40–50 detik** karena Overpass publik memproses satu
-  permintaan gabungan untuk seluruh kategori sekaligus, dan Overpass membalas
-  502/504 saat beban tinggi. Antarmuka menyebut alasannya alih-alih diam.
-  Sesudahnya hasil disimpan 10 menit di server dan di peramban; memperkecil
-  radius disaring di perangkat sehingga **seketika**.
+- **Muat pertama untuk lokasi baru lambat: 40–50 detik.** Diukur 3 Nov 2026: radius
+  1 km butuh **43 detik**, 5 km **45 detik**, 10 km **53 detik** — jadi memperkecil
+  radius TIDAK menolong; yang mahal adalah perjalanan ke Overpass-nya, bukan
+  jumlah hasilnya. Antarmuka menyebut alasannya alih-alih diam.
+- **Pemanasan menghilangkan penantian itu saat demo.** Hasil disimpan 10 menit di
+  server **dan di berkas `.cache-faskes.json`**, jadi bertahan setelah server
+  dijalankan ulang. Terukur: permintaan pertama sesudah restart **13 ms**, dan di
+  peramban **0,5 detik** — dari 40–50 detik. Simpanan yang tersedia untuk radius
+  lebih besar juga dipakai untuk radius yang lebih kecil (disaring), sehingga
+  pemanasan 5 km melayani permintaan 1 km.
+
+  ```bash
+  # nyalakan pemanasan sebelum demo (titik = tempat juri akan mencoba)
+  PEMANASAN_TITIK="-6.1754,106.8272" npm run server
+  # beberapa titik sekaligus, dipisah titik koma
+  PEMANASAN_TITIK="-6.1754,106.8272;-6.9218,107.6070" PEMANASAN_RADIUS=5000 npm run server
+  ```
+
+  **Kosong secara bawaan** — aplikasi tidak menyiapkan data untuk kota yang belum
+  tentu dipakai, dan pemanasan tidak pernah mengarang fasilitas maupun menandai
+  lokasi pengguna. Pengguna tetap harus memberi izin lokasi sendiri.
 - **Di Jakarta, kategori "Kesehatan Tradisional" dan "Fasilitas Khusus" masih
   kosong.** Datanya memang belum dipetakan di OSM, bukan filternya rusak.
 - **Batas 600 fasilitas terdekat** ditampilkan terbuka pada layar
