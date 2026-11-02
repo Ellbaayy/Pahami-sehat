@@ -103,7 +103,7 @@ membesar 112%, garis dan batas fokus dipertebal:
 | [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB bahan** — 6 tabel. Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
-| [`uji-*.mjs`](.) | **15 berkas uji** — 14 di antaranya berjalan tanpa jaringan (total **560 pemeriksaan**, terukur 20 Okt 2026); `uji-jawaban.mjs` butuh server lokal + API key (lihat [Menjalankan uji](#menjalankan-uji)). |
+| [`uji-*.mjs`](.) | **24 berkas uji** — 21 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` butuh server + Chrome; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -556,6 +556,9 @@ lebih berbahaya daripada tidak ada penyaring.
 | POST | `/api/sederhanakan` | terjemahkan teks medis |
 | POST | `/api/verifikasi` | periksa klaim kesehatan |
 | POST | `/api/suara` | teks → MP3 (suara neural) |
+| GET | `/api/faskes` | fasilitas kesehatan di sekitar satu titik (Overpass/OpenStreetMap) |
+| GET | `/api/faskes/kategori` | sepuluh kategori fasilitas yang dipakai antarmuka |
+| GET | `/api/faskes/cari-lokasi` | cari lokasi menurut nama tempat (Nominatim) |
 
 Galat selalu berbentuk `{ ok: false, code, pesan }` — `code` sengaja dipakai UI
 untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
@@ -840,8 +843,8 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 2 Nov 2026: **23 berkas, semua lulus,
-±6 detik**, tanpa jaringan dan tanpa API key.
+memperbarui daftar di mana pun. Diukur 3 Nov 2026: **24 berkas, semua lulus,
+±4 detik**, tanpa jaringan dan tanpa API key.
 
 Daftar per berkas (jalankan langsung dari akar repo kalau sedang menelusuri satu
 uji tertentu):
@@ -862,15 +865,16 @@ node uji-keterbacaan.mjs  # alat ukur keterbacaan itu sendiri
 node uji-sumber.mjs       # lapis sumber + penanda domain resmi (tanpa jaringan)
 node uji-klaim.mjs        # penyaring klaim prognosis
 node uji-konteks.mjs      # konteks percakapan & pertanyaan lanjutan
+node uji-faskes.mjs       # fasilitas kesehatan: 10 kategori, koordinat, duplikat, IGD
 node uji-suara.mjs        # ejaan singkatan & kestabilan nada
 node uji-sitasi.mjs       # jejak sumber (butuh MariaDB; dilewati tanpa DB)
 node uji-server.mjs       # kompresi, 404 JSON, galat klien
 node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
-node uji-peramban.mjs     # peramban sungguhan: 6 halaman × 2 bahasa (butuh server + Chrome)
+node uji-peramban.mjs     # peramban sungguhan: 7 halaman × 2 bahasa (butuh server + Chrome)
 ```
 
-### Uji peramban otomatis — 6 halaman × 2 bahasa
+### Uji peramban otomatis — 7 halaman × 2 bahasa
 
 Satu-satunya hal yang tidak bisa dibuktikan dari build hijau adalah perilaku di
 layar. `uji-peramban.mjs` mengendalikan Chrome lewat protokol DevTools **tanpa
@@ -878,11 +882,12 @@ dependensi baru**, lalu memeriksa untuk setiap halaman dan setiap bahasa:
 judul halaman tampil, tepat satu `h1`, tidak ada luapan horizontal di
 1280×800 maupun 375×812, tidak ada galat runtime, dan — untuk halaman fitur
 (Tanya AI, Riwayat, Kuesioner) — isinya **muat satu layar** di 1366×700 dan
-375×812.
+375×812. Cek Klaim dan Fasilitas Kesehatan diuji pada versi laptop saja: keduanya
+memuat kotak isian/peta plus hasil yang memang bergulir di panelnya sendiri.
 
 ```bash
 cd app && npm run server     # terminal lain; dist/ harus sudah dibuild
-cd .. && node uji-peramban.mjs   # 93 pemeriksaan, ±30 detik
+cd .. && node uji-peramban.mjs   # 105 pemeriksaan, ±40 detik
 ```
 
 Uji ini **tidak** ikut `npm test` — ia butuh server hidup dan peramban, jadi
@@ -1074,6 +1079,83 @@ diambil dari agregasi beberapa putaran.
 Yang **tidak** bisa diuji dari terminal — karena butuh peramban sungguhan —
 diuji manual di `/app/`: mesin OCR, pengenalan suara, pemutaran suara, papan
 klip, dan tampilan mode Inggris.
+
+---
+
+## Fasilitas Kesehatan Terdekat
+
+Menu ketujuh di sidebar. Pengguna memberi izin lokasi lewat **Geolocation API
+peramban**, dan aplikasi menampilkan fasilitas kesehatan nyata di sekitarnya —
+rumah sakit, puskesmas, klinik, praktik mandiri, apotek, laboratorium, penunjang
+medis, fasilitas kesehatan masyarakat, pengobatan tradisional, dan fasilitas
+khusus. Peta memakai **Leaflet + OpenStreetMap** dengan penanda berkelompok
+(*marker clustering*).
+
+**Tidak ada koordinat cadangan.** Kalau izin lokasi ditolak, aplikasi tidak
+mengisi lokasi apa pun — yang muncul adalah kolom pencarian lokasi manual
+(Nominatim, juga OpenStreetMap). Menampilkan fasilitas di sekitar titik karangan
+pada konteks kesehatan bukan kemunduran kecil, melainkan kesalahan yang bisa
+menyesatkan orang yang sedang mencari pertolongan.
+
+### Sumber datanya, dan mengapa hanya satu
+
+| Sumber | Status saat diukur (2 Nov 2026) | Dipakai? |
+|---|---|---|
+| OpenStreetMap lewat Overpass API | Menjawab; 1.702 fasilitas nyata dalam radius 10 km di Jakarta Pusat | **Ya** |
+| `faskes.kemkes.go.id` | Nama domain tidak ditemukan | Tidak |
+| `data.kemkes.go.id` | Nama domain tidak ditemukan | Tidak |
+| `api.kemkes.go.id` | HTTP 404 | Tidak |
+| `sirs.kemkes.go.id` | HTTP 200, tetapi hanya formulir pendaftaran RS — bukan katalog yang bisa dibaca mesin | Tidak |
+| `satusehat.kemkes.go.id` | HTTP 200, tetapi gerbang layanan ber-JavaScript; alamat API FHIR-nya tidak dapat dihubungi dan integrasinya butuh kredensial resmi | Tidak |
+
+Jadi aplikasi **tidak** mengklaim memakai data Kemenkes. Alasan tiap sumber
+yang tidak terpakai ikut ditampilkan di kartu "Sumber data" pada halaman itu
+sendiri, supaya tidak terlihat seperti kelalaian.
+
+### Batas yang disebut apa adanya
+
+- **OpenStreetMap dipetakan sukarela.** Kelengkapan berbeda tajam antarwilayah.
+  Diukur di Jakarta Pusat (radius 10 km): 1.702 fasilitas, tetapi hanya **53**
+  punya nomor telepon, **25** punya website, dan **6** bertanda IGD. Kolom yang
+  tidak tercatat ditampilkan **"Tidak tercatat"** — tidak pernah diisi tebakan.
+- **IGD dan 24 jam hanya dilaporkan bila datanya ada** (`emergency=yes`,
+  `opening_hours=24/7`, atau "IGD" pada nama). Tidak ada data berarti
+  "Tidak diketahui", bukan "tidak ada IGD".
+- **Muat pertama lambat: 40–50 detik** karena Overpass publik memproses satu
+  permintaan gabungan untuk seluruh kategori sekaligus, dan Overpass membalas
+  502/504 saat beban tinggi. Antarmuka menyebut alasannya alih-alih diam.
+  Sesudahnya hasil disimpan 10 menit di server dan di peramban; memperkecil
+  radius disaring di perangkat sehingga **seketika**.
+- **Di Jakarta, kategori "Kesehatan Tradisional" dan "Fasilitas Khusus" masih
+  kosong.** Datanya memang belum dipetakan di OSM, bukan filternya rusak.
+- **Batas 600 fasilitas terdekat** ditampilkan terbuka pada layar
+  ("Menampilkan 600 dari 1.702 yang ditemukan").
+
+### Penggabungan, penyaringan, dan penyeragaman
+
+Lima cermin Overpass dicoba berurutan dengan anggaran waktu 100 detik. Cermin
+yang membalas **200 tetapi kosong** ditolak — `overpass.osm.ch` hanya memuat
+data Swiss dan pernah membuat peta tampil kosong padahal permintaannya
+"berhasil". Duplikat (satu fasilitas terpetakan sebagai titik *dan* bangunan)
+digabung bila namanya sama dan jaraknya di bawah 60 m; kolom yang kosong diisi
+dari kembarannya.
+
+### Tujuh cacat yang tertangkap saat pengujian
+
+Semuanya ditemukan dari pengukuran, bukan dugaan — dan semuanya sekarang dijaga
+`uji-faskes.mjs`:
+
+1. Cermin yang membalas kosong dianggap berhasil → peta kosong.
+2. **122 Posyandu masuk filter Klinik** karena bertag `amenity=clinic`.
+3. Saat server gagal, UI menulis "0 fasilitas ditemukan" — itu pernyataan bahwa
+   sumbernya menjawab "tidak ada", padahal sumbernya tidak menjawab sama sekali.
+4. Tombol Hubungi menggabungkan dua nomor jadi satu nomor palsu
+   (`tel:+622****1008+622****0702`).
+5. Kolom "Layanan" menampilkan tembok istilah Inggris (`acupuncture;allergology;…`).
+6. Menggeser radius memicu permintaan ulang 50 detik untuk data yang sebagian
+   besar sudah ada di layar.
+7. Daftar milik titik pencarian sebelumnya tetap tampil sambil menampilkan galat
+   untuk titik yang baru.
 
 ---
 

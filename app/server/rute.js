@@ -50,6 +50,7 @@ import {
   teksDari,
 } from './batasInput.js'
 import { kontenHarianLengkap } from './konten.js'
+import { faskesSekitar, daftarKategori } from './faskes.js'
 import {
   keteranganDb,
   ambilBerita,
@@ -440,6 +441,7 @@ const batasCari = batasi({ ...LAJU.sederhanakan, nama: 'permintaan' })
 const batasVerifikasi = batasi({ ...LAJU.verifikasi, nama: 'permintaan' })
 const batasSuara = batasi({ ...LAJU.suara, nama: 'permintaan suara' })
 const batasKonten = batasi({ ...LAJU.konten, nama: 'permintaan konten' })
+const batasFaskes = batasi({ ...LAJU.faskes, nama: 'pencarian fasilitas' })
 const batasHealth = batasi({ ...LAJU.health, nama: 'pemeriksaan kesehatan' })
 const batasMeta = batasi({ ...LAJU.meta, nama: 'permintaan meta' })
 const batasBerita = batasi({ ...LAJU.berita, nama: 'ringkasan berita' })
@@ -602,6 +604,94 @@ rute.get('/api/konten', batasKonten, bungkus(async (req, res) => {
   const data = await kontenHarianLengkap({ paksa })
   res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400')
   res.json({ ok: true, ...data })
+}))
+
+/**
+ * Fasilitas kesehatan terdekat — data nyata dari OpenStreetMap/Overpass.
+ *
+ * Koordinat WAJIB dikirim pengguna (dari GPS peramban atau pencarian manual
+ * yang dipilihnya sendiri). Server TIDAK pernah mengisi lokasi default: lokasi
+ * palsu akan menampilkan fasilitas yang salah dan itu berbahaya di konteks
+ * kesehatan.
+ */
+rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
+  const lat = Number(req.query?.lat)
+  const lon = Number(req.query?.lon)
+  const radius = Number(req.query?.radius) || 5000
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    res.status(400).json({
+      ok: false,
+      code: 'koordinat_kosong',
+      pesan: 'Koordinat lokasi diperlukan (lat dan lon).',
+    })
+    return
+  }
+
+  try {
+    const data = await faskesSekitar({ lat, lon, radius })
+    res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
+    res.json({ ok: true, ...data })
+  } catch (e) {
+    const code = e?.code === 'koordinat' ? 'koordinat_tidak_sah' : 'sumber_gagal'
+    res.status(code === 'koordinat_tidak_sah' ? 400 : 503).json({
+      ok: false,
+      code,
+      pesan:
+        e?.code === 'koordinat'
+          ? 'Koordinat lokasi tidak sah.'
+          : 'Data fasilitas kesehatan belum dapat diambil. Coba lagi beberapa saat lagi.',
+      keadaan: e?.keadaan ?? [],
+    })
+  }
+}))
+
+rute.get('/api/faskes/kategori', batasMeta, (_req, res) => {
+  res.json({ ok: true, kategori: daftarKategori() })
+})
+
+/**
+ * Cari lokasi berdasarkan nama tempat — dipakai bila izin GPS ditolak.
+ *
+ * Diteruskan lewat server karena Nominatim mewajibkan User-Agent yang menyebut
+ * aplikasinya, dan peramban tidak bisa mengubah User-Agent. Satu permintaan
+ * per pencarian pengguna; tidak ada polling.
+ */
+rute.get('/api/faskes/cari-lokasi', batasFaskes, bungkus(async (req, res) => {
+  const q = String(req.query?.q ?? '').trim()
+  if (q.length < 3) {
+    res.status(400).json({ ok: false, code: 'kueri_pendek', hasil: [] })
+    return
+  }
+  if (q.length > 120) {
+    res.status(400).json({ ok: false, code: 'kueri_panjang', hasil: [] })
+    return
+  }
+
+  try {
+    const url =
+      'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1' +
+      `&countrycodes=id&limit=6&q=${encodeURIComponent(q)}`
+    const res2 = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'PahamiSehat/1.0 (pendidikan kesehatan; +https://github.com/Ellbaayy/Pahami-sehat)',
+        'Accept-Language': 'id,en;q=0.8',
+      },
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!res2.ok) throw new Error(`HTTP ${res2.status}`)
+    const j = await res2.json()
+    const hasil = (Array.isArray(j) ? j : []).map((x) => ({
+      nama: x.display_name?.split(',')[0] ?? x.name ?? 'Lokasi',
+      alamat: x.display_name ?? '',
+      lat: Number(x.lat),
+      lon: Number(x.lon),
+    }))
+    res.json({ ok: true, hasil })
+  } catch {
+    res.status(503).json({ ok: false, code: 'lokasi_gagal', hasil: [] })
+  }
 }))
 
 rute.get('/api/meta', batasMeta, (_req, res) => {

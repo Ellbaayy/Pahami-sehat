@@ -179,6 +179,14 @@ jobs:
         # lama, tetapi belum pernah masuk CI (49 pemeriksaan).
         run: node uji-konteks.mjs
 
+      - name: Uji lapisan fasilitas kesehatan (kategori, koordinat, duplikat)
+        # Tanpa jaringan: kategori OSM dipetakan ke 10 kategori yang diminta,
+        # koordinat rusak ditolak, IGD/24 jam tidak dikarang, duplikat digabung.
+        # Pemanggilan Overpass sungguhan sengaja TIDAK di sini: runner CI tidak
+        # punya internet, dan uji tanpa jaringan tidak boleh menyentuh layanan
+        # pihak ketiga.
+        run: node uji-faskes.mjs
+
       - name: Uji lapisan server (kompresi, 404 JSON, galat klien)
         # Tanpa jaringan dan tanpa rahasia: server asli dinyalakan di port acak.
         # Yang diuji bukan fitur, melainkan hal yang SALAHNYA tidak terlihat dari

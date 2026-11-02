@@ -30,6 +30,9 @@ import LoadingPage from './components/LoadingPage'
  */
 const QuizPanel = lazy(() => import('./components/dashboard/QuizPanel'))
 const VerifikasiPanel = lazy(() => import('./components/dashboard/VerifikasiPanel'))
+// Halaman fasilitas kesehatan dimuat malas: Leaflet + markercluster hanya
+// dibutuhkan saat menu ini dibuka, tidak perlu ikut bundel awal.
+const FaskesPanel = lazy(() => import('./components/faskes/FaskesPanel'))
 import { PlugZap, Plug, Trash2 } from 'lucide-react'
 import { TOPICS, ARTICLES, HEALTH_TIP } from './data/dummy'
 import { TINGKAT, TINGKAT_DEFAULT } from './data/tingkat'
@@ -882,6 +885,18 @@ export default function App() {
                   suaraJenis={settings.suaraJenis}
                   kontenTips={konten.tips}
                 />
+              </Suspense>
+            ) : null}
+
+            {active === 'faskes' ? (
+              <Suspense
+                fallback={
+                  <div className="grid place-items-center py-16 text-[0.84rem] text-muted-500">
+                    {t('umum.proses')}
+                  </div>
+                }
+              >
+                <FaskesPanel t={t} />
               </Suspense>
             ) : null}
 

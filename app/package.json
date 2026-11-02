@@ -20,6 +20,8 @@
   },
   "dependencies": {
     "express": "^5.3.0",
+    "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3",
     "lucide-react": "^1.52.0",
     "msedge-tts": "^2.1.0",
     "mysql2": "^3.24.6",

@@ -48,7 +48,7 @@ echo "  Pastikan domain $DOMAIN sudah AKTIF di Cloudflare."
 echo "  Kalau belum, langkah ini akan gagal pada tahap pemetaan DNS."
 echo
 
-# 1) Login: membuka peramban, jagi memilih domain yang dipakai.
+# 1) Login: membuka peramban untuk memilih domain yang dipakai.
 if [ ! -f "$HOME/.cloudflared/cert.pem" ]; then
   echo "Langkah 1/3 — login ke Cloudflare (peramban akan terbuka)…"
   "$CLOUDFLARED" tunnel login

@@ -71,6 +71,15 @@ export const LAJU = {
    */
   konten: { maks: 20, maksTotal: 200 },
   /**
+   * Fasilitas kesehatan. Setiap permintaan TANPA simpanan memanggil Overpass
+   * API — layanan sukarela yang membalas 429 bila dipanggil beruntun (diukur
+   * 2 Nov 2026: 20 permintaan terpisah membuat cermin utama menolak pada
+   * permintaan ke-4). Simpanan server 10 menit menahan sebagian besar
+   * panggilan, tetapi batas ini tetap dipasang supaya pengguna yang menyeret
+   * peta bolak-balik tidak menghujani layanan publik itu.
+   */
+  faskes: { maks: 30, maksTotal: 300 },
+  /**
    * Pemeriksaan kesehatan dipanggil berkala oleh aplikasi (tiap 30 detik per
    * tab), jadi batasnya lebih longgar — tetapi TIDAK tanpa batas seperti dulu.
    * Sebelumnya endpoint ini terbuka bebas sambil memanggil Kenari setiap kali.
