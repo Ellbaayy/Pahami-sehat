@@ -161,6 +161,24 @@ jobs:
         # memang opsional, jadi CI tidak boleh merah karenanya.
         run: node uji-sitasi.mjs
 
+      - name: Uji penyaring klaim prognosis
+        # Tanpa jaringan, model, dan DB. Menjaga agar penyaring TIDAK membuang
+        # kalimat yang benar; pemeriksaan "jangan dibuang" sengaja lebih banyak
+        # daripada "harus dibuang".
+        #
+        # KENAPA BARU DITAMBAHKAN (2 Nov 2026): uji ini sudah lama ada dan hijau
+        # di laptop, tetapi TIDAK PERNAH dijalankan CI — 43 pemeriksaannya tidak
+        # menjaga apa pun di runner. Persis hijau palsu yang pernah terjadi pada
+        # uji-tanggal-konten.
+        run: node uji-klaim.mjs
+
+      - name: Uji konteks percakapan
+        # Tanpa jaringan/DB/kunci. Menjaga riwayat sesi tetap dipakai sebagai
+        # konteks, pertanyaan lanjutan tetap dikenali, dan sapaan tidak
+        # tertangkap sebagai lanjutan. Sama seperti di atas: sudah ada sejak
+        # lama, tetapi belum pernah masuk CI (49 pemeriksaan).
+        run: node uji-konteks.mjs
+
       - name: Uji lapisan server (kompresi, 404 JSON, galat klien)
         # Tanpa jaringan dan tanpa rahasia: server asli dinyalakan di port acak.
         # Yang diuji bukan fitur, melainkan hal yang SALAHNYA tidak terlihat dari

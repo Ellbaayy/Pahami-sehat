@@ -404,31 +404,6 @@ export async function catatSumberDikutip(jenis, daftarSumber = []) {
   return n
 }
 
-/**
- * Ambil dokumen yang MASIH BERLAKU saja.
- * Baris yang sudah lewat kedaluwarsa tidak pernah ikut — itu intinya.
- */
-export async function ambilDokumenBerlaku(domain = null, batas = 10) {
-  if (domain) {
-    return tanya(
-      `SELECT d.url, d.judul, d.diambil_pada, d.kedaluwarsa, s.nama AS sumber
-         FROM dokumen d JOIN sumber s ON s.id = d.sumber_id
-        WHERE d.kedaluwarsa > NOW() AND s.domain = ?
-        ORDER BY d.diambil_pada DESC
-        LIMIT ?`,
-      [String(domain), Number(batas) || 10],
-    )
-  }
-  return tanya(
-    `SELECT d.url, d.judul, d.diambil_pada, d.kedaluwarsa, s.nama AS sumber
-       FROM dokumen d JOIN sumber s ON s.id = d.sumber_id
-      WHERE d.kedaluwarsa > NOW()
-      ORDER BY d.diambil_pada DESC
-      LIMIT ?`,
-    [Number(batas) || 10],
-  )
-}
-
 /** Catat bahwa sebuah jawaban memakai dokumen tertentu. */
 export async function catatSitasi(jenisJawaban, dokumenId, rujukanId = null) {
   return tanya(

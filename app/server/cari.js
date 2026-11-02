@@ -28,6 +28,10 @@ const RESMI = [
   'kemkes.go.id',
   'kemenkes.go.id',
   'who.int',
+  // BPOM. Dulu tertulis `pom.go.id` — domain itu TIDAK ADA, sehingga tautan
+  // BPOM yang benar (bpom.go.id) justru tidak pernah ditandai resmi. Diukur
+  // 2 Nov 2026: `resmikah('https://www.bpom.go.id/…')` mengembalikan false.
+  'bpom.go.id',
   'pom.go.id',
   'nih.gov',
   'ncbi.nlm.nih.gov',
@@ -153,7 +157,15 @@ function lewatAntrean(fn) {
   return jalan
 }
 
-function resmikah(url) {
+/**
+ * Apakah sebuah URL dianggap sumber resmi kesehatan?
+ *
+ * DIEKSPOR KHUSUS UNTUK UJI. Tanpa ekspor, salah ketik domain di daftar
+ * `RESMI` tidak bisa ditangkap uji mana pun — dan itu pernah terjadi: daftar
+ * berisi `pom.go.id` (domain yang tidak ada) sehingga tautan BPOM yang benar
+ * tidak pernah ditandai resmi. Diukur 2 Nov 2026.
+ */
+export function resmikah(url) {
   try {
     const h = new URL(url).hostname.replace(/^www\./, '')
     return RESMI.some((d) => h === d || h.endsWith('.' + d))

@@ -40,7 +40,7 @@ import {
   PENGENALAN_TOPIK,
   ISTILAH_CARI,
 } from './app/server/kataKunci.js'
-import { cariInternet } from './app/server/cari.js'
+import { cariInternet, resmikah } from './app/server/cari.js'
 
 let gagal = 0
 function cek(nama, dapat, harus) {
@@ -406,6 +406,34 @@ if (!pakaiJaringan) {
     }
     await new Promise((r) => setTimeout(r, 1500))
   }
+}
+
+/* --------------------------------- penanda sumber resmi (daftar RESMI) --- */
+
+// Diukur 2 Nov 2026: daftar RESMI berisi `pom.go.id` — domain yang TIDAK ADA,
+// sedangkan domain BPOM yang sebenarnya `bpom.go.id`. Akibatnya tautan BPOM
+// tidak pernah ditandai [SUMBER RESMI] walaupun halaman penjelasan menjanjikan
+// BPOM sebagai sumber resmi. Uji ini mengunci perbaikan itu.
+const RESMI_HARUS_BENAR = [
+  'https://www.bpom.go.id/berita/obat',
+  'https://bpom.go.id/',
+  'https://kemkes.go.id/id/rilis-berita',
+  'https://www.who.int/news/item/x',
+  'https://medlineplus.gov/ency/article/x.htm',
+  'https://www.cdc.gov/x',
+]
+for (const u of RESMI_HARUS_BENAR) {
+  cekBenar(`resmi: ${u}`, resmikah(u) === true)
+}
+
+const RESMI_HARUS_SALAH = [
+  'https://id.wikipedia.org/wiki/Kesehatan',
+  'https://contoh-blog.com/bpom-go-id',
+  'https://bpom.go.id.penipu.test/x',
+  'bukan-url',
+]
+for (const u of RESMI_HARUS_SALAH) {
+  cekBenar(`bukan resmi: ${u}`, resmikah(u) === false)
 }
 
 console.log(gagal === 0 ? '\nSEMUA LULUS' : `\n${gagal} UJI GAGAL`)
