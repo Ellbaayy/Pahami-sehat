@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   Hospital,
   MapPin,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { Card, SectionHeading } from '../ui/primitives'
 import PetaFaskes from './PetaFaskes'
+import PemilihWilayah from './PemilihWilayah'
 import { WARNA_KATEGORI } from './kategoriWarna'
 import { useFaskes } from '../../lib/useFaskes'
 import { useCariLokasi } from '../../lib/useCariLokasi'
@@ -57,6 +58,12 @@ const URUTAN = [
 
 const km = (m) => (m == null ? null : m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`)
 
+/** Label lokasi dari wilayah terpilih, dari yang paling rinci. */
+function labelWilayah(w) {
+  const bagian = [w.desa?.nama, w.kecamatan?.nama, w.kabupaten?.nama, w.provinsi?.nama].filter(Boolean)
+  return bagian.length ? bagian.join(', ') : 'Wilayah terpilih'
+}
+
 /**
  * Fasilitas kesehatan terdekat.
  *
@@ -86,6 +93,41 @@ export default function FaskesPanel({ t = (k) => k }) {
   const [hanyaDarurat, setHanyaDarurat] = useState(false)
   const [terpilih, setTerpilih] = useState(null)
   const [kueriLokasi, setKueriLokasi] = useState('')
+  // Titik referensi wilayah sedang diambil; dipakai untuk mematikan tombol.
+  const [memuatTitik, setMemuatTitik] = useState(false)
+  // Wilayah dipilih tetapi titik referensinya tidak ditemukan. Bukan galat
+  // sistem — datanya memang tidak ada — jadi pesannya terpisah.
+  const [titikGagal, setTitikGagal] = useState(false)
+
+  /** Ambil titik referensi wilayah, lalu jadikan pusat pencarian. */
+  const pakaiWilayah = useCallback(
+    async (w) => {
+      setMemuatTitik(true)
+      setTitikGagal(false)
+      try {
+        const q =
+          `/api/wilayah/titik?kode=${encodeURIComponent(w.kode)}` +
+          `&provinsi=${encodeURIComponent(w.provinsi?.nama ?? '')}` +
+          `&kabupaten=${encodeURIComponent(w.kabupaten?.nama ?? '')}` +
+          `&kecamatan=${encodeURIComponent(w.kecamatan?.nama ?? '')}` +
+          `&desa=${encodeURIComponent(w.desa?.nama ?? '')}`
+        const res = await fetch(q)
+        const j = await res.json()
+        if (!res.ok || !j.ok) {
+          // TIDAK mengarang koordinat: kalau titik referensi tidak ada,
+          // pengguna diberi tahu dan diminta memilih wilayah lain.
+          setTitikGagal(true)
+          return
+        }
+        setLokasiManual(j.titik.lat, j.titik.lon, labelWilayah(w), 'wilayah', j.titik.presisi)
+      } catch {
+        setTitikGagal(true)
+      } finally {
+        setMemuatTitik(false)
+      }
+    },
+    [setLokasiManual],
+  )
 
   const labelKategori = useMemo(() => {
     const peta = {}
@@ -120,7 +162,7 @@ export default function FaskesPanel({ t = (k) => k }) {
   const adaLokasi = Boolean(lokasi)
 
   return (
-    <section aria-labelledby="faskes-judul" className="space-y-3">
+    <section aria-labelledby="faskes-judul" className="space-y-2">
       <SectionHeading
         as="h1"
         id="faskes-judul"
@@ -138,6 +180,22 @@ export default function FaskesPanel({ t = (k) => k }) {
           </button>
         }
       />
+
+      <PemilihWilayah
+        t={t}
+        lokasiAktif={lokasi?.label ?? null}
+        statusLokasi={statusLokasi}
+        memuatTitik={memuatTitik}
+        presisi={lokasi?.dari === 'wilayah' ? lokasi.presisi : null}
+        onGps={mintaLokasi}
+        onPilih={pakaiWilayah}
+      />
+
+      {titikGagal ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[0.82rem] leading-snug text-navy-800">
+          {t('wil.titikGagal')}
+        </p>
+      ) : null}
 
       <LokasiBar
         t={t}
@@ -176,7 +234,7 @@ export default function FaskesPanel({ t = (k) => k }) {
 
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
             {/* peta */}
-            <div className="order-1 h-[22rem] lg:order-2 lg:h-[calc(100vh-19rem)] lg:min-h-[26rem]">
+            <div className="order-1 h-[22rem] lg:order-2 lg:h-[calc(100vh-19.5rem)] lg:min-h-[24rem]">
               <PetaFaskes
                 pusat={lokasi}
                 fasilitas={tersaring}
@@ -186,7 +244,7 @@ export default function FaskesPanel({ t = (k) => k }) {
             </div>
 
             {/* daftar */}
-            <div className="order-2 flex min-h-0 flex-col gap-2 lg:order-1 lg:h-[calc(100vh-19rem)] lg:min-h-[26rem]">
+            <div className="order-2 flex min-h-0 flex-col gap-2 lg:order-1 lg:h-[calc(100vh-19.5rem)] lg:min-h-[24rem]">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[0.82rem] font-medium text-muted-500">
                   {/* Saat galat, JANGAN menulis "0 fasilitas ditemukan" — itu
@@ -245,7 +303,7 @@ export default function FaskesPanel({ t = (k) => k }) {
           <SumberData t={t} data={data} />
         </>
       ) : (
-        <Card className="p-6 text-center">
+        <Card className="p-4 text-center">
           <MapPin className="mx-auto size-7 text-brand-700" aria-hidden="true" />
           <p className="mt-2 text-[0.95rem] font-bold text-navy-900">{t('faskes.belumLokasi')}</p>
           <p className="mx-auto mt-1 max-w-[46ch] text-[0.86rem] leading-relaxed text-muted-500">

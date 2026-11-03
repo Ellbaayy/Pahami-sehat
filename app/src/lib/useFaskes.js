@@ -77,8 +77,8 @@ export function useFaskes() {
   }, [])
 
   /** Penetapan lokasi hasil pencarian manual (nama tempat / koordinat). */
-  const setLokasiManual = useCallback((lat, lon, label = null, dari = 'manual') => {
-    setLokasi({ lat, lon, label, dari })
+  const setLokasiManual = useCallback((lat, lon, label = null, dari = 'manual', presisi = null) => {
+    setLokasi({ lat, lon, label, dari, presisi })
     setStatusLokasi('ok')
   }, [])
 

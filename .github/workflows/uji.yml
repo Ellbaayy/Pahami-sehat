@@ -187,6 +187,12 @@ jobs:
         # pihak ketiga.
         run: node uji-faskes.mjs
 
+      - name: Uji wilayah administratif (kode, normalisasi, cascade titik)
+        # Tanpa jaringan: validasi bentuk kode per tingkat, turunan kode induk,
+        # pemilihan hasil Nominatim (menolak kavling/sekolah/polsek), dan
+        # cascade desa -> kecamatan -> kabupaten -> provinsi.
+        run: node uji-wilayah.mjs
+
       - name: Uji lapisan server (kompresi, 404 JSON, galat klien)
         # Tanpa jaringan dan tanpa rahasia: server asli dinyalakan di port acak.
         # Yang diuji bukan fitur, melainkan hal yang SALAHNYA tidak terlihat dari

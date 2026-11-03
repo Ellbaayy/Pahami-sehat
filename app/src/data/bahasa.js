@@ -30,6 +30,28 @@ const KAMUS = {
     'nav.menu': 'Buka menu',
     'nav.tutupSidebar': 'Tutup sidebar',
     'nav.bukaSidebar': 'Buka sidebar',
+    // pemilihan wilayah administratif
+    'wil.judul': 'Pilih wilayah',
+    'wil.catatan':
+      'Pilih provinsi, kota/kabupaten, kecamatan, lalu desa/kelurahan. Lokasi yang dipilih adalah wilayah administratif, bukan posisi GPS Anda.',
+    'wil.provinsi': 'Provinsi',
+    'wil.kabupaten': 'Kota/Kabupaten',
+    'wil.kecamatan': 'Kecamatan',
+    'wil.desa': 'Desa/Kelurahan',
+    'wil.pilih': 'Pilih',
+    'wil.aturUlang': 'Atur ulang',
+    'wil.pakaiGps': 'Pakai GPS',
+    'wil.gunakan': 'Gunakan lokasi ini',
+    'wil.aktif': 'Lokasi aktif',
+    'wil.ubah': 'Ubah wilayah',
+    'wil.galat': 'Daftar wilayah belum dapat dimuat. Coba lagi.',
+    'wil.presisi':
+      'Pusat pencarian memakai titik referensi tingkat {tingkat}. Ini bukan posisi Anda secara presisi.',
+    'wil.titikGagal': 'Titik referensi wilayah ini belum tersedia. Pilih wilayah lain atau pakai GPS.',
+    'wil.tingkat.provinsi': 'provinsi',
+    'wil.tingkat.kabupaten': 'kota/kabupaten',
+    'wil.tingkat.kecamatan': 'kecamatan',
+    'wil.tingkat.desa': 'desa/kelurahan',
 
     // fasilitas kesehatan terdekat
     'nav.faskes': 'Fasilitas Kesehatan',
@@ -536,6 +558,28 @@ const KAMUS = {
     'nav.menu': 'Open menu',
     'nav.tutupSidebar': 'Collapse sidebar',
     'nav.bukaSidebar': 'Expand sidebar',
+    // administrative region picker
+    'wil.judul': 'Choose a region',
+    'wil.catatan':
+      'Pick a province, city/regency, district, then village. The selected location is an administrative area, not your GPS position.',
+    'wil.provinsi': 'Province',
+    'wil.kabupaten': 'City/Regency',
+    'wil.kecamatan': 'District',
+    'wil.desa': 'Village',
+    'wil.pilih': 'Select',
+    'wil.aturUlang': 'Reset',
+    'wil.pakaiGps': 'Use GPS',
+    'wil.gunakan': 'Use this location',
+    'wil.aktif': 'Active location',
+    'wil.ubah': 'Change region',
+    'wil.galat': 'Region list could not be loaded. Please try again.',
+    'wil.presisi':
+      'The search centre uses a {tingkat}-level reference point. This is not your precise position.',
+    'wil.titikGagal': 'No reference point is available for this region. Choose another region or use GPS.',
+    'wil.tingkat.provinsi': 'province',
+    'wil.tingkat.kabupaten': 'city/regency',
+    'wil.tingkat.kecamatan': 'district',
+    'wil.tingkat.desa': 'village',
 
     // nearest health facilities
     'nav.faskes': 'Health Facilities',
