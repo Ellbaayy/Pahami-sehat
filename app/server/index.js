@@ -251,6 +251,29 @@ if (dijalankanLangsung) {
     process.exit(1)
   })
 
+  /*
+   * JARING PENGAMAN: proses TIDAK BOLEH MATI TANPA SEBAB YANG TERBACA.
+   *
+   * Node 26 menghentikan proses pada promise yang ditolak tanpa penangan.
+   * Tanpa dua penangan di bawah, gejalanya cuma satu: terminal kembali ke
+   * prompt tanpa penjelasan, dan tampak seperti "server tidak bisa jalan".
+   * Sekarang sebabnya selalu dicetak sebelum keluar.
+   *
+   * Dipasang hanya saat berkas ini dijalankan langsung (bukan saat diimpor
+   * uji), supaya uji tetap bisa melihat galat aslinya.
+   */
+  process.on('unhandledRejection', (sebab) => {
+    console.error('\n  BERHENTI: ada promise yang ditolak tanpa penangan.')
+    console.error(`  Sebab: ${sebab?.stack ?? sebab?.message ?? sebab}\n`)
+    process.exit(1)
+  })
+
+  process.on('uncaughtException', (e) => {
+    console.error('\n  BERHENTI: galat yang tidak tertangkap.')
+    console.error(`  Sebab: ${e?.stack ?? e?.message ?? e}\n`)
+    process.exit(1)
+  })
+
   /**
    * Matikan dengan rapi: tutup dulu pool database, baru keluar.
    *

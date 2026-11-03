@@ -799,13 +799,17 @@ export function jalankanPemanasan({ log = () => {} } = {}) {
   const radius = Number(process.env.PEMANASAN_RADIUS) || 5000
   for (const t of titik) {
     // Sengaja tidak di-await: server harus siap menerima permintaan lebih dulu.
-    panaskanTitik({ ...t, radius }).then((h) => {
-      log(
-        h.ok
-          ? `[pemanasan] ${t.lat},${t.lon} r=${radius} m -> ${h.jumlah} fasilitas`
-          : `[pemanasan] ${t.lat},${t.lon} gagal: ${h.alasan}`,
-      )
-    })
+    panaskanTitik({ ...t, radius })
+      .then((h) => {
+        log(
+          h.ok
+            ? `[pemanasan] ${t.lat},${t.lon} r=${radius} m -> ${h.jumlah} fasilitas`
+            : `[pemanasan] ${t.lat},${t.lon} gagal: ${h.alasan}`,
+        )
+      })
+      // Penangan ini wajib ada: pemanasan berjalan di latar belakang, dan
+      // promise yang ditolak tanpa penangan MEMATIKAN proses di Node 26.
+      .catch((e) => log(`[pemanasan] ${t.lat},${t.lon} gagal: ${e?.message ?? e}`))
   }
   return titik.length
 }

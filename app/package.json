@@ -15,6 +15,7 @@
     "lint": "eslint .",
     "lint:perbaiki": "eslint . --fix",
     "preview": "vite preview",
+    "preserver": "node scripts/bebaskan-port.mjs",
     "server": "node --env-file=.env server/index.js",
     "start": "npm run build && npm run server"
   },
