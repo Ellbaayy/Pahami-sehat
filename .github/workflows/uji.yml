@@ -193,6 +193,13 @@ jobs:
         # cascade desa -> kecamatan -> kabupaten -> provinsi.
         run: node uji-wilayah.mjs
 
+      - name: Uji penyimpanan fasilitas (MySQL, dilewati bila DB mati)
+        # Runner CI tidak punya MySQL, jadi langkah ini akan mencetak DILEWATI
+        # dan keluar 0 — itu memang perilaku yang diinginkan: database OPSIONAL.
+        # Saat dijalankan di laptop dengan XAMPP hidup, uji ini memeriksa skema,
+        # upsert idempoten, NULL (bukan string kosong), injeksi, dan kedaluwarsa.
+        run: node uji-faskes-db.mjs
+
       - name: Uji lapisan server (kompresi, 404 JSON, galat klien)
         # Tanpa jaringan dan tanpa rahasia: server asli dinyalakan di port acak.
         # Yang diuji bukan fitur, melainkan hal yang SALAHNYA tidak terlihat dari

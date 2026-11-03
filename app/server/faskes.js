@@ -409,6 +409,13 @@ export function normalisasi(elemen) {
     alamat: alamatDari(t),
     telepon: spasi(teks(t.phone) ?? teks(t['contact:phone'])),
     website: teks(t.website) ?? teks(t['contact:website']),
+    email: teks(t.email) ?? teks(t['contact:email']),
+    /*
+     * Foto HANYA dipakai bila memang ada di OSM. JANGAN memakai foto stok atau
+     * foto karangan: kartu yang menampilkan "foto fasilitas" harus benar, dan
+     * foto bangunan lain lebih menyesatkan daripada tidak ada foto.
+     */
+    foto: teks(t.image) ?? teks(t.wikimedia_commons),
     jam: teks(t.opening_hours),
     // `healthcare:speciality` berisi daftar bertitik koma berbahasa Inggris
     // (mis. "acupuncture;allergology;anaesthetics"). Dibiarkan mentah, daftar itu

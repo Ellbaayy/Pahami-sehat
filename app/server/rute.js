@@ -50,8 +50,9 @@ import {
   teksDari,
 } from './batasInput.js'
 import { kontenHarianLengkap } from './konten.js'
-import { faskesSekitar, daftarKategori } from './faskes.js'
+import { faskesSekitar, daftarKategori, jarakMeter } from './faskes.js'
 import { ambilWilayah, cascadeTitik, titikNama, kodeSah, tingkatDariKode } from './wilayah.js'
+import { fasilitasSekitarDb, simpanBanyak, ambilFasilitas } from './faskesDb.js'
 import {
   keteranganDb,
   ambilBerita,
@@ -614,6 +615,19 @@ rute.get('/api/konten', batasKonten, bungkus(async (req, res) => {
  * SEBELUM menyentuh jaringan. Ini juga yang menutup celah injeksi, karena kode
  * dari sini dipakai sebagai parameter query ber-preparasi.
  */
+/**
+ * Hitung jumlah per kategori untuk jalur database.
+ *
+ * Jalur Overpass menghitungnya di `faskes.js`; jalur DB perlu menghitung
+ * sendiri supaya bentuk balasannya SAMA dan antarmuka tidak perlu tahu dari
+ * mana datanya datang.
+ */
+function hitungPerKategori(fasilitas) {
+  const hasil = {}
+  for (const f of fasilitas) hasil[f.kategori] = (hasil[f.kategori] ?? 0) + 1
+  return hasil
+}
+
 rute.get('/api/wilayah', batasMeta, bungkus(async (req, res) => {
   const tingkat = String(req.query?.tingkat ?? 'provinsi')
   const induk = req.query?.induk ? String(req.query.induk) : null
@@ -695,9 +709,66 @@ rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
   }
 
   try {
+    /*
+     * Database DULU, lalu Overpass.
+     *
+     * Kalau DB mati, `fasilitasSekitarDb` mengembalikan null dan jalur lama
+     * dipakai apa adanya — perilaku aplikasi tidak berubah sama sekali.
+     * Kalau DB hidup tetapi kosong untuk area ini, hasil kosong itu BUKAN
+     * jawaban akhir: kita tetap mengambil dari Overpass. Tanpa itu, area yang
+     * belum pernah dibuka akan tampak "tidak ada fasilitas kesehatan", dan itu
+     * kesalahan yang berbahaya di konteks kesehatan.
+     */
+    const dariDb = await fasilitasSekitarDb(lat, lon, radius)
+    if (Array.isArray(dariDb) && dariDb.length) {
+      const fasilitas = dariDb
+        .map((b) => ({
+          ...b,
+          lat: Number(b.lat),
+          lon: Number(b.lon),
+          jarakM: jarakMeter(lat, lon, Number(b.lat), Number(b.lon)),
+        }))
+        .sort((a, b) => a.jarakM - b.jarakM)
+
+      res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
+      res.json({
+        ok: true,
+        sumberDb: true,
+        pusat: { lat, lon },
+        radius,
+        jumlah: fasilitas.length,
+        dipotong: false,
+        fasilitas,
+        perKategori: hitungPerKategori(fasilitas),
+        sumber: [
+          {
+            nama: 'OpenStreetMap',
+            keterangan:
+              'Data fasilitas dari OpenStreetMap lewat Overpass API, disimpan di database aplikasi. Dipetakan sukarela oleh kontributor; kelengkapan berbeda antarwilayah.',
+            url: 'https://www.openstreetmap.org/',
+            lisensi: 'ODbL 1.0',
+          },
+        ],
+        diambilPada: new Date().toISOString(),
+      })
+      return
+    }
+
     const data = await faskesSekitar({ lat, lon, radius })
     res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
     res.json({ ok: true, ...data })
+
+    /*
+     * Simpan hasil Overpass ke database di LATAR BELAKANG: pengguna tidak perlu
+     * menunggu, dan kegagalan simpan tidak boleh menggagalkan respons yang
+     * sudah terkirim.
+     */
+    simpanBanyak(
+      data.fasilitas.map((f) => ({
+        ...f,
+        kode_osm: f.id,
+      })),
+    ).catch(() => null)
   } catch (e) {
     const code = e?.code === 'koordinat' ? 'koordinat_tidak_sah' : 'sumber_gagal'
     res.status(code === 'koordinat_tidak_sah' ? 400 : 503).json({
@@ -757,6 +828,35 @@ rute.get('/api/faskes/cari-lokasi', batasFaskes, bungkus(async (req, res) => {
     res.json({ ok: true, hasil })
   } catch {
     res.status(503).json({ ok: false, code: 'lokasi_gagal', hasil: [] })
+  }
+}))
+
+/**
+ * Detail satu fasilitas menurut id database.
+ *
+ * DIDAFTARKAN PALING AKHIR, setelah `/api/faskes/kategori` dan
+ * `/api/faskes/cari-lokasi`. Kalau `:id` lebih dulu, kedua rute itu
+ * tertangkap sebagai id dan membalas 400 — kesalahan yang membingungkan
+ * karena jalurnya terlihat benar.
+ *
+ * Balasannya 404 kalau barisnya sudah kedaluwarsa: menyajikan jam operasional
+ * yang basi bukan cacat teknis, itu risiko kesehatan (lihat kepala db.js).
+ */
+rute.get('/api/faskes/:id', batasMeta, bungkus(async (req, res) => {
+  const id = String(req.params.id ?? '')
+  if (!/^\d+$/.test(id)) {
+    res.status(400).json({ ok: false, code: 'id_tidak_sah' })
+    return
+  }
+  try {
+    const f = await ambilFasilitas(Number(id))
+    if (!f) {
+      res.status(404).json({ ok: false, code: 'tidak_ditemukan' })
+      return
+    }
+    res.json({ ok: true, fasilitas: f })
+  } catch {
+    res.status(503).json({ ok: false, code: 'database_gagal' })
   }
 }))
 

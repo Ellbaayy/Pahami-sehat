@@ -204,3 +204,91 @@ INSERT INTO sumber (domain, nama, jenis, resmi) VALUES
   ('medlineplus.gov',             'MedlinePlus (NIH)',              'pemerintah', 1),
   ('cdc.gov',                     'CDC (AS)',                       'pemerintah', 1)
 ON DUPLICATE KEY UPDATE nama = VALUES(nama);
+
+-- ============================================================================
+--  Tabel fitur Fasilitas Kesehatan (4 Nov 2026)
+--  Ditambahkan untuk: pemilihan wilayah administratif, penyimpanan fasilitas,
+--  dan halaman detail. Tabel lama TIDAK diubah.
+-- ============================================================================
+
+-- ---------------------------------------------------------------------------
+-- 8. WILAYAH ADMINISTRATIF
+--    Diisi bertahap dari wilayah.id (data BPS/Kemendagri). Kode dipakai sebagai
+--    primary key karena hubungan antarwilayah ditentukan oleh KODE, bukan nama
+--    (nama bisa berubah dan tidak unik; banyak "Sukamaju").
+--
+--    kode_induk menunjuk baris di tabel yang sama: provinsi tanpa induk,
+--    kabupaten -> provinsi, kecamatan -> kabupaten, desa -> kecamatan.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS wilayah (
+  kode        VARCHAR(16)  NOT NULL,
+  nama        VARCHAR(120) NOT NULL,
+  tingkat     ENUM('provinsi','kabupaten','kecamatan','desa') NOT NULL,
+  kode_induk  VARCHAR(16)  NULL,
+  diperbarui  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+                           ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (kode),
+  KEY idx_wilayah_induk (kode_induk),
+  KEY idx_wilayah_tingkat (tingkat),
+  CONSTRAINT fk_wilayah_induk FOREIGN KEY (kode_induk)
+    REFERENCES wilayah (kode) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- 9. KATEGORI FASILITAS
+--    Diisi dari daftar KATEGORI di app/server/faskes.js supaya satu sumber
+--    kebenaran. Jangan disalin manual ke sini.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS kategori_fasilitas (
+  id     TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  kode   VARCHAR(40)  NOT NULL,
+  label  VARCHAR(80)  NOT NULL,
+  UNIQUE KEY uq_kategori_kode (kode)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- 10. FASILITAS KESEHATAN
+--     HASIL PEMETAAN OSM yang disimpan, BUKAN kebenaran. Kolom sumber dan
+--     url_sumber selalu ikut supaya pengguna bisa memeriksa aslinya.
+--
+--     kedaluwarsa mengikuti aturan proyek (lihat kepala berkas ini): baris yang
+--     lewat tanggal ini TIDAK disajikan. Jam operasional yang basi bisa membuat
+--     orang datang ke fasilitas yang sudah tutup — itu risiko nyata, bukan
+--     kerapian.
+--
+--     Kolom yang tidak diketahui bernilai NULL. JANGAN diisi tebakan.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS fasilitas (
+  id                BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  kode_osm          VARCHAR(40)   NOT NULL,   -- mis. "way/500318061"
+  nama              VARCHAR(200)  NOT NULL,
+  kategori_id       TINYINT UNSIGNED NOT NULL,
+  subkategori       VARCHAR(80)   NULL,
+  alamat            VARCHAR(400)  NULL,
+  kode_desa         VARCHAR(16)   NULL,
+  lat               DECIMAL(10,7) NOT NULL,
+  lon               DECIMAL(10,7) NOT NULL,
+  telepon           VARCHAR(120)  NULL,
+  email             VARCHAR(160)  NULL,
+  website           VARCHAR(400)  NULL,
+  jam_operasional   VARCHAR(200)  NULL,
+  layanan           VARCHAR(400)  NULL,
+  igd               TINYINT(1)    NULL,       -- NULL = tidak diketahui
+  buka_24_jam       TINYINT(1)    NOT NULL DEFAULT 0,
+  foto_url          VARCHAR(500)  NULL,
+  sumber            VARCHAR(60)   NOT NULL DEFAULT 'OpenStreetMap',
+  url_sumber        VARCHAR(500)  NULL,
+  status_verifikasi ENUM('belum','terverifikasi','perlu_dicek')
+                                  NOT NULL DEFAULT 'belum',
+  diperbarui        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                  ON UPDATE CURRENT_TIMESTAMP,
+  diperiksa_pada    DATETIME      NULL,
+  kedaluwarsa       DATETIME      NOT NULL,
+  UNIQUE KEY uq_fasilitas_osm (kode_osm),
+  KEY idx_fasilitas_kategori (kategori_id),
+  KEY idx_fasilitas_desa (kode_desa),
+  KEY idx_fasilitas_titik (lat, lon),
+  KEY idx_fasilitas_kedaluwarsa (kedaluwarsa),
+  CONSTRAINT fk_fasilitas_kategori FOREIGN KEY (kategori_id)
+    REFERENCES kategori_fasilitas (id) ON DELETE RESTRICT
+) ENGINE=InnoDB;

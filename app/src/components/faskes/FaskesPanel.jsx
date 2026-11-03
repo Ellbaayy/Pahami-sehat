@@ -655,8 +655,25 @@ function PanelDetail({ t, f, onTutup }) {
         </button>
       </div>
 
+      {/* Foto HANYA ditampilkan kalau memang ada di sumbernya. Tidak ada foto
+          tiruan atau stok: gambar bangunan lain lebih menyesatkan daripada
+          tidak ada gambar. */}
+      {f.foto ? (
+        <img
+          src={f.foto}
+          alt={f.nama}
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          className="mt-3 h-40 w-full rounded-xl object-cover"
+        />
+      ) : null}
+
       <dl className="mt-3 grid gap-x-4 gap-y-1.5 text-[0.84rem] sm:grid-cols-2">
         <Baris t={t} label={t('faskes.detail.alamat')}>{f.alamat ?? t('faskes.tidakAdaData')}</Baris>
+        <Baris t={t} label={t('faskes.detail.wilayah')}>
+          {[f.desa, f.kecamatan, f.kabupaten, f.provinsi].filter(Boolean).join(', ') ||
+            t('faskes.tidakAdaData')}
+        </Baris>
         <Baris t={t} label={t('faskes.detail.koordinat')}>
           <span className="font-mono text-[0.79rem]">
             {f.lat.toFixed(6)}, {f.lon.toFixed(6)}
@@ -676,7 +693,15 @@ function PanelDetail({ t, f, onTutup }) {
               ? t('faskes.igdTidak')
               : t('faskes.tidakDiketahui')}
         </Baris>
+        <Baris t={t} label={t('faskes.detail.email')}>{f.email ?? t('faskes.tidakAdaData')}</Baris>
         <Baris t={t} label={t('faskes.detail.sumber')}>{f.sumber}</Baris>
+        <Baris t={t} label={t('faskes.detail.verifikasi')}>
+          {f.status_verifikasi === 'terverifikasi'
+            ? t('faskes.terverifikasi')
+            : f.status_verifikasi === 'perlu_dicek'
+              ? t('faskes.perluDicek')
+              : t('faskes.belumDiverifikasi')}
+        </Baris>
       </dl>
 
       <div className="mt-3 flex flex-wrap gap-2">

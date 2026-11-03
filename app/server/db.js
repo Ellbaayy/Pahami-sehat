@@ -171,6 +171,29 @@ export async function keteranganDb() {
 }
 
 /**
+ * Jalankan query dengan PREPARED STATEMENT sungguhan (`execute`), bukan
+ * escaping di sisi klien seperti `tanya`.
+ *
+ * KENAPA ADA DUA: `tanya` sengaja mengembalikan null saat gagal supaya
+ * pemanggil bisa jatuh ke jalur berkas — itu yang dibutuhkan fitur lama.
+ * Fungsi ini dipakai penyimpanan fasilitas, tempat dua hal berbeda harus bisa
+ * dibedakan:
+ *
+ *   - DB tidak tersedia  -> mengembalikan null (pemanggil pakai jalur Overpass)
+ *   - query gagal (SQL salah / kolom tidak ada) -> MELEMPAR
+ *
+ * Menelan galat SQL membuat kerusakan skema tampak seperti "database mati", dan
+ * itu jenis kesalahan yang menghabiskan berjam-jam. Jalur di atasnya wajib
+ * menangkapnya kalau tidak ingin respons gagal.
+ */
+export async function eksekusi(sql, params = []) {
+  const p = await db()
+  if (!p) return null
+  const [baris] = await p.execute(sql, params)
+  return baris
+}
+
+/**
  * Jalankan query dengan aman. Mengembalikan null kalau database tidak ada
  * atau query gagal — supaya pemanggil bisa jatuh ke jalur berkas.
  *
