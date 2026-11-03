@@ -53,6 +53,7 @@ import { kontenHarianLengkap } from './konten.js'
 import { faskesSekitar, daftarKategori, jarakMeter } from './faskes.js'
 import { ambilWilayah, cascadeTitik, titikNama, kodeSah, tingkatDariKode } from './wilayah.js'
 import { fasilitasSekitarDb, simpanBanyak, ambilFasilitas } from './faskesDb.js'
+import { ambilRute, tautanGoogleMaps, COSTING } from './rute-perjalanan.js'
 import {
   keteranganDb,
   ambilBerita,
@@ -857,6 +858,58 @@ rute.get('/api/faskes/:id', batasMeta, bungkus(async (req, res) => {
     res.json({ ok: true, fasilitas: f })
   } catch {
     res.status(503).json({ ok: false, code: 'database_gagal' })
+  }
+}))
+
+/**
+ * Rute perjalanan multimoda.
+ *
+ * `moda` WAJIB salah satu dari tiga yang didukung — tidak ada nilai bawaan
+ * yang diam-diam memakai mobil untuk semua permintaan. Kalau `moda` tidak
+ * dikenal, permintaan ditolak 400 supaya kesalahan pemanggil tidak terlihat
+ * seperti "rute tidak ditemukan".
+ */
+rute.get('/api/rute', batasFaskes, bungkus(async (req, res) => {
+  const angka = (v) => {
+    const n = Number(v)
+    return Number.isFinite(n) ? n : null
+  }
+  const latAsal = angka(req.query?.latAsal)
+  const lonAsal = angka(req.query?.lonAsal)
+  const latTujuan = angka(req.query?.latTujuan)
+  const lonTujuan = angka(req.query?.lonTujuan)
+  const moda = String(req.query?.moda ?? 'mobil')
+  // Hanya 'en' yang dianggap Inggris; selain itu Indonesia.
+  const bahasa = String(req.query?.bahasa ?? 'id') === 'en' ? 'en' : 'id'
+
+  if ([latAsal, lonAsal, latTujuan, lonTujuan].some((x) => x === null)) {
+    res.status(400).json({ ok: false, code: 'koordinat_kosong' })
+    return
+  }
+  if (!Object.keys(COSTING).includes(moda)) {
+    res.status(400).json({ ok: false, code: 'moda_tidak_sah' })
+    return
+  }
+
+  try {
+    const rute = await ambilRute({ latAsal, lonAsal, latTujuan, lonTujuan, moda, bahasa })
+    res.json({
+      ok: true,
+      moda,
+      ...rute,
+      googleMaps: tautanGoogleMaps({ latAsal, lonAsal, latTujuan, lonTujuan, moda }),
+      catatanWaktu:
+        'Estimasi waktu dihitung dari profil kecepatan rute, bukan kondisi lalu lintas langsung.',
+    })
+  } catch (e) {
+    // Tautan Google Maps tetap dikirim walau rute gagal: itu jalan keluar
+    // terakhir yang berguna bagi pengguna.
+    res.status(e?.code === 'sumber_gagal' ? 503 : 400).json({
+      ok: false,
+      code: e?.code ?? 'gagal',
+      pesan: 'Rute belum dapat dihitung. Coba lagi, atau buka tujuan di Google Maps.',
+      googleMaps: tautanGoogleMaps({ latAsal, lonAsal, latTujuan, lonTujuan, moda }),
+    })
   }
 }))
 

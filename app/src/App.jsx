@@ -896,7 +896,7 @@ export default function App() {
                   </div>
                 }
               >
-                <FaskesPanel t={t} />
+                <FaskesPanel t={t} bahasa={kodeBahasa} />
               </Suspense>
             ) : null}
 

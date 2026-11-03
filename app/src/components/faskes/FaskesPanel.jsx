@@ -20,6 +20,7 @@ import {
 import { Card, SectionHeading } from '../ui/primitives'
 import PetaFaskes from './PetaFaskes'
 import PemilihWilayah from './PemilihWilayah'
+import PanelNavigasi from './PanelNavigasi'
 import { WARNA_KATEGORI } from './kategoriWarna'
 import { useFaskes } from '../../lib/useFaskes'
 import { useCariLokasi } from '../../lib/useCariLokasi'
@@ -71,7 +72,7 @@ function labelWilayah(w) {
  * `app/server/faskes.js`). Lokasi pengguna SELALU dari GPS peramban atau dari
  * pencarian manual yang dipilih sendiri — tidak pernah koordinat contoh.
  */
-export default function FaskesPanel({ t = (k) => k }) {
+export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
   const {
     lokasi,
     statusLokasi,
@@ -98,6 +99,10 @@ export default function FaskesPanel({ t = (k) => k }) {
   // Wilayah dipilih tetapi titik referensinya tidak ditemukan. Bukan galat
   // sistem — datanya memang tidak ada — jadi pesannya terpisah.
   const [titikGagal, setTitikGagal] = useState(false)
+  // Fasilitas yang sedang dibuka petunjuk arahnya.
+  const [navigasiKe, setNavigasiKe] = useState(null)
+  // Rute aktif, diteruskan ke peta untuk menggambar garis.
+  const [ruteAktif, setRuteAktif] = useState(null)
 
   /** Ambil titik referensi wilayah, lalu jadikan pusat pencarian. */
   const pakaiWilayah = useCallback(
@@ -240,6 +245,7 @@ export default function FaskesPanel({ t = (k) => k }) {
                 fasilitas={tersaring}
                 terpilih={terpilih}
                 onPilih={setTerpilih}
+                rute={ruteAktif}
               />
             </div>
 
@@ -313,7 +319,30 @@ export default function FaskesPanel({ t = (k) => k }) {
       )}
 
       {terpilih ? (
-        <PanelDetail t={t} f={terpilih} onTutup={() => setTerpilih(null)} />
+        <PanelDetail
+          t={t}
+          f={terpilih}
+          onTutup={() => {
+            setTerpilih(null)
+            setNavigasiKe(null)
+            setRuteAktif(null)
+          }}
+          onNavigasi={setNavigasiKe}
+          adaLokasi={adaLokasi}
+        />
+      ) : null}
+
+      {/* Petunjuk arah: hanya bisa dibuka kalau sudah ada lokasi asal. Tanpa
+          asal, rute tidak bisa dihitung dan menampilkan panel kosong hanya
+          membingungkan. */}
+      {navigasiKe && lokasi ? (
+        <PanelNavigasi
+          t={t}
+          asal={lokasi}
+          tujuan={navigasiKe}
+          onRute={setRuteAktif}
+          bahasa={bahasa}
+        />
       ) : null}
     </section>
   )
@@ -629,11 +658,8 @@ function KotakGalat({ t, galat, onUlang }) {
   )
 }
 
-function PanelDetail({ t, f, onTutup }) {
+function PanelDetail({ t, f, onTutup, onNavigasi, adaLokasi }) {
   const warna = WARNA_KATEGORI[f.kategori] ?? '#334155'
-  const arah =
-    `https://www.openstreetmap.org/directions?from=&to=${f.lat}%2C${f.lon}` +
-    '#map=16'
   return (
     <Card className="p-4">
       <div className="flex items-start justify-between gap-3">
@@ -706,7 +732,20 @@ function PanelDetail({ t, f, onTutup }) {
 
       <div className="mt-3 flex flex-wrap gap-2">
         <TautanTombol href={f.sumberUrl} Ikon={ExternalLink} t={t} teks={t('faskes.lihatLokasi')} />
-        <TautanTombol href={arah} Ikon={Navigation} t={t} teks={t('faskes.petunjukArah')} />
+        {/* Petunjuk Arah memakai panel rute sendiri (Valhalla), bukan tautan
+            keluar ke OpenStreetMap: pengguna harus melihat jarak, waktu, dan
+            instruksi per moda TANPA meninggalkan aplikasi. Tautan Google Maps
+            tetap tersedia di dalam panel itu sebagai jalan keluar. */}
+        <button
+          type="button"
+          onClick={() => onNavigasi?.(f)}
+          disabled={!adaLokasi}
+          title={adaLokasi ? undefined : t('rute.butuhLokasi')}
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line-200 bg-white px-2.5 text-[0.8rem] font-semibold text-navy-800 transition hover:border-brand-300 hover:text-brand-800 disabled:border-line-200 disabled:bg-surface-100 disabled:text-muted-400"
+        >
+          <Navigation className="size-3.5" aria-hidden="true" />
+          {t('faskes.petunjukArah')}
+        </button>
         {f.telepon ? (
           <TautanTombol
             href={

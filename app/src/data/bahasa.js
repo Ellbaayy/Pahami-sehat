@@ -44,6 +44,22 @@ const KAMUS = {
     'wil.gunakan': 'Gunakan lokasi ini',
     'wil.aktif': 'Lokasi aktif',
     'wil.ubah': 'Ubah wilayah',
+    // rute perjalanan
+    'rute.judul': 'Petunjuk arah',
+    'rute.moda': 'Moda transportasi',
+    'rute.jalanKaki': 'Jalan kaki',
+    'rute.motor': 'Sepeda motor',
+    'rute.mobil': 'Mobil',
+    'rute.menghitung': 'Menghitung rute…',
+    'rute.ringkas': '{jarak} km · sekitar {menit} menit',
+    'rute.catatanWaktu':
+      'Estimasi waktu dihitung dari profil kecepatan rute, bukan kondisi lalu lintas langsung.',
+    'rute.googleMaps': 'Buka di Google Maps',
+    'rute.galat': 'Rute belum dapat dihitung.',
+    'rute.butuhLokasi': 'Tentukan lokasi Anda lebih dulu',
+    'rute.asalGps': 'Titik awal: lokasi GPS Anda',
+    'rute.asalWilayah':
+      'Titik awal: titik referensi wilayah administratif, bukan posisi Anda secara presisi.',
     'wil.galat': 'Daftar wilayah belum dapat dimuat. Coba lagi.',
     'wil.presisi':
       'Pusat pencarian memakai titik referensi tingkat {tingkat}. Ini bukan posisi Anda secara presisi.',
@@ -578,6 +594,22 @@ const KAMUS = {
     'wil.gunakan': 'Use this location',
     'wil.aktif': 'Active location',
     'wil.ubah': 'Change region',
+    // travel directions
+    'rute.judul': 'Directions',
+    'rute.moda': 'Travel mode',
+    'rute.jalanKaki': 'Walking',
+    'rute.motor': 'Motorcycle',
+    'rute.mobil': 'Car',
+    'rute.menghitung': 'Calculating route…',
+    'rute.ringkas': '{jarak} km · about {menit} minutes',
+    'rute.catatanWaktu':
+      'Travel time is estimated from the route speed profile, not live traffic conditions.',
+    'rute.googleMaps': 'Open in Google Maps',
+    'rute.galat': 'The route could not be calculated.',
+    'rute.butuhLokasi': 'Set your location first',
+    'rute.asalGps': 'Starting point: your GPS location',
+    'rute.asalWilayah':
+      'Starting point: administrative region reference point, not your precise position.',
     'wil.galat': 'Region list could not be loaded. Please try again.',
     'wil.presisi':
       'The search centre uses a {tingkat}-level reference point. This is not your precise position.',

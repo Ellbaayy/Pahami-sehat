@@ -42,11 +42,13 @@ export default function PetaFaskes({
   terpilih = null,
   onPilih,
   zoom = 14,
+  rute = null,
 }) {
   const wadahRef = useRef(null)
   const petaRef = useRef(null)
   const klasterRef = useRef(null)
   const lokasiRef = useRef(null)
+  const garisRef = useRef(null)
 
   // ---- buat peta sekali ----
   useEffect(() => {
@@ -132,6 +134,35 @@ export default function PetaFaskes({
       duration: 0.6,
     })
   }, [terpilih])
+
+  // ---- garis rute ----
+  useEffect(() => {
+    const peta = petaRef.current
+    if (!peta) return
+
+    if (garisRef.current) {
+      peta.removeLayer(garisRef.current)
+      garisRef.current = null
+    }
+    if (!rute?.geometri?.length) return
+
+    garisRef.current = L.polyline(rute.geometri, {
+      // Warna sengaja kontras dengan penanda kategori (merah/biru/hijau) dan
+      // dengan jalan peta yang abu-abu pucat.
+      color: '#0e7490',
+      weight: 6,
+      opacity: 0.9,
+      lineJoin: 'round',
+      lineCap: 'round',
+    }).addTo(peta)
+
+    // Tampilkan seluruh perjalanan, bukan hanya salah satu ujungnya.
+    try {
+      peta.fitBounds(garisRef.current.getBounds(), { padding: [28, 28] })
+    } catch {
+      // bounds kosong (geometri 1 titik) bukan alasan menjatuhkan peta
+    }
+  }, [rute])
 
   return (
     <div

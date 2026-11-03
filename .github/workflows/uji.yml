@@ -200,6 +200,12 @@ jobs:
         # upsert idempoten, NULL (bukan string kosong), injeksi, dan kedaluwarsa.
         run: node uji-faskes-db.mjs
 
+      - name: Uji rute perjalanan (moda, polyline, terjemahan instruksi)
+        # Tanpa jaringan: pemetaan moda ke costing Valhalla (tiga moda, tiga
+        # costing berbeda), decoder polyline6, terjemahan instruksi, dan tautan
+        # Google Maps. OSRM demo sengaja tidak dipakai: semua profilnya identik.
+        run: node uji-rute-perjalanan.mjs
+
       - name: Uji lapisan server (kompresi, 404 JSON, galat klien)
         # Tanpa jaringan dan tanpa rahasia: server asli dinyalakan di port acak.
         # Yang diuji bukan fitur, melainkan hal yang SALAHNYA tidak terlihat dari
