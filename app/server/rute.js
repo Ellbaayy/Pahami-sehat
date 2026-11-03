@@ -51,6 +51,7 @@ import {
 } from './batasInput.js'
 import { kontenHarianLengkap } from './konten.js'
 import { faskesSekitar, daftarKategori } from './faskes.js'
+import { ambilWilayah, cascadeTitik, titikNama, kodeSah, tingkatDariKode } from './wilayah.js'
 import {
   keteranganDb,
   ambilBerita,
@@ -604,6 +605,71 @@ rute.get('/api/konten', batasKonten, bungkus(async (req, res) => {
   const data = await kontenHarianLengkap({ paksa })
   res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400')
   res.json({ ok: true, ...data })
+}))
+
+/**
+ * Wilayah administratif untuk pemilihan lokasi bertingkat.
+ *
+ * Tingkat dan kode induk divalidasi lebih dulu; yang tidak sah ditolak 400
+ * SEBELUM menyentuh jaringan. Ini juga yang menutup celah injeksi, karena kode
+ * dari sini dipakai sebagai parameter query ber-preparasi.
+ */
+rute.get('/api/wilayah', batasMeta, bungkus(async (req, res) => {
+  const tingkat = String(req.query?.tingkat ?? 'provinsi')
+  const induk = req.query?.induk ? String(req.query.induk) : null
+
+  if (!['provinsi', 'kabupaten', 'kecamatan', 'desa'].includes(tingkat)) {
+    res.status(400).json({ ok: false, code: 'tingkat_tidak_sah', wilayah: [] })
+    return
+  }
+  if (tingkat !== 'provinsi' && !kodeSah(induk, tingkatDariKode(induk ?? ''))) {
+    res.status(400).json({ ok: false, code: 'induk_tidak_sah', wilayah: [] })
+    return
+  }
+
+  try {
+    const { data, dariSimpanan } = await ambilWilayah(tingkat, induk)
+    res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800')
+    res.json({ ok: true, tingkat, induk, jumlah: data.length, wilayah: data, dariSimpanan })
+  } catch {
+    res.status(503).json({ ok: false, code: 'sumber_gagal', wilayah: [] })
+  }
+}))
+
+/**
+ * Titik referensi sebuah wilayah.
+ *
+ * PENTING: yang dikembalikan adalah TITIK REFERENSI WILAYAH, bukan posisi
+ * pengguna. `presisi` menyebut tingkat yang benar-benar dipakai supaya
+ * antarmuka bisa mengatakannya terus terang — titik tengah kecamatan bukan
+ * lokasi rumah siapa pun.
+ */
+rute.get('/api/wilayah/titik', batasFaskes, bungkus(async (req, res) => {
+  const kode = String(req.query?.kode ?? '')
+  const tingkat = tingkatDariKode(kode)
+  if (!tingkat || !kodeSah(kode, tingkat)) {
+    res.status(400).json({ ok: false, code: 'kode_tidak_sah' })
+    return
+  }
+
+  const namaWilayah = {
+    provinsi: String(req.query?.provinsi ?? ''),
+    kabupaten: String(req.query?.kabupaten ?? ''),
+    kecamatan: String(req.query?.kecamatan ?? ''),
+    desa: String(req.query?.desa ?? ''),
+  }
+
+  try {
+    const titik = await cascadeTitik({ kode, tingkat }, namaWilayah, titikNama)
+    if (!titik) {
+      // Tidak ada titik referensi -> JANGAN mengarang koordinat.
+      res.status(404).json({ ok: false, code: 'titik_tidak_ditemukan' })
+      return
+    }
+    res.json({ ok: true, kode, tingkat, titik })
+  } catch {
+    res.status(503).json({ ok: false, code: 'sumber_gagal' })
+  }
 }))
 
 /**

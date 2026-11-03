@@ -20,3 +20,6 @@ public/prototipe
 # Simpanan fasilitas kesehatan — supaya muat pertama tidak menunggu Overpass
 # 40-50 detik lagi sesudah server dijalankan ulang (dibuat ulang otomatis)
 .cache-faskes.json
+
+# Simpanan wilayah administratif (dibuat ulang otomatis oleh server/wilayah.js)
+.cache-wilayah.json
