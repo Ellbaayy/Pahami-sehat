@@ -122,6 +122,8 @@ app/
 │   ├── wilayah.js            kode wilayah bertingkat + titik referensi
 │   ├── rute-perjalanan.js    klien Valhalla: costing per moda, polyline6
 │   ├── rsSirs.js             rumah sakit resmi SIRS: cari, filter, ringkasan
+│   ├── geocoding.js          deteksi wilayah dari `address` Nominatim + peta ISO
+│   ├── ruteAlamat.js         endpoint /api/alamat dan /api/wilayah/lengkap
 │   ├── batas.js              pembatas laju
 │   ├── batasInput.js         MAKS_TOKEN + LAJU per jalur
 │   ├── saji.js               gzip + X-Waktu-Ms + 404 JSON
@@ -153,7 +155,7 @@ app/
     ├── data/dummy.js         konten statis
     ├── components/layout/    Sidebar, TopBar, MobileDrawer, nav (7 menu)
     ├── components/ui/        Card, Button, SourcePills, PoinKunci, Peringatan
-    ├── components/faskes/    FaskesPanel, RsNasionalPanel, PemilihWilayah,
+    ├── components/faskes/    FaskesPanel, RsNasionalPanel, InputLokasi, PemilihWilayah,
     │                         PanelNavigasi, kategoriWarna
     └── components/dashboard/ panel tiap halaman
 ```
@@ -182,6 +184,9 @@ Foto" tidak berdiri sendiri karena ketiganya bagian dari Tanya AI.
 | GET | `/api/rs/filter` | pilihan filter dari isi database |
 | GET | `/api/rs/ringkasan` | jumlah, berkoordinat, sinkron terakhir |
 | GET | `/api/rs/:kode` | rincian satu RS menurut kode SIRS |
+| GET | `/api/alamat/cari` | pencarian alamat + deteksi wilayah (`q`) |
+| GET | `/api/alamat/titik` | geocoding balik (`lat`, `lon`) |
+| GET | `/api/wilayah/lengkap` | provinsi + kabupaten + kecamatan |
 | POST | `/api/tanya` | jawab pertanyaan, sesuaikan tingkat baca |
 | POST | `/api/tanya/stream` | sama, tapi streaming (SSE) |
 | POST | `/api/sederhanakan` | terjemahkan teks medis |

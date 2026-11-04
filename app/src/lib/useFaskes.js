@@ -90,8 +90,21 @@ export function useFaskes() {
   }, [])
 
   /** Penetapan lokasi hasil pencarian manual (nama tempat / koordinat). */
-  const setLokasiManual = useCallback((lat, lon, label = null, dari = 'manual', presisi = null) => {
-    setLokasi({ lat, lon, label, dari, presisi })
+  const setLokasiManual = useCallback((lat, lon, label = null, dari = 'manual', presisi = null, wilayah = null) => {
+    /*
+     * `null` = KOSONGKAN titik asal.
+     *
+     * Dibutuhkan saat pengguna berpindah metode lokasi (alamat <-> wilayah).
+     * Tanpa jalur ini, titik lama tetap dipakai dan pencarian fasilitas
+     * memakai koordinat dari metode yang sudah ditinggalkan — campuran dua
+     * metode yang menghasilkan hasil membingungkan.
+     */
+    if (lat === null || lon === null) {
+      setLokasi(null)
+      setStatusLokasi('idle')
+      return
+    }
+    setLokasi({ lat, lon, label, dari, presisi, wilayah })
     setStatusLokasi('ok')
   }, [])
 

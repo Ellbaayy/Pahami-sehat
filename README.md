@@ -123,11 +123,11 @@ bukan hanya tombol.
 | [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **24 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
 | [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 10 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
 | [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs--3325-rs-di-database). |
-| [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota). |
+| [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
-| [`uji-*.mjs`](.) | **29 berkas uji** — 25 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
+| [`uji-*.mjs`](.) | **30 berkas uji** — 26 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -604,6 +604,9 @@ lebih berbahaya daripada tidak ada penyaring.
 | GET | `/api/wilayah` | daftar wilayah administratif bertingkat (`tingkat=provinsi\|kabupaten\|kecamatan\|desa` + `induk=<kode>`) |
 | GET | `/api/wilayah/titik` | titik referensi sebuah wilayah beserta tingkat ketelitiannya |
 | GET | `/api/rute` | rute perjalanan antar dua titik (`moda=jalan-kaki\|motor\|mobil`, `bahasa=id\|en`) |
+| GET | `/api/alamat/cari` | pencarian alamat + saran + deteksi wilayah administratif |
+| GET | `/api/alamat/titik` | geocoding balik: koordinat → alamat + wilayah |
+| GET | `/api/wilayah/lengkap` | provinsi + kabupaten + kecamatan untuk dropdown |
 | GET | `/api/rs` | rumah sakit resmi SIRS Kemenkes: cari, filter, paginasi |
 | GET | `/api/rs/filter` | pilihan filter (provinsi, kabupaten, jenis, kelas, kepemilikan) |
 | GET | `/api/rs/ringkasan` | jumlah RS, berapa berkoordinat, waktu sinkron terakhir |
@@ -827,6 +830,98 @@ dicampur.
 - Cermin Overpass yang menjawab `200` dengan daftar kosong dianggap **gagal**,
   bukan "tidak ada fasilitas" — `overpass.osm.ch` berperilaku begitu karena
   hanya memuat data Swiss.
+
+### Dua cara menentukan lokasi: ketik alamat, atau pilih wilayah
+
+Menu **Fasilitas Kesehatan Terdekat** punya dua tab metode lokasi. Keduanya
+memakai **sistem pencarian fasilitas yang sama** dan koordinat yang sama-sama
+disimpan sebagai `lokasi` tunggal — jadi hasilnya bisa dibandingkan, tetapi
+**tidak pernah dicampur**.
+
+| Metode | Titik asal | Sifat titik |
+|---|---|---|
+| **Ketik alamat** | koordinat hasil geocoding Nominatim | bisa presisi sampai bangunan, atau hanya pusat kota — dan itu **disebutkan** |
+| **Pilih wilayah** | titik referensi wilayah dari Nominatim | **PERKIRAAN** (pusat wilayah), dengan peringatan tertulis |
+| **Pakai GPS** | koordinat perangkat | tetap tersedia, bukan satu-satunya cara |
+
+Mengganti metode **mengosongkan** titik dari metode sebelumnya. Tanpa itu,
+pengguna pindah ke "pilih wilayah" tetapi pencarian masih memakai koordinat
+alamat lama — campuran yang membuat hasil tidak bisa dijelaskan.
+
+#### Deteksi wilayah: kenapa tidak membaca `address` apa adanya
+
+Diukur 4 Nov 2026 pada sembilan alamat Indonesia: bentuk `address` Nominatim
+**tidak konsisten sama sekali**.
+
+| Alamat | Provinsi | Kabupaten | Kecamatan |
+|---|---|---|---|
+| Malioboro | `state` | `city` = "Kota Yogyakarta" | `city_district` = "Gedongtengen" |
+| Monas | **tidak ada `state`** | `city_district` = "Jakarta Pusat" | `suburb` = "Gambir" |
+| RSUD Soetomo | `state` | `city` = "Surabaya" | `municipality` = "Gubeng" |
+| Kuta | `state` | **`region`** = "Badung" | `town` = "Kuta" |
+| UI Depok | `state` | `city` = "Depok" | `village` = "Pondok Cina" |
+
+Membaca satu field tetap menghasilkan wilayah kosong atau salah untuk sebagian
+besar alamat. Karena itu:
+
+1. **Provinsi dari `ISO3166-2-lvl4`** — terbukti andal. Diuji dengan 38 kota
+   provinsi satu per satu lewat Nominatim: **38 dari 38 kode ISO cocok**
+   (ID-JK, ID-YO, ID-JI, ID-BA, …), dipetakan ke kode BPS.
+2. **Kabupaten & kecamatan dicocokkan ke tabel `wilayah`** milik aplikasi
+   (bukan daftar tetap di kode), dibatasi provinsi — lalu kabupaten yang sama.
+
+Empat cacat nyata yang ditemukan dan diperbaiki dalam proses ini, semuanya
+tertangkap sebelum masuk:
+
+- **`city_district` bermakna berbeda antar daerah.** Di DKI berisi *kota
+  administrasi* ("Jakarta Pusat"), di DIY berisi *kecamatan* ("Gedongtengen").
+  Didaftarkan sebagai kunci kabupaten, Malioboro kehilangan kotanya.
+- **Penjagaan "nama provinsi" membuang kota yang sah.** Provinsi "Daerah
+  Istimewa Yogyakarta" dan kota "Kota Yogyakarta" sama-sama menjadi
+  `yogyakarta` setelah normalisasi; kota itu ikut dibuang. Sekarang penjagaan
+  hanya berlaku kalau nilainya menyebut provinsi secara eksplisit.
+- **Nominatim membuang awalan "Kota"/"Kabupaten"** ("Depok", "Surabaya",
+  "Badung"), sementara tabel menyimpan "Kota Depok". Ditangani pencocokan
+  longgar — tetapi hanya dipakai kalau hasilnya **unik** di provinsi itu.
+- **"Bekasi" ambigu.** Bisa Kabupaten Bekasi (32.16) atau Kota Bekasi (32.75),
+  dan sumbernya tidak pernah menyebut yang mana. Sebelumnya kode memilih
+  Kabupaten Bekasi diam-diam. Sekarang wilayahnya **dibiarkan kosong** dan
+  dilaporkan tidak dikenali — menebak di sini menempatkan fasilitas di wilayah
+  yang salah.
+
+Wilayah yang tidak berhasil dikenali **tidak ditebak**: koordinatnya tetap
+dipakai, dan antarmuka menulis "wilayah tidak berhasil dikenali dari sumber".
+
+#### Saran alamat, dan kenapa tidak memilih otomatis
+
+Autocomplete dengan jeda 400 ms + `AbortController` (permintaan lama
+dibatalkan, bukan diabaikan setelah datang). Bila ada **lebih dari satu
+kandidat**, antarmuka meminta pengguna memilih — hasil pertama tidak dipakai
+diam-diam, karena Nominatim mengurutkan menurut kecocokan teks, bukan kebenaran
+administratif. Terukur: "Cikarang Selatan" mengembalikan **perumahan** "Permata
+Cikarang Selatan" di urutan pertama.
+
+Tingkat ketepatan titik ditampilkan apa adanya (`titik bangunan`, `titik jalan`,
+`pusat kabupaten/kota`, `pusat provinsi`), supaya titik yang hanya setepat pusat
+kota tidak terlihat sama akuratnya dengan titik bangunan.
+
+#### Penanganan kegagalan
+
+| Kondisi | Perilaku |
+|---|---|
+| alamat tidak ditemukan | pesan "Alamat tidak ditemukan" + saran pakai pilihan wilayah |
+| alamat terlalu umum / ambigu | semua kandidat ditampilkan, pengguna memilih |
+| beberapa kandidat | `perluPilih` + peringatan "Pilih yang paling sesuai" |
+| koordinat tidak tersedia | hasil tanpa koordinat sah dibuang di server |
+| layanan geocoding mati / kuota | dibedakan: `layanan_gagal` vs `kuota`, keduanya menyebut sebabnya |
+| wilayah tidak dikenali | koordinat tetap dipakai, wilayah ditulis tidak dikenali |
+
+**Pencarian tidak bergantung pada GPS.** Diuji dengan izin GPS **ditolak**:
+alamat Malioboro tetap menghasilkan 314 fasilitas Yogyakarta.
+
+Bukti koordinat alamat benar-benar dipakai (bukan GPS, bukan titik default):
+**Monas → 743 fasilitas** (Jakarta) dan **RSUD Soetomo → 196 fasilitas**
+(Surabaya) — dua titik berbeda, dua hasil berbeda, pada satu sesi yang sama.
 
 ### Tiga jebakan "kosong" — semuanya pernah membuat Jakarta dilaporkan kosong
 
@@ -1111,7 +1206,7 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 4 Nov 2026: **25 berkas lulus, 0 gagal,
+memperbarui daftar di mana pun. Diukur 4 Nov 2026: **26 berkas lulus, 0 gagal,
 ±4 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
 atau API key sengaja dikeluarkan dan dijalankan terpisah (lihat bawah) — supaya
 gerbang ini tidak bergantung pada keadaan mesin.
@@ -1143,6 +1238,7 @@ node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
 node uji-wilayah.mjs      # wilayah bertingkat: validasi kode, cascade, titik referensi (38)
 node uji-rs-sirs.mjs      # rumah sakit SIRS: jumlah, wilayah, koordinat, filter, sinkron ulang (50)
+node uji-geocoding.mjs    # deteksi wilayah dari `address` Nominatim nyata, 38 peta ISO (37)
 node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)
 node uji-rute-perjalanan.mjs  # rute: tiga moda, polyline6, terjemahan instruksi, tautan Maps (44)
 node uji-halaman-penjelasan.mjs  # halaman depan: 6 kartu, 3 tangkapan layar termuat (butuh server + Chrome)

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { Card, SectionHeading } from '../ui/primitives'
 import PetaFaskes from './PetaFaskes'
-import PemilihWilayah from './PemilihWilayah'
+import InputLokasi from './InputLokasi'
 import PanelNavigasi from './PanelNavigasi'
 import RsNasionalPanel from './RsNasionalPanel'
 import { WARNA_KATEGORI } from './kategoriWarna'
@@ -51,6 +51,24 @@ const FILTER_KATEGORI = [
 ]
 
 const PILIHAN_RADIUS = [1000, 3000, 5000, 10000, 25000, 50000]
+
+/**
+ * Nama tingkat ketepatan titik dari geocoding.
+ *
+ * Ditampilkan apa adanya sesudah alamat dipilih: titik yang hanya setepat
+ * "pusat kabupaten" TIDAK boleh terlihat sama akuratnya dengan titik bangunan.
+ * Menyembunyikan perbedaan itu membuat pengguna mengira daftar fasilitas yang
+ * muncul benar-benar dihitung dari lokasi presisinya.
+ */
+const LABEL_KETEPATAN_ALAMAT = {
+  titik: 'titik bangunan',
+  jalan: 'titik jalan',
+  kelurahan: 'tingkat kelurahan/desa',
+  kecamatan: 'tingkat kecamatan',
+  kabupaten: 'pusat kabupaten/kota',
+  provinsi: 'pusat provinsi',
+  lain: 'ketepatan tidak diketahui',
+}
 
 const URUTAN = [
   { id: 'jarak-dekat', kunci: 'faskes.urut.jarak-dekat' },
@@ -131,6 +149,30 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
       } finally {
         setMemuatTitik(false)
       }
+    },
+    [setLokasiManual],
+  )
+
+  /**
+   * Titik asal dari HASIL GEOCODING ALAMAT.
+   *
+   * Menerima `null` untuk MENGOSONGKAN: itu dipakai saat pengguna berpindah ke
+   * metode "pilih wilayah". Tanpa jalur pengosongan ini, titik dari alamat akan
+   * tertinggal dan pencarian tetap memakai koordinat lama — persis "mencampur
+   * dua metode lokasi" yang dilarang.
+   *
+   * Koordinat TIDAK diubah di sini: nilainya datang dari server yang mengambil
+   * dari Nominatim. Klien tidak boleh menggeser atau membulatkan titik sumber.
+   */
+  const pakaiAlamat = useCallback(
+    (h) => {
+      if (!h) {
+        setLokasiManual(null)
+        return
+      }
+      const w = h.wilayah ?? null
+      const ketepatanText = h.ketepatan ? LABEL_KETEPATAN_ALAMAT[h.ketepatan] ?? null : null
+      setLokasiManual(h.lat, h.lon, h.nama ?? h.alamat ?? null, 'alamat', ketepatanText, w)
     },
     [setLokasiManual],
   )
@@ -244,14 +286,14 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
 
       {tab === 'terdekat' ? (
       <div role="tabpanel" id="panel-terdekat" aria-labelledby="tab-terdekat" className="space-y-2">
-      <PemilihWilayah
+      <InputLokasi
         t={t}
-        lokasiAktif={lokasi?.label ?? null}
+        lokasi={lokasi}
         statusLokasi={statusLokasi}
         memuatTitik={memuatTitik}
-        presisi={lokasi?.dari === 'wilayah' ? lokasi.presisi : null}
+        onAlamat={pakaiAlamat}
+        onWilayah={pakaiWilayah}
         onGps={mintaLokasi}
-        onPilih={pakaiWilayah}
       />
 
       {titikGagal ? (

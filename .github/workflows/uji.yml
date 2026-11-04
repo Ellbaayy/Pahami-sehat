@@ -205,6 +205,10 @@ jobs:
         # tetapi di CI service MySQL disediakan supaya benar-benar diperiksa.
         run: node uji-rs-sirs.mjs
 
+      - name: Uji geocoding alamat + deteksi wilayah
+        # Tanpa jaringan: `address` Nominatim nyata dikutip di dalam uji.
+        run: node uji-geocoding.mjs
+
       - name: Uji rute perjalanan (moda, polyline, terjemahan instruksi)
         # Tanpa jaringan: pemetaan moda ke costing Valhalla (tiga moda, tiga
         # costing berbeda), decoder polyline6, terjemahan instruksi, dan tautan

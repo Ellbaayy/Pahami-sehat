@@ -22,6 +22,7 @@ import { config, safeInfo } from './config.js'
 import { pasangKepala } from './kepala.js'
 import { pasangSaji, pasang404Api, sajikanFolder } from './saji.js'
 import rute from './rute.js'
+import ruteAlamat from './ruteAlamat.js'
 import { keteranganDb, tutupDb, bersihkanPercakapan } from './db.js'
 import { jalankanPemanasan } from './faskes.js'
 
@@ -36,6 +37,14 @@ app.use(express.json({ limit: '1mb' }))
 
 // seluruh endpoint API
 app.use(rute)
+/*
+ * Rute alamat dipasang SESUDAH rute utama dan SEBELUM penyajian berkas statis.
+ * Ia hanya menangani /api/alamat dan /api/wilayah/lengkap, jadi tidak ada
+ * benturan dengan /api/wilayah (bertingkat) milik rute utama: Express memakai
+ * pencocokan persis jalur, dan '/api/wilayah/lengkap' tidak cocok dengan
+ * '/api/wilayah'.
+ */
+app.use(ruteAlamat)
 
 /* ------------------------------------------- sajikan aplikasi hasil build --- */
 

@@ -111,6 +111,31 @@ const KAMUS = {
     'faskes.jumlah': '{n} fasilitas ditemukan',
     'faskes.dariSimpanan': 'dari simpanan',
 
+    /* --- Input lokasi: ketik alamat / pilih wilayah ---------------------- */
+    'lokasi.judul': 'Tentukan lokasi pencarian',
+    'lokasi.ketikAlamat': 'Ketik Alamat',
+    'lokasi.pilihWilayah': 'Pilih Wilayah',
+    'lokasi.pakaiGps': 'Pakai GPS',
+    'lokasi.labelAlamat': 'Alamat lokasi pencarian',
+    'lokasi.placeholder': 'Masukkan alamat, nama jalan, gedung, desa, atau kecamatan...',
+    'lokasi.hapus': 'Hapus alamat',
+    'lokasi.contohAlamat':
+      'Contoh: “Jl. Malioboro No. 52, Yogyakarta”, “Universitas Indonesia Depok”, atau “Kecamatan Cikarang Selatan”. Kode pos juga bisa disertakan.',
+    'lokasi.pilihSalahSatu':
+      'Ada beberapa kemungkinan. Pilih yang paling sesuai — jangan langsung dipakai otomatis.',
+    'lokasi.wilayahTidakDikenal': 'wilayah tidak dikenali',
+    'lokasi.wilayahTidakDikenalPanjang':
+      'Wilayah administratif titik ini tidak berhasil dikenali dari sumber. Koordinatnya tetap dipakai, tetapi wilayahnya tidak ditebak.',
+    'lokasi.tidakDiketahui': 'tidak diketahui dari sumber',
+    'lokasi.tidakDitemukan': 'Alamat tidak ditemukan. Coba tulis lebih lengkap, atau pakai pilihan wilayah.',
+    'lokasi.layananMati':
+      'Layanan pencarian alamat sedang tidak dapat diakses. Coba lagi, atau tentukan lokasi lewat pilihan wilayah.',
+    'lokasi.kuota':
+      'Layanan pencarian alamat sedang membatasi permintaan. Tunggu sebentar, atau pakai pilihan wilayah.',
+    'lokasi.alamatTerpilih': 'Alamat terpilih',
+    'lokasi.wilayahPerkiraan':
+      'Titik dari pilihan wilayah adalah PERKIRAAN (pusat wilayah), bukan lokasi presisi Anda. Jarak dan fasilitas terdekat dihitung dari titik itu.',
+
     /* --- Rumah sakit nasional (SIRS Kemenkes) ------------------------------ */
     'rs.judul': 'Rumah Sakit Nasional',
     'rs.sumber':
@@ -705,6 +730,28 @@ const KAMUS = {
       'The first load for a new location takes a while because data is fetched directly from OpenStreetMap. Locations already opened are loaded from cache.',
     'faskes.jumlah': '{n} facilities found',
     'faskes.dariSimpanan': 'from cache',
+
+    'lokasi.judul': 'Choose the search location',
+    'lokasi.ketikAlamat': 'Type an Address',
+    'lokasi.pilihWilayah': 'Choose a Region',
+    'lokasi.pakaiGps': 'Use GPS',
+    'lokasi.labelAlamat': 'Address of the search location',
+    'lokasi.placeholder': 'Enter an address, street name, building, village, or district...',
+    'lokasi.hapus': 'Clear address',
+    'lokasi.contohAlamat':
+      'Examples: “Jl. Malioboro No. 52, Yogyakarta”, “Universitas Indonesia Depok”, or “Kecamatan Cikarang Selatan”. A postcode may be included.',
+    'lokasi.pilihSalahSatu': 'There are several possibilities. Pick the right one — none is chosen for you.',
+    'lokasi.wilayahTidakDikenal': 'region not recognised',
+    'lokasi.wilayahTidakDikenalPanjang':
+      'The administrative region of this point could not be recognised from the source. Its coordinates are still used, but the region is not guessed.',
+    'lokasi.tidakDiketahui': 'not provided by the source',
+    'lokasi.tidakDitemukan': 'Address not found. Try a more complete address, or use the region picker.',
+    'lokasi.layananMati':
+      'The address lookup service is unreachable. Try again, or set the location using the region picker.',
+    'lokasi.kuota': 'The address lookup service is rate-limiting requests. Wait a moment, or use the region picker.',
+    'lokasi.alamatTerpilih': 'Selected address',
+    'lokasi.wilayahPerkiraan':
+      'A point from the region picker is an APPROXIMATION (the regional centre), not your precise position. Distances and nearby facilities are measured from that point.',
 
     'rs.judul': 'National Hospitals',
     'rs.sumber':
