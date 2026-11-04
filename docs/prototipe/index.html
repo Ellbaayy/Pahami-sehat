@@ -358,8 +358,8 @@
   <div class="container">
     <div class="section-head reveal has-illus"><div class="sh-text">
       <span class="eyebrow">Fitur Utama</span>
-      <h2>Lima cara informasi jadi lebih dekat</h2>
-      <p>Penjelasan tiap fitur: apa masukannya, apa yang dikerjakan AI, dan apa keluarannya.</p>
+      <h2>Enam cara informasi jadi lebih dekat</h2>
+      <p>Penjelasan tiap fitur: apa masukannya, apa yang dikerjakan aplikasi, dan apa keluarannya.</p>
     </div>
     <div class="sh-art"><img class="illus" src="assets/ilustrasi/fitur.png" alt="Ilustrasi resep dan obat" width="420" height="420" loading="lazy" decoding="async">
     </div>
@@ -565,6 +565,34 @@
 
         <p class="note-box"><svg class="ic-svg lucide-newspaper" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-newspaper" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg> Berita tetap harus dicek ke sumber aslinya — setiap berita disertai tautan ke artikel medianya.</p>
       </article>
+
+      <!-- 6. Fasilitas kesehatan terdekat + petunjuk arah -->
+      <article class="feature-card f-blue reveal">
+        <div class="f-head"><span class="f-num">6</span><h3>Fasilitas Kesehatan Terdekat &amp; Petunjuk Arah</h3></div>
+        <p class="f-value">Masalah yang dipecahkan: orang tahu harus ke fasilitas kesehatan, tetapi tidak tahu mana yang terdekat, apa layanannya, dan bagaimana jalannya. Fitur ini menjawab ketiganya di satu halaman.</p>
+        <ul class="f-list">
+          <li><strong>Menentukan lokasi:</strong> pilih <strong>Provinsi → Kota/Kabupaten → Kecamatan → Desa/Kelurahan</strong>, atau pakai GPS. Keempat pilihan saling bergantung dan mengatur ulang pilihannya sendiri bila tingkat di atasnya diganti.</li>
+          <li><strong>Data wilayahnya resmi:</strong> diambil dari dataset administratif BPS/Kemendagri (38 provinsi, kode wilayah disimpan — bukan hanya namanya).</li>
+          <li><strong>Sepuluh kategori:</strong> rumah sakit, puskesmas, klinik, praktik mandiri, apotek, laboratorium, penunjang medis, kesehatan masyarakat, kesehatan tradisional, dan fasilitas khusus — beserta subkategorinya.</li>
+          <li><strong>Peta interaktif:</strong> Leaflet + OpenStreetMap, penanda berkelompok, warna berbeda per kategori, dan daftar fasilitas yang selalu mengikuti area pencarian.</li>
+          <li><strong>Detail fasilitas:</strong> alamat, wilayah, koordinat, telepon, jam operasional, layanan, IGD, sumber data, dan status verifikasi. Kolom yang tidak ada ditulis <em>“Tidak tercatat”</em> — tidak pernah diisi tebakan.</li>
+          <li><strong>Petunjuk arah tiga moda:</strong> jalan kaki, sepeda motor, dan mobil. Mengganti moda <strong>menghitung ulang rute</strong> — jarak, waktu, jumlah langkah, dan garis di peta ikut berubah.</li>
+        </ul>
+
+        <div class="demo">
+          <p class="demo-label">Contoh hasil untuk rute yang sama (Monas → RSPAD Gatot Soebroto):</p>
+          <ul class="check-list" style="margin-top:.4rem">
+            <li>Jalan kaki — 2,14 km, sekitar 30 menit, 24 langkah</li>
+            <li>Sepeda motor — 4,54 km, sekitar 18 menit, 14 langkah</li>
+            <li>Mobil — 4,54 km, sekitar 15 menit, 14 langkah</li>
+          </ul>
+          <p class="demo-tag">Angka ini hasil pengukuran sungguhan, bukan contoh karangan. Moda yang berbeda memang memberi rute yang berbeda.</p>
+        </div>
+
+        <img class="shot" src="assets/tangkapan-layar/faskes-1-peta-daftar.png" alt="Halaman Fasilitas Kesehatan pada aplikasi: pemilihan wilayah, filter kategori, daftar fasilitas, dan peta" width="1440" height="900" loading="lazy" decoding="async">
+
+        <p class="note-box"><svg class="ic-svg lucide-info" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg> Batas yang disebut apa adanya: memuat pertama kali butuh 40–50 detik karena data diambil langsung dari OpenStreetMap; sesudahnya dari simpanan. Estimasi waktu perjalanan berasal dari profil kecepatan rute, <strong>bukan</strong> lalu lintas langsung. Wilayah administratif bukan posisi Anda secara presisi — tingkat yang benar-benar dipakai selalu ditampilkan.</p>
+      </article>
     </div>
 
     <!-- Status fitur -->
@@ -573,11 +601,13 @@
         <h3><svg class="ic-svg lucide-clipboardlist " xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-list" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg> Status tiap fitur — apa yang sudah jalan, apa yang masih rencana</h3>
         <p class="finding-lead">Ditulis apa adanya, supaya tidak ada klaim yang berlebihan.</p>
         <ul class="f-list" style="margin-top:.9rem">
-          <li><strong>Sudah jalan:</strong> Tanya AI (streaming), <strong>pencarian internet + sumber yang bisa dibuka</strong>, Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, <strong>berita kesehatan harian dari RSS + lonceng pemberitahuan</strong>, kuesioner HLS-SF12, riwayat sesi, <strong>tanya dengan suara (STT)</strong>, <strong>pindai foto jadi teks</strong>, <strong>mode kontras tinggi</strong>, dan <strong>antarmuka dua bahasa</strong> (Indonesia / Inggris).</li>
+          <li><strong>Sudah jalan:</strong> Tanya AI (streaming), <strong>pencarian internet + sumber yang bisa dibuka</strong>, Sederhanakan teks medis, Cek Klaim, 4 tingkat baca, poin kunci, <strong>berita kesehatan harian dari RSS + lonceng pemberitahuan</strong>, kuesioner HLS-SF12, riwayat sesi, <strong>tanya dengan suara (STT)</strong>, <strong>pindai foto jadi teks</strong>, <strong>mode kontras tinggi</strong>, <strong>antarmuka dua bahasa</strong> (Indonesia / Inggris), serta <strong>Fasilitas Kesehatan Terdekat</strong> — pemilihan wilayah administratif bertingkat, peta interaktif sepuluh kategori, detail fasilitas, dan <strong>petunjuk arah jalan kaki / sepeda motor / mobil</strong>.</li>
+          <li><strong>Fasilitas kesehatan — apa yang benar-benar tersimpan:</strong> data fasilitas diambil dari OpenStreetMap (lisensi ODbL) dan <strong>disimpan di basis data aplikasi</strong> (MySQL) beserta sumber, status verifikasi, dan tanggal kedaluwarsanya. Aplikasi tetap berjalan tanpa basis data: kalau MySQL mati, data diambil langsung dari OpenStreetMap seperti sebelumnya.</li>
+          <li><strong>Fasilitas kesehatan — batasnya disebut terbuka:</strong> memuat pertama kali untuk wilayah baru butuh 40–50 detik karena permintaan langsung ke OpenStreetMap; sesudahnya dilayani dari simpanan. Kelengkapan OpenStreetMap berbeda tajam antarwilayah — di Jakarta Pusat hanya 53 dari 1.702 fasilitas yang mencantumkan nomor telepon. Estimasi waktu perjalanan memakai profil kecepatan rute, <strong>bukan</strong> kondisi lalu lintas langsung. Peta dan rutenya memakai OpenStreetMap, bukan Google Maps; tombol “Buka di Google Maps” disediakan sebagai jalan keluar.</li>
           <li><strong>Baca otomatis (TTS): berjalan di komputer sendiri, belum di versi daring.</strong> Rancangannya suara neural dengan nada mengikuti isi kalimat — dan itu <strong>sudah terbukti berbunyi</strong> saat aplikasi dijalankan di komputer sendiri (yang dipakai saat penjurian): lima suara neural, MP3 24 kHz, diperiksa sampai isinya lewat transkripsi balik. Di versi daring (Vercel) belum, karena fungsi serverless tidak bisa mempertahankan koneksi WebSocket yang dipakai layanan suara Microsoft. Rinciannya di kartu Mode Suara di atas.</li>
           <li><strong>Semua pengaturan berfungsi:</strong> tingkat baca, mode kontras tinggi, putar suara otomatis, dan bahasa antarmuka — tidak ada yang hanya jadi hiasan.</li>
           <li><strong>Pindai foto berjalan di perangkat, bukan di server.</strong> Mesin pembacanya (WebAssembly) disajikan dari situs ini sendiri, bukan dari CDN — jadi saat memindai <strong>tidak ada satu pun permintaan yang keluar</strong> dari peramban. Foto tidak pernah dikirim ke mana pun, dan fitur ini tetap bekerja walau server AI mati. <em>Batasnya jujur disebut di aplikasi: ini alat bantu baca, angka hasil lab tetap wajib dicek ke kertas aslinya.</em></li>
-          <li><strong>Belum ada:</strong> terjemahan ke bahasa daerah (baru pilihan bahasanya) dan pengenalan tulisan tangan pada resep.</li>
+          <li><strong>Belum ada:</strong> terjemahan ke bahasa daerah (baru pilihan bahasanya), pengenalan tulisan tangan pada resep, dan data fasilitas resmi Kementerian Kesehatan — katalog publiknya belum tersedia untuk dibaca mesin saat diperiksa, jadi aplikasi memakai OpenStreetMap dan <strong>tidak</strong> mengklaim memakai data Kemenkes.</li>
         </ul>
       </div>
     </div>
@@ -670,7 +700,19 @@
       </div>
     </div>
 
-    <p class="demo-tag" style="color:#B9C6D8;margin-top:1.2rem">Tampilan di atas adalah ilustrasi produk. Yang bisa dicoba ada di aplikasinya.</p>
+    <p class="demo-tag" style="color:#B9C6D8;margin-top:1.2rem">Rangka di atas adalah ilustrasi tata letak. Tangkapan layar di bawah ini <strong>diambil langsung dari aplikasi yang berjalan</strong> — bukan mockup dan bukan gambar karangan.</p>
+
+    <!-- TANGKAPAN LAYAR ASLI (bukan mockup) -->
+    <div class="grid-2" style="margin-top:1.6rem;gap:1.2rem;align-items:start">
+      <figure class="reveal" style="margin:0">
+        <img class="shot" src="assets/tangkapan-layar/faskes-2-detail.png" alt="Panel detail fasilitas: alamat, wilayah, koordinat, telepon, jam operasional, layanan, IGD, dan status verifikasi" width="1440" height="900" loading="lazy" decoding="async">
+        <figcaption class="demo-tag" style="color:#B9C6D8">Detail fasilitas — kolom yang tidak ada ditulis “Tidak tercatat”, tidak diisi tebakan.</figcaption>
+      </figure>
+      <figure class="reveal" style="margin:0">
+        <img class="shot" src="assets/tangkapan-layar/faskes-3-petunjuk-arah.png" alt="Panel petunjuk arah dengan pilihan jalan kaki, sepeda motor, dan mobil beserta daftar instruksi perjalanan" width="1440" height="900" loading="lazy" decoding="async">
+        <figcaption class="demo-tag" style="color:#B9C6D8">Petunjuk arah — mengganti moda menghitung ulang rute, bukan hanya mengganti ikon.</figcaption>
+      </figure>
+    </div>
   </div>
 </section>
 

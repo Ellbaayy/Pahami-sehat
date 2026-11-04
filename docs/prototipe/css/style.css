@@ -1061,3 +1061,20 @@ input,select,textarea{max-width:100%}
   word-break:break-word;
 }
 .sumber-list a:hover{color:var(--navy)}
+
+/* ---------------------------------------------------------------------------
+   Tangkapan layar aplikasi di dalam kartu fitur.
+   Gambar ini diambil dari aplikasi yang benar-benar berjalan (skrip
+   ambil-tangkapan.mjs), bukan mockup. Karena itu bingkainya menyerupai jendela
+   peramban dan diberi batas, supaya jelas ini tangkapan layar produk.
+   --------------------------------------------------------------------------- */
+.shot{
+  display:block;
+  width:100%;
+  height:auto;
+  margin-top:1rem;
+  border-radius:.9rem;
+  border:1px solid var(--line, #E2E8F0);
+  box-shadow:0 10px 28px rgba(15,30,51,.10);
+  background:#F8FAFC;
+}

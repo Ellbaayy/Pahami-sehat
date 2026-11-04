@@ -206,6 +206,19 @@ jobs:
         # Google Maps. OSRM demo sengaja tidak dipakai: semua profilnya identik.
         run: node uji-rute-perjalanan.mjs
 
+      - name: Uji halaman penjelasan (enam kartu, tangkapan layar termuat)
+        # Butuh peramban + server. Membuktikan halaman depan benar-benar
+        # menampilkan enam kartu fitur dan ketiga tangkapan layar termuat
+        # (naturalWidth > 0), bukan hanya <img> yang terpasang.
+        run: |
+          npm --prefix app run build
+          node app/server/index.js &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8787/api/health >/dev/null && break
+            sleep 1
+          done
+          node uji-halaman-penjelasan.mjs
+
       - name: Uji lapisan server (kompresi, 404 JSON, galat klien)
         # Tanpa jaringan dan tanpa rahasia: server asli dinyalakan di port acak.
         # Yang diuji bukan fitur, melainkan hal yang SALAHNYA tidak terlihat dari

@@ -559,6 +559,9 @@ lebih berbahaya daripada tidak ada penyaring.
 | GET | `/api/faskes` | fasilitas kesehatan di sekitar satu titik (Overpass/OpenStreetMap) |
 | GET | `/api/faskes/kategori` | sepuluh kategori fasilitas yang dipakai antarmuka |
 | GET | `/api/faskes/cari-lokasi` | cari lokasi menurut nama tempat (Nominatim) |
+| GET | `/api/wilayah` | daftar wilayah administratif bertingkat (`tingkat=provinsi\|kabupaten\|kecamatan\|desa` + `induk=<kode>`) |
+| GET | `/api/wilayah/titik` | titik referensi sebuah wilayah beserta tingkat ketelitiannya |
+| GET | `/api/rute` | rute perjalanan antar dua titik (`moda=jalan-kaki\|motor\|mobil`, `bahasa=id\|en`) |
 
 Galat selalu berbentuk `{ ok: false, code, pesan }` — `code` sengaja dipakai UI
 untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
@@ -678,8 +681,101 @@ tetap tersaji tanpa database.
 Endpoint untuk memeriksa: `GET /api/health` (status db) dan `GET /api/db`
 (hitungan + contoh baris, bukan seluruh isi tabel).
 
+Tiga tabel tambahan untuk fitur Fasilitas Kesehatan Terdekat sudah ada di
+`docs/skema-database.sql`: `wilayah`, `kategori_fasilitas`, dan `fasilitas`
+(beserta `sumber`, `sumber_url`, `diperbarui_pada`, dan `kedaluwarsa_pada`).
+Fasilitas yang sudah pernah diambil **disimpan** di sana, jadi permintaan
+berikutnya tidak perlu menunggu OpenStreetMap.
+
 **Untuk Grand Final:** `npm start` adalah yang dipakai saat presentasi — Express
 menyajikan hasil build sekaligus melayani `/api`, jadi cukup satu alamat.
+
+## Fasilitas Kesehatan Terdekat (4 Nov 2026)
+
+Menu ketujuh di sidebar. Dua hal yang membuatnya berbeda dari sekadar "peta
+rumah sakit": **lokasi tidak lagi hanya GPS**, dan **petunjuk arahnya rute
+sungguhan**.
+
+### Menentukan lokasi — wilayah administratif dulu, GPS sebagai pilihan
+
+Empat dropdown bertingkat: **Provinsi → Kota/Kabupaten → Kecamatan →
+Desa/Kelurahan**. Mengganti tingkat mana pun mengosongkan dan menonaktifkan
+semua tingkat di bawahnya.
+
+Sumbernya `wilayah.id`, yang disalin ke tabel `wilayah` milik aplikasi. Dipilih
+setelah membandingkan tiga sumber (4 Nov 2026):
+
+| Sumber | Provinsi | Catatan |
+|---|---|---|
+| `wilayah.id` | **38** | benar untuk Indonesia sekarang; kode bertitik (`32.16.16` = Kec. Cikarang Selatan) |
+| `emsifa.com` | 34 | **usang** — empat provinsi baru belum ada |
+| dump `cahyadsn` | — | tidak dipakai; tidak memberi keunggulan |
+
+Kode wilayah disimpan, bukan hanya namanya, supaya identitas wilayah tetap
+utuh walau namanya berubah. Titik referensi diambil lewat Nominatim pada
+tingkat terdalam yang benar-benar punya koordinat — dan antarmuka
+**menyebut tingkat itu apa adanya** ("titik referensi tingkat kota/kabupaten,
+bukan posisi Anda secara presisi"). Desa/kelurahan di `wilayah.id` tidak punya
+koordinat, jadi titiknya naik ke kecamatan/kabupaten.
+
+GPS tetap ada sebagai metode alternatif. Aplikasi tidak pernah mengisi lokasi
+pengguna dengan koordinat tetap.
+
+### Petunjuk arah — Valhalla, bukan OSRM demo
+
+Tiga moda: jalan kaki, sepeda motor, mobil. **Mengganti moda menghitung ulang
+rute**, bukan hanya mengganti ikon.
+
+OSRM demo sengaja **tidak** dipakai. Hasil pengukuran 4 Nov 2026 untuk satu
+rute yang sama (Monas → RSPAD Gatot Soebroto): `driving`, `foot`, `bike`,
+`walking`, dan `motorcycle` semuanya mengembalikan **4,32 km / 6,4 menit** —
+profilnya diabaikan. Memakainya berarti tombol moda jadi hiasan.
+
+Valhalla memberi hasil yang benar-benar berbeda:
+
+| Moda | Jarak | Waktu | Langkah |
+|---|---|---|---|
+| Jalan kaki | 2,14 km | ±30 menit | 24 |
+| Sepeda motor | 4,54 km | ±18 menit | 14 |
+| Mobil | 4,54 km | ±15 menit | 14 |
+
+Valhalla **tidak** mendukung `id-ID` (diukur: `language=id-ID` tetap Inggris),
+jadi instruksi diterjemahkan sendiri di `terjemahkanManuver()`. Pola yang tidak
+dikenal dikembalikan apa adanya — lebih baik Inggris asli daripada terjemahan
+karangan. Nama jalan selalu dipertahankan. Pada antarmuka Inggris, instruksi
+Valhalla ditampilkan apa adanya (`Drive south.`), bukan diterjemahkan lalu
+dicampur.
+
+### Batas yang disebut di antarmuka, bukan disembunyikan
+
+- **Muat pertama 40–50 detik** untuk wilayah baru — itu batas layanan
+  OpenStreetMap publik, bukan kode. Sesudahnya dilayani dari MySQL (6,8 ms).
+  Pemanasan saat server start: `PEMANASAN_TITIK="-6.1754,106.8272" npm run server`.
+- **Kelengkapan OpenStreetMap tidak rata.** Di Jakarta Pusat hanya 53 dari
+  1.702 fasilitas mencantumkan nomor telepon. Kolom kosong ditulis "Tidak
+  tercatat", tidak diisi tebakan.
+- **Estimasi waktu** memakai profil kecepatan rute, **bukan** lalu lintas
+  langsung.
+- **Kategori Tradisional dan Khusus kosong di sekitar Jakarta** — OpenStreetMap
+  memang belum punya datanya di sana. Kekosongan itu ditampilkan, tidak diisi.
+- **Tidak ada data Kemenkes.** Katalog publiknya tidak tersedia untuk dibaca
+  mesin saat diperiksa (semua endpoint NXDOMAIN/404/formulir/gerbang JS), jadi
+  aplikasi memakai OpenStreetMap dan **tidak** mengklaim memakai data Kemenkes.
+- Cermin Overpass yang menjawab `200` dengan daftar kosong dianggap **gagal**,
+  bukan "tidak ada fasilitas" — `overpass.osm.ch` berperilaku begitu karena
+  hanya memuat data Swiss.
+
+### Halaman penjelasan ikut diperbarui
+
+`docs/prototipe/index.html` sekarang punya **enam** kartu fitur (sebelumnya
+lima) dan menampilkan **tiga tangkapan layar asli** dari aplikasi yang berjalan
+— bukan mockup. Gambarnya dihasilkan `ambil-tangkapan.mjs`, yang menolak
+menyimpan berkas di bawah 20 KB supaya tangkapan gagal tidak lolos:
+
+```bash
+npm run server            # di terminal lain
+node ambil-tangkapan.mjs  # -> docs/tangkapan-layar/ dan docs/prototipe/assets/tangkapan-layar/
+```
 
 ## Melihat halaman penjelasan
 
@@ -843,8 +939,9 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 3 Nov 2026: **24 berkas, semua lulus,
-±4 detik**, tanpa jaringan dan tanpa API key.
+memperbarui daftar di mana pun. Diukur 4 Nov 2026: **25 berkas lulus, 0 gagal,
+±10 detik**, tanpa jaringan dan tanpa API key. Tiga uji yang butuh peramban atau
+database dijalankan terpisah (lihat bawah).
 
 Daftar per berkas (jalankan langsung dari akar repo kalau sedang menelusuri satu
 uji tertentu):
@@ -871,8 +968,16 @@ node uji-sitasi.mjs       # jejak sumber (butuh MariaDB; dilewati tanpa DB)
 node uji-server.mjs       # kompresi, 404 JSON, galat klien
 node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
+node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB)
+node uji-rute-perjalanan.mjs  # rute: tiga moda, polyline6, terjemahan instruksi, tautan Maps
+node uji-halaman-penjelasan.mjs  # halaman depan: 6 kartu, 3 tangkapan layar termuat (butuh server + Chrome)
 node uji-peramban.mjs     # peramban sungguhan: 7 halaman × 2 bahasa (butuh server + Chrome)
 ```
+
+Tiga uji terakhir butuh Chrome (dan `uji-halaman-penjelasan` butuh server hidup).
+Skripnya memakai CDP langsung, tanpa dependensi baru — dan sengaja begitu:
+harness browser biasa timeout pada halaman penjelasan karena tingginya 18.280 px
+dengan banyak animasi dan gambar lambat.
 
 ### Uji peramban otomatis — 7 halaman × 2 bahasa
 
