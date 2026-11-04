@@ -159,12 +159,33 @@ async function main() {
       `SELECT DISTINCT provinsi FROM fasilitas WHERE sumber = 'SIRS Kemenkes' AND provinsi IS NOT NULL`,
     )
     const [wil] = await pool.query(`SELECT nama FROM wilayah WHERE tingkat = 'provinsi'`)
-    const namaWil = new Set(wil.map((w) => w.nama.toLowerCase()))
-    const tidakCocok = sirs.map((s) => s.provinsi).filter((p) => !namaWil.has(String(p).toLowerCase()))
-    console.log('')
+    /*
+     * Pemeriksaan kecocokan provinsi SIRS <-> tabel wilayah.
+     *
+     * Versi lama MEMBANDINGKAN NAMA MENTAH (lowercase), dan itu melaporkan
+     * "BELUM COCOK: Yogyakarta" padahal 77 rumah sakit di provinsi itu
+     * pemetaannya benar. Sebabnya: SIRS menulis "Yogyakarta", wilayah.id
+     * menulis "Daerah Istimewa Yogyakarta" — dua nama sah untuk provinsi yang
+     * sama.
+     *
+     * Perbandingan nama mentah selalu menghasilkan peringatan palsu seperti
+     * itu. Yang benar: pakai normalisasi yang SAMA dengan pemetaan sungguhan
+     * (`petakan-wilayah.mjs`), supaya hasil pemeriksaan ini berarti apa adanya.
+     * Pemeriksaan ini hanya laporan — keputusan pemetaan ada di
+     * petakan-wilayah.mjs, bukan di sini.
+     */
+    const { normalNama } = await import('./app/server/geocoding.js')
+    const namaWil = new Set(wil.map((w) => normalNama(w.nama)))
+    const tidakCocok = sirs
+      .map((s) => s.provinsi)
+      .filter((p) => !namaWil.has(normalNama(p)))
     console.log(`      provinsi SIRS: ${sirs.length} | ada di tabel wilayah: ${sirs.length - tidakCocok.length}`)
-    if (tidakCocok.length) console.log(`      BELUM COCOK: ${tidakCocok.join(', ')}`)
-    else console.log('      semua provinsi SIRS cocok dengan tabel wilayah.')
+    if (tidakCocok.length) {
+      console.log(`      TIDAK COCOK: ${tidakCocok.join(', ')}`)
+      console.log('      (dicek dengan normalisasi yang sama dengan petakan-wilayah.mjs)')
+    } else {
+      console.log('      semua provinsi SIRS cocok dengan tabel wilayah.')
+    }
   } finally {
     await pool.end()
   }
