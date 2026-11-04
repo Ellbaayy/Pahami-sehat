@@ -6,6 +6,15 @@ import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import { WARNA_KATEGORI, WARNA_LOKASI } from './kategoriWarna'
 
+/** Sebutan titik asal sesuai sumbernya — dipakai sebagai tooltip penanda. */
+const LABEL_SUMBER = {
+  gps: 'Lokasi GPS Anda',
+  alamat: 'Alamat yang Anda pilih',
+  wilayah: 'Pusat wilayah yang Anda pilih (perkiraan)',
+  nama: 'Lokasi yang Anda cari',
+  manual: 'Titik yang Anda tentukan',
+}
+
 /**
  * Peta fasilitas kesehatan — Leaflet + OpenStreetMap.
  *
@@ -36,6 +45,18 @@ const IKON_LOKASI = L.divIcon({
   iconAnchor: [11, 11],
 })
 
+/*
+ * Titik yang BARU DIPILIH lewat klik peta — berbeda rupa dari titik asal,
+ * karena maknanya berbeda: yang ini belum dipakai untuk mencari. Bentuknya
+ * pin (bukan bulatan) supaya tidak tertukar dengan penanda fasilitas.
+ */
+const IKON_PILIHAN = L.divIcon({
+  className: 'faskes-pin-pilihan',
+  html: `<span style="display:block;width:14px;height:14px;border-radius:9999px 9999px 9999px 0;transform:rotate(-45deg);background:#b45309;border:2px solid #fff;box-shadow:0 1px 5px rgba(15,30,51,.5)"></span>`,
+  iconSize: [18, 18],
+  iconAnchor: [9, 16],
+})
+
 export default function PetaFaskes({
   pusat,
   fasilitas = [],
@@ -43,12 +64,30 @@ export default function PetaFaskes({
   onPilih,
   zoom = 14,
   rute = null,
+  /**
+   * Mode "pilih titik di peta" (seperti Google Maps: klik peta -> titik baru).
+   *
+   * Saat aktif, setiap klik pada peta memanggil `onKlikPeta({lat, lon})` dan
+   * SERVER yang menentukan alamat serta wilayahnya (geocoding balik). Peta
+   * tidak menebak nama wilayah dari koordinat — itu pekerjaan geocoder, dan
+   * hasilnya harus datang dari sumber, bukan dari perhitungan klien.
+   */
+  modePilihTitik = false,
+  onKlikPeta = null,
+  /** Titik yang sedang dipilih di peta tetapi belum dipakai sebagai asal. */
+  titikPilihan = null,
 }) {
   const wadahRef = useRef(null)
   const petaRef = useRef(null)
   const klasterRef = useRef(null)
   const lokasiRef = useRef(null)
   const garisRef = useRef(null)
+  const pilihanRef = useRef(null)
+  // Callback disimpan di ref supaya efek pembuatan peta tidak perlu bergantung
+  // padanya — kalau tidak, setiap render ulang induk akan MEMBUAT ULANG peta
+  // (penanda berkedip, posisi melompat).
+  const klikRef = useRef(null)
+  klikRef.current = onKlikPeta
 
   // ---- buat peta sekali ----
   useEffect(() => {
@@ -79,8 +118,59 @@ export default function PetaFaskes({
       petaRef.current = null
       klasterRef.current = null
       lokasiRef.current = null
+      pilihanRef.current = null
     }
   }, [pusat, zoom])
+
+  /* ---- klik peta: pilih titik (hanya saat mode aktif) ------------------ */
+  useEffect(() => {
+    const peta = petaRef.current
+    if (!peta) return
+
+    const saatKlik = (e) => {
+      /*
+       * Klik pada PENANDA tidak boleh dianggap "pilih titik baru".
+       * Leaflet meneruskan klik penanda ke peta, jadi tanpa pemeriksaan ini
+       * memilih fasilitas dari daftar sekaligus memindahkan titik asal —
+       * perilaku yang membingungkan dan merusak data pencarian.
+       */
+      if (e.originalEvent?.target?.closest?.('.leaflet-marker-icon')) return
+      if (e.originalEvent?.target?.closest?.('.leaflet-popup')) return
+      klikRef.current?.({ lat: e.latlng.lat, lon: e.latlng.lng })
+    }
+
+    if (modePilihTitik) {
+      peta.on('click', saatKlik)
+      // Kursor berubah supaya pengguna tahu peta sekarang bisa diklik.
+      const el = peta.getContainer()
+      el.style.cursor = 'crosshair'
+      return () => {
+        peta.off('click', saatKlik)
+        el.style.cursor = ''
+      }
+    }
+    return undefined
+  }, [modePilihTitik])
+
+  /* ---- penanda titik pilihan (belum dipakai sebagai asal) -------------- */
+  useEffect(() => {
+    const peta = petaRef.current
+    if (!peta) return
+
+    if (pilihanRef.current) {
+      peta.removeLayer(pilihanRef.current)
+      pilihanRef.current = null
+    }
+    if (!titikPilihan) return
+
+    pilihanRef.current = L.marker([titikPilihan.lat, titikPilihan.lon], {
+      icon: IKON_PILIHAN,
+      keyboard: false,
+      zIndexOffset: 1200,
+    })
+      .addTo(peta)
+      .bindTooltip('Titik yang dipilih', { direction: 'top', offset: [0, -12] })
+  }, [titikPilihan])
 
   // ---- pusat & penanda lokasi pengguna ----
   useEffect(() => {
@@ -89,6 +179,9 @@ export default function PetaFaskes({
     peta.setView([pusat.lat, pusat.lon], Math.max(peta.getZoom(), zoom))
     if (lokasiRef.current) {
       lokasiRef.current.setLatLng([pusat.lat, pusat.lon])
+      // Tooltip ikut diperbarui: pengguna bisa mengganti metode lokasi tanpa
+      // peta dibuat ulang, dan label lama akan menyesatkan.
+      lokasiRef.current.setTooltipContent(LABEL_SUMBER[pusat.dari] ?? 'Titik asal pencarian')
       return
     }
     lokasiRef.current = L.marker([pusat.lat, pusat.lon], {
@@ -97,7 +190,18 @@ export default function PetaFaskes({
       zIndexOffset: 1000,
     })
       .addTo(peta)
-      .bindTooltip('Lokasi Anda', { direction: 'top', offset: [0, -10] })
+      /*
+       * Label menyebut SUMBER titiknya, bukan selalu "Lokasi Anda".
+       *
+       * Titik asal bisa datang dari GPS, dari alamat yang diketik, atau dari
+       * pusat wilayah administratif. Menulis "Lokasi Anda" untuk dua yang
+       * terakhir adalah kebohongan kecil yang membuat pengguna mengira
+       * aplikasi tahu posisi presisinya.
+       */
+      .bindTooltip(LABEL_SUMBER[pusat.dari] ?? 'Titik asal pencarian', {
+        direction: 'top',
+        offset: [0, -10],
+      })
   }, [pusat, zoom])
 
   // ---- penanda fasilitas ----

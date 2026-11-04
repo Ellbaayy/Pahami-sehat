@@ -17,10 +17,11 @@
  * campuran "koordinat dari alamat + label dari wilayah".
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search, MapPin, X, Loader2, TriangleAlert, Check, Map } from 'lucide-react'
 import { useAlamat } from '../../lib/useAlamat'
 import PemilihWilayah from './PemilihWilayah'
+import PemilihTitik from './PemilihTitik'
 
 /** Nama tingkat ketepatan untuk ditampilkan apa adanya. */
 const LABEL_KETEPATAN = {
@@ -41,12 +42,38 @@ export default function InputLokasi({
   onAlamat, // (hasilGeocoding) => void  — koordinat dari geocoding
   onWilayah, // (wilayah) => void        — titik referensi wilayah
   onGps,
+  /** (titik) => void — titik dari klik peta, belum/tanpa wilayah tebakan. */
+  onTitikPeta,
+  /** Apakah mode pilih-titik sedang aktif (peta memasang handler klik). */
+  modePilihTitik = false,
+  onModePilihTitik,
+  /** Handler klik peta yang didaftarkan PemilihTitik lalu diteruskan ke peta. */
+  onKlikPeta,
 }) {
   const [metode, setMetode] = useState('alamat') // 'alamat' | 'wilayah'
   const a = useAlamat()
+  /*
+   * Sorotan keyboard untuk daftar saran.
+   *
+   * Perilaku yang ditiru dari Google Maps: panah bawah/atas memindahkan
+   * sorotan, Enter memilih yang tersorot, Escape menutup daftar. Tanpa ini,
+   * pengguna keyboard harus Tab melewati semua saran sebelum bisa memilih.
+   */
+  const [sorot, setSorot] = useState(-1)
 
   const wilayahDipilih = lokasi?.dari === 'wilayah' ? lokasi : null
-  const alamatDipilih = lokasi?.dari === 'alamat' ? lokasi : null
+  /*
+   * Kotak "alamat terpilih" berlaku untuk DUA sumber: hasil geocoding
+   * ('alamat') dan titik yang diklik di peta ('manual').
+   *
+   * Sebelumnya hanya 'alamat', sehingga setelah pengguna menekan "Pakai titik
+   * ini" kotak itu hilang dan wilayah hasil geocoding balik tidak pernah
+   * terlihat — padahal server sudah mengirimnya. 'wilayah' TIDAK termasuk:
+   * titik itu ditampilkan oleh PemilihWilayah dengan label perkiraannya
+   * sendiri, dan menampilkannya dua kali membuat pengguna mengira ada dua
+   * lokasi berbeda.
+   */
+  const alamatDipilih = lokasi?.dari === 'alamat' || lokasi?.dari === 'manual' ? lokasi : null
 
   const gantiMetode = (m) => {
     if (m === metode) return
@@ -59,9 +86,49 @@ export default function InputLokasi({
     else onWilayah(null)
   }
 
+  // Sorotan direset setiap daftar saran berganti: menyisakan indeks lama akan
+  // menunjuk baris yang sudah tidak ada.
+  useEffect(() => {
+    setSorot(-1)
+  }, [a.saran])
+
   const pilihSaran = (h) => {
+    if (!h) return
     a.pilih(h)
     onAlamat(h)
+    setSorot(-1)
+  }
+
+  /**
+   * Enter: pilih yang tersorot, atau ambil saran PERTAMA kalau belum ada
+   * sorotan.
+   *
+   * Mengambil yang pertama saat Enter ditekan BUKAN "memilih otomatis" yang
+   * dilarang: pengguna sendiri yang menekan Enter setelah melihat daftarnya.
+   * Yang dilarang adalah memilih tanpa pengguna tahu — dan di sini daftarnya
+   * terlihat di layar sebelum Enter ditekan.
+   */
+  const saatEnter = () => {
+    if (a.saran.length) {
+      pilihSaran(a.saran[sorot >= 0 ? sorot : 0])
+    }
+  }
+
+  const saatTombol = (e) => {
+    if (!a.saran.length) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSorot((i) => (i + 1) % a.saran.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSorot((i) => (i <= 0 ? a.saran.length - 1 : i - 1))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      saatEnter()
+    } else if (e.key === 'Escape') {
+      setSorot(-1)
+      a.setKueri('')
+    }
   }
 
   return (
@@ -106,15 +173,28 @@ export default function InputLokasi({
           </button>
         </div>
 
-        {/* GPS tetap tersedia, tetapi BUKAN satu-satunya cara. */}
-        <button
-          type="button"
-          onClick={onGps}
-          className="ml-auto inline-flex min-h-8 items-center gap-1 rounded-lg border border-line-200 bg-white px-2.5 text-[0.78rem] font-medium text-navy-700"
-        >
-          <MapPin className="size-3.5" aria-hidden="true" />
-          {t('lokasi.pakaiGps')}
-        </button>
+        {/* Dua jalan keluar tambahan: pilih titik di peta, dan GPS.
+            GPS tetap tersedia, tetapi BUKAN satu-satunya cara. */}
+        <div className="ml-auto flex flex-wrap items-center gap-1.5">
+          <PemilihTitik
+            t={t}
+            aktif={modePilihTitik}
+            onAktif={onModePilihTitik}
+            onKlikPeta={onKlikPeta}
+            onPakai={(titik) => {
+              onTitikPeta?.(titik)
+              onAlamat(titik)
+            }}
+          />
+          <button
+            type="button"
+            onClick={onGps}
+            className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-line-200 bg-white px-2.5 text-[0.78rem] font-medium text-navy-700"
+          >
+            <MapPin className="size-3.5" aria-hidden="true" />
+            {t('lokasi.pakaiGps')}
+          </button>
+        </div>
       </div>
 
       {/* METODE 1: ketik alamat ---------------------------------------- */}
@@ -133,6 +213,11 @@ export default function InputLokasi({
               type="search"
               value={a.kueri}
               onChange={(e) => a.setKueri(e.target.value)}
+              onKeyDown={saatTombol}
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="alamat-saran"
+              aria-activedescendant={sorot >= 0 ? `saran-${sorot}` : undefined}
               placeholder={t('lokasi.placeholder')}
               autoComplete="off"
               aria-describedby="alamat-bantuan"
@@ -154,9 +239,22 @@ export default function InputLokasi({
             ) : null}
           </div>
 
-          <p id="alamat-bantuan" className="mt-1 text-[0.72rem] leading-snug text-muted-500">
-            {t('lokasi.contohAlamat')}
-          </p>
+          {/* Tombol eksplisit: sebagian pengguna tidak tahu bahwa Enter bisa
+              dipakai, dan tombol membuat aksi "cari" terlihat. */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => (a.saran.length ? pilihSaran(a.saran[sorot >= 0 ? sorot : 0]) : a.setKueri(a.kueri))}
+              disabled={a.kueri.trim().length < 3 || a.memuat}
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-lg bg-brand-700 px-2.5 text-[0.78rem] font-semibold text-white disabled:bg-surface-200 disabled:text-muted-400"
+            >
+              <Search className="size-3.5" aria-hidden="true" />
+              {t('lokasi.tombolCari')}
+            </button>
+            <p id="alamat-bantuan" className="text-[0.72rem] leading-snug text-muted-500">
+              {t('lokasi.contohAlamat')}
+            </p>
+          </div>
 
           {/* Saran ---------------------------------------------------- */}
           {a.saran.length > 0 ? (
@@ -175,7 +273,13 @@ export default function InputLokasi({
                 {a.saran.map((h, i) => {
                   const w = h.wilayah ?? {}
                   return (
-                    <li key={`${h.lat}-${h.lon}-${i}`} role="option" aria-selected={false}>
+                    <li
+                      key={`${h.lat}-${h.lon}-${i}`}
+                      id={`saran-${i}`}
+                      role="option"
+                      aria-selected={i === sorot}
+                      className={i === sorot ? 'bg-brand-50' : undefined}
+                    >
                       <button
                         type="button"
                         onClick={() => pilihSaran(h)}

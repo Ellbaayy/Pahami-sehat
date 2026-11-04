@@ -122,6 +122,30 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
   const [navigasiKe, setNavigasiKe] = useState(null)
   // Rute aktif, diteruskan ke peta untuk menggambar garis.
   const [ruteAktif, setRuteAktif] = useState(null)
+  /*
+   * Mode "pilih titik di peta".
+   *
+   * Ditahan di INDUK, bukan di dalam peta atau di dalam tombolnya, karena dua
+   * komponen berbeda perlu tahu keadaan yang sama: tombol (untuk menampilkan
+   * batal/pakai) dan peta (untuk memasang handler klik). Menyimpannya di salah
+   * satu membuat yang lain harus menebak.
+   */
+  const [modePilihTitik, setModePilihTitik] = useState(false)
+  /**
+   * Handler klik peta yang didaftarkan PemilihTitik. `null` = mode nonaktif.
+   *
+   * DIBUNGKUS `setKlikPeta(() => fn)` dengan sengaja, bukan `setKlikPeta(fn)`.
+   * React memperlakukan argumen fungsi pada setter sebagai UPDATER
+   * (`prev => next`), jadi `setKlikPeta(saatKlik)` akan MENJALANKAN saatKlik
+   * dengan state sebelumnya sebagai argumen — bukan menyimpannya. Akibatnya
+   * handler tidak pernah tersimpan dan klik peta tidak melakukan apa pun.
+   */
+  const [klikPeta, setKlikPeta] = useState(null)
+  const daftarkanKlikPeta = useCallback((fn) => {
+    setKlikPeta(fn ? () => fn : null)
+  }, [])
+  /** Titik yang sedang dipilih tetapi BELUM dipakai sebagai asal pencarian. */
+  const [titikPilihan, setTitikPilihan] = useState(null)
 
   /** Ambil titik referensi wilayah, lalu jadikan pusat pencarian. */
   const pakaiWilayah = useCallback(
@@ -168,11 +192,25 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
     (h) => {
       if (!h) {
         setLokasiManual(null)
+        setTitikPilihan(null)
         return
       }
       const w = h.wilayah ?? null
       const ketepatanText = h.ketepatan ? LABEL_KETEPATAN_ALAMAT[h.ketepatan] ?? null : null
-      setLokasiManual(h.lat, h.lon, h.nama ?? h.alamat ?? null, 'alamat', ketepatanText, w)
+      /*
+       * `dari` ditentukan sumbernya, bukan diseragamkan jadi 'alamat'.
+       *
+       * Titik dari peta tetap berkoordinat hasil klik pengguna, tetapi ia
+       * BUKAN hasil pencarian alamat — dan peta memakai `dari` untuk memilih
+       * label penanda. Menyamakannya akan membuat penanda berkata "Alamat yang
+       * Anda pilih" untuk titik yang diklik di tengah sawah.
+       */
+      const asal = h.dariPeta ? 'manual' : 'alamat'
+      setLokasiManual(h.lat, h.lon, h.nama ?? h.alamat ?? null, asal, ketepatanText, w)
+      // Titik pilihan sudah dipakai: penanda sementaranya dibersihkan supaya
+      // tidak ada dua penanda bertumpuk di titik yang sama.
+      setTitikPilihan(null)
+      setModePilihTitik(false)
     },
     [setLokasiManual],
   )
@@ -294,6 +332,10 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
         onAlamat={pakaiAlamat}
         onWilayah={pakaiWilayah}
         onGps={mintaLokasi}
+        onTitikPeta={setTitikPilihan}
+        modePilihTitik={modePilihTitik}
+        onModePilihTitik={setModePilihTitik}
+        onKlikPeta={daftarkanKlikPeta}
       />
 
       {titikGagal ? (
@@ -346,6 +388,9 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
                 terpilih={terpilih}
                 onPilih={setTerpilih}
                 rute={ruteAktif}
+                modePilihTitik={modePilihTitik}
+                onKlikPeta={klikPeta}
+                titikPilihan={titikPilihan}
               />
             </div>
 

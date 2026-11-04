@@ -892,6 +892,43 @@ tertangkap sebelum masuk:
 Wilayah yang tidak berhasil dikenali **tidak ditebak**: koordinatnya tetap
 dipakai, dan antarmuka menulis "wilayah tidak berhasil dikenali dari sumber".
 
+#### Interaksi peta: klik untuk memilih titik
+
+Selain mengetik alamat, pengguna bisa **mengklik peta** untuk memilih titik —
+jalan keluar untuk alamat yang tidak ditemukan geocoder (gang tanpa nama, rumah
+di dalam kompleks, area baru).
+
+Aturan yang dipegang:
+
+- Titik datang dari **klik pengguna**, bukan tebakan.
+- Alamat dan wilayahnya ditanyakan ke server (`/api/alamat/titik`, geocoding
+  balik). Klien tidak mengarang nama wilayah dari koordinat.
+- Titik itu **belum** dipakai untuk mencari sampai pengguna menekan "Pakai titik
+  ini". Tanpa langkah konfirmasi, satu klik tak sengaja akan memicu ulang seluruh
+  pencarian fasilitas.
+- Klik pada **penanda** diabaikan: Leaflet meneruskan klik penanda ke peta, jadi
+  tanpa penjagaan ini memilih fasilitas sekaligus memindahkan titik asal.
+- Penanda titik asal diberi label sesuai **sumbernya** ("Lokasi GPS Anda",
+  "Alamat yang Anda pilih", "Pusat wilayah yang Anda pilih (perkiraan)", "Titik
+  yang Anda tentukan") — menulis "Lokasi Anda" untuk semuanya adalah kebohongan
+  kecil yang membuat pengguna mengira aplikasi tahu posisi presisinya.
+
+Diuji di peramban: klik peta di Kwitang → geocoding balik mengembalikan
+**DKI Jakarta / Kota Administrasi Jakarta Pusat / Senen / Kwitang** beserta nama
+jalan, lalu "Pakai titik ini" memakai koordinat itu untuk mencari.
+
+Satu bug React yang tertangkap di sini, dan jenisnya mudah terulang:
+`setKlikPeta(fn)` **menjalankan** `fn` sebagai updater, bukan menyimpannya —
+karena React memperlakukan argumen fungsi pada setter sebagai `prev => next`.
+Handler klik harus dibungkus: `setKlikPeta(() => fn)`.
+
+#### Keyboard dan Enter
+
+Panah atas/bawah memindahkan sorotan, **Enter memilih** yang tersorot (atau saran
+pertama bila belum ada sorotan), Escape menutup daftar. Memilih saran pertama
+saat Enter ditekan bukan "memilih otomatis" yang dilarang: pengguna sendiri yang
+menekan Enter setelah daftarnya terlihat.
+
 #### Saran alamat, dan kenapa tidak memilih otomatis
 
 Autocomplete dengan jeda 400 ms + `AbortController` (permintaan lama
