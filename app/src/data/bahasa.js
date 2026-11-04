@@ -45,6 +45,7 @@ const KAMUS = {
     'wil.aktif': 'Lokasi aktif',
     'wil.ubah': 'Ubah wilayah',
     // rute perjalanan
+    'rute.tutup': 'Tutup petunjuk arah',
     'rute.judul': 'Petunjuk arah',
     'rute.moda': 'Moda transportasi',
     'rute.jalanKaki': 'Jalan kaki',
@@ -58,6 +59,9 @@ const KAMUS = {
     'rute.googleMaps': 'Buka di Google Maps',
     'rute.galat': 'Rute belum dapat dihitung.',
     'rute.butuhLokasi': 'Tentukan lokasi Anda lebih dulu',
+    'rute.asalAlamat': 'Titik awal: alamat yang Anda pilih',
+    'rute.asalManual': 'Titik awal: titik yang Anda tentukan di peta',
+    'rute.asalNama': 'Titik awal: lokasi yang Anda cari',
     'rute.asalGps': 'Titik awal: lokasi GPS Anda',
     'rute.asalWilayah':
       'Titik awal: titik referensi wilayah administratif, bukan posisi Anda secara presisi.',
@@ -132,7 +136,7 @@ const KAMUS = {
       'Contoh: “Jl. Malioboro No. 52, Yogyakarta”, “Universitas Indonesia Depok”, atau “Kecamatan Cikarang Selatan”. Kode pos juga bisa disertakan.',
     'lokasi.pilihSalahSatu':
       'Ada beberapa kemungkinan. Pilih yang paling sesuai — jangan langsung dipakai otomatis.',
-    'lokasi.wilayahTidakDikenal': 'wilayah tidak dikenali',
+    'lokasi.wilayahResmiMenyusul': 'wilayah resmi menyusul setelah dipilih',
     'lokasi.wilayahTidakDikenalPanjang':
       'Wilayah administratif titik ini tidak berhasil dikenali dari sumber. Koordinatnya tetap dipakai, tetapi wilayahnya tidak ditebak.',
     'lokasi.tidakDiketahui': 'tidak diketahui dari sumber',
@@ -674,6 +678,7 @@ const KAMUS = {
     'wil.aktif': 'Active location',
     'wil.ubah': 'Change region',
     // travel directions
+    'rute.tutup': 'Close directions',
     'rute.judul': 'Directions',
     'rute.moda': 'Travel mode',
     'rute.jalanKaki': 'Walking',
@@ -687,6 +692,9 @@ const KAMUS = {
     'rute.googleMaps': 'Open in Google Maps',
     'rute.galat': 'The route could not be calculated.',
     'rute.butuhLokasi': 'Set your location first',
+    'rute.asalAlamat': 'Starting point: the address you picked',
+    'rute.asalManual': 'Starting point: the point you picked on the map',
+    'rute.asalNama': 'Starting point: the location you searched',
     'rute.asalGps': 'Starting point: your GPS location',
     'rute.asalWilayah':
       'Starting point: administrative region reference point, not your precise position.',
@@ -759,7 +767,7 @@ const KAMUS = {
     'lokasi.contohAlamat':
       'Examples: “Jl. Malioboro No. 52, Yogyakarta”, “Universitas Indonesia Depok”, or “Kecamatan Cikarang Selatan”. A postcode may be included.',
     'lokasi.pilihSalahSatu': 'There are several possibilities. Pick the right one — none is chosen for you.',
-    'lokasi.wilayahTidakDikenal': 'region not recognised',
+    'lokasi.wilayahResmiMenyusul': 'official region follows after selection',
     'lokasi.wilayahTidakDikenalPanjang':
       'The administrative region of this point could not be recognised from the source. Its coordinates are still used, but the region is not guessed.',
     'lokasi.tidakDiketahui': 'not provided by the source',

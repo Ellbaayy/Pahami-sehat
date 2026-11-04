@@ -75,18 +75,28 @@ membesar 112%, garis dan batas fokus dipertebal:
 
 ### Fasilitas Kesehatan Terdekat (4 Nov 2026)
 
-Diambil lewat `ambil-tangkapan.mjs` pada 1440×900, memakai jalur **pemilihan
-wilayah** (Jawa Barat → Kabupaten Bekasi → Cikarang Selatan) supaya keempat
-dropdown terlihat berisi — bukan jalur GPS yang membuatnya kosong.
+Diambil lewat `ambil-tangkapan.mjs` pada 1440×900, memakai jalur **ketik
+alamat** ("Malioboro Yogyakarta") — alur yang menyerupai Google Maps dan yang
+ingin ditunjukkan. Skrip menulis ke `docs/tangkapan-layar/` **dan** ke
+`docs/prototipe/assets/tangkapan-layar/` sekaligus; halaman penjelasan memakai
+folder kedua, dan sebelum ini skrip hanya menulis ke yang pertama sehingga
+halaman terus menampilkan gambar lama tanpa pesan apa pun.
 
-| Peta + daftar + filter | Detail fasilitas | Petunjuk arah |
+| Autocomplete alamat | Peta + daftar setelah alamat dipilih | Pilih titik di peta |
 |---|---|---|
-| ![Peta dan daftar](docs/tangkapan-layar/faskes-1-peta-daftar.png) | ![Detail fasilitas](docs/tangkapan-layar/faskes-2-detail.png) | ![Petunjuk arah](docs/tangkapan-layar/faskes-3-petunjuk-arah.png) |
+| ![Saran alamat](docs/tangkapan-layar/faskes-1-autocomplete.png) | ![Peta dan daftar](docs/tangkapan-layar/faskes-2-peta-daftar.png) | ![Pilih titik](docs/tangkapan-layar/faskes-5-pilih-titik.png) |
 
-Yang perlu diperhatikan saat melihatnya: sidebar sudah **7 menu**, keempat
-dropdown wilayah terisi, kolom yang tidak ada di data ditulis "Tidak tercatat",
-dan panel petunjuk arah menampilkan tiga moda beserta jarak/waktu/langkah —
-bukan hanya tombol.
+| Detail fasilitas | Petunjuk arah | RS Nasional (SIRS) |
+|---|---|---|
+| ![Detail fasilitas](docs/tangkapan-layar/faskes-3-detail.png) | ![Petunjuk arah](docs/tangkapan-layar/faskes-4-petunjuk-arah.png) | ![RS Nasional](docs/tangkapan-layar/faskes-0-rs-nasional.png) |
+
+Yang perlu diperhatikan saat melihatnya: sidebar **7 menu**; tiap saran alamat
+menyebut kota dan provinsinya supaya "Malioboro" tidak tertukar antara yang di
+Surabaya dan yang di Yogyakarta; setelah alamat dipilih, wilayah terdeteksi
+sampai kelurahan (**Danurejan / Sosrokusuman**) dan **324 fasilitas** muncul;
+panel petunjuk arah menampilkan tiga moda beserta jarak/waktu/langkah dan
+menyebut titik awalnya sebagai **"alamat yang Anda pilih"**, bukan GPS; tab
+Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 
 ### Halaman penjelasan (prototype)
 
@@ -122,12 +132,12 @@ bukan hanya tombol.
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
 | [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **24 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
 | [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 10 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
-| [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs--3325-rs-di-database). |
+| [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs-3325-rs-di-database). |
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
-| [`uji-*.mjs`](.) | **30 berkas uji** — 26 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
+| [`uji-*.mjs`](.) | **30 berkas uji** — 26 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -172,7 +182,7 @@ pahami-sehat/
 ├── README.md
 ├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
 ├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
-├── uji-*.mjs                  ← 15 berkas uji (14 tanpa jaringan)
+├── uji-*.mjs                  ← 30 berkas uji (26 tanpa jaringan)
 ├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
@@ -883,9 +893,11 @@ Nominatim, OSRM, dan Valhalla semuanya layanan publik tanpa kunci.
   langsung.
 - **Kategori Tradisional dan Khusus kosong di sekitar Jakarta** — OpenStreetMap
   memang belum punya datanya di sana. Kekosongan itu ditampilkan, tidak diisi.
-- **Tidak ada data Kemenkes.** Katalog publiknya tidak tersedia untuk dibaca
-  mesin saat diperiksa (semua endpoint NXDOMAIN/404/formulir/gerbang JS), jadi
-  aplikasi memakai OpenStreetMap dan **tidak** mengklaim memakai data Kemenkes.
+- **Data Kemenkes ADA — 3.325 rumah sakit resmi SIRS** (lihat [bagian SIRS](#rumah-sakit-resmi-kemenkes-sirs-3325-rs-di-database)).
+  Yang TIDAK tersedia dari sumber itu adalah **koordinat**, jadi rumah sakit
+  SIRS tidak digambar di peta. Sebelumnya README ini menyatakan katalog
+  Kemenkes tidak bisa dibaca mesin; itu keliru — `rekap_rs_all?id=0` mengembalikan
+  JSON lengkap tanpa paginasi. Kesalahan lama dikoreksi, bukan dihapus diam-diam.
 - Cermin Overpass yang menjawab `200` dengan daftar kosong dianggap **gagal**,
   bukan "tidak ada fasilitas" — `overpass.osm.ch` berperilaku begitu karena
   hanya memuat data Swiss.
@@ -1588,12 +1600,16 @@ menyesatkan orang yang sedang mencari pertolongan.
 | `faskes.kemkes.go.id` | Nama domain tidak ditemukan | Tidak |
 | `data.kemkes.go.id` | Nama domain tidak ditemukan | Tidak |
 | `api.kemkes.go.id` | HTTP 404 | Tidak |
-| `sirs.kemkes.go.id` | HTTP 200, tetapi hanya formulir pendaftaran RS — bukan katalog yang bisa dibaca mesin | Tidak |
-| `satusehat.kemkes.go.id` | HTTP 200, tetapi gerbang layanan ber-JavaScript; alamat API FHIR-nya tidak dapat dihubungi dan integrasinya butuh kredensial resmi | Tidak |
+| `sirs.kemkes.go.id/fo/home/rekap_rs_all?id=0` | **HTTP 200 dan JSON** — seluruh daftar nasional, tanpa paginasi | **Ya** |
+| `satusehat.kemkes.go.id` | Gerbang layanan ber-JavaScript; API FHIR-nya membalas **HTTP 401** tanpa kredensial resmi | Tidak |
 
-Jadi aplikasi **tidak** mengklaim memakai data Kemenkes. Alasan tiap sumber
-yang tidak terpakai ikut ditampilkan di kartu "Sumber data" pada halaman itu
-sendiri, supaya tidak terlihat seperti kelalaian.
+Catatan koreksi: uji awal sempat menyimpulkan `sirs.kemkes.go.id` hanya berisi
+formulir. Itu salah — endpoint `rekap_rs_all` mengembalikan JSON berisi
+**3.325 rumah sakit** dan langsung dipakai, tervalidasi terhadap rekapitulasi
+resmi SIRS sendiri (kelas A 86 · B 451 · C 1.826 · D 872 · D PRATAMA 85;
+RSU 2.828 · RSIA 296). Yang tetap tidak bisa diambil dari sana adalah
+**koordinat**, sehingga baris SIRS diberi tanda "Tanpa koordinat" dan tidak
+ditampilkan di peta.
 
 ### Batas yang disebut apa adanya
 

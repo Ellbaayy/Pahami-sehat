@@ -571,12 +571,15 @@
         <div class="f-head"><span class="f-num">6</span><h3>Fasilitas Kesehatan Terdekat &amp; Petunjuk Arah</h3></div>
         <p class="f-value">Masalah yang dipecahkan: orang tahu harus ke fasilitas kesehatan, tetapi tidak tahu mana yang terdekat, apa layanannya, dan bagaimana jalannya. Fitur ini menjawab ketiganya di satu halaman.</p>
         <ul class="f-list">
-          <li><strong>Menentukan lokasi:</strong> pilih <strong>Provinsi → Kota/Kabupaten → Kecamatan → Desa/Kelurahan</strong>, atau pakai GPS. Keempat pilihan saling bergantung dan mengatur ulang pilihannya sendiri bila tingkat di atasnya diganti.</li>
+          <li><strong>Dua cara menentukan lokasi, satu sistem pencarian:</strong> <strong>ketik alamat</strong> seperti di Google Maps (saran muncul saat mengetik, jeda 400 ms supaya tidak membanjiri layanan), atau <strong>pilih wilayah</strong> Provinsi → Kota/Kabupaten → Kecamatan → Desa/Kelurahan. Keduanya memakai koordinat yang sama-sama nyata dan menghasilkan daftar fasilitas yang sama.</li>
+          <li><strong>Alamat dikenali sampai kecamatan:</strong> mengetik “Malioboro Yogyakarta” menghasilkan <em>Daerah Istimewa Yogyakarta · Kota Yogyakarta · Danurejan · Sosrokusuman</em>, lengkap dengan koordinat — bukan hanya nama kota yang dicocokkan.</li>
+          <li><strong>Titik bisa diklik langsung di peta</strong> untuk alamat yang tidak ditemukan pencarian (gang tanpa nama, rumah di dalam kompleks). Alamat dan wilayahnya diambil dari layanan geocoding balik, lalu pengguna menekan “Pakai titik ini” — satu klik tak sengaja tidak langsung memindahkan seluruh pencarian.</li>
           <li><strong>Data wilayahnya resmi:</strong> diambil dari dataset administratif BPS/Kemendagri (38 provinsi, kode wilayah disimpan — bukan hanya namanya).</li>
           <li><strong>Sepuluh kategori:</strong> rumah sakit, puskesmas, klinik, praktik mandiri, apotek, laboratorium, penunjang medis, kesehatan masyarakat, kesehatan tradisional, dan fasilitas khusus — beserta subkategorinya.</li>
           <li><strong>Peta interaktif:</strong> Leaflet + OpenStreetMap, penanda berkelompok, warna berbeda per kategori, dan daftar fasilitas yang selalu mengikuti area pencarian.</li>
           <li><strong>Detail fasilitas:</strong> alamat, wilayah, koordinat, telepon, jam operasional, layanan, IGD, sumber data, dan status verifikasi. Kolom yang tidak ada ditulis <em>“Tidak tercatat”</em> — tidak pernah diisi tebakan.</li>
-          <li><strong>Petunjuk arah tiga moda:</strong> jalan kaki, sepeda motor, dan mobil. Mengganti moda <strong>menghitung ulang rute</strong> — jarak, waktu, jumlah langkah, dan garis di peta ikut berubah.</li>
+          <li><strong>Petunjuk arah tiga moda:</strong> jalan kaki, sepeda motor, dan mobil. Mengganti moda <strong>menghitung ulang rute</strong> — jarak, waktu, jumlah langkah, dan garis di peta ikut berubah. Setiap moda memakai penyedia yang benar-benar mendukungnya, bukan sekadar mengganti ikon.</li>
+          <li><strong>3.325 rumah sakit resmi Kemenkes</strong> di tab terpisah: seluruh daftar nasional SIRS, bisa dicari dan disaring menurut provinsi, kabupaten/kota, jenis, kelas, dan kepemilikan. Daftar ini <strong>tidak</strong> ditaruh di peta, karena sumbernya memang tidak menyediakan koordinat — menampilkannya sebagai titik akan berarti mengarang lokasi.</li>
         </ul>
 
         <div class="demo">
@@ -589,9 +592,12 @@
           <p class="demo-tag">Angka ini hasil pengukuran sungguhan, bukan contoh karangan. Moda yang berbeda memang memberi rute yang berbeda.</p>
         </div>
 
-        <img class="shot" src="assets/tangkapan-layar/faskes-1-peta-daftar.png" alt="Halaman Fasilitas Kesehatan pada aplikasi: pemilihan wilayah, filter kategori, daftar fasilitas, dan peta" width="1440" height="900" loading="lazy" decoding="async">
+        <img class="shot" src="assets/tangkapan-layar/faskes-1-autocomplete.png" alt="Pencarian alamat dengan daftar saran yang muncul saat mengetik, masing-masing menyebut kota dan provinsinya" width="1440" height="900" loading="lazy" decoding="async">
+        <img class="shot" src="assets/tangkapan-layar/faskes-2-peta-daftar.png" alt="Setelah alamat dipilih: wilayah terdeteksi sampai kelurahan, 324 fasilitas ditemukan, peta dengan penanda, dan daftar di sampingnya" width="1440" height="900" loading="lazy" decoding="async">
+        <img class="shot" src="assets/tangkapan-layar/faskes-5-pilih-titik.png" alt="Memilih titik langsung di peta: alamat hasil geocoding balik beserta tombol Pakai titik ini" width="1440" height="900" loading="lazy" decoding="async">
+        <img class="shot" src="assets/tangkapan-layar/faskes-0-rs-nasional.png" alt="Tab Rumah Sakit Nasional: 3.325 rumah sakit resmi SIRS Kemenkes dengan pencarian dan penyaring provinsi, jenis, kelas, kepemilikan" width="1440" height="900" loading="lazy" decoding="async">
 
-        <p class="note-box"><svg class="ic-svg lucide-info" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg> Batas yang disebut apa adanya: memuat pertama kali butuh 40–50 detik karena data diambil langsung dari OpenStreetMap; sesudahnya dari simpanan. Estimasi waktu perjalanan berasal dari profil kecepatan rute, <strong>bukan</strong> lalu lintas langsung. Wilayah administratif bukan posisi Anda secara presisi — tingkat yang benar-benar dipakai selalu ditampilkan.</p>
+        <p class="note-box"><svg class="ic-svg lucide-info" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg> Batas yang disebut apa adanya: memuat pertama kali butuh 40–50 detik karena data fasilitas diambil langsung dari OpenStreetMap; sesudahnya dari simpanan. Estimasi waktu perjalanan berasal dari profil kecepatan rute, <strong>bukan</strong> lalu lintas langsung. Wilayah administratif bukan posisi Anda secara presisi — tingkat yang benar-benar dipakai selalu ditampilkan. Pencarian alamat, peta, dan rute memakai layanan terbuka (Photon, Nominatim, OSRM, Valhalla) — <strong>tidak ada Google Maps API dan tidak ada kunci API</strong> yang perlu dibeli.</p>
       </article>
     </div>
 
@@ -607,7 +613,7 @@
           <li><strong>Baca otomatis (TTS): berjalan di komputer sendiri, belum di versi daring.</strong> Rancangannya suara neural dengan nada mengikuti isi kalimat — dan itu <strong>sudah terbukti berbunyi</strong> saat aplikasi dijalankan di komputer sendiri (yang dipakai saat penjurian): lima suara neural, MP3 24 kHz, diperiksa sampai isinya lewat transkripsi balik. Di versi daring (Vercel) belum, karena fungsi serverless tidak bisa mempertahankan koneksi WebSocket yang dipakai layanan suara Microsoft. Rinciannya di kartu Mode Suara di atas.</li>
           <li><strong>Semua pengaturan berfungsi:</strong> tingkat baca, mode kontras tinggi, putar suara otomatis, dan bahasa antarmuka — tidak ada yang hanya jadi hiasan.</li>
           <li><strong>Pindai foto berjalan di perangkat, bukan di server.</strong> Mesin pembacanya (WebAssembly) disajikan dari situs ini sendiri, bukan dari CDN — jadi saat memindai <strong>tidak ada satu pun permintaan yang keluar</strong> dari peramban. Foto tidak pernah dikirim ke mana pun, dan fitur ini tetap bekerja walau server AI mati. <em>Batasnya jujur disebut di aplikasi: ini alat bantu baca, angka hasil lab tetap wajib dicek ke kertas aslinya.</em></li>
-          <li><strong>Belum ada:</strong> terjemahan ke bahasa daerah (baru pilihan bahasanya), pengenalan tulisan tangan pada resep, dan data fasilitas resmi Kementerian Kesehatan — katalog publiknya belum tersedia untuk dibaca mesin saat diperiksa, jadi aplikasi memakai OpenStreetMap dan <strong>tidak</strong> mengklaim memakai data Kemenkes.</li>
+          <li><strong>Belum ada:</strong> terjemahan ke bahasa daerah (baru pilihan bahasanya) dan pengenalan tulisan tangan pada resep.</li>
         </ul>
       </div>
     </div>
@@ -705,11 +711,11 @@
     <!-- TANGKAPAN LAYAR ASLI (bukan mockup) -->
     <div class="grid-2" style="margin-top:1.6rem;gap:1.2rem;align-items:start">
       <figure class="reveal" style="margin:0">
-        <img class="shot" src="assets/tangkapan-layar/faskes-2-detail.png" alt="Panel detail fasilitas: alamat, wilayah, koordinat, telepon, jam operasional, layanan, IGD, dan status verifikasi" width="1440" height="900" loading="lazy" decoding="async">
+        <img class="shot" src="assets/tangkapan-layar/faskes-3-detail.png" alt="Panel detail fasilitas: alamat, wilayah, koordinat, telepon, jam operasional, layanan, IGD, dan status verifikasi" width="1440" height="900" loading="lazy" decoding="async">
         <figcaption class="demo-tag" style="color:#B9C6D8">Detail fasilitas — kolom yang tidak ada ditulis “Tidak tercatat”, tidak diisi tebakan.</figcaption>
       </figure>
       <figure class="reveal" style="margin:0">
-        <img class="shot" src="assets/tangkapan-layar/faskes-3-petunjuk-arah.png" alt="Panel petunjuk arah dengan pilihan jalan kaki, sepeda motor, dan mobil beserta daftar instruksi perjalanan" width="1440" height="900" loading="lazy" decoding="async">
+        <img class="shot" src="assets/tangkapan-layar/faskes-4-petunjuk-arah.png" alt="Panel petunjuk arah dengan pilihan jalan kaki, sepeda motor, dan mobil beserta daftar instruksi perjalanan" width="1440" height="900" loading="lazy" decoding="async">
         <figcaption class="demo-tag" style="color:#B9C6D8">Petunjuk arah — mengganti moda menghitung ulang rute, bukan hanya mengganti ikon.</figcaption>
       </figure>
     </div>

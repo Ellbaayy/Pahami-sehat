@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Hospital,
   MapPin,
@@ -120,6 +120,20 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
   const [titikGagal, setTitikGagal] = useState(false)
   // Fasilitas yang sedang dibuka petunjuk arahnya.
   const [navigasiKe, setNavigasiKe] = useState(null)
+
+  /**
+   * Panel rute ditaruh di atas, dan gulir diarahkan ke sana saat dibuka.
+   *
+   * Tanpa gulir otomatis, pengguna yang menekan "Petunjuk Arah" dari kartu
+   * detail (jauh di bawah) tetap melihat halaman yang tidak berubah — panelnya
+   * muncul di luar layar. `block: 'nearest'` dipakai supaya tidak melompat
+   * kalau panelnya sudah terlihat.
+   */
+  const panelRuteRef = useRef(null)
+  useEffect(() => {
+    if (!navigasiKe) return
+    panelRuteRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [navigasiKe])
   // Rute aktif, diteruskan ke peta untuk menggambar garis.
   const [ruteAktif, setRuteAktif] = useState(null)
   /*
@@ -361,6 +375,34 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
 
       {adaLokasi ? (
         <>
+          {/*
+           * PANEL RUTE DI ATAS, BUKAN DI BAWAH.
+           *
+           * Sebelumnya panel ini dirender setelah kartu detail — terukur
+           * jatuh di y=1944 pada jendela 900 px, jadi pengguna menekan
+           * "Petunjuk Arah" lalu TIDAK MELIHAT APA PUN. Rutenya sudah
+           * dihitung, tetapi di luar layar; yang terlihat hanya halaman yang
+           * tidak berubah.
+           *
+           * Sekarang ia muncul tepat di bawah pemilih lokasi, tempat mata
+           * pengguna berada saat menekan tombol, dan gulir diarahkan ke sini.
+           */}
+          {navigasiKe && lokasi ? (
+            <div ref={panelRuteRef}>
+              <PanelNavigasi
+                t={t}
+                asal={lokasi}
+                tujuan={navigasiKe}
+                onRute={setRuteAktif}
+                bahasa={bahasa}
+                onTutup={() => {
+                  setNavigasiKe(null)
+                  setRuteAktif(null)
+                }}
+              />
+            </div>
+          ) : null}
+
           <FilterBar
             t={t}
             labelKategori={labelKategori}
@@ -514,18 +556,6 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
         />
       ) : null}
 
-      {/* Petunjuk arah: hanya bisa dibuka kalau sudah ada lokasi asal. Tanpa
-          asal, rute tidak bisa dihitung dan menampilkan panel kosong hanya
-          membingungkan. */}
-      {navigasiKe && lokasi ? (
-        <PanelNavigasi
-          t={t}
-          asal={lokasi}
-          tujuan={navigasiKe}
-          onRute={setRuteAktif}
-          bahasa={bahasa}
-        />
-      ) : null}
       </div>
       ) : null}
     </section>

@@ -152,7 +152,7 @@ app/
     ├── lib/ocr.js            tesseract.js + angka mutu pembacaan
     ├── lib/keterbacaan.js    alat ukur keterbacaan + SASARAN
     ├── lib/skorHls.js        indeks HLS-SF12 (0–50)
-    ├── data/bahasa.js        kamus id + en (437 kunci masing-masing)
+    ├── data/bahasa.js        kamus id + en (500 kunci masing-masing, seimbang)
     ├── data/tingkat.js       daftar tingkat baca (satu sumber kebenaran)
     ├── data/dummy.js         konten statis
     ├── components/layout/    Sidebar, TopBar, MobileDrawer, nav (7 menu)

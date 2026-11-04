@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Loader2,
   TriangleAlert,
+  X,
 } from 'lucide-react'
 import { Card } from '../ui/primitives'
 import { useRute } from '../../lib/useRute'
@@ -27,7 +28,7 @@ const MODA = [
   { id: 'mobil', Ikon: Car, kunci: 'rute.mobil' },
 ]
 
-export default function PanelNavigasi({ t = (k) => k, asal, tujuan, onRute, bahasa = 'id' }) {
+export default function PanelNavigasi({ t = (k) => k, asal, tujuan, onRute, bahasa = 'id', onTutup }) {
   const { rute, moda, memuat, galat, hitung } = useRute(bahasa)
 
   // Hitung sekali saat panel dibuka; `hitung` stabil (useCallback tanpa dep).
@@ -56,15 +57,46 @@ export default function PanelNavigasi({ t = (k) => k, asal, tujuan, onRute, baha
       modaBaru: m,
     })
 
-  const asalWilayah = asal?.dari === 'wilayah'
+  /*
+   * Label titik awal WAJIB mengikuti sumbernya, bukan diseragamkan.
+   *
+   * Sebelumnya hanya dua label: "lokasi GPS Anda" atau "pusat wilayah". Dua
+   * sumber lain — alamat yang diketik dan titik yang diklik di peta — ikut
+   * disebut "lokasi GPS Anda". Terukur 4 Nov 2026: pengguna mencari
+   * "Malioboro Yogyakarta", lalu panel rute menulis "Titik awal: lokasi GPS
+   * Anda" padahal GPS tidak dipakai sama sekali.
+   */
+  const KUNCI_ASAL = {
+    gps: 'rute.asalGps',
+    alamat: 'rute.asalAlamat',
+    manual: 'rute.asalManual',
+    wilayah: 'rute.asalWilayah',
+    nama: 'rute.asalNama',
+  }
+  const kunciAsal = KUNCI_ASAL[asal?.dari] ?? 'rute.asalGps'
 
   return (
-    <Card className="p-3">
+    <Card className="relative p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="inline-flex items-center gap-1.5 text-[0.84rem] font-bold text-navy-900">
           <Navigation className="size-4 text-brand-700" aria-hidden="true" />
           {t('rute.judul')}
         </p>
+        {/*
+          * Tombol tutup: panel ini tampil di ATAS halaman, jadi ia harus bisa
+          * ditutup tanpa pengguna menggulir mencari tombol lain. Tanpa ini,
+          * rute menutupi isi halaman sampai halaman dimuat ulang.
+          */}
+        {onTutup ? (
+          <button
+            type="button"
+            onClick={onTutup}
+            aria-label={t('rute.tutup')}
+            className="ml-auto inline-flex size-7 items-center justify-center rounded-lg text-muted-500 hover:bg-surface-100 hover:text-navy-800"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        ) : null}
         <div className="flex gap-1.5" role="group" aria-label={t('rute.moda')}>
           {MODA.map(({ id, Ikon, kunci }) => (
             <button
@@ -91,7 +123,8 @@ export default function PanelNavigasi({ t = (k) => k, asal, tujuan, onRute, baha
         posisi rumah pengguna, padahal hanya dari pusat wilayah.
       */}
       <p className="mt-1 text-[0.76rem] leading-snug text-muted-500">
-        {asalWilayah ? t('rute.asalWilayah') : t('rute.asalGps')}
+        {t(kunciAsal)}
+        {asal?.nama ? <span className="text-muted-400"> · {asal.nama}</span> : null}
       </p>
 
       {memuat ? (

@@ -336,8 +336,18 @@ export default function InputLokasi({
                             {w.kecamatan ? <span>{w.kecamatan}</span> : null}
                             {w.kabupaten ? <span>· {w.kabupaten}</span> : null}
                             {w.provinsi ? <span>· {w.provinsi}</span> : null}
+                            {/*
+                              * Petunjuk kota di atas berasal dari Photon dan
+                              * hanya untuk MEMBEDAKAN kandidat. Wilayah resmi
+                              * (kode BPS) baru diambil setelah pengguna memilih.
+                              *
+                              * Karena itu kalimatnya "wilayah resmi menyusul",
+                              * BUKAN "wilayah tidak dikenali" — yang terakhir
+                              * terbaca seolah sistem gagal, padahal kotanya
+                              * sudah terlihat jelas di baris atas.
+                              */}
                             {!w.dikenal ? (
-                              <span className="text-amber-700">· {t('lokasi.wilayahTidakDikenal')}</span>
+                              <span className="text-muted-400">· {t('lokasi.wilayahResmiMenyusul')}</span>
                             ) : null}
                             <span className="text-muted-400">· {LABEL_KETEPATAN[h.ketepatan] ?? h.ketepatan}</span>
                           </span>

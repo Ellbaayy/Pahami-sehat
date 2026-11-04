@@ -24,7 +24,7 @@
  */
 
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, writeFileSync, statSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -107,6 +107,22 @@ async function evaluasi(cdp, ekspresi) {
   return r?.result?.value
 }
 
+/**
+ * Klik di koordinat layar lewat CDP.
+ *
+ * DIPERLUKAN untuk peta: klik pada Leaflet tidak bisa ditiru dengan
+ * `element.click()` karena Leaflet membaca koordinat dari event mouse
+ * (`clientX`/`clientY`), dan `.click()` tidak membawa keduanya. Tanpa
+ * Input.dispatchMouseEvent, kliknya "berhasil" tanpa efek apa pun — peta tidak
+ * pernah menerima titik.
+ */
+async function klik(cdp, x, y) {
+  const dasar = { x, y, button: 'left', clickCount: 1 }
+  await cdp.kirim('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y })
+  await cdp.kirim('Input.dispatchMouseEvent', { type: 'mousePressed', ...dasar })
+  await cdp.kirim('Input.dispatchMouseEvent', { type: 'mouseReleased', ...dasar })
+}
+
 /* ------------------------------------------------------------ utama ----- */
 
 const PROFIL = join('/tmp', `pahami-shot-${Date.now()}`)
@@ -176,12 +192,29 @@ async function main() {
     accuracy: 20,
   })
 
+  /**
+   * Simpan tangkapan ke DUA tempat.
+   *
+   * `docs/tangkapan-layar/` adalah arsip, tetapi yang benar-benar dipakai
+   * halaman penjelasan adalah `docs/prototipe/assets/tangkapan-layar/`.
+   * SEBELUMNYA skrip ini hanya menulis ke arsip, sehingga halaman penjelasan
+   * terus menampilkan gambar lama — dan tidak ada yang memberi tahu, karena
+   * rujukan `<img>`-nya hanya "gagal diam-diam" sebagai gambar rusak.
+   *
+   * Menyalinnya di sini membuat keduanya tidak mungkin menyimpang.
+   */
   const simpan = async (nama) => {
     const r = await cdp.kirim('Page.captureScreenshot', { format: 'png' })
+    const isi = Buffer.from(r.data, 'base64')
     const jalur = join(TUJUAN, nama)
-    writeFileSync(jalur, Buffer.from(r.data, 'base64'))
-    const ukuran = statSync(jalur).size
+    writeFileSync(jalur, isi)
+    const ukuran = isi.length
     if (ukuran < 20000) throw new Error(`${nama} terlalu kecil (${ukuran} byte) — tangkapan gagal`)
+
+    const untukHalaman = join(AKAR, 'docs', 'prototipe', 'assets', 'tangkapan-layar', nama)
+    mkdirSync(dirname(untukHalaman), { recursive: true })
+    writeFileSync(untukHalaman, isi)
+
     console.log(`  ok  ${nama}  (${Math.round(ukuran / 1024)} KB)`)
   }
 
@@ -206,72 +239,132 @@ async function main() {
   )
   await jeda(2000)
 
-  /*
-   * Pakai JALUR WILAYAH, bukan GPS.
+  /* ====================================================================== *
+   * TANGKAPAN 0: TAB RS NASIONAL (SIRS)
    *
-   * Halaman penjelasan harus memperlihatkan fitur yang baru, dan pemilihan
-   * wilayah administratif itulah fiturnya. Kalau jalur GPS yang dipakai,
-   * keempat dropdown tampil kosong dan tombolnya nonaktif — gambar yang benar
-   * secara teknis tetapi menyembunyikan hal yang ingin ditonjolkan.
-   */
-  const isiWilayah = async (indeks, nama) => {
-    const kode = await evaluasi(
-      cdp,
-      `(() => {
-        const sel = [...document.querySelectorAll('main select')][${indeks}];
-        if (!sel) return null;
-        const o = [...sel.options].find(x => x.textContent.indexOf(${JSON.stringify(nama)}) >= 0);
-        return o ? o.value : null;
-      })()`,
-    )
-    if (!kode) return false
-    await evaluasi(
-      cdp,
-      `(() => {
-        const sel = [...document.querySelectorAll('main select')][${indeks}];
-        const set = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value').set;
-        set.call(sel, ${JSON.stringify(kode)});
-        sel.dispatchEvent(new Event('change', { bubbles: true }));
-      })()`,
-    )
-    await jeda(1500)
-    return true
-  }
-
-  console.log('  wilayah:', await isiWilayah(0, 'Jawa Barat'))
-  console.log('  kabupaten:', await isiWilayah(1, 'Kabupaten Bekasi'))
-  console.log('  kecamatan:', await isiWilayah(2, 'Cikarang Selatan'))
-
+   * Diambil PALING AWAL karena tidak butuh lokasi sama sekali — daftarnya
+   * berasal dari database, bukan dari pencarian sekitar titik. Kalau diambil
+   * belakangan, halaman sudah penuh peta dan daftar fasilitas sehingga tab
+   * yang ingin ditonjolkan justru tenggelam.
+   * ====================================================================== */
+  console.log('  tab RS Nasional…')
   await evaluasi(
     cdp,
     `(() => {
-      const b = [...document.querySelectorAll('main button')]
-        .find(e => /Gunakan lokasi ini/i.test(e.textContent));
+      const b = [...document.querySelectorAll('main [role="tab"], main button')]
+        .find(e => /Rumah Sakit Nasional/i.test(e.textContent));
       if (b) b.click();
       return !!b;
     })()`,
   )
-
-  // tunggu sampai ada penanda DAN jumlah fasilitas muncul — syarat yang jelas,
-  // bukan "halaman tenang" yang tidak pernah tercapai karena ubin peta.
-  const adaData = await tungguSampai(
+  await jeda(2500)
+  const adaRs = await tungguSampai(
     async () =>
       (await evaluasi(
         cdp,
         `(() => {
           const t = document.querySelector('main')?.innerText || '';
-          const pin = document.querySelectorAll('.leaflet-marker-icon').length;
-          return /fasilitas ditemukan/.test(t);
+          return /rumah sakit/i.test(t) && /\\d{3,}/.test(t);
         })()`,
       )) === true,
-    120000,
+    30000,
+    800,
+  )
+  if (adaRs) {
+    await simpan('faskes-0-rs-nasional.png')
+  } else {
+    console.log('  (tab RS Nasional tidak siap — dilewati)')
+  }
+
+  /* ====================================================================== *
+   * TANGKAPAN 1-2: PENCARIAN ALAMAT (fitur baru)
+   *
+   * Jalur ketik alamat, bukan jalur wilayah: inilah yang menyerupai Google
+   * Maps dan yang ingin ditunjukkan. Kandidat dipilih dari daftar saran
+   * SUNGGUHAN (Photon), bukan diketik lalu ditekan Enter tanpa melihat.
+   * ====================================================================== */
+  console.log('  kembali ke tab Cari Fasilitas…')
+  await evaluasi(
+    cdp,
+    `(() => {
+      const b = [...document.querySelectorAll('main [role="tab"], main button')]
+        .find(e => /Fasilitas Terdekat/i.test(e.textContent));
+      if (b) b.click();
+      return !!b;
+    })()`,
+  )
+  await jeda(1500)
+
+  console.log('  mengetik alamat…')
+  await evaluasi(
+    cdp,
+    `(() => {
+      const i = document.getElementById('input-alamat');
+      if (!i) return false;
+      i.focus();
+      const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      set.call(i, 'Malioboro Yogyakarta');
+      i.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  )
+
+  // Tunggu daftar saran benar-benar terisi — bukan sekadar jeda tetap.
+  const adaSaran = await tungguSampai(
+    async () =>
+      (await evaluasi(cdp, `document.querySelectorAll('#alamat-saran li').length > 0`)) === true,
+    30000,
+    500,
+  )
+  if (!adaSaran) throw new Error('saran alamat tidak muncul — Photon hidup? coba lagi')
+  await jeda(700)
+  await simpan('faskes-1-autocomplete.png')
+
+  // Pilih saran pertama, lalu tunggu wilayah terdeteksi.
+  console.log('  memilih saran…')
+  await evaluasi(
+    cdp,
+    `(() => {
+      const b = document.querySelector('#alamat-saran li button');
+      if (b) b.click();
+      return !!b;
+    })()`,
+  )
+
+  const adaWilayah = await tungguSampai(
+    async () =>
+      (await evaluasi(
+        cdp,
+        `(() => {
+          const t = document.querySelector('main')?.innerText || '';
+          return /Provinsi/.test(t) && /Kecamatan/.test(t);
+        })()`,
+      )) === true,
+    45000,
+    800,
+  )
+  if (!adaWilayah) throw new Error('wilayah tidak terdeteksi setelah memilih alamat')
+
+  // Tunggu fasilitas benar-benar datang (bisa 40-50 detik untuk wilayah baru).
+  const adaDataAlamat = await tungguSampai(
+    async () =>
+      (await evaluasi(
+        cdp,
+        `(() => {
+          const t = document.querySelector('main')?.innerText || '';
+          return /fasilitas ditemukan/.test(t) && document.querySelectorAll('.leaflet-marker-icon').length > 0;
+        })()`,
+      )) === true,
+    150000,
     1000,
   )
-  if (!adaData) throw new Error('data fasilitas tidak siap — server hidup? coba lagi')
+  if (!adaDataAlamat) throw new Error('fasilitas dari alamat tidak siap')
   await jeda(2500)
-  await simpan('faskes-1-peta-daftar.png')
+  await simpan('faskes-2-peta-daftar.png')
 
-  // detail fasilitas
+  /* ====================================================================== *
+   * TANGKAPAN 3: DETAIL FASILITAS
+   * ====================================================================== */
   const kartu = await evaluasi(
     cdp,
     `(() => {
@@ -280,16 +373,18 @@ async function main() {
         const s = e.textContent;
         return s.length < 240 && (s.indexOf(' km') > 0 || s.indexOf(' m') > 0);
       });
-      const t = k.find(e => /RSPAD Gatot/i.test(e.textContent)) || k[0];
+      const t = k[0];
       if (t) t.click();
       return t ? t.innerText.replace(/\\n/g, ' | ').slice(0, 50) : null;
     })()`,
   )
   console.log('  kartu:', kartu)
   await jeda(2000)
-  await simpan('faskes-2-detail.png')
+  await simpan('faskes-3-detail.png')
 
-  // petunjuk arah — pilih jalan kaki supaya rutenya jelas berbeda
+  /* ====================================================================== *
+   * TANGKAPAN 4: PETUNJUK ARAH (jalan kaki, supaya beda dari mobil)
+   * ====================================================================== */
   await evaluasi(
     cdp,
     `(() => {
@@ -305,7 +400,7 @@ async function main() {
         cdp,
         `(() => {
           const t = document.querySelector('main')?.innerText || '';
-          return /km · sekitar/.test(t) && document.querySelectorAll('ol li').length > 0;
+          return /km · sekitar|kurang dari 1 menit/.test(t) && document.querySelectorAll('ol li').length > 0;
         })()`,
       )) === true,
     60000,
@@ -322,7 +417,113 @@ async function main() {
     })()`,
   )
   await jeda(3000)
-  await simpan('faskes-3-petunjuk-arah.png')
+  await simpan('faskes-4-petunjuk-arah.png')
+
+  /* ====================================================================== *
+   * TANGKAPAN 5: PILIH TITIK DI PETA
+   *
+   * Fitur ini tidak punya jalan masuk lain di layar selain tombol kecil
+   * "Pilih titik di peta" — tanpa tangkapan, ia tidak akan pernah terlihat di
+   * halaman penjelasan. Urutannya: aktifkan mode, klik peta, lalu tangkap
+   * panel yang menampilkan alamat hasil geocoding balik.
+   * ====================================================================== */
+  console.log('  mode pilih titik…')
+  // Tutup panel rute dulu supaya halaman kembali ke keadaan normal.
+  await evaluasi(
+    cdp,
+    `(() => {
+      const b = [...document.querySelectorAll('main button')]
+        .find(e => /Tutup petunjuk arah/i.test(e.getAttribute('aria-label') || ''));
+      if (b) b.click();
+      return !!b;
+    })()`,
+  )
+  await jeda(1200)
+
+  const modeAktif = await evaluasi(
+    cdp,
+    `(() => {
+      const b = [...document.querySelectorAll('main button')]
+        .find(e => /Pilih titik di peta/i.test(e.textContent));
+      if (b) b.click();
+      return !!b;
+    })()`,
+  )
+  if (modeAktif) {
+    await jeda(1500)
+    // Klik di tengah peta, digeser sedikit supaya tidak menimpa penanda asal.
+    const kotak = await evaluasi(
+      cdp,
+      `(() => {
+        const c = document.querySelector('.leaflet-container');
+        if (!c) return null;
+        c.scrollIntoView({ block: 'center' });
+        const r = c.getBoundingClientRect();
+        return { x: Math.round(r.left + r.width * 0.62), y: Math.round(r.top + r.height * 0.45) };
+      })()`,
+    )
+    if (kotak) {
+      console.log('    klik di', kotak)
+      await klik(cdp, kotak.x, kotak.y)
+      // Klik KEDUA: klik pertama kadang jatuh di atas penanda fasilitas.
+      // Peta sengaja mengabaikan klik pada penanda (supaya memilih fasilitas
+      // tidak sekaligus memindahkan titik asal), jadi titik baru terbentuk
+      // pada klik di area kosong.
+      if (
+        (await evaluasi(
+          cdp,
+          `(() => (document.querySelector('main')?.innerText || '').indexOf('Pakai titik ini') >= 0)()`,
+        )) !== true
+      ) {
+        await jeda(600)
+        const k2 = await evaluasi(
+          cdp,
+          `(() => {
+            const c = document.querySelector('.leaflet-container');
+            const r = c.getBoundingClientRect();
+            return { x: Math.round(r.left + r.width * 0.35), y: Math.round(r.top + r.height * 0.62) };
+          })()`,
+        )
+        if (k2) await klik(cdp, k2.x, k2.y)
+      }
+      const adaTitik = await tungguSampai(
+        async () =>
+          (await evaluasi(
+            cdp,
+            `(() => {
+              const t = document.querySelector('main')?.innerText || '';
+              return /Pakai titik ini/i.test(t);
+            })()`,
+          )) === true,
+        30000,
+        700,
+      )
+      if (adaTitik) {
+        /*
+         * Gulir ke panel titiknya SEBELUM menangkap.
+         *
+         * Percobaan pertama menghasilkan gambar yang isinya hanya daftar
+         * fasilitas dengan panel titik terpotong di tepi bawah — secara teknis
+         * "ada", tetapi tidak menunjukkan apa pun tentang fitur ini.
+         */
+        await evaluasi(
+          cdp,
+          `(() => {
+            const b = [...document.querySelectorAll('main button')]
+              .find(e => /Pakai titik ini/i.test(e.textContent));
+            if (b) b.scrollIntoView({ block: 'center', behavior: 'instant' });
+            return !!b;
+          })()`,
+        )
+        await jeda(1200)
+        await simpan('faskes-5-pilih-titik.png')
+      } else {
+        console.log('  (titik peta tidak terbentuk — dilewati)')
+      }
+    }
+  } else {
+    console.log('  (tombol pilih titik tidak ada — dilewati)')
+  }
 
   cdp.tutup()
   console.log('\nselesai — berkas di docs/tangkapan-layar/')

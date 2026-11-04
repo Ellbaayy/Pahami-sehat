@@ -46,14 +46,21 @@ docs/prototipe/
 │   ├── qr-pahami-sehat.png
 │   ├── fonts/pjs-var.woff2
 │   ├── ilustrasi/      # hero, masalah, konsep, alur, fitur, produk, kuesioner, klaim, tenang
-│   └── tangkapan-layar/ # 3 PNG ASLI dari aplikasi (peta+daftar, detail, petunjuk arah)
+│   └── tangkapan-layar/ # 6 PNG ASLI dari aplikasi (RS nasional, autocomplete,
+│                        #   peta+daftar, detail, petunjuk arah, pilih titik)
 └── Pahami-Sehat.jpeg   # gambar referensi desain (source of truth)
 ```
 
-`assets/tangkapan-layar/` adalah **salinan** dari `docs/tangkapan-layar/` di akar
-repo. Kalau tangkapan layar diambil ulang, salin keduanya — halaman memakai
-jalur relatif `assets/tangkapan-layar/…`, jadi berkas harus ada di dalam folder
-ini agar tetap tampil saat halaman dibuka langsung maupun lewat `dist/`.
+`assets/tangkapan-layar/` adalah salinan dari `docs/tangkapan-layar/` di akar
+repo. Halaman memakai jalur relatif `assets/tangkapan-layar/…`, jadi berkas
+harus ada di dalam folder ini agar tetap tampil saat halaman dibuka langsung
+maupun lewat `dist/`.
+
+**Menyalinnya tidak lagi manual.** `ambil-tangkapan.mjs` menulis ke kedua tempat
+sekaligus. Sebelumnya ia hanya menulis ke arsip, dan halaman penjelasan terus
+menampilkan gambar lama — kegagalannya diam, berupa gambar rusak tanpa pesan.
+Kalau berkas di folder ini hilang, itu berarti skripnya tidak dijalankan, bukan
+berkasnya lupa disalin.
 
 ## Section halaman
 
@@ -91,10 +98,14 @@ karena keduanya dibaca sebagai daftar isi.
 > **Rangka mockup ≠ tangkapan layar.** Rangka laptop/ponsel adalah ilustrasi tata
 > letak dan diberi keterangan begitu. Tiga gambar di bawahnya adalah tangkapan
 > layar **asli** dari aplikasi yang berjalan — peta + daftar fasilitas, panel
-> detail fasilitas, dan panel petunjuk arah. Gambarnya dihasilkan
-> `ambil-tangkapan.mjs` di akar repo (butuh server hidup di `:8787`), yang
-> **menolak menyimpan berkas di bawah 20 KB** supaya tangkapan gagal tidak lolos
-> diam-diam ke halaman publik.
+> detail fasilitas, dan panel petunjuk arah.
+
+Kartu **Fasilitas Kesehatan** memuat **enam** tangkapan layar asli: tab Rumah
+Sakit Nasional (3.325 RS SIRS), autocomplete alamat, peta + daftar setelah
+alamat dipilih, detail fasilitas, petunjuk arah, dan pemilihan titik di peta.
+Semuanya dihasilkan `ambil-tangkapan.mjs` di akar repo (butuh server hidup di
+`:8787`), yang **menolak menyimpan berkas di bawah 20 KB** supaya tangkapan
+gagal tidak lolos diam-diam ke halaman publik.
 
 ## Aksesibilitas & responsif
 
