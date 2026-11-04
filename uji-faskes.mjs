@@ -263,6 +263,193 @@ try {
   cek('koordinat bukan angka ditolak', e.code === 'koordinat', e.code)
 }
 
+/* ---------------------------------------------------------------------------
+ * Hasil kosong tidak boleh disimpan (racun cache)
+ * ---------------------------------------------------------------------------
+ * Satu cermin Overpass menjawab 200 dengan `elements` kosong karena hanya
+ * memuat data Swiss. Kalau hasil itu disimpan, "0 fasilitas" bertahan 10 menit
+ * dan aplikasi dengan yakin berkata "tidak ada fasilitas di sekitar Anda"
+ * untuk Jakarta. Uji ini memalsukan jaringan: pertama semua cermin menjawab
+ * kosong, kedua menjawab satu fasilitas. Kalau hasil kosong ikut tersimpan,
+ * panggilan kedua akan tetap 0.
+ */
+console.log('')
+console.log('== hasil kosong tidak disimpan ==')
+{
+  _kosongkanSimpanan()
+  const fetchAsli = globalThis.fetch
+  let panggilan = 0
+  try {
+    // Panggilan 1: semua cermin menjawab 200 dengan daftar kosong.
+    globalThis.fetch = async () => {
+      panggilan++
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ elements: [] }),
+        text: async () => JSON.stringify({ elements: [] }),
+      }
+    }
+    const pertama = await faskesSekitar({ lat: -6.1754, lon: 106.8272, radiusM: 3000 })
+    // Semua cermin menjawab kosong -> dua cermin tepercaya sepakat -> diterima.
+    cek('dua cermin tepercaya sepakat kosong -> jawabanKosong', pertama?.jawabanKosong === true, String(pertama?.jawabanKosong))
+    cek('hasil kosong berjumlah nol', pertama?.jumlah === 0, String(pertama?.jumlah))
+
+    // Panggilan 2: cermin menjawab satu fasilitas nyata.
+    globalThis.fetch = async () => {
+      panggilan++
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          elements: [
+            {
+              type: 'node',
+              id: 1,
+              lat: -6.176,
+              lon: 106.828,
+              tags: { amenity: 'hospital', name: 'RS Uji' },
+            },
+          ],
+        }),
+        text: async () => '{}',
+      }
+    }
+    const kedua = await faskesSekitar({ lat: -6.1754, lon: 106.8272, radiusM: 3000 })
+    cek('hasil kosong TIDAK dipakai ulang dari simpanan', kedua?.jumlah === 1, String(kedua?.jumlah))
+    cek('panggilan jaringan benar-benar terjadi lagi', panggilan > 0, String(panggilan))
+
+    // Panggilan 3: hasil berisi harus DIPAKAI dari simpanan (tidak memanggil jaringan).
+    const sebelum = panggilan
+    const ketiga = await faskesSekitar({ lat: -6.1754, lon: 106.8272, radiusM: 3000 })
+    cek('hasil berisi dipakai ulang dari simpanan', ketiga?.dariSimpanan === true, String(ketiga?.dariSimpanan))
+    cek('tidak ada panggilan jaringan tambahan', panggilan === sebelum, `${sebelum} -> ${panggilan}`)
+  } finally {
+    globalThis.fetch = fetchAsli
+    _kosongkanSimpanan()
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Balasan kosong dari cermin yang tidak memuat data Indonesia = GAGAL
+ * ---------------------------------------------------------------------------
+ * overpass.osm.ch menjawab 200 dengan daftar kosong karena basis datanya hanya
+ * memuat Swiss. Mempercayainya berarti aplikasi berkata "tidak ada fasilitas di
+ * sekitar Anda" untuk Jakarta. Uji ini memalsukan jaringan sehingga hanya
+ * cermin Swiss yang menjawab (kosong) dan cermin Indonesia gagal.
+ */
+console.log('')
+console.log('== kosong dari cermin Swiss bukan bukti ==')
+{
+  _kosongkanSimpanan()
+  const fetchAsli = globalThis.fetch
+  try {
+    globalThis.fetch = async (url) => {
+      const u = String(url)
+      if (u.includes('overpass.osm.ch')) {
+        // 200 dengan daftar kosong, seperti perilaku aslinya
+        return { ok: true, status: 200, json: async () => ({ elements: [] }), text: async () => '{"elements":[]}' }
+      }
+      // cermin Indonesia sedang 502 (keadaan nyata 4 Nov 2026)
+      return { ok: false, status: 502, json: async () => ({}), text: async () => 'Bad Gateway' }
+    }
+    let kode = null
+    let pesan = ''
+    try {
+      await faskesSekitar({ lat: -6.1754, lon: 106.8272, radiusM: 3000 })
+    } catch (e) {
+      kode = e.code
+      pesan = String(e.message)
+    }
+    cek('kosong dari cermin Swiss TIDAK diterima sebagai hasil', kode === 'sumber_gagal', String(kode))
+    cek('pesan galat menyebut sebabnya', /kosong|gagal/i.test(pesan), pesan.slice(0, 60))
+  } finally {
+    globalThis.fetch = fetchAsli
+    _kosongkanSimpanan()
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Satu cermin tepercaya yang kosong BELUM cukup
+ * ---------------------------------------------------------------------------
+ * Keadaan nyata 4 Nov 2026: overpass-api.de membalas 502, lz4 membalas 200
+ * dengan nol elemen untuk Jakarta Pusat. Satu balasan kosong bisa berarti
+ * replikanya belum lengkap, jadi tidak boleh disimpulkan "tidak ada fasilitas".
+ */
+console.log('')
+console.log('== satu cermin kosong belum cukup ==')
+{
+  _kosongkanSimpanan()
+  const fetchAsli = globalThis.fetch
+  try {
+    globalThis.fetch = async (url) => {
+      const u = String(url)
+      if (u.includes('lz4.overpass-api.de')) {
+        return { ok: true, status: 200, json: async () => ({ elements: [] }), text: async () => '{"elements":[]}' }
+      }
+      if (u.includes('overpass-api.de')) {
+        return { ok: false, status: 502, json: async () => ({}), text: async () => 'Bad Gateway' }
+      }
+      // cermin lain ikut kosong, tetapi TIDAK memuat data Indonesia
+      return { ok: true, status: 200, json: async () => ({ elements: [] }), text: async () => '{"elements":[]}' }
+    }
+    let kode = null
+    try {
+      await faskesSekitar({ lat: -6.1754, lon: 106.8272, radiusM: 3000 })
+    } catch (e) {
+      kode = e.code
+    }
+    cek('satu cermin tepercaya kosong -> sumber_gagal', kode === 'sumber_gagal', String(kode))
+  } finally {
+    globalThis.fetch = fetchAsli
+    _kosongkanSimpanan()
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * `remark` Overpass = GALAT, bukan "wilayah kosong"
+ * ---------------------------------------------------------------------------
+ * Saat query timeout di sisi server, Overpass membalas HTTP 200 dengan
+ * elements: [] DAN remark berisi galatnya. Balasan itu nyaris tidak bisa
+ * dibedakan dari "tidak ada fasilitas" — dan itulah yang membuat Jakarta Pusat
+ * dilaporkan kosong pada 4 Nov 2026. Uji ini memastikan remark diperlakukan
+ * sebagai galat.
+ */
+console.log('')
+console.log('== remark Overpass diperlakukan sebagai galat ==')
+{
+  _kosongkanSimpanan()
+  const fetchAsli = globalThis.fetch
+  try {
+    const balasanTimeout = {
+      version: 0.6,
+      elements: [],
+      remark: 'runtime error: Query timed out in "query" at line 1 after 2 seconds.',
+    }
+    globalThis.fetch = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => balasanTimeout,
+      text: async () => JSON.stringify(balasanTimeout),
+    })
+    let kode = null
+    let pesan = ''
+    try {
+      await faskesSekitar({ lat: -6.1754, lon: 106.8272, radiusM: 3000 })
+    } catch (e) {
+      kode = e.code
+      pesan = String(e.message)
+    }
+    cek('remark -> sumber_gagal (bukan "kosong")', kode === 'sumber_gagal', String(kode))
+    cek('sebabnya terlihat di keadaan cermin', /timed out|remark/i.test(
+      JSON.stringify((await (async () => { try { await faskesSekitar({ lat: -6.1754, lon: 106.8272, radiusM: 3000 }) } catch (e) { return e.keadaan } })()) ?? ''),
+    ), pesan.slice(0, 50))
+  } finally {
+    globalThis.fetch = fetchAsli
+    _kosongkanSimpanan()
+  }
+}
+
 console.log('')
 console.log(gagal === 0 ? `SEMUA LULUS — ${lulus} pemeriksaan` : `${lulus} lulus, ${gagal} GAGAL`)
 process.exit(gagal === 0 ? 0 : 1)

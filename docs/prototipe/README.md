@@ -45,9 +45,15 @@ docs/prototipe/
 │   ├── logo-tim.jpeg   # logo tim NØCTURNE
 │   ├── qr-pahami-sehat.png
 │   ├── fonts/pjs-var.woff2
-│   └── ilustrasi/      # hero, masalah, konsep, alur, fitur, produk, kuesioner, klaim, tenang
+│   ├── ilustrasi/      # hero, masalah, konsep, alur, fitur, produk, kuesioner, klaim, tenang
+│   └── tangkapan-layar/ # 3 PNG ASLI dari aplikasi (peta+daftar, detail, petunjuk arah)
 └── Pahami-Sehat.jpeg   # gambar referensi desain (source of truth)
 ```
+
+`assets/tangkapan-layar/` adalah **salinan** dari `docs/tangkapan-layar/` di akar
+repo. Kalau tangkapan layar diambil ulang, salin keduanya — halaman memakai
+jalur relatif `assets/tangkapan-layar/…`, jadi berkas harus ada di dalam folder
+ini agar tetap tampil saat halaman dibuka langsung maupun lewat `dist/`.
 
 ## Section halaman
 
@@ -65,18 +71,30 @@ karena keduanya dibaca sebagai daftar isi.
    Terpercaya
 6. `#alur` — **Alur Pemakaian**: MULAI → pilih bahasa + tingkat baca →
    butuh bantuan apa → proses AI → titik keputusan → SELESAI
-7. `#fitur` — **Fitur Utama**: Penerjemah Bahasa Medis, Mode Suara &
-   Bahasa Sehari-hari, Mode Kontras Tinggi, Verifikasi klaim
-8. `#produk` — mockup laptop + mockup ponsel (ilustrasi, bukan tangkapan layar)
+7. `#fitur` — **Enam Fitur Utama**: Penerjemah Bahasa Medis, Mode Suara &
+   Bahasa Sehari-hari, Mode Kontras Tinggi, Mencari Internet & Mencantumkan
+   Sumber, Berita Kesehatan Harian, dan Fasilitas Kesehatan Terdekat &
+   Petunjuk Arah
+8. `#produk` — mockup laptop + mockup ponsel (**ilustrasi tata letak**) dan
+   **tiga tangkapan layar asli** dari aplikasi yang berjalan
 9. `#kuesioner` — **Cek Tingkat Literasi Kesehatan** (instrumen HLS-SF12)
 10. `#sumber` — **Daftar Rujukan**
 11. `#etika` — **Privasi, Etika AI, dan Jejaknya**
 12. Quote band + footer
 
 > Mockup perangkat di bagian **Produk** menampilkan **menu yang sama** dengan
-> aplikasi sungguhan: Beranda, Tanya AI, Cek Klaim, Riwayat, Kuesioner,
-> Pengaturan. "Sederhanakan", "Suara", dan "Pindai Foto" tidak berdiri sendiri
-> karena ketiganya sudah menjadi bagian dari Tanya AI.
+> aplikasi sungguhan: Beranda, Tanya AI, Cek Klaim, Fasilitas Kesehatan
+> Terdekat, Riwayat, Kuesioner, Pengaturan (7 menu). "Sederhanakan", "Suara",
+> dan "Pindai Foto" tidak berdiri sendiri karena ketiganya sudah menjadi bagian
+> dari Tanya AI.
+
+> **Rangka mockup ≠ tangkapan layar.** Rangka laptop/ponsel adalah ilustrasi tata
+> letak dan diberi keterangan begitu. Tiga gambar di bawahnya adalah tangkapan
+> layar **asli** dari aplikasi yang berjalan — peta + daftar fasilitas, panel
+> detail fasilitas, dan panel petunjuk arah. Gambarnya dihasilkan
+> `ambil-tangkapan.mjs` di akar repo (butuh server hidup di `:8787`), yang
+> **menolak menyimpan berkas di bawah 20 KB** supaya tangkapan gagal tidak lolos
+> diam-diam ke halaman publik.
 
 ## Aksesibilitas & responsif
 
@@ -85,6 +103,24 @@ karena keduanya dibaca sebagai daftar isi.
 - HTML semantik, `skip-link`, `aria-label`, `aria-pressed`, `role="switch"`,
   target sentuh ≥44 px, fokus terlihat, menghormati `prefers-reduced-motion`
 - Font + logo disimpan lokal — halaman tetap tampil penuh tanpa internet
+- Gambar tangkapan layar memakai `loading="lazy"` + `width`/`height` eksplisit,
+  jadi tata letak tidak melompat saat gambarnya masuk
+
+Halaman ini punya uji peramban sendiri di akar repo:
+
+```bash
+npm run server                     # di app/, terminal lain
+node uji-halaman-penjelasan.mjs    # 18 pemeriksaan
+```
+
+Yang diperiksa: enam kartu fitur, penyebutan wilayah bertingkat dan tiga moda,
+**ketiga tangkapan layar benar-benar termuat** (`naturalWidth` 1440×900 — bukan
+sekadar tag `<img>` yang terpasang), tidak ada gambar rusak, tidak ada luapan
+mendatar di 1366×700 maupun 375×812, dan semua tautan jangkar punya tujuan.
+
+> Uji itu **menggulir dulu** seperti pengguna. `loading="lazy"` memang menahan
+> gambar di bawah lipatan (`complete: false`, `currentSrc: ""`), dan memaksa
+> `src` lebih dulu justru menyembunyikan kesalahan jalur yang sebenarnya.
 
 ## Catatan
 

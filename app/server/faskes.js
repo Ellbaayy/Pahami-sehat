@@ -55,6 +55,25 @@ const CERMIN = [
   'https://overpass.osm.ch/api/interpreter',
 ]
 
+/**
+ * Cermin yang TERBUKTI memuat data Indonesia.
+ *
+ * KENAPA PERLU DIPISAH: `overpass.osm.ch` menjawab HTTP 200 dengan `elements`
+ * kosong untuk koordinat mana pun di Indonesia karena basis datanya hanya
+ * memuat Swiss. Balasan kosong dari cermin seperti itu BUKAN bukti bahwa
+ * areanya kosong. Tanpa pembedaan ini, saat `overpass-api.de` membalas 502
+ * (sering terjadi), aplikasi akan menampilkan "tidak ada fasilitas di sekitar
+ * Anda" untuk Jakarta — pernyataan yang salah dan tidak bisa dibela.
+ *
+ * Aturannya: balasan kosong hanya dipercaya kalau datang dari cermin di daftar
+ * ini. Kalau tidak, hasilnya `sumber_gagal` — pengguna diminta mencoba lagi,
+ * bukan diberi peta kosong yang terlihat meyakinkan.
+ */
+const CERMIN_DATA_INDONESIA = new Set([
+  'https://overpass-api.de/api/interpreter',
+  'https://lz4.overpass-api.de/api/interpreter',
+])
+
 /** Batas aman: satu permintaan gabungan, bukan satu per kategori. */
 const TIMEOUT_MS = 70_000
 /**
@@ -494,6 +513,25 @@ async function ambilCermin(cermin, query, batasMs = TIMEOUT_MS) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const j = await res.json()
   if (!Array.isArray(j?.elements)) throw new Error('balasan bukan Overpass')
+
+  /*
+   * AKAR MASALAH "JAKARTA TIDAK PUNYA FASILITAS".
+   *
+   * Saat query-nya timeout di sisi server, Overpass membalas HTTP 200 dengan
+   * `elements: []` DAN sebuah `remark` berisi galatnya. Diukur 4 Nov 2026:
+   *
+   *   { "elements": [], "remark": "runtime error: Query timed out in \"query\"
+   *     at line 1 after 2 seconds." }
+   *
+   * Tanpa pemeriksaan ini, balasan itu terlihat persis seperti "wilayah ini
+   * tidak punya fasilitas" — dan itulah yang terjadi: Jakarta Pusat dilaporkan
+   * kosong, hasilnya tersimpan 10 menit di simpanan, dan peta kosong tampil
+   * dengan meyakinkan. `remark` adalah satu-satunya penanda bahwa ini GALAT,
+   * bukan hasil.
+   */
+  if (j.remark) {
+    throw new Error(`Overpass: ${String(j.remark).slice(0, 120)}`)
+  }
   // CACAT YANG PERNAH TERJADI, dan tidak terlihat sama sekali: sebagian cermin
   // (mis. overpass.osm.ch) hanya memuat data satu negara, jadi ia membalas 200
   // dengan daftar KOSONG untuk koordinat di Indonesia. Tanpa pemeriksaan ini,
@@ -536,6 +574,11 @@ function bacaSimpananDisk() {
     const isi = JSON.parse(readFileSync(BERKAS_SIMPANAN, 'utf8'))
     if (!isi || typeof isi !== 'object') return
     for (const [kunci, nilai] of Object.entries(isi)) {
+      // Entri berisi nol fasilitas dibuang saat dibaca: itu sisa dari versi
+      // sebelum perbaikan di bawah, dan mempercayainya berarti menampilkan
+      // "tidak ada fasilitas" untuk wilayah yang sebenarnya penuh.
+      const jumlah = nilai?.data?.jumlah ?? 0
+      if (jumlah <= 0) continue
       if (nilai?.waktu && nilai?.data && Date.now() - nilai.waktu <= CACHE_MS) {
         simpanan.set(kunci, nilai)
       }
@@ -659,7 +702,8 @@ export async function faskesSekitar({ lat, lon, radius = 5000 } = {}) {
   // di sini" dan "sumbernya sedang mati" terlihat sama di antarmuka.
   let elemen = null
   let dipakai = null
-  let adaJawabanKosong = false
+  // Berapa CERMIN TEPERCAYA yang bilang "kosong". Satu saja tidak cukup.
+  let kosongTepercaya = 0
 
   const mulaiTotal = Date.now()
   for (const cermin of CERMIN) {
@@ -681,7 +725,12 @@ export async function faskesSekitar({ lat, lon, radius = 5000 } = {}) {
       keadaan.push({ nama: 'OpenStreetMap (Overpass)', url: cermin, ok: true, ms: Date.now() - mulai })
       break
     } catch (e) {
-      if (e?.kosong) adaJawabanKosong = true
+      if (e?.kosong) {
+        // Balasan kosong hanya dianggap bukti kalau cerminnya memang memuat
+        // data Indonesia. Dari cermin Swiss, kosong berarti "tidak ada data
+        // untuk wilayah ini", bukan "wilayah ini kosong".
+        if (CERMIN_DATA_INDONESIA.has(cermin)) kosongTepercaya++
+      }
       keadaan.push({
         nama: 'OpenStreetMap (Overpass)',
         url: cermin,
@@ -692,8 +741,22 @@ export async function faskesSekitar({ lat, lon, radius = 5000 } = {}) {
     }
   }
 
-  if (!elemen && !adaJawabanKosong) {
-    const galat = new Error('semua cermin Overpass gagal')
+  /*
+   * Butuh DUA cermin tepercaya yang sepakat "kosong".
+   *
+   * Diukur 4 Nov 2026: `overpass-api.de` membalas 502 lalu
+   * `lz4.overpass-api.de` membalas 200 dengan NOL elemen untuk Jakarta Pusat —
+   * padahal wilayah itu penuh fasilitas. Satu cermin yang menjawab kosong bisa
+   * berarti replikanya belum lengkap, bukan berarti areanya kosong. Dua cermin
+   * independen yang sama-sama kosong baru layak dipercaya.
+   *
+   * Kalau tidak tercapai, hasilnya `sumber_gagal`: "coba lagi" itu benar,
+   * "tidak ada fasilitas di sini" itu belum tentu benar.
+   */
+  if (!elemen && kosongTepercaya < 2) {
+    const galat = new Error(
+      'semua cermin Overpass gagal atau hanya menjawab kosong dari basis data yang tidak memuat Indonesia',
+    )
     galat.code = 'sumber_gagal'
     galat.keadaan = keadaan
     throw galat
@@ -745,8 +808,21 @@ export async function faskesSekitar({ lat, lon, radius = 5000 } = {}) {
     ],
   }
 
-  tulisCache(kunciCache(a, b, r), data)
-  return { ...data, dariSimpanan: false }
+  /*
+   * JANGAN simpan hasil kosong.
+   *
+   * Satu cermin Overpass (overpass.osm.ch) menjawab HTTP 200 dengan daftar
+   * `elements` kosong karena hanya memuat data Swiss. Tanpa penjagaan ini,
+   * "0 fasilitas" ikut tersimpan 10 menit — dan sesudah itu aplikasi dengan
+   * yakin menampilkan "tidak ada fasilitas di sekitar Anda" untuk Jakarta.
+   * Terbukti di berkas simpanan: dua kunci berisi 0 fasilitas untuk Jakarta.
+   *
+   * Hasil kosong tetap DIPAKAI untuk permintaan ini (bisa jadi areanya memang
+   * kosong), tetapi tidak pernah disimpan dan ditandai supaya antarmuka tidak
+   * menyimpulkan terlalu jauh.
+   */
+  if (unik.length > 0) tulisCache(kunciCache(a, b, r), data)
+  return { ...data, jawabanKosong: unik.length === 0, dariSimpanan: false }
 }
 
 /* ------------------------------------------------------------ pemanasan -- */

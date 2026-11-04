@@ -36,15 +36,21 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 ## Tampilan
 
 Tangkapan layar di bawah diambil langsung dari aplikasi yang berjalan
-(`npm run server`) — bukan gambar desain. Seluruh **21 berkas** di
+(`npm run server`) — bukan gambar desain. **21 berkas** di
 [`docs/tangkapan-layar/`](docs/tangkapan-layar/) diambil ulang **20 Okt 2026**,
-sesudah halaman login dihapus dan kartu privasi di Pengaturan dibuang, jadi yang
-terlihat di README adalah tampilan yang benar-benar berlaku sekarang.
+sesudah halaman login dihapus dan kartu privasi di Pengaturan dibuang. **Tiga
+berkas** (`faskes-*.png`, **4 Nov 2026**) menyusul untuk fitur Fasilitas
+Kesehatan Terdekat, diambil lewat `ambil-tangkapan.mjs` pada **1440×900**.
 
 Dashboard diambil pada **1280×577** (laptop), ponsel **390×844** dengan DPR 2
 (780×1688 piksel), dan mode kontras tinggi **1440×900**. Yang terlihat di bagian
 **Produk** adalah mockup perangkat, dan itu memang ilustrasi di dalam halaman —
 sisanya tampilan sungguhan.
+
+> Tangkapan layar dashboard di bawah diambil **sebelum** menu ketujuh ada, jadi
+> sidebar-nya masih 6 menu. Yang memperlihatkan keadaan sekarang adalah tiga
+> gambar Fasilitas Kesehatan di bagian bawah — itulah fitur terbaru, dan
+> sidebar-nya sudah 7 menu.
 
 ### Aplikasi — dashboard
 
@@ -67,13 +73,28 @@ membesar 112%, garis dan batas fokus dipertebal:
 
 ![Mode kontras tinggi](docs/tangkapan-layar/dashboard-kontras-tinggi.png)
 
+### Fasilitas Kesehatan Terdekat (4 Nov 2026)
+
+Diambil lewat `ambil-tangkapan.mjs` pada 1440×900, memakai jalur **pemilihan
+wilayah** (Jawa Barat → Kabupaten Bekasi → Cikarang Selatan) supaya keempat
+dropdown terlihat berisi — bukan jalur GPS yang membuatnya kosong.
+
+| Peta + daftar + filter | Detail fasilitas | Petunjuk arah |
+|---|---|---|
+| ![Peta dan daftar](docs/tangkapan-layar/faskes-1-peta-daftar.png) | ![Detail fasilitas](docs/tangkapan-layar/faskes-2-detail.png) | ![Petunjuk arah](docs/tangkapan-layar/faskes-3-petunjuk-arah.png) |
+
+Yang perlu diperhatikan saat melihatnya: sidebar sudah **7 menu**, keempat
+dropdown wilayah terisi, kolom yang tidak ada di data ditulis "Tidak tercatat",
+dan panel petunjuk arah menampilkan tiga moda beserta jarak/waktu/langkah —
+bukan hanya tombol.
+
 ### Halaman penjelasan (prototype)
 
 | Pembuka | Masalah & data | Konsep |
 |---|---|---|
 | ![Pembuka](docs/tangkapan-layar/prototype-1-hero.png) | ![Masalah](docs/tangkapan-layar/prototype-2-masalah.png) | ![Konsep](docs/tangkapan-layar/prototype-3-konsep.png) |
 
-| Alur enam langkah | Lima fitur utama | Lanjutan fitur |
+| Alur enam langkah | Fitur utama (20 Okt) | Lanjutan fitur |
 |---|---|---|
 | ![Alur](docs/tangkapan-layar/prototype-4-alur.png) | ![Fitur](docs/tangkapan-layar/prototype-5-fitur.png) | ![Fitur lanjutan](docs/tangkapan-layar/prototype-6-fitur-lanjut.png) |
 
@@ -99,11 +120,11 @@ membesar 112%, garis dan batas fokus dipertebal:
 |---|---|
 | [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
-| [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **21 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
-| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB bahan** — 6 tabel. Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
+| [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **24 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
+| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 10 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
-| [`uji-*.mjs`](.) | **24 berkas uji** — 21 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` butuh server + Chrome; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
+| [`uji-*.mjs`](.) | **28 berkas uji** — 24 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -158,8 +179,8 @@ pahami-sehat/
 │   ├── .env                   ← API key Kenari (JANGAN di-commit, mode 600)
 │   ├── .env.example
 │   ├── public/ocr/            ← mesin OCR: worker, core WASM, data bahasa (17 MB)
-│   ├── scripts/               ← salin-prototipe.mjs (prebuild)
-│   ├── server/                ← backend Express (20 berkas)
+│   ├── scripts/               ← salin-prototipe, mampatkan-dist, bebaskan-port
+│   ├── server/                ← backend Express (24 berkas)
 │   ├── src/                   ← frontend React: App.jsx, lib/, data/, components/
 │   ├── api/index.js           ← pintu masuk serverless Vercel
 │   ├── index.html
@@ -172,7 +193,7 @@ pahami-sehat/
     │   ├── css/
     │   ├── js/
     │   └── assets/
-    ├── tangkapan-layar/       ← 21 tangkapan layar
+    ├── tangkapan-layar/       ← 24 tangkapan layar
     ├── skema-database.sql
     ├── sumber-hls-sf12.txt
     └── verifikasi-*.md
@@ -189,15 +210,16 @@ ke aplikasi.
 ```mermaid
 flowchart TB
   subgraph Peramban["Peramban — React 19 + Vite 8 + Tailwind 4"]
-    UI["Antarmuka<br/>Beranda · Tanya AI · Cek Klaim · Riwayat · Kuesioner · Pengaturan"]
+    UI["Antarmuka (7 menu)<br/>Beranda · Tanya AI · Cek Klaim · Fasilitas Kesehatan<br/>Riwayat · Kuesioner · Pengaturan"]
     OCR["Mesin OCR<br/>tesseract.js / WebAssembly"]
     LS[("localStorage<br/>sesi · kuesioner · setelan")]
+    PETA["Peta Leaflet + OpenStreetMap<br/>ubin + penanda berkelompok"]
   end
 
   subgraph Server["Express 5 — lokal; Vercel Serverless saat produksi"]
     B["Pembatas laju<br/>20 permintaan/menit per IP + batas total per instance"]
     R["Rute /api/*"]
-    DBJ["app/server/db.js<br/>jembatan database — OPSIONAL untuk bahan<br/>gagal = null, tidak pernah melempar"]
+    DBJ["app/server/db.js<br/>jembatan database — OPSIONAL<br/>gagal = null + alasanGagal, tidak melempar"]
   end
 
   subgraph Simpanan["MariaDB (XAMPP) — di laptop sendiri"]
@@ -206,6 +228,7 @@ flowchart TB
     T3[("pengetahuan<br/>salinan berlabel tanggal")]
     T4[("sumber")]
     T6[("dokumen · sitasi<br/>jejak sumber yang dikutip")]
+    T7[("wilayah · kategori_fasilitas<br/>fasilitas + sumber & kedaluwarsa")]
   end
 
   subgraph Luar["Layanan luar"]
@@ -214,11 +237,16 @@ flowchart TB
     M["MedlinePlus<br/>wsearch.nlm.nih.gov"]
     N["RSS berita kesehatan<br/>Detik Health · WHO · Google News"]
     MS["Microsoft Edge TTS<br/>suara neural via WebSocket"]
+    OV["Overpass API<br/>OpenStreetMap"]
+    VH["Valhalla<br/>rute jalan kaki · motor · mobil"]
+    NM["Nominatim<br/>titik referensi wilayah"]
+    WID["wilayah.id<br/>38 provinsi, kode bertitik"]
   end
 
   UI --> B --> R
   UI <--> LS
   UI --> OCR
+  UI --> PETA
   OCR -.->|"tidak pernah keluar<br/>dari perangkat"| OCR
 
   R -->|"kata kunci terpilih"| W
@@ -226,6 +254,12 @@ flowchart TB
   R -->|"pertanyaan berita"| N
   R -->|"sumber + pertanyaan"| K
   R -->|"teks"| MS
+  R -->|"radius + koordinat"| OV
+  OV -->|"fasilitas (ODbL)"| R
+  R -->|"asal + tujuan + moda"| VH
+  VH -->|"jarak, waktu, langkah"| R
+  R -->|"kode wilayah"| WID
+  R -->|"nama wilayah"| NM
   MS -->|"audio MP3"| R
   K -->|"jawaban + sumber yang dikutip"| R
   R -->|"jawaban"| UI
@@ -236,11 +270,12 @@ flowchart TB
   DBJ --> T3
   DBJ --> T4
   DBJ --> T6
+  DBJ --> T7
 
   classDef store fill:#eef,stroke:#446,color:#113
   classDef opsional fill:#ffe9c9,stroke:#a63,color:#420,stroke-dasharray:4 3
   class LS store
-  class T1,T2,T3,T4,T6 store
+  class T1,T2,T3,T4,T6,T7 store
   class DBJ opsional
 ```
 
@@ -315,11 +350,12 @@ tidak ada tempat menautkan riwayat ke seseorang. Menghapus riwayat di satu
 peramban tidak memengaruhi peramban lain, karena keduanya tidak pernah
 terhubung.
 
-**Database bahan bersifat OPSIONAL, dan itu dijaga di kode.** MariaDB (lewat
-XAMPP) dipakai untuk menyimpan **bahan** dan **teks percakapan**. Kalau
-MariaDB mati, bahan tetap tersaji memakai berkas cache dan jawaban tetap
-diberikan tanpa konteks — `app/server/db.js` mengembalikan `null` alih-alih
-melempar galat.
+**Database bersifat OPSIONAL, dan itu dijaga di kode.** MariaDB (lewat XAMPP)
+dipakai untuk menyimpan **bahan**, **teks percakapan**, dan **fasilitas
+kesehatan yang sudah pernah diambil**. Kalau MariaDB mati, bahan tetap tersaji
+memakai berkas cache, jawaban tetap diberikan tanpa konteks, dan fasilitas
+diambil langsung dari OpenStreetMap — `app/server/db.js` mengembalikan `null`
+alih-alih melempar galat.
 
 Dibuktikan ulang 20 Okt 2026 dengan `DB_MATI=1`:
 
@@ -340,6 +376,9 @@ Dibuktikan ulang 20 Okt 2026 dengan `DB_MATI=1`:
 | `pengetahuan` | **331 topik medis** dari sumber resmi, salinan berlabel tanggal | (baru) |
 | `sumber` | lembaga resmi (Kemenkes, WHO, BPOM, NIH, CDC, …) — **12 baris di skema**, bertambah saat panen | (baru) |
 | `dokumen` + `sitasi` | **jejak sumber yang dikutip** — klaim "jawaban ini dari WHO" jadi bisa **dilacak**, bukan cuma ditulis | (baru) |
+| `wilayah` | **kode wilayah administratif** 4 tingkat (provinsi → desa/kelurahan), kode bertitik disimpan apa adanya | (baru, 4 Nov 2026) |
+| `kategori_fasilitas` | sepuluh kategori fasilitas kesehatan + warna penandanya | (baru, 4 Nov 2026) |
+| `fasilitas` | fasilitas kesehatan hasil Overpass, **beserta `sumber`, `sumber_url`, `diperbarui_pada`, dan `kedaluwarsa_pada`** | `.cache-faskes.json` |
 
 Tidak ada tabel akun di skema mana pun. `skema-database.sql` malah
 menjalankan `DROP TABLE IF EXISTS riwayat, setelan, pengguna` untuk
@@ -567,7 +606,7 @@ Galat selalu berbentuk `{ ok: false, code, pesan }` — `code` sengaja dipakai U
 untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
 `input_kosong` ditampilkan berbeda, bukan satu kotak merah yang sama).
 
-### Lima hal yang dijaga di sisi server
+### Enam hal yang dijaga di sisi server
 
 - **`app/server/kataKunci.js`** — pengenalan topik kesehatan. Satu daftar
   istilah dipakai bersama oleh `PENGENALAN_TOPIK`, `KATA_KESEHATAN`, dan kedua
@@ -593,6 +632,16 @@ untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
   timeout; (3) penyajian data medis **selalu** menyaring
   `WHERE kedaluwarsa > NOW()`. Batasnya diakui: satu pool berisi 5 koneksi,
   tanpa kolam cadangan dan tanpa penyimpanan ulang otomatis.
+- **`app/server/faskes.js`** — tiga aturan yang menjaga agar aplikasi tidak
+  berkata "tidak ada fasilitas" saat sebenarnya gagal: `remark` Overpass
+  dilempar sebagai galat, hasil kosong tidak pernah masuk simpanan, dan balasan
+  kosong baru dipercaya kalau **dua** cermin yang memuat data Indonesia
+  sepakat. Ketiganya diuji lewat `fetch` palsu di `uji-faskes.mjs`
+  (**127 pemeriksaan**), jadi tidak butuh jaringan.
+- **`app/server/wilayah.js`** + `rute-perjalanan.js` — kode wilayah divalidasi
+  sebelum dipakai (bukan dipercaya apa adanya), dan `moda` rute dipetakan ke
+  costing Valhalla lewat daftar tertutup tiga entri, jadi moda asing ditolak
+  alih-alih diam-diam jadi "mobil".
 
 ### Jawaban kosong tidak boleh terjadi — dan cara membuktikannya
 
@@ -657,8 +706,8 @@ Jadi **mengubah halaman penjelasan wajib lewat build** sebelum diuji.
 ### Database
 
 **Opsional.** Database hanya menyimpan bahan (berita, konten, pengetahuan,
-sitasi). Aplikasi tetap bisa dipakai penuh tanpa MariaDB — tidak ada akun yang
-butuh database lagi.
+sitasi) **dan** fasilitas kesehatan yang sudah pernah diambil. Aplikasi tetap
+bisa dipakai penuh tanpa MariaDB — tidak ada akun yang butuh database lagi.
 
 ```bash
 # XAMPP: pasang libxcrypt-compat DULU di Arch/CachyOS.
@@ -681,11 +730,18 @@ tetap tersaji tanpa database.
 Endpoint untuk memeriksa: `GET /api/health` (status db) dan `GET /api/db`
 (hitungan + contoh baris, bukan seluruh isi tabel).
 
-Tiga tabel tambahan untuk fitur Fasilitas Kesehatan Terdekat sudah ada di
+**Diverifikasi pada XAMPP sungguhan (4 Nov 2026):** MariaDB **10.4.32** dari
+`/opt/lampp`, port 3306, basis data `pahami_sehat`, seluruh 10 tabel terbentuk
+dari `docs/skema-database.sql`, dan `/api/health` melaporkan
+`db: { aktif: true, host: "127.0.0.1", port: 3306 }`. `uji-faskes-db.mjs`
+**12/12 lulus** di server yang sama — bukan hanya di instance uji terpisah.
+
+Tiga tabel untuk fitur Fasilitas Kesehatan Terdekat ada di
 `docs/skema-database.sql`: `wilayah`, `kategori_fasilitas`, dan `fasilitas`
 (beserta `sumber`, `sumber_url`, `diperbarui_pada`, dan `kedaluwarsa_pada`).
 Fasilitas yang sudah pernah diambil **disimpan** di sana, jadi permintaan
-berikutnya tidak perlu menunggu OpenStreetMap.
+berikutnya dilayani dari MySQL (6,8 ms) alih-alih menunggu OpenStreetMap
+(40–50 detik).
 
 **Untuk Grand Final:** `npm start` adalah yang dipakai saat presentasi — Express
 menyajikan hasil build sekaligus melayani `/api`, jadi cukup satu alamat.
@@ -764,6 +820,43 @@ dicampur.
 - Cermin Overpass yang menjawab `200` dengan daftar kosong dianggap **gagal**,
   bukan "tidak ada fasilitas" — `overpass.osm.ch` berperilaku begitu karena
   hanya memuat data Swiss.
+
+### Tiga jebakan "kosong" — semuanya pernah membuat Jakarta dilaporkan kosong
+
+Pada 4 Nov 2026 aplikasi sempat berkata **"tidak ada fasilitas di sekitar Anda"**
+untuk Jakarta Pusat. Itu salah, dan tidak bisa dibela. Ada tiga sebab, dan
+ketiganya harus ditutup bersamaan:
+
+1. **`remark` Overpass = galat, bukan hasil.** Saat query timeout di sisi server,
+   Overpass membalas **HTTP 200** dengan `elements: []` **dan** sebuah `remark`:
+
+   ```json
+   { "elements": [], "remark": "runtime error: Query timed out in \"query\" at line 1 after 2 seconds." }
+   ```
+
+   Balasan itu nyaris tidak bisa dibedakan dari "wilayah ini kosong". Sekarang
+   `remark` diperiksa lebih dulu dan dilempar sebagai galat.
+2. **Hasil kosong tidak pernah masuk simpanan.** Sekali "0 fasilitas" tersimpan,
+   ia bertahan 10 menit dan tampil dengan yakin. Sekarang hanya hasil berisi yang
+   disimpan, dan entri berjumlah 0 dari versi lama dibuang saat dibaca.
+3. **Satu cermin yang bilang kosong belum cukup.** Terukur: `overpass-api.de`
+   membalas 502, lalu `lz4.overpass-api.de` membalas 200 dengan **nol elemen**
+   untuk Jakarta Pusat — padahal wilayah itu penuh fasilitas. Replika bisa belum
+   lengkap. Butuh **dua** cermin yang terbukti memuat data Indonesia dan
+   sama-sama kosong; kalau tidak, hasilnya `sumber_gagal`.
+
+**Overpass publik bisa benar-benar penuh**, bukan hanya lambat:
+
+```
+502 Gateway Timeout
+This Overpass API server is currently at capacity. All query workers are busy
+and the request queue is full.
+```
+
+Saat itu terjadi, jawaban yang benar adalah 503 `sumber_gagal` dengan tombol coba
+lagi — **bukan** peta kosong yang terlihat meyakinkan, dan tentu bukan data
+karangan untuk "mengisi" layar. Ketiga aturan di atas diuji tanpa jaringan lewat
+`fetch` palsu di `uji-faskes.mjs`.
 
 ### Halaman penjelasan ikut diperbarui
 
@@ -939,9 +1032,10 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 4 Nov 2026: **25 berkas lulus, 0 gagal,
-±10 detik**, tanpa jaringan dan tanpa API key. Tiga uji yang butuh peramban atau
-database dijalankan terpisah (lihat bawah).
+memperbarui daftar di mana pun. Diukur 4 Nov 2026: **24 berkas lulus, 0 gagal,
+±4 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
+atau API key sengaja dikeluarkan dan dijalankan terpisah (lihat bawah) — supaya
+gerbang ini tidak bergantung pada keadaan mesin.
 
 Daftar per berkas (jalankan langsung dari akar repo kalau sedang menelusuri satu
 uji tertentu):
@@ -962,14 +1056,15 @@ node uji-keterbacaan.mjs  # alat ukur keterbacaan itu sendiri
 node uji-sumber.mjs       # lapis sumber + penanda domain resmi (tanpa jaringan)
 node uji-klaim.mjs        # penyaring klaim prognosis
 node uji-konteks.mjs      # konteks percakapan & pertanyaan lanjutan
-node uji-faskes.mjs       # fasilitas kesehatan: 10 kategori, koordinat, duplikat, IGD
+node uji-faskes.mjs       # fasilitas: 10 kategori, koordinat, duplikat, IGD, tiga jebakan "kosong" (127)
 node uji-suara.mjs        # ejaan singkatan & kestabilan nada
 node uji-sitasi.mjs       # jejak sumber (butuh MariaDB; dilewati tanpa DB)
 node uji-server.mjs       # kompresi, 404 JSON, galat klien
 node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
-node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB)
-node uji-rute-perjalanan.mjs  # rute: tiga moda, polyline6, terjemahan instruksi, tautan Maps
+node uji-wilayah.mjs      # wilayah bertingkat: validasi kode, cascade, titik referensi (38)
+node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)
+node uji-rute-perjalanan.mjs  # rute: tiga moda, polyline6, terjemahan instruksi, tautan Maps (44)
 node uji-halaman-penjelasan.mjs  # halaman depan: 6 kartu, 3 tangkapan layar termuat (butuh server + Chrome)
 node uji-peramban.mjs     # peramban sungguhan: 7 halaman × 2 bahasa (butuh server + Chrome)
 ```
@@ -1057,7 +1152,18 @@ node verifikasi-judul.mjs # buktikan setiap judul artikel Wikipedia benar-benar 
 node periksa-istilah.mjs  # periksa calon istilah baru sebelum masuk peta
 node uji-jawaban.mjs      # tembak /api/tanya server lokal, baca JAWABANNYA
 node uji-sumber.mjs --jaringan  # buktikan sumbernya benar-benar ada
+node ambil-tangkapan.mjs  # ambil 3 tangkapan layar fitur fasilitas (butuh server + Chrome)
 ```
+
+Fitur Fasilitas Kesehatan memakai empat layanan luar. Semuanya **gratis dan
+tanpa kunci**, dan semuanya bisa gagal:
+
+| Layanan | Dipakai untuk | Kalau gagal |
+|---|---|---|
+| Overpass API (OpenStreetMap) | daftar fasilitas | `503 sumber_gagal` + tombol coba lagi |
+| Valhalla (`valhalla1.openstreetmap.de`) | rute tiga moda | pesan galat + tautan Google Maps |
+| Nominatim | titik referensi wilayah | `titikGagal` — pilihan wilayah tetap jalan, hanya titiknya tidak ada |
+| `wilayah.id` | daftar provinsi/kabupaten/kecamatan/desa | dropdown kosong dengan pesan, bukan daftar karangan |
 
 ### Lapisan server — hal yang salahnya tidak terlihat dari build hijau
 

@@ -67,6 +67,10 @@ const BUTUH_LUAR = new Set([
   // Kalau dimasukkan ke sini, gerbang `npm test` jadi bergantung pada keadaan
   // mesin — persis yang ingin dihindari uji tanpa jaringan ini.
   'uji-peramban.mjs',
+  // Sama: butuh server hidup + Chrome. Memasukkannya ke `npm test` membuat
+  // gerbang tanpa jaringan bergantung pada keadaan mesin. Dijalankan terpisah:
+  // `node uji-halaman-penjelasan.mjs`.
+  'uji-halaman-penjelasan.mjs',
 ])
 
 /** Uji yang memeriksa hasil build; hanya jalan kalau `dist/` ada. */
