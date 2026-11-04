@@ -152,6 +152,101 @@ export async function simpanBanyak(daftar) {
   return n
 }
 
+
+/* ---------------------------------------------------------------------------
+ * Cakupan: apakah isi DB untuk satu titik+radius benar-benar LENGKAP?
+ * ---------------------------------------------------------------------------
+ * KENAPA PERLU. Versi pertama /api/faskes memakai aturan "kalau DB
+ * mengembalikan baris apa pun, pakai itu". Terukur 4 Nov 2026: DB berisi 3
+ * baris hasil uji di Cikarang, lalu SETIAP permintaan radius berhenti di 3
+ * baris itu dan Overpass tidak pernah dipanggil. Pengguna melihat "3
+ * fasilitas" untuk area yang sebenarnya berisi ratusan.
+ *
+ * Sekarang setiap pengambilan dari Overpass mencatat cakupannya:
+ *   titik (dibulatkan ~1 km), radius, jumlah, dan waktu ambil.
+ * Simpanan hanya dipakai sebagai jawaban akhir kalau ADA catatan cakupan yang
+ * radiusnya >= radius yang diminta dan umurnya masih segar. Kalau tidak,
+ * Overpass tetap dipanggil.
+ *
+ * Catatan disimpan terpisah dari baris `fasilitas`, karena "3 baris ini adalah
+ * SELURUH isi radius 5 km" adalah fakta tentang pengambilan, bukan tentang
+ * fasilitasnya.
+ */
+const CAKUPAN_SEGAR_MS = 6 * 60 * 60 * 1000 // 6 jam
+
+/*
+ * Siapkan tabel cakupan SEKALI per proses.
+ *
+ * Memakai Promise, bukan penanda boolean yang diset setelah `await`. Versi
+ * boolean memicu `require-atomic-updates` (dan peringatannya benar): dua
+ * permintaan bersamaan bisa sama-sama melihat `false` lalu sama-sama membuat
+ * tabel. Dengan Promise, pemanggil kedua cukup menunggu promise yang sama.
+ */
+let janjiTabelCakupan = null
+
+function pastikanTabelCakupan() {
+  if (!janjiTabelCakupan) {
+    janjiTabelCakupan = (async () => {
+      if (!(await dbSiap())) return false
+      await eksekusi(
+        `CREATE TABLE IF NOT EXISTS cakupan_faskes (
+           id        BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+           lat_bulat DECIMAL(9,5) NOT NULL,
+           lon_bulat DECIMAL(9,5) NOT NULL,
+           radius_m  INT UNSIGNED NOT NULL,
+           jumlah    INT UNSIGNED NOT NULL,
+           diambil   DATETIME     NOT NULL,
+           UNIQUE KEY uq_cakupan (lat_bulat, lon_bulat, radius_m)
+         ) ENGINE=InnoDB`,
+      )
+      return true
+    })().catch(() => {
+      // Gagal sekali jangan dikunci selamanya: kalau DB hidup lagi, coba lagi.
+      janjiTabelCakupan = null
+      return false
+    })
+  }
+  return janjiTabelCakupan
+}
+
+/** Titik dibulatkan ~1,1 km supaya geseran kecil di peta tidak bikin catatan baru. */
+const bulatkan = (x) => Math.round(Number(x) * 100) / 100
+
+/** Catat bahwa hasil untuk titik+radius ini sudah diambil LENGKAP dari Overpass. */
+export async function catatCakupan(lat, lon, radiusM, jumlah) {
+  if (!(await pastikanTabelCakupan())) return false
+  return eksekusi(
+    `INSERT INTO cakupan_faskes (lat_bulat, lon_bulat, radius_m, jumlah, diambil)
+     VALUES (?, ?, ?, ?, NOW())
+     ON DUPLICATE KEY UPDATE jumlah = VALUES(jumlah), diambil = NOW()`,
+    [bulatkan(lat), bulatkan(lon), Math.round(radiusM), jumlah],
+  )
+}
+
+/**
+ * Apakah ada catatan cakupan yang menutupi radius ini?
+ *
+ * Radius yang dicatat lebih BESAR juga menutupi: kalau kita pernah mengambil
+ * 5 km di titik ini, permintaan 2 km pasti tercakup.
+ */
+export async function cakupanLengkap(lat, lon, radiusM) {
+  if (!(await pastikanTabelCakupan())) return false
+  const r = await eksekusi(
+    `SELECT jumlah FROM cakupan_faskes
+      WHERE lat_bulat = ? AND lon_bulat = ? AND radius_m >= ?
+        AND diambil > DATE_SUB(NOW(), INTERVAL ? SECOND)
+      ORDER BY radius_m ASC LIMIT 1`,
+    [bulatkan(lat), bulatkan(lon), Math.round(radiusM), Math.floor(CAKUPAN_SEGAR_MS / 1000)],
+  )
+  return Array.isArray(r) && r.length > 0
+}
+
+/** Hapus catatan cakupan — untuk uji. */
+export async function _lupakanCakupan() {
+  if (!(await dbSiap())) return
+  await eksekusi('DELETE FROM cakupan_faskes').catch(() => {})
+}
+
 const PILIH = `
   SELECT f.id, f.kode_osm, f.nama, k.kode AS kategori, f.subkategori, f.alamat,
          f.kode_desa, f.lat, f.lon, f.telepon, f.email, f.website,
@@ -182,15 +277,32 @@ export async function cariFasilitas(teks, { limit = 50 } = {}) {
  * jarak sebenarnya dihitung pemanggil (haversine) karena perhitungan itu tidak
  * bisa memakai indeks.
  */
-export async function fasilitasSekitarDb(lat, lon, radiusM, { limit = 600 } = {}) {
+export async function fasilitasSekitarDb(lat, lon, radiusM, { limit = 5000 } = {}) {
   if (!(await dbSiap())) return null
   const dLat = radiusM / 111320
   const dLon = radiusM / (111320 * Math.cos((lat * Math.PI) / 180))
+  /*
+   * Batas 600 yang LAMA adalah cacat yang terukur.
+   *
+   * Diukur 4 Nov 2026 di Jakarta Pusat radius 5 km: permintaan berhenti tepat
+   * di 600 baris, lalu `catatCakupan` mencatat "600 = lengkap". Sesudah itu
+   * setiap permintaan untuk area tersebut dilayani dari DB dan SELALU 600 —
+   * sisanya tidak pernah terlihat, dan tidak ada satu pun tanda bahwa ada yang
+   * hilang. Inilah bentuk paling berbahaya dari "cuma sedikit yang muncul":
+   * angkanya terlihat wajar.
+   *
+   * Dinaikkan ke 5.000, disamakan dengan MAKS_HASIL di faskes.js. Pesan ini
+   * sengaja TIDAK menjanjikan objek {daftar, dipotong}: fungsi ini tetap
+   * mengembalikan array supaya semua pemanggil lama tidak rusak. Kalau batas
+   * ini suatu saat terlewati lagi, angkanya akan kembali terlihat wajar — jadi
+   * pemanggil yang butuh kepastian harus memeriksa `cakupanLengkap()`.
+   */
   const r = await eksekusi(
     `${PILIH}
      WHERE f.kedaluwarsa > NOW()
        AND f.lat BETWEEN ? AND ?
        AND f.lon BETWEEN ? AND ?
+     ORDER BY f.id ASC
      LIMIT ${batas(limit)}`,
     [lat - dLat, lat + dLat, lon - dLon, lon + dLon],
   )

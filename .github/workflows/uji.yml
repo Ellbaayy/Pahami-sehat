@@ -200,6 +200,11 @@ jobs:
         # upsert idempoten, NULL (bukan string kosong), injeksi, dan kedaluwarsa.
         run: node uji-faskes-db.mjs
 
+      - name: Uji rumah sakit SIRS (jumlah, wilayah, koordinat, filter)
+        # Butuh MariaDB; uji ini melewati bagian database kalau DB tidak ada,
+        # tetapi di CI service MySQL disediakan supaya benar-benar diperiksa.
+        run: node uji-rs-sirs.mjs
+
       - name: Uji rute perjalanan (moda, polyline, terjemahan instruksi)
         # Tanpa jaringan: pemetaan moda ke costing Valhalla (tiga moda, tiga
         # costing berbeda), decoder polyline6, terjemahan instruksi, dan tautan

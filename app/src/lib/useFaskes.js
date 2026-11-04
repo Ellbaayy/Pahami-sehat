@@ -28,7 +28,8 @@ function kunciPusat(lat, lon) {
 
 /** Saring hasil yang sudah ada ke radius yang lebih kecil. */
 function potongRadius(data, radius) {
-  const fasilitas = (data.fasilitas ?? []).filter((f) => f.jarakM <= radius)
+  const semua = data.fasilitas ?? []
+  const fasilitas = semua.filter((f) => f.jarakM <= radius)
   const perKategori = {}
   for (const f of fasilitas) perKategori[f.kategori] = (perKategori[f.kategori] ?? 0) + 1
   return {
@@ -37,6 +38,18 @@ function potongRadius(data, radius) {
     fasilitas,
     jumlah: fasilitas.length,
     perKategori,
+    /*
+     * `dipotong` HARUS dihitung ulang, tidak boleh ikut dari `...data`.
+     *
+     * Setelah disaring ke radius lebih kecil, angka "yang tidak dimuat" milik
+     * radius sebelumnya sudah tidak berlaku. Membiarkannya berarti layar
+     * menampilkan "sisanya 123 tidak dimuat" untuk daftar yang sebenarnya
+     * sudah lengkap di radius ini — pernyataan yang salah.
+     *
+     * Sisa yang benar = (yang di server tidak terkirim) + (yang tersaring
+     * keluar karena radius lebih kecil).
+     */
+    dipotong: (data.dipotong ?? 0) + (semua.length - fasilitas.length),
     dariSimpanan: true,
   }
 }

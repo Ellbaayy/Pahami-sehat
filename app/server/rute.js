@@ -52,8 +52,9 @@ import {
 import { kontenHarianLengkap } from './konten.js'
 import { faskesSekitar, daftarKategori, jarakMeter } from './faskes.js'
 import { ambilWilayah, cascadeTitik, titikNama, kodeSah, tingkatDariKode } from './wilayah.js'
-import { fasilitasSekitarDb, simpanBanyak, ambilFasilitas } from './faskesDb.js'
+import { fasilitasSekitarDb, simpanBanyak, ambilFasilitas, cakupanLengkap, catatCakupan } from './faskesDb.js'
 import { ambilRute, tautanGoogleMaps, COSTING } from './rute-perjalanan.js'
+import { cariRsSirs, rsSirsMenurutKode, pilihanFilterSirs, ringkasanSirs } from './rsSirs.js'
 import {
   keteranganDb,
   ambilBerita,
@@ -711,48 +712,64 @@ rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
 
   try {
     /*
-     * Database DULU, lalu Overpass.
+     * Overpass DULU (kalau simpanannya lengkap), DB kalau sebaliknya.
      *
-     * Kalau DB mati, `fasilitasSekitarDb` mengembalikan null dan jalur lama
-     * dipakai apa adanya — perilaku aplikasi tidak berubah sama sekali.
-     * Kalau DB hidup tetapi kosong untuk area ini, hasil kosong itu BUKAN
-     * jawaban akhir: kita tetap mengambil dari Overpass. Tanpa itu, area yang
-     * belum pernah dibuka akan tampak "tidak ada fasilitas kesehatan", dan itu
-     * kesalahan yang berbahaya di konteks kesehatan.
+     * CACAT YANG DIPERBAIKI 4 Nov 2026 — inilah penyebab "cuma 3 fasilitas".
+     *
+     * Versi lama berbunyi "DB dulu, dan kalau DB mengembalikan baris apa pun,
+     * pakai itu". Akibatnya terukur: database berisi 3 baris OSM di Cikarang,
+     * lalu SETIAP permintaan di radius berapa pun berhenti di 3 baris itu —
+     * Overpass tidak pernah dipanggil, sehingga area yang sebenarnya penuh
+     * fasilitas tampil nyaris kosong. Pengguna melihat 3 hasil dan menyimpulkan
+     * itulah semua yang ada.
+     *
+     * Aturan yang benar: simpanan di DB hanya dipakai kalau memang LENGKAP
+     * untuk area itu. `cakupan` dicatat saat pengambilan; kalau tidak ada
+     * catatan cakupan, isi DB tidak bisa dipercaya sebagai jawaban akhir dan
+     * Overpass tetap dipanggil.
      */
     const dariDb = await fasilitasSekitarDb(lat, lon, radius)
-    if (Array.isArray(dariDb) && dariDb.length) {
-      const fasilitas = dariDb
-        .map((b) => ({
-          ...b,
-          lat: Number(b.lat),
-          lon: Number(b.lon),
-          jarakM: jarakMeter(lat, lon, Number(b.lat), Number(b.lon)),
-        }))
-        .sort((a, b) => a.jarakM - b.jarakM)
+    const adaIsiDb = Array.isArray(dariDb) && dariDb.length > 0
 
-      res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
-      res.json({
-        ok: true,
-        sumberDb: true,
-        pusat: { lat, lon },
-        radius,
-        jumlah: fasilitas.length,
-        dipotong: false,
-        fasilitas,
-        perKategori: hitungPerKategori(fasilitas),
-        sumber: [
-          {
-            nama: 'OpenStreetMap',
-            keterangan:
-              'Data fasilitas dari OpenStreetMap lewat Overpass API, disimpan di database aplikasi. Dipetakan sukarela oleh kontributor; kelengkapan berbeda antarwilayah.',
-            url: 'https://www.openstreetmap.org/',
-            lisensi: 'ODbL 1.0',
-          },
-        ],
-        diambilPada: new Date().toISOString(),
-      })
-      return
+    if (adaIsiDb) {
+      // Lengkap atau tidak? Cakupan dicatat per titik+radius saat pengambilan.
+      const lengkap = await cakupanLengkap(lat, lon, radius)
+      if (lengkap) {
+        const fasilitas = dariDb
+          .map((b) => ({
+            ...b,
+            lat: Number(b.lat),
+            lon: Number(b.lon),
+            jarakM: jarakMeter(lat, lon, Number(b.lat), Number(b.lon)),
+          }))
+          .sort((a, b) => a.jarakM - b.jarakM)
+
+        res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
+        res.json({
+          ok: true,
+          sumberDb: true,
+          pusat: { lat, lon },
+          radius,
+          jumlah: fasilitas.length,
+          dipotong: false,
+          fasilitas,
+          perKategori: hitungPerKategori(fasilitas),
+          sumber: [
+            {
+              nama: 'OpenStreetMap',
+              keterangan:
+                'Data fasilitas dari OpenStreetMap lewat Overpass API, disimpan di database aplikasi. Dipetakan sukarela oleh kontributor; kelengkapan berbeda antarwilayah.',
+              url: 'https://www.openstreetmap.org/',
+              lisensi: 'ODbL 1.0',
+            },
+          ],
+          diambilPada: new Date().toISOString(),
+        })
+        return
+      }
+      // Ada isi tapi cakupannya tidak diketahui -> jangan percaya sebagai
+      // jawaban akhir; Overpass tetap dicoba di bawah. Kalau Overpass gagal,
+      // isi DB dipakai sebagai cadangan (lihat blok catch).
     }
 
     const data = await faskesSekitar({ lat, lon, radius })
@@ -763,15 +780,88 @@ rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
      * Simpan hasil Overpass ke database di LATAR BELAKANG: pengguna tidak perlu
      * menunggu, dan kegagalan simpan tidak boleh menggagalkan respons yang
      * sudah terkirim.
+     *
+     * `catatCakupan` HANYA dipanggil kalau tarikan ini benar-benar lengkap.
+     *
+     * Ini cacat yang terukur 4 Nov 2026: saat hasil terpotong di batas 600,
+     * cakupan tetap dicatat "600 = lengkap". Sesudah itu setiap permintaan
+     * untuk area tersebut dilayani dari DB dan SELALU 600 — sisanya tidak
+     * pernah terlihat dan tidak ada tanda apa pun bahwa ada yang hilang.
+     * Mencatat "lengkap" untuk hasil yang terpotong adalah cara paling halus
+     * untuk berbohong tentang kelengkapan data.
      */
+    const lengkapBenar = !(data.dipotong > 0)
     simpanBanyak(
       data.fasilitas.map((f) => ({
         ...f,
         kode_osm: f.id,
       })),
-    ).catch(() => null)
+    )
+      .then(() =>
+        data.fasilitas.length && lengkapBenar ? catatCakupan(lat, lon, radius, data.fasilitas.length) : null,
+      )
+      .catch(() => null)
   } catch (e) {
     const code = e?.code === 'koordinat' ? 'koordinat_tidak_sah' : 'sumber_gagal'
+
+    /*
+     * CADANGAN DB — benar-benar dipakai, bukan hanya dijanjikan di komentar.
+     *
+     * Saat Overpass gagal (502/503/timeout, yang sering terjadi pada layanan
+     * publik ini), pengguna tidak boleh kehilangan data yang SUDAH ada di
+     * database. Yang dikirim adalah isi DB apa adanya, DENGAN penanda jujur
+     * `dariSimpanan: true` dan `sebagian: true` supaya antarmuka bisa berkata
+     * "ini bukan tarikan terbaru".
+     *
+     * Syaratnya: hanya untuk kegagalan sumber, bukan koordinat tidak sah, dan
+     * hanya kalau memang ada isi.
+     */
+    if (code === 'sumber_gagal') {
+      try {
+        const cadangan = await fasilitasSekitarDb(lat, lon, radius)
+        if (Array.isArray(cadangan) && cadangan.length) {
+          const fasilitas = cadangan
+            .map((b) => ({
+              ...b,
+              lat: Number(b.lat),
+              lon: Number(b.lon),
+              jarakM: jarakMeter(lat, lon, Number(b.lat), Number(b.lon)),
+            }))
+            .sort((a, b) => a.jarakM - b.jarakM)
+
+          res.set('Cache-Control', 'no-store')
+          res.json({
+            ok: true,
+            sumberDb: true,
+            dariSimpanan: true,
+            // Disebut terbuka: ini BUKAN kelengkapan penuh, karena sumber
+            // sedang tidak bisa dihubungi.
+            sebagian: true,
+            pusat: { lat, lon },
+            radius,
+            jumlah: fasilitas.length,
+            dipotong: false,
+            fasilitas,
+            perKategori: hitungPerKategori(fasilitas),
+            sumber: [
+              {
+                nama: 'OpenStreetMap (simpanan)',
+                keterangan:
+                  'Sumber sedang tidak dapat dihubungi. Ini data yang tersimpan sebelumnya di database aplikasi, bukan tarikan terbaru — jumlahnya bisa belum lengkap.',
+                url: 'https://www.openstreetmap.org/',
+                lisensi: 'ODbL 1.0',
+              },
+            ],
+            keadaan: e?.keadaan ?? [],
+            diambilPada: new Date().toISOString(),
+          })
+          return
+        }
+      } catch {
+        // Cadangan gagal juga: jatuh ke galat di bawah, jangan menelan diam-diam.
+      }
+    }
+
     res.status(code === 'koordinat_tidak_sah' ? 400 : 503).json({
       ok: false,
       code,
@@ -869,6 +959,98 @@ rute.get('/api/faskes/:id', batasMeta, bungkus(async (req, res) => {
  * dikenal, permintaan ditolak 400 supaya kesalahan pemanggil tidak terlihat
  * seperti "rute tidak ditemukan".
  */
+/*
+ * Rumah sakit RESMI Kemenkes (SIRS) — 3.325 RS nasional.
+ *
+ * Dipisah dari /api/faskes dengan sengaja. /api/faskes melayani peta radius dan
+ * hanya bisa memuat fasilitas BERKOORDINAT. Data SIRS tidak punya koordinat
+ * sama sekali (diukur 4 Nov 2026), jadi mencampurnya akan menampilkan rumah
+ * sakit seolah punya titik akurat di peta.
+ *
+ * Yang dijaga di sini:
+ *   - `perHalaman` dibatasi MAKS_HALAMAN agar satu permintaan tidak menarik
+ *     seluruh 3.325 baris dan membebani server + peramban.
+ *   - Filter diambil dari nilai yang benar-benar ada di database, bukan daftar
+ *     tetap di kode.
+ *   - Database mati menghasilkan 503 dengan pesan jelas, BUKAN daftar kosong:
+ *     "tidak ada rumah sakit" dan "database mati" adalah dua hal berbeda.
+ */
+rute.get('/api/rs', batasFaskes, bungkus(async (req, res) => {
+  const q = req.query ?? {}
+  const hasil = await cariRsSirs({
+    cari: q.cari ? String(q.cari).slice(0, 120) : null,
+    provinsi: q.provinsi ? String(q.provinsi).slice(0, 80) : null,
+    kabupaten: q.kabupaten ? String(q.kabupaten).slice(0, 80) : null,
+    kelas: q.kelas ? String(q.kelas).slice(0, 20) : null,
+    jenis: q.jenis ? String(q.jenis).slice(0, 40) : null,
+    kepemilikan: q.kepemilikan ? String(q.kepemilikan).slice(0, 60) : null,
+    hanyaKoordinat: String(q.koordinat ?? '') === '1',
+    halaman: Number(q.halaman) || 1,
+    perHalaman: Number(q.perHalaman) || 50,
+  })
+
+  if (!hasil) {
+    res.status(503).json({
+      ok: false,
+      code: 'db_mati',
+      pesan:
+        'Data rumah sakit resmi tersimpan di MySQL dan database sedang tidak tersambung. Nyalakan XAMPP (MySQL) lalu coba lagi.',
+    })
+    return
+  }
+
+  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')
+  res.json({
+    ok: true,
+    total: hasil.total,
+    halaman: hasil.halaman,
+    perHalaman: hasil.perHalaman,
+    jumlahHalaman: Math.max(1, Math.ceil(hasil.total / hasil.perHalaman)),
+    jumlah: hasil.daftar.length,
+    daftar: hasil.daftar,
+    sumber: {
+      nama: 'SIRS Kemenkes RI',
+      url: 'https://sirs.kemkes.go.id/fo/home/dashboard_rs',
+      keterangan:
+        'Daftar Rumah Sakit Nasional dari SIRS Kementerian Kesehatan RI. Data resmi, tanpa koordinat: SIRS tidak menyediakan latitude/longitude, kecamatan, kelurahan, email, maupun website.',
+    },
+  })
+}))
+
+rute.get('/api/rs/filter', batasMeta, bungkus(async (_req, res) => {
+  const f = await pilihanFilterSirs()
+  if (!f) {
+    res.status(503).json({ ok: false, code: 'db_mati', pesan: 'Database tidak tersambung.' })
+    return
+  }
+  res.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=1800')
+  res.json({ ok: true, ...f })
+}))
+
+rute.get('/api/rs/ringkasan', batasMeta, bungkus(async (_req, res) => {
+  const r = await ringkasanSirs()
+  if (!r) {
+    res.status(503).json({ ok: false, code: 'db_mati', pesan: 'Database tidak tersambung.' })
+    return
+  }
+  res.set('Cache-Control', 'public, max-age=300')
+  res.json({ ok: true, ...r })
+}))
+
+rute.get('/api/rs/:kode', batasFaskes, bungkus(async (req, res) => {
+  const rs = await rsSirsMenurutKode(String(req.params.kode).slice(0, 24))
+  if (rs === null) {
+    res.status(503).json({ ok: false, code: 'db_mati', pesan: 'Database tidak tersambung.' })
+    return
+  }
+  if (!rs) {
+    res.status(404).json({ ok: false, code: 'tidak_ada', pesan: 'Rumah sakit dengan kode itu tidak ada di database.' })
+    return
+  }
+  res.set('Cache-Control', 'public, max-age=300')
+  res.json({ ok: true, rs })
+}))
+
 rute.get('/api/rute', batasFaskes, bungkus(async (req, res) => {
   const angka = (v) => {
     const n = Number(v)

@@ -105,11 +105,56 @@ const KAMUS = {
     'faskes.memuat': 'Mengambil data fasilitas…',
     'faskes.gagalMuat': 'Data fasilitas belum berhasil diambil',
     'faskes.dipotong':
-      'Menampilkan 600 fasilitas terdekat dari {n} fasilitas yang ditemukan dalam radius ini.',
+      'Menampilkan {tampil} fasilitas terdekat, dari {n} yang ditemukan dalam radius ini. Sisanya ({sisa}) tidak dimuat karena melewati batas tampilan.',
     'faskes.memuatLama':
       'Pengambilan pertama untuk lokasi baru memerlukan waktu karena data diambil langsung dari OpenStreetMap. Lokasi yang sudah pernah dibuka dimuat dari simpanan.',
     'faskes.jumlah': '{n} fasilitas ditemukan',
     'faskes.dariSimpanan': 'dari simpanan',
+
+    /* --- Rumah sakit nasional (SIRS Kemenkes) ------------------------------ */
+    'rs.judul': 'Rumah Sakit Nasional',
+    'rs.sumber':
+      'Daftar resmi SIRS Kementerian Kesehatan RI. Setiap baris berasal dari sumber itu; kolom yang tidak tersedia di sumber dibiarkan kosong, bukan diisi tebakan.',
+    'rs.totalRs': 'rumah sakit',
+    'rs.tanpaKoordinatSemua': 'sumber ini tidak menyediakan koordinat',
+    'rs.cariNama': 'Cari nama atau alamat rumah sakit',
+    'rs.aturUlang': 'Atur ulang',
+    'rs.provinsi': 'Provinsi',
+    'rs.kabupaten': 'Kabupaten / Kota',
+    'rs.jenis': 'Jenis',
+    'rs.kelas': 'Kelas',
+    'rs.kepemilikan': 'Kepemilikan',
+    'rs.semuaProvinsi': 'Semua provinsi',
+    'rs.semuaKabupaten': 'Semua kabupaten/kota',
+    'rs.pilihProvinsiDulu': 'Pilih provinsi dulu',
+    'rs.semuaJenis': 'Semua jenis',
+    'rs.semuaKelas': 'Semua kelas',
+    'rs.semuaKepemilikan': 'Semua kepemilikan',
+    'rs.kelasLabel': 'Kelas',
+    'rs.memuat': 'Memuat data rumah sakit…',
+    'rs.jumlah': '{n} rumah sakit',
+    'rs.gagal': 'Data belum berhasil dimuat',
+    'rs.galatDb':
+      'Daftar ini tersimpan di MySQL dan sekarang tidak tersambung. Nyalakan XAMPP lalu coba lagi.',
+    'rs.cobaLagi': 'Coba lagi',
+    'rs.kosong': 'Tidak ada rumah sakit yang cocok dengan filter ini.',
+    'rs.sebelumnya': 'Sebelumnya',
+    'rs.berikutnya': 'Berikutnya',
+    'rs.dari': 'dari',
+    'rs.adaKoordinat': 'Ada koordinat',
+    'rs.tanpaKoordinat': 'Tanpa koordinat',
+    'rs.catatanSumber':
+      'SIRS tidak menyediakan koordinat, kecamatan, kelurahan, email, maupun website untuk rumah sakit. Karena itu rumah sakit dari daftar ini belum bisa ditampilkan sebagai titik di peta atau dipakai untuk petunjuk arah. Untuk pencarian di sekitar lokasi, gunakan tab Fasilitas Terdekat.',
+    'rs.tabTerdekat': 'Fasilitas Terdekat',
+    'rs.tabNasional': 'Rumah Sakit Nasional',
+    'rs.tabNasionalCatatan': 'Daftar resmi Kemenkes, tanpa koordinat',
+    /*
+     * Dipakai HANYA saat sumber gagal dan isi database dipakai sebagai
+     * cadangan. Kalimatnya harus menyebut bahwa ini bukan tarikan terbaru —
+     * menyembunyikan itu membuat angka lama tampak seperti data terkini.
+     */
+    'faskes.sebagian':
+      'Sumber data sedang tidak dapat dihubungi. Yang tampil adalah data yang tersimpan sebelumnya, jadi jumlahnya bisa belum lengkap.',
     'faskes.kosong': 'Tidak ada fasilitas yang cocok dengan pencarian dan filter Anda.',
     'faskes.galatSumber':
       'Data fasilitas belum dapat diambil dari sumbernya. Coba lagi beberapa saat lagi.',
@@ -655,11 +700,49 @@ const KAMUS = {
     'faskes.memuat': 'Loading facilities…',
         'faskes.gagalMuat': 'Facility data could not be retrieved',
     'faskes.dipotong':
-      'Showing the 600 nearest facilities out of {n} found within this radius.',
+      'Showing the {tampil} nearest facilities out of {n} found within this radius. The remaining {sisa} are not loaded because they exceed the display limit.',
     'faskes.memuatLama':
       'The first load for a new location takes a while because data is fetched directly from OpenStreetMap. Locations already opened are loaded from cache.',
     'faskes.jumlah': '{n} facilities found',
     'faskes.dariSimpanan': 'from cache',
+
+    'rs.judul': 'National Hospitals',
+    'rs.sumber':
+      'Official list from the Indonesian Ministry of Health SIRS. Every row comes from that source; fields the source does not provide are left empty rather than guessed.',
+    'rs.totalRs': 'hospitals',
+    'rs.tanpaKoordinatSemua': 'this source provides no coordinates',
+    'rs.cariNama': 'Search hospital name or address',
+    'rs.aturUlang': 'Reset',
+    'rs.provinsi': 'Province',
+    'rs.kabupaten': 'Regency / City',
+    'rs.jenis': 'Type',
+    'rs.kelas': 'Class',
+    'rs.kepemilikan': 'Ownership',
+    'rs.semuaProvinsi': 'All provinces',
+    'rs.semuaKabupaten': 'All regencies/cities',
+    'rs.pilihProvinsiDulu': 'Choose a province first',
+    'rs.semuaJenis': 'All types',
+    'rs.semuaKelas': 'All classes',
+    'rs.semuaKepemilikan': 'All ownership',
+    'rs.kelasLabel': 'Class',
+    'rs.memuat': 'Loading hospital data…',
+    'rs.jumlah': '{n} hospitals',
+    'rs.gagal': 'Data could not be loaded',
+    'rs.galatDb': 'This list is stored in MySQL and is currently unreachable. Start XAMPP and try again.',
+    'rs.cobaLagi': 'Try again',
+    'rs.kosong': 'No hospital matches these filters.',
+    'rs.sebelumnya': 'Previous',
+    'rs.berikutnya': 'Next',
+    'rs.dari': 'of',
+    'rs.adaKoordinat': 'Has coordinates',
+    'rs.tanpaKoordinat': 'No coordinates',
+    'rs.catatanSumber':
+      'SIRS does not provide coordinates, district, village, email, or website for hospitals. Hospitals from this list therefore cannot be shown as map points or used for directions. For a search around your location, use the Nearby Facilities tab.',
+    'rs.tabTerdekat': 'Nearby Facilities',
+    'rs.tabNasional': 'National Hospitals',
+    'rs.tabNasionalCatatan': 'Official Ministry of Health list, no coordinates',
+    'faskes.sebagian':
+      'The data source cannot be reached right now. These are previously stored results, so the list may be incomplete.',
     'faskes.kosong': 'No facilities match your search and filters.',
     'faskes.galatSumber':
       'Facility data could not be retrieved from its source. Please try again shortly.',

@@ -121,6 +121,7 @@ app/
 │   ├── faskesDb.js           simpan/baca fasilitas di MySQL
 │   ├── wilayah.js            kode wilayah bertingkat + titik referensi
 │   ├── rute-perjalanan.js    klien Valhalla: costing per moda, polyline6
+│   ├── rsSirs.js             rumah sakit resmi SIRS: cari, filter, ringkasan
 │   ├── batas.js              pembatas laju
 │   ├── batasInput.js         MAKS_TOKEN + LAJU per jalur
 │   ├── saji.js               gzip + X-Waktu-Ms + 404 JSON
@@ -152,7 +153,7 @@ app/
     ├── data/dummy.js         konten statis
     ├── components/layout/    Sidebar, TopBar, MobileDrawer, nav (7 menu)
     ├── components/ui/        Card, Button, SourcePills, PoinKunci, Peringatan
-    ├── components/faskes/    FaskesPanel, PemilihWilayah, PetaFaskes,
+    ├── components/faskes/    FaskesPanel, RsNasionalPanel, PemilihWilayah,
     │                         PanelNavigasi, kategoriWarna
     └── components/dashboard/ panel tiap halaman
 ```
@@ -177,6 +178,10 @@ Foto" tidak berdiri sendiri karena ketiganya bagian dari Tanya AI.
 | GET | `/api/faskes/kategori` | sepuluh kategori fasilitas yang dipakai antarmuka |
 | GET | `/api/faskes/cari-lokasi` | cari tempat menurut nama (Nominatim) |
 | GET | `/api/rute` | rute perjalanan (`moda=jalan-kaki\|motor\|mobil`, `bahasa=id\|en`) |
+| GET | `/api/rs` | rumah sakit resmi SIRS: `cari`, `provinsi`, `kabupaten`, `jenis`, `kelas`, `kepemilikan`, `halaman`, `perHalaman` |
+| GET | `/api/rs/filter` | pilihan filter dari isi database |
+| GET | `/api/rs/ringkasan` | jumlah, berkoordinat, sinkron terakhir |
+| GET | `/api/rs/:kode` | rincian satu RS menurut kode SIRS |
 | POST | `/api/tanya` | jawab pertanyaan, sesuaikan tingkat baca |
 | POST | `/api/tanya/stream` | sama, tapi streaming (SSE) |
 | POST | `/api/sederhanakan` | terjemahkan teks medis |

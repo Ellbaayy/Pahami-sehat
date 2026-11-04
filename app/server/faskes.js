@@ -85,7 +85,21 @@ const TIMEOUT_MS = 70_000
  * 37–49 detik untuk radius 3 km.
  */
 const ANGGARAN_TOTAL_MS = 100_000
-const MAKS_HASIL = 600
+/*
+ * Batas atas jumlah hasil per permintaan.
+ *
+ * PERNAH 600, dan itu menyembunyikan fakta: diukur 4 Nov 2026, radius 5 km di
+ * Jakarta Pusat mengembalikan tepat 600 hasil — persis di batas — sementara
+ * `dipotong` bernilai false karena bendera itu dibandingkan dengan `<` pada
+ * angka SEBELUM dipotong. Pengguna melihat "600 fasilitas" dan tidak diberi
+ * tahu bahwa sisanya dibuang.
+ *
+ * Dinaikkan ke 5.000: cukup untuk radius 50 km di wilayah padat, dan masih
+ * aman dikirim sebagai JSON (±2 MB) serta dirender di panel yang bergulir.
+ * Kalau jumlahnya tetap melewati batas ini, `dipotong` sekarang benar-benar
+ * menghitung sisa yang tidak ikut — bukan membandingkan angka yang salah.
+ */
+const MAKS_HASIL = 5000
 const RADIUS_MAKS_M = 50_000
 const CACHE_MS = 10 * 60 * 1000
 const CACHE_MAKS = 40
@@ -776,7 +790,15 @@ export async function faskesSekitar({ lat, lon, radius = 5000 } = {}) {
     pusat: { lat: a, lon: b },
     radius: r,
     jumlah: unik.length,
-    dipotong: unik.length > MAKS_HASIL,
+    /*
+     * `dipotong` = jumlah yang TIDAK ikut terkirim.
+     *
+     * Sebelumnya berisi boolean dari `unik.length > MAKS_HASIL`, dan itu tidak
+     * berguna bagi antarmuka: pengguna perlu tahu BERAPA yang hilang, bukan
+     * sekadar "ada yang hilang". Nilainya 0 kalau semuanya muat.
+     */
+    dipotong: Math.max(0, unik.length - MAKS_HASIL),
+    jumlahDitemukan: unik.length,
     fasilitas: unik.slice(0, MAKS_HASIL),
     perKategori,
     // Sumber yang benar-benar dipakai, untuk ditampilkan di antarmuka.

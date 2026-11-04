@@ -21,6 +21,7 @@ import { Card, SectionHeading } from '../ui/primitives'
 import PetaFaskes from './PetaFaskes'
 import PemilihWilayah from './PemilihWilayah'
 import PanelNavigasi from './PanelNavigasi'
+import RsNasionalPanel from './RsNasionalPanel'
 import { WARNA_KATEGORI } from './kategoriWarna'
 import { useFaskes } from '../../lib/useFaskes'
 import { useCariLokasi } from '../../lib/useCariLokasi'
@@ -166,8 +167,19 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
 
   const adaLokasi = Boolean(lokasi)
 
+  /*
+   * Dua tab, bukan satu daftar campuran.
+   *
+   * Tab "Terdekat" bekerja dengan radius dan hanya bisa memuat fasilitas
+   * berkoordinat. Tab "Nasional" memuat 3.325 rumah sakit resmi SIRS yang
+   * TIDAK punya koordinat sama sekali. Mencampurnya berarti RS tanpa titik
+   * tampil seolah punya lokasi akurat — karena itu keduanya dipisah dan
+   * batasnya ditulis di masing-masing tab.
+   */
+  const [tab, setTab] = useState('terdekat')
+
   return (
-    <section aria-labelledby="faskes-judul" className="space-y-2">
+    <section aria-labelledby="faskes-judul" className="space-y-1.5">
       <SectionHeading
         as="h1"
         id="faskes-judul"
@@ -175,6 +187,43 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
         title={t('faskes.judul')}
         description={t('faskes.deskripsi')}
         action={
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <button
+        type="button"
+        role="tab"
+        id="tab-terdekat"
+        aria-selected={tab === 'terdekat'}
+        aria-controls="panel-terdekat"
+        onClick={() => setTab('terdekat')}
+        className={
+          tab === 'terdekat'
+            ? 'min-h-9 rounded-lg border border-brand-300 bg-brand-50 px-2.5 text-[0.84rem] font-semibold text-brand-800'
+            : 'min-h-9 rounded-lg border border-line-200 bg-white px-2.5 text-[0.84rem] font-medium text-navy-700'
+        }
+      >
+        <Navigation className="mr-1.5 inline size-3.5" aria-hidden="true" />
+        {t('rs.tabTerdekat')}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="tab-nasional"
+        aria-selected={tab === 'nasional'}
+        aria-controls="panel-nasional"
+        onClick={() => setTab('nasional')}
+        className={
+          tab === 'nasional'
+            ? 'min-h-9 rounded-lg border border-brand-300 bg-brand-50 px-2.5 text-[0.84rem] font-semibold text-brand-800'
+            : 'min-h-9 rounded-lg border border-line-200 bg-white px-2.5 text-[0.84rem] font-medium text-navy-700'
+        }
+      >
+        <Hospital className="mr-1.5 inline size-3.5" aria-hidden="true" />
+        {t('rs.tabNasional')}
+      </button>
+      {/* Keterangan tab nasional disebut di sini, bukan disembunyikan: pengguna
+          perlu tahu sebelum memilih bahwa daftar ini tanpa koordinat, supaya
+          tidak kecewa saat tidak menemukan tombol petunjuk arah. */}
+      <span className="text-[0.74rem] text-muted-500">{t('rs.tabNasionalCatatan')}</span>
           <button
             type="button"
             onClick={mintaLokasi}
@@ -183,9 +232,18 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
             <LocateFixed className="size-4" aria-hidden="true" />
             {adaLokasi ? t('faskes.perbaruiLokasi') : t('faskes.pakaiLokasi')}
           </button>
+          </div>
         }
       />
 
+      {tab === 'nasional' ? (
+        <div role="tabpanel" id="panel-nasional" aria-labelledby="tab-nasional">
+          <RsNasionalPanel t={t} />
+        </div>
+      ) : null}
+
+      {tab === 'terdekat' ? (
+      <div role="tabpanel" id="panel-terdekat" aria-labelledby="tab-terdekat" className="space-y-2">
       <PemilihWilayah
         t={t}
         lokasiAktif={lokasi?.label ?? null}
@@ -267,6 +325,24 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
                     {t('faskes.dariSimpanan')}
                   </span>
                 ) : null}
+                {/* Cadangan terpisah dari simpanan biasa: ini bukan "data
+                     tersimpan yang lengkap", melainkan "sumber sedang mati" —
+                    pengguna berhak tahu bedanya sebelum mempercayai angkanya.
+                    Tombol coba lagi disertakan supaya ia bisa langsung
+                    meminta tarikan baru, bukan menutup halaman. */}
+                {data?.sebagian ? (
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-[0.75rem] leading-snug text-amber-900">
+                    <span className="min-w-0 flex-1">{t('faskes.sebagian')}</span>
+                    <button
+                      type="button"
+                      onClick={muatUlang}
+                      className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-2 text-[0.75rem] font-semibold text-amber-800"
+                    >
+                      <RefreshCw className="size-3.5" aria-hidden="true" />
+                      {t('faskes.cobaLagi')}
+                    </button>
+                  </div>
+                ) : null}
               </div>
               {/* Pengambilan pertama dari Overpass diukur 40–48 detik. Diam selama
                   itu membuat pengguna mengira halamannya macet, jadi alasannya
@@ -278,14 +354,33 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
               ) : null}
               {/* Batas 600 fasilitas terdekat disebut terbuka: menyembunyikannya
                   membuat pengguna mengira 600 itu seluruh isi radius. */}
-              {!memuat && !galat && data?.dipotong ? (
-                <p className="text-[0.74rem] leading-snug text-muted-500">
-                  {t('faskes.dipotong', { n: data.jumlah })}
+              {!memuat && !galat && data?.dipotong > 0 ? (
+                <p className="text-[0.74rem] leading-snug text-amber-700">
+                  {t('faskes.dipotong', {
+                    // `dipotong` sekarang berisi JUMLAH yang tidak ikut, bukan
+                    // boolean. Angka 600 tidak lagi ditulis di teks karena batas
+                    // di server bisa berubah dan teks yang salah lebih buruk
+                    // daripada tidak ada teks.
+                    n: (data.jumlah ?? 0) + (data.dipotong ?? 0),
+                    tampil: data.jumlah ?? 0,
+                    sisa: data.dipotong ?? 0,
+                  })}
                 </p>
               ) : null}
 
               <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-                {tersaring.slice(0, 80).map((f) => (
+                {/*
+                  * SELURUH hasil ditampilkan — tidak dipotong lagi.
+                  *
+                  * Sebelumnya baris ini `tersaring.slice(0, 80)`, dan itu
+                  * menyembunyikan sisa hasil tanpa memberi tahu siapa pun:
+                  * penghitung di atas menulis "X fasilitas" (angka penuh)
+                  * sementara daftar hanya memuat 80. Pengguna yang menggulir
+                  * sampai bawah akan menyimpulkan hanya ada 80 fasilitas di
+                  * radius itu. Daftarnya sudah punya wadah bergulir sendiri
+                  * (`overflow-y-auto`), jadi menampilkan semua aman.
+                  */}
+                {tersaring.map((f) => (
                   <li key={f.id}>
                     <KartuFaskes
                       t={t}
@@ -343,6 +438,8 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
           onRute={setRuteAktif}
           bahasa={bahasa}
         />
+      ) : null}
+      </div>
       ) : null}
     </section>
   )

@@ -122,9 +122,12 @@ bukan hanya tombol.
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
 | [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **24 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
 | [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 10 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
+| [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs--3325-rs-di-database). |
+| [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota). |
+| [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
-| [`uji-*.mjs`](.) | **28 berkas uji** — 24 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
+| [`uji-*.mjs`](.) | **29 berkas uji** — 25 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -601,6 +604,10 @@ lebih berbahaya daripada tidak ada penyaring.
 | GET | `/api/wilayah` | daftar wilayah administratif bertingkat (`tingkat=provinsi\|kabupaten\|kecamatan\|desa` + `induk=<kode>`) |
 | GET | `/api/wilayah/titik` | titik referensi sebuah wilayah beserta tingkat ketelitiannya |
 | GET | `/api/rute` | rute perjalanan antar dua titik (`moda=jalan-kaki\|motor\|mobil`, `bahasa=id\|en`) |
+| GET | `/api/rs` | rumah sakit resmi SIRS Kemenkes: cari, filter, paginasi |
+| GET | `/api/rs/filter` | pilihan filter (provinsi, kabupaten, jenis, kelas, kepemilikan) |
+| GET | `/api/rs/ringkasan` | jumlah RS, berapa berkoordinat, waktu sinkron terakhir |
+| GET | `/api/rs/:kode` | rincian satu rumah sakit menurut kode SIRS |
 
 Galat selalu berbentuk `{ ok: false, code, pesan }` — `code` sengaja dipakai UI
 untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
@@ -858,6 +865,78 @@ lagi — **bukan** peta kosong yang terlihat meyakinkan, dan tentu bukan data
 karangan untuk "mengisi" layar. Ketiga aturan di atas diuji tanpa jaringan lewat
 `fetch` palsu di `uji-faskes.mjs`.
 
+### Rumah sakit resmi Kemenkes (SIRS) — 3.325 RS di database
+
+**Sumbernya bukan scraping.** `sirs.kemkes.go.id/fo/home/rekap_rs_all?id=0`
+ternyata membalas **JSON resmi** yang dipakai dashboard SIRS sendiri, dan satu
+tarikan berisi **seluruh 3.325 rumah sakit nasional** — tanpa pagination, jadi
+tidak ada halaman yang bisa terlewat.
+
+Kelengkapannya divalidasi terhadap **rekap resmi SIRS sendiri**
+(`rekap_by_jenis`, `rekap_by_kelas`, `rekap_by_kepemilikan`): ketiganya harus
+sama dengan hitungan lokal. Hasilnya cocok persis, termasuk A 86 · B 451 ·
+C 1.826 · D 872 · D PRATAMA 85 dan RSU 2.828 · RSIA 296.
+
+**Yang tidak ada di sumber, dan karena itu NULL** — diperiksa satu per satu,
+bukan diasumsikan:
+
+| Field | Status |
+|---|---|
+| latitude / longitude | **tidak ada** — tidak di daftar nasional, tidak di `profile_rs/<kode>`, dan JS peta SIRS hanya berisi poligon provinsi |
+| kecamatan / kelurahan | tidak ada |
+| email / website | tidak ada |
+| status operasional | tidak ada sebagai field |
+
+Karena itu rumah sakit SIRS **tidak** ditampilkan sebagai titik di peta. Ada tab
+terpisah: **"Fasilitas Terdekat"** (radius, Leaflet) dan **"Rumah Sakit
+Nasional"** (daftar + filter). Mencampurnya akan membuat RS tanpa koordinat
+tampil seolah punya lokasi akurat.
+
+**Sinkronisasi ulang aman dan idempoten.** Diuji: tarikan kedua menghasilkan
+**0 baru, 3.325 tidak berubah, 3.325 kode unik**. RS yang tidak lagi muncul
+ditandai `hilang_pada`, **tidak dihapus** — hilang dari satu tarikan bisa berarti
+sumbernya sedang terganggu.
+
+**Nama wilayah SIRS ≠ nama wilayah resmi.** Ini kesalahan nyata yang sempat
+masuk database: SIRS menulis nama **kabupaten tanpa awalan** ("Bekasi"), sementara
+kotanya selalu lengkap ("Kota Bekasi"). Versi pertama pemetaan membuang kata
+"kota"/"kabupaten" sebagai awalan, sehingga **57 RS Kabupaten Bekasi masuk ke
+Kota Bekasi** (dan 32 RS Bogor ke Kota Bogor). Sekarang jenis wilayah ikut jadi
+kunci pencocokan. Hasil akhir: **513 dari 513** pasangan provinsi+kabupaten
+terpetakan, dengan 6 alias eksplisit yang bisa dibaca satu per satu.
+
+```bash
+/opt/lampp/bin/mysql -u root < docs/migrasi-sirs.sql   # migrasi (idempoten)
+node isi-wilayah.mjs                                    # 38 provinsi + 514 kabupaten
+node impor-sirs.mjs                                     # impor / sinkron ulang
+node petakan-wilayah.mjs                                # nama SIRS -> kode wilayah
+node uji-rs-sirs.mjs                                    # 50 pemeriksaan
+```
+
+Laporan lengkap: [`docs/laporan-impor-sirs.md`](docs/laporan-impor-sirs.md).
+
+### Hasil radius tidak lagi dipotong diam-diam
+
+Terukur 4 Nov 2026: Jakarta Pusat radius 5 km **selalu** berhenti di **600**
+fasilitas, dan tidak ada satu pun tanda bahwa ada yang hilang. Ada tiga sebab
+yang semuanya harus ditutup:
+
+1. **`MAKS_HASIL = 600`** di `faskes.js` — batas keras. Dinaikkan ke 5.000.
+2. **`dipotong` berbohong.** Nilainya `unik.length > MAKS_HASIL` — membandingkan
+   angka SEBELUM dipotong, jadi saat hasilnya tepat 600 ia bernilai `false`.
+   Sekarang berisi **jumlah** yang tidak ikut terkirim.
+3. **`fasilitasSekitarDb` punya batas 600 sendiri**, dan `catatCakupan`
+   mencatat "600 = lengkap". Sesudah itu setiap permintaan untuk area tersebut
+   dilayani dari DB dan **selalu** 600. Sekarang cakupan hanya dicatat kalau
+   hasilnya benar-benar tidak terpotong.
+
+Selain itu daftar dulu dirender `slice(0, 80)` sementara penghitung menulis
+angka penuh. Sekarang **seluruh** hasil dirender.
+
+Diukur ulang sesudah perbaikan: **743 fasilitas** di radius 5 km Jakarta Pusat,
+743 kartu dirender, `dipotong: 0`, `jumlahDitemukan: 743`. Permintaan kedua
+dilayani dari MySQL dalam **62 ms** (dari 50 detik).
+
 ### Halaman penjelasan ikut diperbarui
 
 `docs/prototipe/index.html` sekarang punya **enam** kartu fitur (sebelumnya
@@ -1032,7 +1111,7 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 4 Nov 2026: **24 berkas lulus, 0 gagal,
+memperbarui daftar di mana pun. Diukur 4 Nov 2026: **25 berkas lulus, 0 gagal,
 ±4 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
 atau API key sengaja dikeluarkan dan dijalankan terpisah (lihat bawah) — supaya
 gerbang ini tidak bergantung pada keadaan mesin.
@@ -1063,6 +1142,7 @@ node uji-server.mjs       # kompresi, 404 JSON, galat klien
 node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
 node uji-wilayah.mjs      # wilayah bertingkat: validasi kode, cascade, titik referensi (38)
+node uji-rs-sirs.mjs      # rumah sakit SIRS: jumlah, wilayah, koordinat, filter, sinkron ulang (50)
 node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)
 node uji-rute-perjalanan.mjs  # rute: tiga moda, polyline6, terjemahan instruksi, tautan Maps (44)
 node uji-halaman-penjelasan.mjs  # halaman depan: 6 kartu, 3 tangkapan layar termuat (butuh server + Chrome)
