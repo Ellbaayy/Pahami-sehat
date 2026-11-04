@@ -123,6 +123,8 @@ app/
 │   ├── rute-perjalanan.js    klien Valhalla: costing per moda, polyline6
 │   ├── rsSirs.js             rumah sakit resmi SIRS: cari, filter, ringkasan
 │   ├── geocoding.js          deteksi wilayah dari `address` Nominatim + peta ISO
+│   ├── layanan.js            SEMUA endpoint luar + antrean + simpanan (mudah diganti via env)
+│   ├── photon.js             klien Photon: autocomplete, saring negara, simpanan 10 menit
 │   ├── ruteAlamat.js         endpoint /api/alamat dan /api/wilayah/lengkap
 │   ├── batas.js              pembatas laju
 │   ├── batasInput.js         MAKS_TOKEN + LAJU per jalur
@@ -185,7 +187,7 @@ Foto" tidak berdiri sendiri karena ketiganya bagian dari Tanya AI.
 | GET | `/api/rs/filter` | pilihan filter dari isi database |
 | GET | `/api/rs/ringkasan` | jumlah, berkoordinat, sinkron terakhir |
 | GET | `/api/rs/:kode` | rincian satu RS menurut kode SIRS |
-| GET | `/api/alamat/cari` | pencarian alamat + deteksi wilayah (`q`) |
+| GET | `/api/alamat/cari` | autocomplete alamat — Photon, cadangan Nominatim (`q`); `sumberCari` menyebut yang menjawab |
 | GET | `/api/alamat/titik` | geocoding balik (`lat`, `lon`) |
 | GET | `/api/wilayah/lengkap` | provinsi + kabupaten + kecamatan |
 | POST | `/api/tanya` | jawab pertanyaan, sesuaikan tingkat baca |

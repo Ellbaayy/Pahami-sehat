@@ -34,6 +34,24 @@ const LABEL_KETEPATAN = {
   lain: 'ketepatan: tidak diketahui',
 }
 
+/**
+ * Baris pembeda: kota/kabupaten + provinsi, untuk kandidat yang namanya sama.
+ *
+ * Sumbernya `petunjukWilayah` (Photon) atau `wilayah` (Nominatim). Ini HANYA
+ * untuk membedakan tampilan — bukan untuk deteksi wilayah resmi, karena
+ * `state` Photon bukan nama provinsi resmi. Karena itu dipakai apa adanya
+ * sebagai petunjuk, dan tidak disimpan sebagai identitas wilayah.
+ */
+function kotaPembeda(h) {
+  const p = h?.petunjukWilayah ?? {}
+  const w = h?.wilayah ?? {}
+  const kota = p.kabupaten || w.kabupaten || p.kecamatan
+  const prov = p.provinsi || w.provinsi
+  const bagian = [kota, prov].filter(Boolean)
+  // Hanya tampil kalau memang ada kota; kalau kosong, baris itu tidak berguna.
+  return bagian.length ? bagian.join(' · ') : null
+}
+
 export default function InputLokasi({
   t = (k) => k,
   lokasi,
@@ -92,10 +110,13 @@ export default function InputLokasi({
     setSorot(-1)
   }, [a.saran])
 
-  const pilihSaran = (h) => {
+  const pilihSaran = async (h) => {
     if (!h) return
-    a.pilih(h)
-    onAlamat(h)
+    // `pilih` mengembalikan kandidat yang sudah dilengkapi wilayahnya (Photon
+    // belum punya wilayah resmi). Tanpa menunggu, peta akan menerima
+    // `wilayah.dikenal:false` padahal server sudah tahu jawabannya.
+    const lengkap = await a.pilih(h)
+    onAlamat(lengkap)
     setSorot(-1)
   }
 
@@ -288,6 +309,25 @@ export default function InputLokasi({
                         <MapPin className="mt-0.5 size-3.5 shrink-0 text-brand-600" aria-hidden="true" />
                         <span className="min-w-0">
                           <span className="block truncate text-[0.83rem] font-semibold text-navy-900">{h.nama}</span>
+                          {/*
+                           * PEMBEDA KOTA DIPISAH DAN DITEBALKAN.
+                           *
+                           * "Malioboro" ada di Surabaya DAN di Yogyakarta; nama
+                           * jalan "Jalan Malioboro" ada di Jakarta, Balikpapan,
+                           * Serbelawan, dan Yogyakarta. Kalau kota hanya
+                           * tercantum di tengah alamat panjang, pengguna harus
+                           * membaca kalimat penuh untuk membedakannya — dan pada
+                           * uji nyata, yang terpilih justru Malioboro Surabaya.
+                           *
+                           * Baris ini menaruh kota di depan, sebelum alamat
+                           * lengkap, supaya dua kandidat yang namanya sama
+                           * langsung terlihat berbeda.
+                           */}
+                          {kotaPembeda(h) ? (
+                            <span className="block text-[0.75rem] font-medium text-brand-800">
+                              {kotaPembeda(h)}
+                            </span>
+                          ) : null}
                           <span className="block text-[0.74rem] leading-snug text-muted-500">{h.alamat}</span>
                           <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[0.71rem] text-muted-500">
                             {/* Wilayah ditampilkan SEBELUM pencarian dijalankan,

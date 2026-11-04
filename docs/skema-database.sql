@@ -239,8 +239,14 @@ CREATE TABLE IF NOT EXISTS wilayah (
 --    Diisi dari daftar KATEGORI di app/server/faskes.js supaya satu sumber
 --    kebenaran. Jangan disalin manual ke sini.
 -- ---------------------------------------------------------------------------
+-- id sengaja SMALLINT, bukan TINYINT:
+-- `INSERT ... ON DUPLICATE KEY UPDATE` tetap MEMAKAI satu angka AUTO_INCREMENT
+-- setiap kali kuncinya sudah ada, jadi jatah 0..255 habis setelah 255 kali
+-- penyimpanan — bukan setelah 255 kategori dibuat. Terukur 4 Nov 2026: tabel
+-- berisi 10 baris tetapi AUTO_INCREMENT sudah 256, dan SETIAP penyimpanan
+-- fasilitas baru gagal dengan HA_ERR_AUTOINC_ERANGE (errno 167).
 CREATE TABLE IF NOT EXISTS kategori_fasilitas (
-  id     TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  id     SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   kode   VARCHAR(40)  NOT NULL,
   label  VARCHAR(80)  NOT NULL,
   UNIQUE KEY uq_kategori_kode (kode)
@@ -262,7 +268,10 @@ CREATE TABLE IF NOT EXISTS fasilitas (
   id                BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   kode_osm          VARCHAR(40)   NOT NULL,   -- mis. "way/500318061"
   nama              VARCHAR(200)  NOT NULL,
-  kategori_id       TINYINT UNSIGNED NOT NULL,
+  -- Tipenya WAJIB sama dengan kategori_fasilitas.id (SMALLINT), karena kolom
+  -- ini dipakai sebagai foreign key ke sana. MySQL menolak FK yang tipenya
+  -- berbeda — errno 150 "Foreign key constraint is incorrectly formed".
+  kategori_id       SMALLINT UNSIGNED NOT NULL,
   subkategori       VARCHAR(80)   NULL,
   alamat            VARCHAR(400)  NULL,
   kode_desa         VARCHAR(16)   NULL,

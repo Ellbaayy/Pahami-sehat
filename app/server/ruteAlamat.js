@@ -22,13 +22,26 @@ import { Router } from 'express'
 import { batasi } from './batas.js'
 import { LAJU } from './batasInput.js'
 import { deteksiWilayah, tingkatKetepatan, normalNama } from './geocoding.js'
+import { cariPhoton } from './photon.js'
+import { NOMINATIM, antre, buatSimpanan } from './layanan.js'
 import { eksekusi } from './db.js'
 
 const ruteAlamat = Router()
 const batasAlamat = batasi({ ...LAJU.faskes, nama: 'permintaan alamat' })
 
-const UA = 'PahamiSehat/1.0 (pendidikan kesehatan; +https://github.com/Ellbaayy/Pahami-sehat)'
-const NOMINATIM = 'https://nominatim.openstreetmap.org'
+const UA = NOMINATIM.ua
+const NOMINATIM_BASE = NOMINATIM.url
+
+/*
+ * Simpanan geocoding balik.
+ *
+ * Geocoding balik dipanggil dua kali untuk alur yang sama: sekali saat
+ * pengguna memilih kandidat (untuk wilayah), sekali lagi kalau ia memakai
+ * titik peta. Kueri yang sama persis sering berulang (pengguna memilih,
+ * batal, memilih lagi), dan kebijakan Nominatim membatasi 1 permintaan/detik —
+ * jadi menyimpan hasilnya bukan optimasi, melainkan cara mematuhi kebijakan.
+ */
+const simpananBalik = buatSimpanan({ maks: NOMINATIM.cacheMaks, umurMs: NOMINATIM.cacheMs })
 
 /** Bungkus handler supaya galat tak terduga jadi 500 JSON, bukan HTML. */
 const bungkus = (fn) => (req, res) =>
@@ -73,8 +86,9 @@ function muatTabelWilayah() {
 /** Ambil satu halaman hasil Nominatim. */
 async function tanyaNominatim(q, batasMs = 12_000) {
   const url =
-    `${NOMINATIM}/search?format=jsonv2&addressdetails=1&countrycodes=id` +
+    `${NOMINATIM_BASE}/search?format=jsonv2&addressdetails=1&countrycodes=id` +
     `&limit=6&q=${encodeURIComponent(q)}`
+  await antre('nominatim', NOMINATIM.jedaMs)
   const res = await fetch(url, {
     headers: { 'User-Agent': UA, 'Accept-Language': 'id,en;q=0.8' },
     signal: AbortSignal.timeout(batasMs),
@@ -93,26 +107,84 @@ async function tanyaNominatim(q, batasMs = 12_000) {
 /** Geocoding balik: koordinat -> alamat. Dipakai saat pengguna memberi titik
  *  langsung (mis. "‑6.2, 106.8") atau memilih hasil yang hanya punya koordinat. */
 async function balikGeocoding(lat, lon, batasMs = 12_000) {
+  // Dibulatkan 5 desimal (~1 m): cukup presisi, dan membuat kueri berulang
+  // untuk titik yang sama benar-benar memakai simpanan.
+  const kunci = `${Number(lat).toFixed(5)},${Number(lon).toFixed(5)}`
+  const tersimpan = simpananBalik.ambil(kunci)
+  if (tersimpan !== null) return tersimpan
+
   const url =
-    `${NOMINATIM}/reverse?format=jsonv2&addressdetails=1&zoom=18` +
+    `${NOMINATIM_BASE}/reverse?format=jsonv2&addressdetails=1&zoom=18` +
     `&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`
+  await antre('nominatim', NOMINATIM.jedaMs)
   const res = await fetch(url, {
     headers: { 'User-Agent': UA, 'Accept-Language': 'id,en;q=0.8' },
     signal: AbortSignal.timeout(batasMs),
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const j = await res.json()
-  return j && j.address ? j : null
+  const hasil = j && j.address ? j : null
+  // Hasil kosong ikut disimpan: titik di tengah laut memang tidak punya
+  // alamat, dan menanyakan ulang ke layanan hanya membuang kuota.
+  simpananBalik.simpan(kunci, hasil)
+  return hasil
 }
 
-/** Ubah satu hasil Nominatim jadi bentuk yang dipakai antarmuka. */
+/**
+ * Ubah satu hasil jadi bentuk yang dipakai antarmuka.
+ *
+ * Menerima DUA bentuk: hasil Nominatim (`lat`/`lon` string, `address` objek)
+ * dan hasil Photon dari `photon.js` (`lat`/`lon` angka, `alamat` sudah jadi,
+ * `petunjukWilayah`). Dibedakan lewat adanya `petunjukWilayah` — bukan lewat
+ * nama layanan, supaya penambahan provider lain tidak memaksa perubahan di
+ * sini.
+ */
 function bentukHasil(x, tabel) {
+  const dariPhoton = x.petunjukWilayah !== undefined
+
   const lat = Number(x.lat)
   const lon = Number(x.lon)
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null
   // Indonesia: tolak koordinat di luar batas. Nominatim kadang mengembalikan
   // hasil negara lain walau `countrycodes=id` sudah dipasang.
   if (lat < -11.5 || lat > 6.5 || lon < 94 || lon > 141.1) return null
+
+  if (dariPhoton) {
+    /*
+     * Wilayah TIDAK diambil dari `petunjukWilayah`.
+     *
+     * Photon memberi `state: "Yogyakarta"`, bukan "Daerah Istimewa
+     * Yogyakarta"; `city`/`county` juga tidak konsisten dengan pembagian
+     * BPS. Memakainya akan menghasilkan kode wilayah yang salah atau kosong.
+     *
+     * Jadi wilayah ditanyakan ke Nominatim lewat titik koordinatnya. Itu satu
+     * permintaan tambahan per pemilihan, bukan per ketikan — dan hasilnya
+     * disimpan, jadi memilih alamat yang sama dua kali tidak menambah beban.
+     */
+    const petunjuk = x.petunjukWilayah ?? {}
+    return {
+      nama: x.nama ?? 'Lokasi',
+      alamat: x.alamat ?? '',
+      lat,
+      lon,
+      ketepatan: tingkatKetepatanDariPhoton(x.tipe),
+      tipe: x.tipe ?? null,
+      kategori: 'photon',
+      kodePos: x.kodePos ?? petunjuk.kodePos ?? null,
+      /*
+       * `petunjukWilayah` DITERUSKAN ke antarmuka — bukan untuk identitas
+       * wilayah (itu tetap dari Nominatim), melainkan untuk membedakan
+       * kandidat yang namanya sama di kota berbeda. "Malioboro" ada di
+       * Surabaya dan Yogyakarta; tanpa petunjuk ini daftar saran menampilkan
+       * dua baris yang tampak identik.
+       */
+      petunjukWilayah: petunjuk,
+      // Ditandai belum final: endpoint mengisi ini lewat geocoding balik
+      // sebelum balasan dikirim. Kalau gagal, `dikenal:false` — bukan tebakan.
+      wilayah: { dikenal: false, sumber: 'belum' },
+      perluWilayah: true,
+    }
+  }
 
   const alamat = x.address ?? {}
   const w = deteksiWilayah(alamat, tabel ?? {})
@@ -133,6 +205,29 @@ function bentukHasil(x, tabel) {
     kodePos: alamat.postcode ?? null,
     wilayah: w,
   }
+}
+
+/**
+ * Terjemahkan `type` Photon ke istilah ketepatan yang sama dengan Nominatim.
+ *
+ * Pemetaan ini DIPERIKSA terhadap nilai yang benar-benar keluar dari Photon
+ * untuk alamat Indonesia (house, street, district, city, state, ...), bukan
+ * daftar tebakan. Jenis yang tidak dikenal menghasilkan null — lebih baik
+ * tidak menyebut ketepatan daripada menyebut yang salah.
+ */
+const KETEPATAN_PHOTON = {
+  house: 'titik',
+  street: 'jalan',
+  locality: 'kelurahan',
+  district: 'kecamatan',
+  city: 'kabupaten',
+  county: 'kabupaten',
+  state: 'provinsi',
+  country: 'provinsi',
+}
+
+function tingkatKetepatanDariPhoton(tipe) {
+  return KETEPATAN_PHOTON[String(tipe ?? '').toLowerCase()] ?? null
 }
 
 /* ------------------------------------------------------------------ cari -- */
@@ -157,7 +252,39 @@ ruteAlamat.get('/api/alamat/cari', batasAlamat, bungkus(async (req, res) => {
   }
 
   try {
-    const mentah = await tanyaNominatim(q)
+    /*
+     * KANDIDAT: Photon dulu, Nominatim sebagai cadangan.
+     *
+     * Photon jauh lebih cepat untuk pencarian sebagian kata, dan itu yang
+     * dibutuhkan autocomplete. Tapi Photon tidak memberi nama provinsi resmi
+     * (lihat catatan di photon.js), jadi hasilnya hanya KANDIDAT: wilayahnya
+     * tetap diperkaya lewat balikGeocoding -> deteksiWilayah di `bentukHasil`.
+     *
+     * Kalau Photon gagal (mati, 400, timeout), Nominatim dipakai supaya
+     * fitur tidak ikut mati. Kegagalan itu dicatat di balasan (`sumberCari`)
+     * agar tidak terlihat seperti Photon yang berhasil.
+     */
+    let mentah = []
+    let sumberCari = 'photon'
+    let photonGagal = null
+    try {
+      const p = await cariPhoton(q)
+      mentah = p.hasil
+      if (p.dariSimpanan) sumberCari = 'photon-simpanan'
+    } catch (e) {
+      photonGagal = e?.status ? `http_${e.status}` : 'jaringan'
+      sumberCari = 'nominatim-cadangan'
+    }
+
+    // Photon kosong BUKAN berarti alamat tidak ada: indeksnya bisa melewatkan
+    // alamat lengkap bergaya Indonesia (RT/RW, nama kompleks). Jadi Nominatim
+    // tetap ditanya sebelum menyimpulkan "tidak ditemukan".
+    if (!mentah.length) {
+      const n = await tanyaNominatim(q)
+      mentah = n
+      sumberCari = photonGagal ? 'nominatim-cadangan' : 'nominatim'
+    }
+
     const hasil = mentah.map((x) => bentukHasil(x, tabel)).filter(Boolean)
 
     // Kueri berupa koordinat: Nominatim tidak menemukan apa pun, tetapi
@@ -219,6 +346,13 @@ ruteAlamat.get('/api/alamat/cari', batasAlamat, bungkus(async (req, res) => {
       kueri: q,
       jumlah: hasil.length,
       perluPilih: hasil.length > 1,
+      /*
+       * `sumberCari` menyebut layanan yang benar-benar menjawab: 'photon',
+       * 'photon-simpanan', 'nominatim', atau 'nominatim-cadangan' (Photon
+       * gagal). Ini bukan hiasan — tanpa ini, kegagalan Photon tidak terlihat
+       * dan orang akan menyimpulkan Photon bekerja padahal tidak.
+       */
+      sumberCari,
       hasil,
     })
   } catch (e) {

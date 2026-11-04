@@ -241,8 +241,10 @@ flowchart TB
     N["RSS berita kesehatan<br/>Detik Health · WHO · Google News"]
     MS["Microsoft Edge TTS<br/>suara neural via WebSocket"]
     OV["Overpass API<br/>OpenStreetMap"]
-    VH["Valhalla<br/>rute jalan kaki · motor · mobil"]
-    NM["Nominatim<br/>titik referensi wilayah"]
+    PH["Photon<br/>autocomplete alamat"]
+    VH["Valhalla<br/>rute jalan kaki · motor"]
+    OS["OSRM routed-car / routed-foot<br/>rute mobil · pejalan kaki"]
+    NM["Nominatim<br/>geocoding balik · titik referensi wilayah"]
     WID["wilayah.id<br/>38 provinsi, kode bertitik"]
   end
 
@@ -259,10 +261,14 @@ flowchart TB
   R -->|"teks"| MS
   R -->|"radius + koordinat"| OV
   OV -->|"fasilitas (ODbL)"| R
+  R -->|"kueri alamat"| PH
+  PH -->|"kandidat + koordinat"| R
   R -->|"asal + tujuan + moda"| VH
   VH -->|"jarak, waktu, langkah"| R
+  R -->|"asal + tujuan + moda"| OS
+  OS -->|"jarak, waktu, langkah"| R
   R -->|"kode wilayah"| WID
-  R -->|"nama wilayah"| NM
+  R -->|"koordinat -> alamat + wilayah"| NM
   MS -->|"audio MP3"| R
   K -->|"jawaban + sumber yang dikutip"| R
   R -->|"jawaban"| UI
@@ -604,7 +610,7 @@ lebih berbahaya daripada tidak ada penyaring.
 | GET | `/api/wilayah` | daftar wilayah administratif bertingkat (`tingkat=provinsi\|kabupaten\|kecamatan\|desa` + `induk=<kode>`) |
 | GET | `/api/wilayah/titik` | titik referensi sebuah wilayah beserta tingkat ketelitiannya |
 | GET | `/api/rute` | rute perjalanan antar dua titik (`moda=jalan-kaki\|motor\|mobil`, `bahasa=id\|en`) |
-| GET | `/api/alamat/cari` | pencarian alamat + saran + deteksi wilayah administratif |
+| GET | `/api/alamat/cari` | pencarian alamat: **Photon** untuk kandidat, **Nominatim** sebagai cadangan; balasan menyebut `sumberCari` |
 | GET | `/api/alamat/titik` | geocoding balik: koordinat → alamat + wilayah |
 | GET | `/api/wilayah/lengkap` | provinsi + kabupaten + kecamatan untuk dropdown |
 | GET | `/api/rs` | rumah sakit resmi SIRS Kemenkes: cari, filter, paginasi |
@@ -787,17 +793,48 @@ koordinat, jadi titiknya naik ke kecamatan/kabupaten.
 GPS tetap ada sebagai metode alternatif. Aplikasi tidak pernah mengisi lokasi
 pengguna dengan koordinat tetap.
 
-### Petunjuk arah — Valhalla, bukan OSRM demo
+### Petunjuk arah — OSRM dan Valhalla, masing-masing pada yang benar-benar didukungnya
 
 Tiga moda: jalan kaki, sepeda motor, mobil. **Mengganti moda menghitung ulang
 rute**, bukan hanya mengganti ikon.
 
-OSRM demo sengaja **tidak** dipakai. Hasil pengukuran 4 Nov 2026 untuk satu
-rute yang sama (Monas → RSPAD Gatot Soebroto): `driving`, `foot`, `bike`,
-`walking`, dan `motorcycle` semuanya mengembalikan **4,32 km / 6,4 menit** —
-profilnya diabaikan. Memakainya berarti tombol moda jadi hiasan.
+**Setiap penyedia hanya dipakai untuk moda yang benar-benar dilayaninya.**
+Itu bukan preferensi gaya, melainkan hasil pengukuran.
 
-Valhalla memberi hasil yang benar-benar berbeda:
+`router.project-osrm.org` (instance demo) **tidak** dipakai sama sekali: untuk
+rute Monas → RSPAD Gatot Soebroto, `driving`, `foot`, `bike`, `walking`, dan
+`motorcycle` semuanya mengembalikan **4,32 km / 6,4 menit** — profilnya
+diabaikan, jadi tombol moda hanya akan menjadi hiasan.
+
+Yang dipakai adalah `routing.openstreetmap.de`, yang menjalankan **instance
+terpisah per profil**. Diukur 4 Nov 2026, rute yang sama:
+
+| Host OSRM | Jarak | Waktu | Profil |
+|---|---|---|---|
+| `routed-car` | 4,32 km | 6,4 menit | mobil |
+| `routed-foot` | 1,71 km | 22,9 menit | pejalan kaki |
+| `routed-bike` | 2,15 km | 16,1 menit | sepeda |
+
+Ada satu jebakan yang wajib diketahui siapa pun yang mengubah kode ini:
+**profil ditentukan oleh HOST, bukan oleh path.** Ketiga baris di atas memakai
+path `/route/v1/driving` yang sama. Mengganti `/driving` menjadi `/foot` tidak
+mengubah apa pun — sudah diuji, hasilnya tetap rute mobil. Ini terkunci di
+`uji-layanan-peta.mjs`.
+
+**OSRM publik tidak mendukung sepeda motor.** Tidak ada host `routed-motor`;
+permintaan ke sana membalas 404. Karena itu:
+
+| Moda | Penyedia | Alasan |
+|---|---|---|
+| Mobil | OSRM `routed-car` (atau Valhalla bila `RUTE_PROVIDER=valhalla`) | keduanya mendukung |
+| Jalan kaki | Valhalla `pedestrian`, atau OSRM `routed-foot` | keduanya mendukung |
+| Sepeda motor | **Valhalla `motor_scooter` saja** | OSRM publik tidak punya profilnya |
+
+Memberi rute `routed-car` lalu menamainya "sepeda motor" adalah persis
+kebohongan yang dilarang pada pekerjaan ini. `OSRM_MODA.motor` bernilai `null`
+dengan sengaja — bukan karena lupa diisi.
+
+Valhalla memberi hasil yang berbeda untuk ketiga moda:
 
 | Moda | Jarak | Waktu | Langkah |
 |---|---|---|---|
@@ -811,6 +848,28 @@ dikenal dikembalikan apa adanya — lebih baik Inggris asli daripada terjemahan
 karangan. Nama jalan selalu dipertahankan. Pada antarmuka Inggris, instruksi
 Valhalla ditampilkan apa adanya (`Drive south.`), bukan diterjemahkan lalu
 dicampur.
+
+#### Satu bug bentuk balasan yang mudah terulang
+
+`/api/rute` menyebar objek rute apa adanya (`res.json({ ok: true, ...rute })`).
+Artinya **nama kunci yang salah tidak menimbulkan error** — ia hanya hilang,
+dan antarmuka menampilkan kolom kosong tanpa keluhan.
+
+Itu benar-benar terjadi: jalur OSRM mengembalikan `jarak`/`waktu`/`garis`,
+sedangkan Valhalla mengembalikan `jarakKm`/`waktuMenit`/`geometri`. Selama OSRM
+belum dipakai, cacatnya tidak terlihat. Begitu `RUTE_PROVIDER=osrm` dinyalakan,
+rute mobil tampil kosong sementara jalan kaki (yang jatuh ke Valhalla) tetap
+normal.
+
+Sekarang kedua jalur wajib mengembalikan kunci yang sama, dan
+`uji-layanan-peta.mjs` memeriksanya satu per satu.
+
+#### Endpoint layanan bisa diganti tanpa menyentuh kode
+
+Semua alamat layanan ada di `app/server/layanan.js` dan bisa ditimpa lewat
+environment: `PHOTON_URL`, `NOMINATIM_URL`, `OSRM_MOBIL`, `OSRM_KAKI`,
+`VALHALLA_URL`, `RUTE_PROVIDER`. Tidak ada API key di mana pun — Photon,
+Nominatim, OSRM, dan Valhalla semuanya layanan publik tanpa kunci.
 
 ### Batas yang disebut di antarmuka, bukan disembunyikan
 

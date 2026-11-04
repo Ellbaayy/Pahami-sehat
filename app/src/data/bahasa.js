@@ -52,6 +52,7 @@ const KAMUS = {
     'rute.mobil': 'Mobil',
     'rute.menghitung': 'Menghitung rute…',
     'rute.ringkas': '{jarak} km · sekitar {menit} menit',
+    'rute.ringkasKurangSatuMenit': '{jarak} km · kurang dari 1 menit',
     'rute.catatanWaktu':
       'Estimasi waktu dihitung dari profil kecepatan rute, bukan kondisi lalu lintas langsung.',
     'rute.googleMaps': 'Buka di Google Maps',
@@ -680,6 +681,7 @@ const KAMUS = {
     'rute.mobil': 'Car',
     'rute.menghitung': 'Calculating route…',
     'rute.ringkas': '{jarak} km · about {menit} minutes',
+    'rute.ringkasKurangSatuMenit': '{jarak} km · under 1 minute',
     'rute.catatanWaktu':
       'Travel time is estimated from the route speed profile, not live traffic conditions.',
     'rute.googleMaps': 'Open in Google Maps',

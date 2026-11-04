@@ -89,13 +89,33 @@ export function useAlamat() {
 
   /**
    * Tetapkan titik asal dari satu kandidat yang DIPILIH pengguna.
-   * Koordinat dan wilayah sudah dihitung server; hook ini tidak mengubahnya.
+   *
+   * Kandidat dari Photon datang dengan `wilayah.dikenal === false`, karena
+   * `state` Photon bukan nama provinsi resmi. Wilayahnya dilengkapi di sini
+   * lewat geocoding balik — SATU permintaan per pemilihan, bukan per ketikan.
+   * Kalau gagal, wilayah tetap `dikenal:false` dan koordinat tetap dipakai:
+   * titiknya sah, hanya wilayahnya yang tidak bisa dipastikan.
+   *
+   * @returns {Promise<object>} kandidat yang sudah dilengkapi (atau apa adanya)
    */
-  const pilih = useCallback((h) => {
-    setDipilih(h)
+  const pilih = useCallback(async (h) => {
+    let hasil = h
+    if (h?.perluWilayah) {
+      try {
+        const res = await fetch(`/api/alamat/titik?lat=${h.lat}&lon=${h.lon}`)
+        const j = await res.json()
+        if (res.ok && j.ok) {
+          hasil = { ...h, wilayah: j.wilayah ?? h.wilayah, alamat: j.alamat ?? h.alamat }
+        }
+      } catch {
+        // Jaringan gagal: pakai kandidat apa adanya, jangan batalkan pilihan.
+      }
+    }
+    setDipilih(hasil)
     setSaran([])
     setPerluPilih(false)
     setGalat(null)
+    return hasil
   }, [])
 
   const bersihkan = useCallback(() => {

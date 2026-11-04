@@ -119,10 +119,24 @@ export default function PanelNavigasi({ t = (k) => k, asal, tujuan, onRute, baha
       {rute && !rute.gagal ? (
         <>
           <p className="mt-2 text-[0.9rem] font-semibold text-navy-900">
-            {t('rute.ringkas', {
-              jarak: Number(rute.jarakKm ?? 0).toFixed(2),
-              menit: Math.round(Number(rute.waktuMenit ?? 0)),
-            })}
+            {/*
+             * Waktu < 1 menit ditulis "kurang dari 1 menit" lewat kunci
+             * TERPISAH, bukan dengan menyisipkan teks ke dalam templat
+             * `rute.ringkas`.
+             *
+             * Alasannya: templat itu berbunyi '{jarak} km · sekitar {menit}
+             * menit'. Menyisipkan "kurang dari 1 menit" ke dalamnya
+             * menghasilkan "sekitar kurang dari 1 menit menit" — dua kata
+             * "menit" dan satu "sekitar" yang salah.
+             *
+             * Terukur: rute 140 m dulu tampil "sekitar 0 menit".
+             */}
+            {Number(rute.waktuMenit ?? 0) < 1
+              ? t('rute.ringkasKurangSatuMenit', { jarak: Number(rute.jarakKm ?? 0).toFixed(2) })
+              : t('rute.ringkas', {
+                  jarak: Number(rute.jarakKm ?? 0).toFixed(2),
+                  menit: Math.round(Number(rute.waktuMenit ?? 0)),
+                })}
           </p>
           <p className="text-[0.74rem] leading-snug text-muted-500">{t('rute.catatanWaktu')}</p>
 

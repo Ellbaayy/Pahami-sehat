@@ -71,6 +71,14 @@ const BUTUH_LUAR = new Set([
   // gerbang tanpa jaringan bergantung pada keadaan mesin. Dijalankan terpisah:
   // `node uji-halaman-penjelasan.mjs`.
   'uji-halaman-penjelasan.mjs',
+  /*
+   * Memanggil layanan publik SUNGGUHAN (Photon, Nominatim, OSRM, Valhalla)
+   * untuk membuktikan klaim tentang kemampuannya — termasuk bahwa OSRM publik
+   * TIDAK mendukung motor. Itu tidak boleh masuk gerbang tanpa jaringan:
+   * kegagalan jaringan akan terbaca sebagai "klaimnya salah". Dijalankan
+   * terpisah: `node uji-layanan-peta.mjs`.
+   */
+  'uji-layanan-peta.mjs',
 ])
 
 /** Uji yang memeriksa hasil build; hanya jalan kalau `dist/` ada. */

@@ -1,3 +1,5 @@
+import { buatSimpanan, OSRM_MODA } from './layanan.js'
+
 /**
  * Rute perjalanan multimoda lewat Valhalla.
  *
@@ -40,12 +42,43 @@ const UA =
   'PahamiSehat/1.0 (pendidikan kesehatan; +https://github.com/Ellbaayy/Pahami-sehat)'
 const TIMEOUT_MS = 25_000
 
-/** Moda yang didukung -> costing Valhalla. Tiga moda, tidak lebih (YAGNI). */
+/**
+ * Simpanan rute.
+ *
+ * Rute tidak berubah selama jalan dan aturannya tidak berubah, jadi menyimpan
+ * 30 menit aman. Ini juga yang membuat mengganti-ganti moda bolak-balik tidak
+ * menghajar peladen routing publik (yang dibiayai sumbangan).
+ */
+const simpananRute = buatSimpanan({
+  maks: Number(process.env.RUTE_CACHE_MAKS || '120'),
+  umurMs: Number(process.env.RUTE_CACHE_MS || String(30 * 60 * 1000)),
+})
+
+/**
+ * Moda yang didukung -> costing Valhalla. Tiga moda, tidak lebih (YAGNI).
+ *
+ * Valhalla dipakai untuk SEMUA moda di sini karena ia satu-satunya penyedia
+ * publik yang benar-benar membedakan ketiganya (terukur: pedestrian 2,14 km /
+ * 29,6 mnt vs motor_scooter 4,54 / 17,9 vs auto 4,54 / 15,4). OSRM tersedia
+ * sebagai jalur alternatif untuk mobil — lihat `ruteLewatOsrm` — dan dipakai
+ * kalau `RUTE_PROVIDER=osrm`.
+ */
 export const COSTING = {
   'jalan-kaki': 'pedestrian',
   motor: 'motor_scooter',
   mobil: 'auto',
 }
+
+/**
+ * Kemampuan OSRM — SATU sumber kebenaran, diimpor dari `layanan.js`.
+ *
+ * Jangan mendefinisikan ulang di sini. Versi sebelumnya punya dua daftar
+ * yang saling bertentangan: `layanan.js` mengaku motor didukung lewat
+ * `routed-car`, sementara berkas ini menulis `motor: null`. Kalau keduanya
+ * dipakai di jalur berbeda, salah satunya akan memberi rute mobil berlabel
+ * motor — dan tidak ada galat apa pun yang menandainya.
+ */
+export { OSRM_MODA }
 
 /** Moda -> kode travelmode Google Maps (3e0 mobil, 3e1 sepeda, 3e2 jalan, 3e3 motor). */
 const GM_MODE = { 'jalan-kaki': '2', motor: '3', mobil: '0' }
@@ -242,7 +275,17 @@ export function normalkanRute(j, moda, bahasa = 'id') {
 }
 
 /**
- * Ambil rute dari Valhalla.
+ * Ambil rute.
+ *
+ * PROVIDER DIPILIH BERDASARKAN DUKUNGAN NYATA, BUKAN SELERA:
+ *
+ *   mobil        -> OSRM (routed-car) kalau RUTE_PROVIDER=osrm, jika tidak Valhalla
+ *   jalan-kaki   -> Valhalla (pedestrian)
+ *   motor        -> Valhalla (motor_scooter) — OSRM publik tidak punya profil ini
+ *
+ * Valhalla selalu menjadi cadangan: kalau OSRM gagal, rute tetap ada. Yang
+ * TIDAK pernah dilakukan adalah memakai rute mobil lalu menyebutnya motor
+ * atau jalan kaki — itu akan lulus tampilan tetapi salah isi.
  *
  * Melempar HANYA dengan `code` yang bisa ditampilkan antarmuka:
  *   'moda'          -> moda tidak dikenal (galat pemanggil, 400)
@@ -256,6 +299,133 @@ export async function ambilRute({ latAsal, lonAsal, latTujuan, lonTujuan, moda =
     throw e
   }
 
+  const provider = String(process.env.RUTE_PROVIDER ?? 'valhalla').toLowerCase()
+  const osrm = OSRM_MODA[moda]
+
+  /*
+   * Simpanan rute.
+   *
+   * Kunci memuat kedua titik (dibulatkan 5 desimal ~1 m) dan modanya: rute
+   * Monas->RSPAD dengan mobil TIDAK sama dengan Monas->RSPAD jalan kaki, jadi
+   * moda wajib ikut jadi kunci. Tanpa pembulatan, angka desimal yang
+   * bergetar sedikit (sisa geseran peta) akan membuat simpanan tidak pernah
+   * kena.
+   */
+  const kunci =
+    `${moda}|${Number(latAsal).toFixed(5)},${Number(lonAsal).toFixed(5)}|` +
+    `${Number(latTujuan).toFixed(5)},${Number(lonTujuan).toFixed(5)}|${bahasa}`
+  const tersimpan = simpananRute.ambil(kunci)
+  if (tersimpan) return { ...tersimpan, dariSimpanan: true }
+
+  /*
+   * OSRM hanya dipakai kalau (a) moda itu benar-benar didukungnya dan
+   * (b) providernya dipilih. Kalau tidak, jalur Valhalla yang diambil.
+   */
+  if (provider === 'osrm' && osrm) {
+    try {
+      const r = await ruteLewatOsrm({ latAsal, lonAsal, latTujuan, lonTujuan, moda, bahasa, osrm })
+      simpananRute.simpan(kunci, r)
+      return r
+    } catch {
+      // Sengaja tidak diteruskan: Valhalla di bawah adalah cadangan yang sah,
+      // dan pengguna lebih butuh rute daripada pesan galat penyedia.
+    }
+  }
+
+  const r = await ruteLewatValhalla({ latAsal, lonAsal, latTujuan, lonTujuan, moda, bahasa, costing })
+  simpananRute.simpan(kunci, r)
+  return r
+}
+
+/**
+ * Rute lewat OSRM.
+ *
+ * `overview=full&geometries=geojson` dipakai supaya garis rute datang sebagai
+ * GeoJSON — tidak perlu decoder polyline, dan urutannya sudah [lon, lat] yang
+ * tinggal dibalik untuk Leaflet.
+ */
+async function ruteLewatOsrm({ latAsal, lonAsal, latTujuan, lonTujuan, moda, bahasa, osrm }) {
+  const koor = `${Number(lonAsal)},${Number(latAsal)};${Number(lonTujuan)},${Number(latTujuan)}`
+  // Perhatikan: URUTANNYA lon,lat — OSRM memakai urutan yang sama dengan
+  // GeoJSON, bukan lat,lon seperti Valhalla. Menukarnya menghasilkan rute
+  // ke Somalia.
+  const url =
+    `${osrm.host}/route/v1/${osrm.profil}/${koor}` +
+    `?overview=full&geometries=geojson&steps=true&alternatives=false`
+
+  const res = await fetch(url, {
+    headers: { 'User-Agent': UA, Accept: 'application/json' },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  })
+  if (!res.ok) throw new Error(`OSRM HTTP ${res.status}`)
+  const j = await res.json().catch(() => null)
+  if (j?.code !== 'Ok' || !j.routes?.length) throw new Error(`OSRM: ${j?.code ?? 'tanpa rute'}`)
+
+  const r = j.routes[0]
+  const langkah = (r.legs?.[0]?.steps ?? []).map((s) => ({
+    instruksi: terjemahkanManuver(kalimatOsrm(s), moda, bahasa),
+    // Nama kunci DISAMAKAN dengan bentuk Valhalla (`jarakM`/`waktuDetik`),
+    // karena `langkah` dari kedua penyedia dibaca oleh antarmuka yang sama.
+    // Sebelumnya di sini `jarak`/`waktu`, dan itu membuat kolom jarak per
+    // langkah kosong saat rute datang dari OSRM.
+    jarakM: Math.round(Number(s.distance ?? 0)),
+    waktuDetik: Math.round(Number(s.duration ?? 0)),
+    jenis: s.maneuver?.type ?? null,
+  }))
+
+  return {
+    moda,
+    /*
+     * Nama kunci mengikuti bentuk Valhalla (`jarakKm`, `waktuMenit`,
+     * `geometri`). Dua penyedia yang mengembalikan bentuk berbeda dari satu
+     * fungsi adalah sumber bug yang tidak terlihat: `/api/rute` hanya
+     * menyebar `...rute`, jadi kunci yang salah nama tidak error — ia hanya
+     * hilang, dan antarmuka menampilkan "None" tanpa keluhan.
+     */
+    jarakKm: Number((Number(r.distance ?? 0) / 1000).toFixed(3)),
+    waktuMenit: Number(Number(r.duration ?? 0)) / 60,
+    // Garis rute: [lon, lat] -> [lat, lon] untuk Leaflet.
+    geometri: (r.geometry?.coordinates ?? []).map(([lon, lat]) => [lat, lon]),
+    langkah,
+    sumber: 'OSRM',
+    penyedia: osrm.host,
+  }
+}
+
+/**
+ * Susun satu instruksi dari langkah OSRM.
+ *
+ * OSRM memberi `maneuver.type` + `name` terpisah, bukan kalimat. Digabung di
+ * sini supaya bentuknya sama dengan Valhalla, sehingga `terjemahkanManuver`
+ * hanya perlu menangani satu bentuk.
+ */
+const ARAH_OSRM = {
+  depart: 'Start',
+  arrive: 'Arrive at destination',
+  turn: 'Turn',
+  'new name': 'Continue',
+  merge: 'Merge',
+  'on ramp': 'Take the ramp',
+  'off ramp': 'Take the exit',
+  fork: 'Keep',
+  'end of road': 'Turn',
+  continue: 'Continue',
+  roundabout: 'At the roundabout, take the exit',
+  rotary: 'At the roundabout, take the exit',
+  'roundabout turn': 'At the roundabout, turn',
+  notification: 'Continue',
+}
+
+function kalimatOsrm(s) {
+  const tipe = s.maneuver?.type ?? 'continue'
+  const dasar = ARAH_OSRM[tipe] ?? 'Continue'
+  const arah = s.maneuver?.modifier ? ` ${s.maneuver.modifier}` : ''
+  const nama = s.name ? ` onto ${s.name}` : ''
+  return `${dasar}${arah}${nama}`
+}
+
+/** Rute lewat Valhalla — jalur utama untuk semua moda, dan cadangan OSRM. */
+async function ruteLewatValhalla({ latAsal, lonAsal, latTujuan, lonTujuan, moda, bahasa, costing }) {
   const isi = {
     locations: [
       { lat: Number(latAsal), lon: Number(lonAsal) },
@@ -298,5 +468,5 @@ export async function ambilRute({ latAsal, lonAsal, latTujuan, lonTujuan, moda =
     g.code = 'sumber_gagal'
     throw g
   }
-  return rute
+  return { ...rute, sumber: 'Valhalla', penyedia: BASE }
 }

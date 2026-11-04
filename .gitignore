@@ -27,6 +27,12 @@ npm-debug.log*
 # buang dulu tabel pengguna_baru / sesi / riwayat_pengguna.
 *.sql
 !docs/skema-database.sql
+# Migrasi BUKAN dump: isinya DDL yang ditulis tangan, tanpa satu pun baris data
+# pengguna. Tanpa pengecualian ini, berkas migrasi tidak pernah ikut ter-commit
+# dan perbaikan skema hanya hidup di laptop — orang lain akan mengulang bug yang
+# sama saat memasang aplikasi.
+!docs/migrasi-*.sql
+!docs/petakan-wilayah.sql
 
 # Berkas kerja sementara di akar repo (bukan bagian produk)
 /reference.png
