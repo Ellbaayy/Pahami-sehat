@@ -18,10 +18,23 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Search, MapPin, X, Loader2, TriangleAlert, Check, Map } from 'lucide-react'
+import { Search, MapPin, X, Loader2, TriangleAlert, Check, Map, Crosshair } from 'lucide-react'
 import { useAlamat } from '../../lib/useAlamat'
 import PemilihWilayah from './PemilihWilayah'
-import PemilihTitik from './PemilihTitik'
+
+/**
+ * Tampilan tombol metode lokasi (tata letak 5 Nov 2026).
+ *
+ * SATU konstanta untuk ketiganya supaya tidak pernah menyimpang: tiga tombol
+ * yang dianggap setara harus terlihat PERSIS sama. Saat masih ditulis terpisah
+ * per tombol, satu tombol sempat mendapat gaya sorotan dan dua lainnya tidak —
+ * dan itulah yang terbaca sebagai "ada langkah yang belum dikerjakan".
+ *
+ * Tingginya `min-h-11` (44 px) — ambang target sentuh yang dipakai seluruh
+ * aplikasi.
+ */
+const KELAS_TOMBOL_METODE =
+  'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-line-200 bg-white px-3 text-[0.82rem] font-medium text-navy-700 transition hover:border-brand-300 hover:text-brand-800'
 
 /** Nama tingkat ketepatan untuk ditampilkan apa adanya. */
 const LABEL_KETEPATAN = {
@@ -60,13 +73,23 @@ export default function InputLokasi({
   onAlamat, // (hasilGeocoding) => void  — koordinat dari geocoding
   onWilayah, // (wilayah) => void        — titik referensi wilayah
   onGps,
-  /** (titik) => void — titik dari klik peta, belum/tanpa wilayah tebakan. */
-  onTitikPeta,
-  /** Apakah mode pilih-titik sedang aktif (peta memasang handler klik). */
-  modePilihTitik = false,
-  onModePilihTitik,
-  /** Handler klik peta yang didaftarkan PemilihTitik lalu diteruskan ke peta. */
-  onKlikPeta,
+  /*
+   * Pencarian nama tempat + ringkasan status lokasi — pindahan dari `LokasiBar`
+   * (5 Nov 2026). Komponen itu berdiri sebagai KARTU KEDUA tepat di bawah
+   * kartu ini, padahal isinya masih bagian dari "menentukan lokasi": judulnya
+   * pun "Lokasi belum diketahui" berikut kolom pencarian nama tempat. Di layar
+   * itu terbaca sebagai dua kotak pencarian lokasi yang berdampingan, dan itulah
+   * keluhan yang muncul saat tata letak baru dicoba.
+   *
+   * Sekarang isinya duduk di BAWAH garis pemisah di dalam kartu yang sama —
+   * persis seperti desain yang disetujui (bagian kedua kartu yang dipisah
+   * garis): di atas garis = cara memilih lokasi, di bawah garis = lokasi yang
+   * sedang dipakai.
+   */
+  kueriLokasi = '',
+  setKueriLokasi = () => {},
+  cariLokasi = null,
+  onPilihLokasi,
 }) {
   const [metode, setMetode] = useState('alamat') // 'alamat' | 'wilayah'
   const a = useAlamat()
@@ -81,17 +104,13 @@ export default function InputLokasi({
 
   const wilayahDipilih = lokasi?.dari === 'wilayah' ? lokasi : null
   /*
-   * Kotak "alamat terpilih" berlaku untuk DUA sumber: hasil geocoding
-   * ('alamat') dan titik yang diklik di peta ('manual').
+   * Kotak "alamat terpilih" berlaku untuk hasil geocoding ('alamat').
    *
-   * Sebelumnya hanya 'alamat', sehingga setelah pengguna menekan "Pakai titik
-   * ini" kotak itu hilang dan wilayah hasil geocoding balik tidak pernah
-   * terlihat — padahal server sudah mengirimnya. 'wilayah' TIDAK termasuk:
-   * titik itu ditampilkan oleh PemilihWilayah dengan label perkiraannya
-   * sendiri, dan menampilkannya dua kali membuat pengguna mengira ada dua
-   * lokasi berbeda.
+   * 'wilayah' TIDAK termasuk: titik itu ditampilkan oleh PemilihWilayah dengan
+   * label perkiraannya sendiri, dan menampilkannya dua kali membuat pengguna
+   * mengira ada dua lokasi berbeda.
    */
-  const alamatDipilih = lokasi?.dari === 'alamat' || lokasi?.dari === 'manual' ? lokasi : null
+  const alamatDipilih = lokasi?.dari === 'alamat' ? lokasi : null
 
   const gantiMetode = (m) => {
     if (m === metode) return
@@ -157,70 +176,17 @@ export default function InputLokasi({
       aria-labelledby="input-lokasi-judul"
       className="rounded-2xl border border-line-200/80 bg-white p-3 shadow-sm"
     >
-      <h2 id="input-lokasi-judul" className="sr-only">
-        {t('lokasi.judul')}
+      {/* Judul seksi. Dulu `sr-only`; sekarang TAMPIL karena tata letak
+          mengikuti desain yang disetujui (5 Nov 2026): setiap bagian kartu
+          punya judul yang terlihat, sehingga pengguna tahu sedang mengisi
+          apa. `h2` tetap, karena `h1` halaman sudah dipakai panel fitur. */}
+      <h2 id="input-lokasi-judul" className="text-[1.05rem] font-bold tracking-tight text-navy-900">
+        {t('lokasi.cariJudul')}
       </h2>
-
-      {/* Pemilih metode ------------------------------------------------- */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <div role="tablist" aria-label={t('lokasi.judul')} className="flex gap-1 rounded-lg bg-surface-100 p-0.5">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={metode === 'alamat'}
-            onClick={() => gantiMetode('alamat')}
-            className={
-              metode === 'alamat'
-                ? 'inline-flex min-h-8 items-center gap-1 rounded-md bg-white px-2.5 text-[0.8rem] font-semibold text-brand-800 shadow-sm'
-                : 'inline-flex min-h-8 items-center gap-1 rounded-md px-2.5 text-[0.8rem] font-medium text-navy-700'
-            }
-          >
-            <Search className="size-3.5" aria-hidden="true" />
-            {t('lokasi.ketikAlamat')}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={metode === 'wilayah'}
-            onClick={() => gantiMetode('wilayah')}
-            className={
-              metode === 'wilayah'
-                ? 'inline-flex min-h-8 items-center gap-1 rounded-md bg-white px-2.5 text-[0.8rem] font-semibold text-brand-800 shadow-sm'
-                : 'inline-flex min-h-8 items-center gap-1 rounded-md px-2.5 text-[0.8rem] font-medium text-navy-700'
-            }
-          >
-            <Map className="size-3.5" aria-hidden="true" />
-            {t('lokasi.pilihWilayah')}
-          </button>
-        </div>
-
-        {/* Dua jalan keluar tambahan: pilih titik di peta, dan GPS.
-            GPS tetap tersedia, tetapi BUKAN satu-satunya cara. */}
-        <div className="ml-auto flex flex-wrap items-center gap-1.5">
-          <PemilihTitik
-            t={t}
-            aktif={modePilihTitik}
-            onAktif={onModePilihTitik}
-            onKlikPeta={onKlikPeta}
-            onPakai={(titik) => {
-              onTitikPeta?.(titik)
-              onAlamat(titik)
-            }}
-          />
-          <button
-            type="button"
-            onClick={onGps}
-            className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-line-200 bg-white px-2.5 text-[0.78rem] font-medium text-navy-700"
-          >
-            <MapPin className="size-3.5" aria-hidden="true" />
-            {t('lokasi.pakaiGps')}
-          </button>
-        </div>
-      </div>
 
       {/* METODE 1: ketik alamat ---------------------------------------- */}
       {metode === 'alamat' ? (
-        <div className="mt-2">
+        <div className="mt-2.5">
           <label htmlFor="input-alamat" className="sr-only">
             {t('lokasi.labelAlamat')}
           </label>
@@ -243,8 +209,7 @@ export default function InputLokasi({
               autoComplete="off"
               aria-describedby="alamat-bantuan"
               aria-expanded={a.saran.length > 0}
-              aria-controls="alamat-saran"
-              className="min-h-10 w-full rounded-lg border border-line-200 bg-white pl-9 pr-9 text-[0.85rem] text-navy-900 placeholder:text-muted-400"
+              className="min-h-11 w-full rounded-xl border border-line-300 bg-white pl-10 pr-10 text-[0.88rem] text-navy-900 placeholder:text-muted-400"
             />
             {a.memuat ? (
               <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-400" aria-hidden="true" />
@@ -260,22 +225,40 @@ export default function InputLokasi({
             ) : null}
           </div>
 
-          {/* Tombol eksplisit: sebagian pengguna tidak tahu bahwa Enter bisa
-              dipakai, dan tombol membuat aksi "cari" terlihat. */}
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => (a.saran.length ? pilihSaran(a.saran[sorot >= 0 ? sorot : 0]) : a.setKueri(a.kueri))}
-              disabled={a.kueri.trim().length < 3 || a.memuat}
-              className="inline-flex min-h-8 items-center gap-1.5 rounded-lg bg-brand-700 px-2.5 text-[0.78rem] font-semibold text-white disabled:bg-surface-200 disabled:text-muted-400"
-            >
-              <Search className="size-3.5" aria-hidden="true" />
-              {t('lokasi.tombolCari')}
-            </button>
-            <p id="alamat-bantuan" className="text-[0.72rem] leading-snug text-muted-500">
-              {t('lokasi.contohAlamat')}
-            </p>
-          </div>
+          {/*
+           * TOMBOL + CONTOH HANYA MUNCUL SAAT DIBUTUHKAN (disunting 5 Nov 2026).
+           *
+           * Sebelumnya keduanya selalu tampil. Akibatnya, sebelum pengguna
+           * mengetik apa pun, kartu ini sudah berisi dua baris tambahan:
+           * tombol "Cari Lokasi" yang MATI (dimatikan karena kueri < 3 huruf)
+           * dan satu kalimat contoh yang panjang. Di layar itu terbaca sebagai
+           * dua tombol abu-abu berdempet di bawah kolom isian — padahal
+           * pengguna belum sampai ke langkah mencari.
+           *
+           * Sekarang keduanya muncul begitu pengguna mulai mengetik. Saat
+           * kolom kosong, kartu hanya berisi judul, kolom isian, dan tiga
+           * tombol metode — persis seperti desain.
+           *
+           * Kontras tetap dijaga: tombol abu-abu yang mati hanya terbaca
+           * sebagai "belum bisa dipakai" karena ADA di samping kolom yang
+           * terisi. Tanpa itu, ia terbaca sebagai tombol rusak.
+           */}
+          {a.kueri.trim() ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => (a.saran.length ? pilihSaran(a.saran[sorot >= 0 ? sorot : 0]) : a.setKueri(a.kueri))}
+                disabled={a.kueri.trim().length < 3 || a.memuat}
+                className="inline-flex min-h-8 items-center gap-1.5 rounded-lg bg-brand-700 px-2.5 text-[0.78rem] font-semibold text-white disabled:bg-surface-200 disabled:text-muted-400"
+              >
+                <Search className="size-3.5" aria-hidden="true" />
+                {t('lokasi.tombolCari')}
+              </button>
+              <p id="alamat-bantuan" className="text-[0.72rem] leading-snug text-muted-500">
+                {t('lokasi.contohAlamat')}
+              </p>
+            </div>
+          ) : null}
 
           {/* Saran ---------------------------------------------------- */}
           {a.saran.length > 0 ? (
@@ -410,7 +393,211 @@ export default function InputLokasi({
           </p>
         </div>
       ) : null}
+
+      {/*
+       * DUA TOMBOL METODE — di BAWAH kolom isian.
+       *
+       * Tombol "Pilih di Peta" (klik peta untuk menentukan titik) DIHAPUS
+       * 5 Nov 2026 atas permintaan pengguna. Yang tersisa adalah dua cara yang
+       * tetap berjalan tanpa bergantung pada klik di peta: ketik alamat dan
+       * pilih wilayah.
+       *
+       * KEDUA TOMBOLNYA SENGAJA TERLIHAT SAMA (5 Nov 2026).
+       * Versi pertama tata letak ini memberi sorotan penuh pada tombol yang
+       * "sedang aktif" — akibatnya "Ketik Alamat" selalu terlihat terpilih
+       * walaupun belum ada yang menyentuhnya, sehingga pengguna mengira ada
+       * langkah tambahan yang tertinggal. Sekarang tidak ada yang disorot;
+       * tombol hanya BERTINDAK. Status "mode wilayah sedang terbuka" tetap
+       * terlihat dari isi kartu di bawahnya (pemilih wilayah tampil), bukan
+       * dari warna tombol.
+       *
+       * Perilaku `gantiMetode` TIDAK DIUBAH: titik dari metode sebelumnya
+       * tetap dibuang, karena mencampur "koordinat dari alamat" dengan "label
+       * dari wilayah" adalah kesalahan yang sudah pernah terjadi.
+       */}
+      <p className="mt-2 text-[0.8rem] text-muted-500">{t('lokasi.metodeLain')}</p>
+      <div className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2" role="group" aria-label={t('lokasi.metodeLain')}>
+        {/* 1. Ketik alamat — juga jalan kembali dari mode wilayah. */}
+        <button
+          type="button"
+          aria-pressed={metode === 'alamat'}
+          onClick={() => gantiMetode('alamat')}
+          className={KELAS_TOMBOL_METODE}
+        >
+          <Search className="size-4" aria-hidden="true" />
+          {t('lokasi.ketikAlamat')}
+        </button>
+
+        {/*
+         * 2. PILIH WILAYAH — DAN GPS, PADA TOMBOL YANG SAMA.
+         *
+         * GPS dulu punya tombol sendiri di kanan atas dan satu tautan kecil di
+         * bawah. Keduanya dibuang (5 Nov 2026) karena merangsang salah paham:
+         *   - Tombol "Pakai GPS" duplikat dengan "Izinkan akses lokasi" yang
+         *     SUDAH ada di baris ringkasan lokasi tepat di bawah kartu ini.
+         *     Dua tombol untuk satu tindakan yang sama.
+         *   - Tautan kecil "Pakai GPS" di bawah tombol metode terbaca sebagai
+         *     catatan kaki, bukan sebagai cara memilih lokasi.
+         *
+         * Perilaku: satu klik membuka pemilih wilayah (seperti sebelumnya).
+         * GPS tetap tersedia di dalam panel wilayah, di baris ringkasan lokasi,
+         * dan di header. Yang hilang hanya DUPLIKAT tombolnya — bukan
+         * kemampuannya. Desain yang disetujui pun tidak punya tombol GPS
+         * terpisah, jadi ini yang paling dekat dengan desain tanpa mencabut
+         * jalan pintas yang berguna.
+         */}
+        <button
+          type="button"
+          aria-pressed={metode === 'wilayah'}
+          onClick={() => gantiMetode('wilayah')}
+          className={KELAS_TOMBOL_METODE}
+        >
+          <Map className="size-4" aria-hidden="true" />
+          {t('lokasi.pilihWilayah')}
+        </button>
+      </div>
+
+      <StatusLokasi
+        t={t}
+        lokasi={lokasi}
+        statusLokasi={statusLokasi}
+        onMinta={onGps}
+        kueriLokasi={kueriLokasi}
+        setKueriLokasi={setKueriLokasi}
+        cariLokasi={cariLokasi}
+        onPilihLokasi={onPilihLokasi}
+      />
     </section>
+  )
+}
+
+/**
+ * Ringkasan lokasi yang sedang dipakai + pencarian nama tempat.
+ *
+ * DIPISAH DENGAN GARIS, bukan kartu sendiri (diubah 5 Nov 2026 — isinya
+ * pindahan dari `LokasiBar`). Garis pemisah itu punya makna: di atasnya
+ * adalah CARA menentukan lokasi, di bawahnya adalah lokasi YANG SUDAH
+ * ditentukan.
+ *
+ * Dua lapis pencarian tetap ada dan tetap berbeda fungsinya:
+ *   - kolom "Cari lokasi Anda" di atas -> geocoding alamat (Photon/Nominatim),
+ *     hasilnya kaya wilayah resmi dan ketepatan titik;
+ *   - kolom "Cari nama tempat, jalan…" di sini -> pencarian nama tempat
+ *     (`/api/faskes/cari-lokasi`, Nominatim) yang hasilnya hanya nama + alamat.
+ * Penggabungan keduanya menjadi satu kolom akan MENGHAPUS fungsi, bukan
+ * menyederhanakan: pencarian nama tempat hanya mencari, sedangkan kolom atas
+ * juga dipakai untuk menormalkan wilayah dan ketepatan.
+ *
+ * JIKA `cariLokasi` TIDAK DIOPER (pemakaian komponen di tempat lain), blok
+ * bawah garis hanya menampilkan ringkasan status — tidak ada kolom kosong yang
+ * tidak berfungsi.
+ */
+function StatusLokasi({ t, lokasi, statusLokasi, onMinta, kueriLokasi, setKueriLokasi, cariLokasi, onPilihLokasi }) {
+  const pesan =
+    statusLokasi === 'ditolak'
+      ? t('faskes.gpsDitolak')
+      : statusLokasi === 'takdidukung'
+        ? t('faskes.gpsTakDidukung')
+        : statusLokasi === 'galat'
+          ? t('faskes.gpsGalat')
+          : null
+
+  return (
+    <div className="mt-2 border-t border-line-200 pt-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="inline-flex items-center gap-1.5 text-[0.84rem] font-semibold text-navy-800">
+          <MapPin className="size-4 text-brand-700" aria-hidden="true" />
+          {lokasi ? lokasi.label ?? t('faskes.lokasiTerdeteksi') : t('faskes.lokasiBelum')}
+        </span>
+        {lokasi ? (
+          <span className="font-mono text-[0.76rem] text-muted-500">
+            {lokasi.lat.toFixed(5)}, {lokasi.lon.toFixed(5)}
+            {lokasi.dari === 'gps' ? ` · ${t('faskes.dariGps')}` : ''}
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={onMinta}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-brand-600 px-3 text-[0.82rem] font-semibold text-white hover:bg-brand-700"
+          >
+            <Crosshair className="size-3.5" aria-hidden="true" />
+            {t('faskes.izinkanLokasi')}
+          </button>
+        )}
+      </div>
+
+      {pesan ? (
+        <p className="mt-2 flex items-start gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[0.8rem] leading-snug text-navy-800">
+          <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-600" aria-hidden="true" />
+          {pesan}
+        </p>
+      ) : null}
+
+      {cariLokasi ? (
+        <>
+          <form
+            className="mt-1.5 flex flex-wrap items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              cariLokasi.cari(kueriLokasi)
+            }}
+          >
+            <label htmlFor="cari-lokasi" className="sr-only">
+              {t('faskes.cariLokasiLabel')}
+            </label>
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-line-200 bg-surface-100 px-3">
+              <Search className="size-4 shrink-0 text-muted-400" aria-hidden="true" />
+              <input
+                id="cari-lokasi"
+                value={kueriLokasi}
+                onChange={(e) => setKueriLokasi(e.target.value)}
+                placeholder={t('faskes.cariLokasi')}
+                className="min-h-11 w-full bg-transparent text-[0.86rem] text-navy-900 outline-none placeholder:text-muted-400"
+              />
+            </div>
+            <button
+              type="submit"
+              className="min-h-11 rounded-xl border border-line-200 bg-white px-3 text-[0.84rem] font-semibold text-navy-800 hover:border-brand-300 hover:text-brand-800"
+            >
+              {t('faskes.cari')}
+            </button>
+          </form>
+
+          {cariLokasi.memuat ? (
+            <p className="mt-2 inline-flex items-center gap-1.5 text-[0.8rem] text-muted-500">
+              <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+              {t('faskes.mencariLokasi')}
+            </p>
+          ) : null}
+          {cariLokasi.galat === 'tidak_ditemukan' ? (
+            <p className="mt-2 text-[0.8rem] text-muted-500">{t('faskes.lokasiTidakDitemukan')}</p>
+          ) : null}
+          {cariLokasi.galat === 'jaringan' || cariLokasi.galat === 'lokasi_gagal' ? (
+            <p className="mt-2 text-[0.8rem] text-amber-700">{t('faskes.lokasiGalatCari')}</p>
+          ) : null}
+
+          {cariLokasi.hasil.length ? (
+            <ul className="mt-2 divide-y divide-line-200 overflow-hidden rounded-xl border border-line-200">
+              {cariLokasi.hasil.map((h) => (
+                <li key={`${h.lat},${h.lon}`}>
+                  <button
+                    type="button"
+                    onClick={() => onPilihLokasi?.(h)}
+                    className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-surface-100"
+                  >
+                    <MapPin className="mt-0.5 size-3.5 shrink-0 text-brand-700" aria-hidden="true" />
+                    <span className="min-w-0">
+                      <span className="block text-[0.85rem] font-semibold text-navy-900">{h.nama}</span>
+                      <span className="block truncate text-[0.76rem] text-muted-500">{h.alamat}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </>
+      ) : null}
+    </div>
   )
 }
 

@@ -94,6 +94,22 @@ jobs:
       - name: Uji kesehatan kamus id/en
         run: node uji-bahasa.mjs
 
+      - name: Uji tingkat baca (server & klien sepakat)
+        # Tanpa jaringan. Menjaga dua hal yang dulu tidak terlihat dari build
+        # hijau: (1) `TINGKAT_DEFAULT` di server dan di klien harus sama, dan
+        # (2) bawaannya tidak boleh kembali ke 'anak'. Diukur 5 Nov 2026:
+        # permintaan tanpa field `tingkat` dijawab dengan gaya pembaca 9–11
+        # tahun (578 karakter) — pengguna yang tidak memilih tingkat tidak
+        # sedang meminta versi anak-anak.
+        run: node uji-tingkat.mjs
+
+      - name: Uji dokumentasi (angka README = isi repo)
+        # Menghitung langsung dari folder: jumlah uji, tangkapan layar, berkas
+        # server, dan memastikan setiap uji yang dijalankan `npm test` disebut
+        # README. Tanpa ini, menambah satu uji atau satu tangkapan layar membuat
+        # angka di dokumen utama diam-diam ketinggalan.
+        run: node uji-dokumentasi.mjs
+
       - name: Uji jalur berita (deteksi, parser RSS, penetrasi)
         # Parser RSS makan data dari pihak luar. Uji ini membuktikan injeksi
         # prompt lewat judul/deskripsi, skema link aneh, feed raksasa/rusak,

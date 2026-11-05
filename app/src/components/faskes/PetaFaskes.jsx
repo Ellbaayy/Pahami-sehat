@@ -12,6 +12,13 @@ const LABEL_SUMBER = {
   alamat: 'Alamat yang Anda pilih',
   wilayah: 'Pusat wilayah yang Anda pilih (perkiraan)',
   nama: 'Lokasi yang Anda cari',
+  /*
+   * 'manual' = titik yang diketik/dipilih pengguna yang bukan hasil pencarian
+   * alamat. Sejak 5 Nov 2026 titik yang diklik di peta dihapus, jadi penanda
+   * ini hanya muncul untuk titik yang LABEL-nya memang datang dari pengguna;
+   * label cadangan 'Titik yang Anda tentukan' sengaja tidak dipakai lagi untuk
+   * alamat hasil geocoding (lihat efek penanda di bawah).
+   */
   manual: 'Titik yang Anda tentukan',
 }
 
@@ -45,49 +52,12 @@ const IKON_LOKASI = L.divIcon({
   iconAnchor: [11, 11],
 })
 
-/*
- * Titik yang BARU DIPILIH lewat klik peta — berbeda rupa dari titik asal,
- * karena maknanya berbeda: yang ini belum dipakai untuk mencari. Bentuknya
- * pin (bukan bulatan) supaya tidak tertukar dengan penanda fasilitas.
- */
-const IKON_PILIHAN = L.divIcon({
-  className: 'faskes-pin-pilihan',
-  html: `<span style="display:block;width:14px;height:14px;border-radius:9999px 9999px 9999px 0;transform:rotate(-45deg);background:#b45309;border:2px solid #fff;box-shadow:0 1px 5px rgba(15,30,51,.5)"></span>`,
-  iconSize: [18, 18],
-  iconAnchor: [9, 16],
-})
-
-export default function PetaFaskes({
-  pusat,
-  fasilitas = [],
-  terpilih = null,
-  onPilih,
-  zoom = 14,
-  rute = null,
-  /**
-   * Mode "pilih titik di peta" (seperti Google Maps: klik peta -> titik baru).
-   *
-   * Saat aktif, setiap klik pada peta memanggil `onKlikPeta({lat, lon})` dan
-   * SERVER yang menentukan alamat serta wilayahnya (geocoding balik). Peta
-   * tidak menebak nama wilayah dari koordinat — itu pekerjaan geocoder, dan
-   * hasilnya harus datang dari sumber, bukan dari perhitungan klien.
-   */
-  modePilihTitik = false,
-  onKlikPeta = null,
-  /** Titik yang sedang dipilih di peta tetapi belum dipakai sebagai asal. */
-  titikPilihan = null,
-}) {
+export default function PetaFaskes({ pusat, fasilitas = [], terpilih = null, onPilih, zoom = 14, rute = null }) {
   const wadahRef = useRef(null)
   const petaRef = useRef(null)
   const klasterRef = useRef(null)
   const lokasiRef = useRef(null)
   const garisRef = useRef(null)
-  const pilihanRef = useRef(null)
-  // Callback disimpan di ref supaya efek pembuatan peta tidak perlu bergantung
-  // padanya — kalau tidak, setiap render ulang induk akan MEMBUAT ULANG peta
-  // (penanda berkedip, posisi melompat).
-  const klikRef = useRef(null)
-  klikRef.current = onKlikPeta
 
   // ---- buat peta sekali ----
   useEffect(() => {
@@ -118,59 +88,8 @@ export default function PetaFaskes({
       petaRef.current = null
       klasterRef.current = null
       lokasiRef.current = null
-      pilihanRef.current = null
     }
   }, [pusat, zoom])
-
-  /* ---- klik peta: pilih titik (hanya saat mode aktif) ------------------ */
-  useEffect(() => {
-    const peta = petaRef.current
-    if (!peta) return
-
-    const saatKlik = (e) => {
-      /*
-       * Klik pada PENANDA tidak boleh dianggap "pilih titik baru".
-       * Leaflet meneruskan klik penanda ke peta, jadi tanpa pemeriksaan ini
-       * memilih fasilitas dari daftar sekaligus memindahkan titik asal —
-       * perilaku yang membingungkan dan merusak data pencarian.
-       */
-      if (e.originalEvent?.target?.closest?.('.leaflet-marker-icon')) return
-      if (e.originalEvent?.target?.closest?.('.leaflet-popup')) return
-      klikRef.current?.({ lat: e.latlng.lat, lon: e.latlng.lng })
-    }
-
-    if (modePilihTitik) {
-      peta.on('click', saatKlik)
-      // Kursor berubah supaya pengguna tahu peta sekarang bisa diklik.
-      const el = peta.getContainer()
-      el.style.cursor = 'crosshair'
-      return () => {
-        peta.off('click', saatKlik)
-        el.style.cursor = ''
-      }
-    }
-    return undefined
-  }, [modePilihTitik])
-
-  /* ---- penanda titik pilihan (belum dipakai sebagai asal) -------------- */
-  useEffect(() => {
-    const peta = petaRef.current
-    if (!peta) return
-
-    if (pilihanRef.current) {
-      peta.removeLayer(pilihanRef.current)
-      pilihanRef.current = null
-    }
-    if (!titikPilihan) return
-
-    pilihanRef.current = L.marker([titikPilihan.lat, titikPilihan.lon], {
-      icon: IKON_PILIHAN,
-      keyboard: false,
-      zIndexOffset: 1200,
-    })
-      .addTo(peta)
-      .bindTooltip('Titik yang dipilih', { direction: 'top', offset: [0, -12] })
-  }, [titikPilihan])
 
   // ---- pusat & penanda lokasi pengguna ----
   useEffect(() => {

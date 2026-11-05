@@ -16,7 +16,22 @@ export const TINGKAT = [
   { kunci: 'lansia', label: 'Lansia', usia: '60 tahun ke atas' },
 ]
 
-export const TINGKAT_DEFAULT = 'anak'
+/**
+ * Tingkat baca bawaan — untuk pengguna yang belum memilih.
+ *
+ * KENAPA 'dewasa' (diperbaiki 5 Nov 2026): bawaannya dulu 'anak', sehingga
+ * pengguna baru langsung menerima jawaban bergaya pembaca 9–11 tahun tanpa
+ * pernah memintanya. Aplikasi ini disusun untuk orang dewasa yang kesulitan
+ * memahami istilah medis; merendahkan tingkat baca sebagai keadaan awal
+ * membuat pertanyaan pertama terasa diremehkan. Tingkat yang lebih sederhana
+ * tetap satu klik di Pengaturan.
+ *
+ * HARUS SAMA dengan `TINGKAT_DEFAULT` di app/server/prompts.js. Kalau kedua
+ * nilai berbeda, jawaban tanpa tingkat (mis. dari curl) dan jawaban dari
+ * antarmuka akan memakai gaya berbeda — dan itu baru ketahuan dari keluhan
+ * pengguna, bukan dari build. Dijaga uji-batas.mjs.
+ */
+export const TINGKAT_DEFAULT = 'dewasa'
 
 export const labelTingkat = (kunci) =>
   TINGKAT.find((t) => t.kunci === kunci)?.label ?? TINGKAT[0].label

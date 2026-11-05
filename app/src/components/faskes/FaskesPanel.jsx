@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Hospital,
-  MapPin,
   LocateFixed,
   Search,
-  Loader2,
   TriangleAlert,
   Navigation,
   Phone,
@@ -15,9 +13,9 @@ import {
   RefreshCw,
   ExternalLink,
   Flag,
-  Crosshair,
+  Map,
 } from 'lucide-react'
-import { Card, SectionHeading } from '../ui/primitives'
+import { Card } from '../ui/primitives'
 import PetaFaskes from './PetaFaskes'
 import InputLokasi from './InputLokasi'
 import PanelNavigasi from './PanelNavigasi'
@@ -136,30 +134,6 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
   }, [navigasiKe])
   // Rute aktif, diteruskan ke peta untuk menggambar garis.
   const [ruteAktif, setRuteAktif] = useState(null)
-  /*
-   * Mode "pilih titik di peta".
-   *
-   * Ditahan di INDUK, bukan di dalam peta atau di dalam tombolnya, karena dua
-   * komponen berbeda perlu tahu keadaan yang sama: tombol (untuk menampilkan
-   * batal/pakai) dan peta (untuk memasang handler klik). Menyimpannya di salah
-   * satu membuat yang lain harus menebak.
-   */
-  const [modePilihTitik, setModePilihTitik] = useState(false)
-  /**
-   * Handler klik peta yang didaftarkan PemilihTitik. `null` = mode nonaktif.
-   *
-   * DIBUNGKUS `setKlikPeta(() => fn)` dengan sengaja, bukan `setKlikPeta(fn)`.
-   * React memperlakukan argumen fungsi pada setter sebagai UPDATER
-   * (`prev => next`), jadi `setKlikPeta(saatKlik)` akan MENJALANKAN saatKlik
-   * dengan state sebelumnya sebagai argumen — bukan menyimpannya. Akibatnya
-   * handler tidak pernah tersimpan dan klik peta tidak melakukan apa pun.
-   */
-  const [klikPeta, setKlikPeta] = useState(null)
-  const daftarkanKlikPeta = useCallback((fn) => {
-    setKlikPeta(fn ? () => fn : null)
-  }, [])
-  /** Titik yang sedang dipilih tetapi BELUM dipakai sebagai asal pencarian. */
-  const [titikPilihan, setTitikPilihan] = useState(null)
 
   /** Ambil titik referensi wilayah, lalu jadikan pusat pencarian. */
   const pakaiWilayah = useCallback(
@@ -206,25 +180,11 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
     (h) => {
       if (!h) {
         setLokasiManual(null)
-        setTitikPilihan(null)
         return
       }
       const w = h.wilayah ?? null
       const ketepatanText = h.ketepatan ? LABEL_KETEPATAN_ALAMAT[h.ketepatan] ?? null : null
-      /*
-       * `dari` ditentukan sumbernya, bukan diseragamkan jadi 'alamat'.
-       *
-       * Titik dari peta tetap berkoordinat hasil klik pengguna, tetapi ia
-       * BUKAN hasil pencarian alamat — dan peta memakai `dari` untuk memilih
-       * label penanda. Menyamakannya akan membuat penanda berkata "Alamat yang
-       * Anda pilih" untuk titik yang diklik di tengah sawah.
-       */
-      const asal = h.dariPeta ? 'manual' : 'alamat'
-      setLokasiManual(h.lat, h.lon, h.nama ?? h.alamat ?? null, asal, ketepatanText, w)
-      // Titik pilihan sudah dipakai: penanda sementaranya dibersihkan supaya
-      // tidak ada dua penanda bertumpuk di titik yang sama.
-      setTitikPilihan(null)
-      setModePilihTitik(false)
+      setLokasiManual(h.lat, h.lon, h.nama ?? h.alamat ?? null, 'alamat', ketepatanText, w)
     },
     [setLokasiManual],
   )
@@ -274,61 +234,90 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
 
   return (
     <section aria-labelledby="faskes-judul" className="space-y-1.5">
-      <SectionHeading
-        as="h1"
-        id="faskes-judul"
-        eyebrow={t('faskes.eyebrow')}
-        title={t('faskes.judul')}
-        description={t('faskes.deskripsi')}
-        action={
-          <div className="flex flex-wrap items-center justify-end gap-1.5">
+      {/*
+       * SATU KARTU PEMBUKA (tata letak 5 Nov 2026, mengikuti desain yang
+       * disetujui): judul + pilihan tab di dalam satu kartu bergaris, lalu
+       * isi tab SEBAGAI KARTU TERPISAH di bawahnya.
+       *
+       * Sebelumnya judul halaman, dua tombol tab, catatan kecil, dan tombol
+       * "Pakai lokasi saya" berdesakan dalam SATU baris di kanan judul. Pada
+       * lebar 1440 px baris itu sudah hampir penuh, dan pada laptop 1280 px
+       * catatan "Daftar resmi Kemenkes, tanpa koordinat" terlipat sehingga
+       * terbaca seolah milik tombol tab. Tab sekarang duduk DI BAWAH judul —
+       * tempat yang menyatakan bahwa keduanya mengatur isi kartu di bawahnya.
+       */}
+      <div className="rounded-2xl border border-line-200/80 bg-white px-4 py-2.5 shadow-[0_1px_2px_rgba(15,30,51,0.04),0_8px_24px_-16px_rgba(15,30,51,0.10)]">
+        {/* H1 satu-satunya di halaman ini. Eyebrow dan deskripsi panjang
+            disembunyikan seperti pada SectionHeading sebelumnya — judul
+            halaman tetap satu baris di layar pendek, dan deskripsi panjangnya
+            sudah ada di halaman penjelasan. */}
+        <h1 id="faskes-judul" className="text-[clamp(1.05rem,0.95rem+0.45vw,1.35rem)] font-bold tracking-tight text-navy-900">
+          {t('faskes.judul')}
+        </h1>
+
+        <div role="tablist" aria-label={t('faskes.judul')} className="mt-2 flex flex-wrap items-center gap-1.5">
           <button
-        type="button"
-        role="tab"
-        id="tab-terdekat"
-        aria-selected={tab === 'terdekat'}
-        aria-controls="panel-terdekat"
-        onClick={() => setTab('terdekat')}
-        className={
-          tab === 'terdekat'
-            ? 'min-h-9 rounded-lg border border-brand-300 bg-brand-50 px-2.5 text-[0.84rem] font-semibold text-brand-800'
-            : 'min-h-9 rounded-lg border border-line-200 bg-white px-2.5 text-[0.84rem] font-medium text-navy-700'
-        }
-      >
-        <Navigation className="mr-1.5 inline size-3.5" aria-hidden="true" />
-        {t('rs.tabTerdekat')}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        id="tab-nasional"
-        aria-selected={tab === 'nasional'}
-        aria-controls="panel-nasional"
-        onClick={() => setTab('nasional')}
-        className={
-          tab === 'nasional'
-            ? 'min-h-9 rounded-lg border border-brand-300 bg-brand-50 px-2.5 text-[0.84rem] font-semibold text-brand-800'
-            : 'min-h-9 rounded-lg border border-line-200 bg-white px-2.5 text-[0.84rem] font-medium text-navy-700'
-        }
-      >
-        <Hospital className="mr-1.5 inline size-3.5" aria-hidden="true" />
-        {t('rs.tabNasional')}
-      </button>
-      {/* Keterangan tab nasional disebut di sini, bukan disembunyikan: pengguna
-          perlu tahu sebelum memilih bahwa daftar ini tanpa koordinat, supaya
-          tidak kecewa saat tidak menemukan tombol petunjuk arah. */}
-      <span className="text-[0.74rem] text-muted-500">{t('rs.tabNasionalCatatan')}</span>
+            type="button"
+            role="tab"
+            id="tab-terdekat"
+            aria-selected={tab === 'terdekat'}
+            aria-controls="panel-terdekat"
+            onClick={() => setTab('terdekat')}
+            className={
+              tab === 'terdekat'
+                ? 'inline-flex min-h-9 items-center rounded-lg border border-brand-300 bg-brand-50 px-2.5 text-[0.84rem] font-semibold text-brand-800'
+                : 'inline-flex min-h-9 items-center rounded-lg border border-line-200 bg-white px-2.5 text-[0.84rem] font-medium text-navy-700 transition hover:border-brand-300 hover:text-brand-800'
+            }
+          >
+            <Navigation className="mr-1.5 size-3.5" aria-hidden="true" />
+            {t('rs.tabTerdekat')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-nasional"
+            aria-selected={tab === 'nasional'}
+            aria-controls="panel-nasional"
+            onClick={() => setTab('nasional')}
+            className={
+              tab === 'nasional'
+                ? 'inline-flex min-h-9 items-center rounded-lg border border-brand-300 bg-brand-50 px-2.5 text-[0.84rem] font-semibold text-brand-800'
+                : 'inline-flex min-h-9 items-center rounded-lg border border-line-200 bg-white px-2.5 text-[0.84rem] font-medium text-navy-700 transition hover:border-brand-300 hover:text-brand-800'
+            }
+          >
+            <Hospital className="mr-1.5 size-3.5" aria-hidden="true" />
+            {t('rs.tabNasional')}
+          </button>
+
+          {/*
+           * CATATAN TETAP ADA — HANYA DIPINDAH, BUKAN DIHAPUS.
+           *
+           * Sebelumnya ia berdiri di antara tab dan tombol lokasi, di baris
+           * judul yang sama. Sekarang ia menjadi keterangan DI BAWAH tab
+           * (aria-describedby pada kedua tab), sehingga pengguna tetap tahu
+           * SEBELUM memilih bahwa daftar nasional tidak punya koordinat —
+           * informasi yang wajib ada supaya mereka tidak kecewa saat tidak
+           * menemukan tombol petunjuk arah.
+           *
+           * Di layar di bawah `sm`, tombol "Pakai lokasi saya" turun ke baris
+           * sendiri dan mengambil lebar penuh (`max-sm:basis-full`), sehingga
+           * di ponsel hasilnya dua baris rapi: dua tab, lalu satu tombol —
+           * bukan tiga baris dengan satu tombol menggantung di kiri.
+           */}
           <button
             type="button"
             onClick={mintaLokasi}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line-200 bg-white px-3 text-[0.84rem] font-semibold text-navy-800 transition hover:border-brand-300 hover:text-brand-800"
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line-200 bg-white px-2.5 text-[0.82rem] font-semibold text-navy-800 transition hover:border-brand-300 hover:text-brand-800 max-sm:basis-full max-sm:justify-center sm:ml-auto"
           >
-            <LocateFixed className="size-4" aria-hidden="true" />
+            <LocateFixed className="size-3.5" aria-hidden="true" />
             {adaLokasi ? t('faskes.perbaruiLokasi') : t('faskes.pakaiLokasi')}
           </button>
-          </div>
-        }
-      />
+        </div>
+
+        <p id="tab-nasional-catatan" className="mt-1 text-[0.74rem] leading-snug text-muted-500">
+          {t('rs.tabNasionalCatatan')}
+        </p>
+      </div>
 
       {tab === 'nasional' ? (
         <div role="tabpanel" id="panel-nasional" aria-labelledby="tab-nasional">
@@ -337,7 +326,23 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
       ) : null}
 
       {tab === 'terdekat' ? (
-      <div role="tabpanel" id="panel-terdekat" aria-labelledby="tab-terdekat" className="space-y-2">
+      /*
+       * `flex flex-col gap-2` (bukan `space-y-2`), dan `flex-1` di bawah:
+       * kartu peta kosong memakai `flex-1` supaya mengisi sisa tinggi layar.
+       *
+       * KENAPA (diukur 5 Nov 2026 pada laptop 1366×700): dengan tinggi tetap,
+       * tinggi halaman menjadi 781 px — 81 px melewati layar — sehingga uji
+       * "muat satu layar" gagal di kedua bahasa. Padding bawah `main` (16 px)
+       * memang ikut terhitung, tetapi itu bagian dari kerangka halaman yang
+       * dipakai semua fitur, jadi yang disesuaikan adalah kartu ini. `flex-1`
+       * membuat tingginya MENYESUAIKAN tinggi layar: pas di laptop pendek,
+       * dan tetap wajar (tidak melar berlebihan karena `min-h-[13rem]` di
+       * dalamnya) di layar tinggi.
+       *
+       * `space-y-2` tidak bisa dipakai bersama `flex` di sini tanpa
+       * mengubah jarak antar-anak: versi `flex` memakai `gap-2` yang setara.
+       */
+      <div role="tabpanel" id="panel-terdekat" aria-labelledby="tab-terdekat" className="flex flex-1 flex-col gap-2">
       <InputLokasi
         t={t}
         lokasi={lokasi}
@@ -346,23 +351,6 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
         onAlamat={pakaiAlamat}
         onWilayah={pakaiWilayah}
         onGps={mintaLokasi}
-        onTitikPeta={setTitikPilihan}
-        modePilihTitik={modePilihTitik}
-        onModePilihTitik={setModePilihTitik}
-        onKlikPeta={daftarkanKlikPeta}
-      />
-
-      {titikGagal ? (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[0.82rem] leading-snug text-navy-800">
-          {t('wil.titikGagal')}
-        </p>
-      ) : null}
-
-      <LokasiBar
-        t={t}
-        lokasi={lokasi}
-        statusLokasi={statusLokasi}
-        onMinta={mintaLokasi}
         kueriLokasi={kueriLokasi}
         setKueriLokasi={setKueriLokasi}
         cariLokasi={cariLokasi}
@@ -372,6 +360,12 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
           cariLokasi.bersihkan()
         }}
       />
+
+      {titikGagal ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[0.82rem] leading-snug text-navy-800">
+          {t('wil.titikGagal')}
+        </p>
+      ) : null}
 
       {adaLokasi ? (
         <>
@@ -430,9 +424,6 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
                 terpilih={terpilih}
                 onPilih={setTerpilih}
                 rute={ruteAktif}
-                modePilihTitik={modePilihTitik}
-                onKlikPeta={klikPeta}
-                titikPilihan={titikPilihan}
               />
             </div>
 
@@ -533,11 +524,31 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
           <SumberData t={t} data={data} />
         </>
       ) : (
-        <Card className="p-4 text-center">
-          <MapPin className="mx-auto size-7 text-brand-700" aria-hidden="true" />
-          <p className="mt-2 text-[0.95rem] font-bold text-navy-900">{t('faskes.belumLokasi')}</p>
-          <p className="mx-auto mt-1 max-w-[46ch] text-[0.86rem] leading-relaxed text-muted-500">
-            {t('faskes.belumLokasiSub')}
+        /*
+         * PANEL PETA KOSONG — tampil sebelum lokasi ditentukan.
+         *
+         * Menggantikan kartu lama yang isinya "Lokasi belum ditentukan / Izinkan
+         * akses lokasi, atau cari nama tempat secara manual…". Kalimat itu
+         * mengulang persis tombol-tombol yang sudah ada tepat di atasnya, jadi
+         * yang dibaca pengguna adalah instruksi kedua kalinya.
+         *
+         * Sekarang isinya menjelaskan APA YANG AKAN MUNCUL di tempat ini — peta
+         * beserta fasilitas terdekat — sehingga ruang kosong itu terbaca
+         * sebagai tempat yang menunggu diisi, bukan sebagai kegagalan.
+         *
+         * Ikonnya `Map` (peta terlipat), sama dengan lambang "Pilih Wilayah",
+         * bukan `MapPin` seperti dulu: pin menyatakan "sudah ada satu titik",
+         * padahal justru belum ada titik mana pun.
+         */
+        <Card className="flex flex-1 flex-col items-center justify-center px-4 py-6 text-center">
+          <Map
+            aria-hidden="true"
+            className="size-7 text-navy-700"
+            strokeWidth={1.75}
+          />
+          <p className="mt-3 text-[1.05rem] font-bold text-navy-900">{t('faskes.petaKosongJudul')}</p>
+          <p className="mx-auto mt-1 max-w-[52ch] text-[0.88rem] leading-relaxed text-muted-500">
+            {t('faskes.petaKosongSub')}
           </p>
         </Card>
       )}
@@ -564,121 +575,15 @@ export default function FaskesPanel({ t = (k) => k, bahasa = 'id' }) {
 
 /* ------------------------------------------------------------ bagian UI -- */
 
-function LokasiBar({
-  t,
-  lokasi,
-  statusLokasi,
-  onMinta,
-  kueriLokasi,
-  setKueriLokasi,
-  cariLokasi,
-  onPilihLokasi,
-}) {
-  const pesan =
-    statusLokasi === 'ditolak'
-      ? t('faskes.gpsDitolak')
-      : statusLokasi === 'takdidukung'
-        ? t('faskes.gpsTakDidukung')
-        : statusLokasi === 'galat'
-          ? t('faskes.gpsGalat')
-          : null
-
-  return (
-    <Card className="p-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="inline-flex items-center gap-1.5 text-[0.84rem] font-semibold text-navy-800">
-          <MapPin className="size-4 text-brand-700" aria-hidden="true" />
-          {lokasi
-            ? lokasi.label ?? t('faskes.lokasiTerdeteksi')
-            : t('faskes.lokasiBelum')}
-        </span>
-        {lokasi ? (
-          <span className="font-mono text-[0.76rem] text-muted-500">
-            {lokasi.lat.toFixed(5)}, {lokasi.lon.toFixed(5)}
-            {lokasi.dari === 'gps' ? ` · ${t('faskes.dariGps')}` : ''}
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={onMinta}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-brand-600 px-3 text-[0.82rem] font-semibold text-white hover:bg-brand-700"
-          >
-            <Crosshair className="size-3.5" aria-hidden="true" />
-            {t('faskes.izinkanLokasi')}
-          </button>
-        )}
-      </div>
-
-      {pesan ? (
-        <p className="mt-2 flex items-start gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[0.8rem] leading-snug text-navy-800">
-          <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-600" aria-hidden="true" />
-          {pesan}
-        </p>
-      ) : null}
-
-      <form
-        className="mt-2 flex flex-wrap items-center gap-2"
-        onSubmit={(e) => {
-          e.preventDefault()
-          cariLokasi.cari(kueriLokasi)
-        }}
-      >
-        <label htmlFor="cari-lokasi" className="sr-only">
-          {t('faskes.cariLokasiLabel')}
-        </label>
-        <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-line-200 bg-surface-100 px-3">
-          <Search className="size-4 shrink-0 text-muted-400" aria-hidden="true" />
-          <input
-            id="cari-lokasi"
-            value={kueriLokasi}
-            onChange={(e) => setKueriLokasi(e.target.value)}
-            placeholder={t('faskes.cariLokasi')}
-            className="min-h-11 w-full bg-transparent text-[0.86rem] text-navy-900 outline-none placeholder:text-muted-400"
-          />
-        </div>
-        <button
-          type="submit"
-          className="min-h-11 rounded-xl border border-line-200 bg-white px-3 text-[0.84rem] font-semibold text-navy-800 hover:border-brand-300 hover:text-brand-800"
-        >
-          {t('faskes.cari')}
-        </button>
-      </form>
-
-      {cariLokasi.memuat ? (
-        <p className="mt-2 inline-flex items-center gap-1.5 text-[0.8rem] text-muted-500">
-          <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-          {t('faskes.mencariLokasi')}
-        </p>
-      ) : null}
-      {cariLokasi.galat === 'tidak_ditemukan' ? (
-        <p className="mt-2 text-[0.8rem] text-muted-500">{t('faskes.lokasiTidakDitemukan')}</p>
-      ) : null}
-      {cariLokasi.galat === 'jaringan' || cariLokasi.galat === 'lokasi_gagal' ? (
-        <p className="mt-2 text-[0.8rem] text-amber-700">{t('faskes.lokasiGalatCari')}</p>
-      ) : null}
-
-      {cariLokasi.hasil.length ? (
-        <ul className="mt-2 divide-y divide-line-200 overflow-hidden rounded-xl border border-line-200">
-          {cariLokasi.hasil.map((h) => (
-            <li key={`${h.lat},${h.lon}`}>
-              <button
-                type="button"
-                onClick={() => onPilihLokasi(h)}
-                className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-surface-100"
-              >
-                <MapPin className="mt-0.5 size-3.5 shrink-0 text-brand-700" aria-hidden="true" />
-                <span className="min-w-0">
-                  <span className="block text-[0.85rem] font-semibold text-navy-900">{h.nama}</span>
-                  <span className="block truncate text-[0.76rem] text-muted-500">{h.alamat}</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </Card>
-  )
-}
+/*
+ * `LokasiBar` DIHAPUS (5 Nov 2026). Isinya dipindah ke `StatusLokasi` di dalam
+ * InputLokasi, di bawah garis pemisah kartu yang sama. Alasannya: sebagai
+ * kartu terpisah ia membuat halaman punya DUA kotak lokasi berdampingan —
+ * "Cari lokasi Anda" dan "Lokasi belum diketahui" — padahal keduanya bagian
+ * dari tugas yang sama. Pemindahan ini tidak menghapus satu perilaku pun:
+ * ringkasan koordinat, tombol "Izinkan akses lokasi", pesan galat GPS,
+ * pencarian nama tempat, dan daftar hasilnya semuanya dibawa apa adanya.
+ */
 
 function FilterBar({
   t,

@@ -82,9 +82,9 @@ ingin ditunjukkan. Skrip menulis ke `docs/tangkapan-layar/` **dan** ke
 folder kedua, dan sebelum ini skrip hanya menulis ke yang pertama sehingga
 halaman terus menampilkan gambar lama tanpa pesan apa pun.
 
-| Autocomplete alamat | Peta + daftar setelah alamat dipilih | Pilih titik di peta |
-|---|---|---|
-| ![Saran alamat](docs/tangkapan-layar/faskes-1-autocomplete.png) | ![Peta dan daftar](docs/tangkapan-layar/faskes-2-peta-daftar.png) | ![Pilih titik](docs/tangkapan-layar/faskes-5-pilih-titik.png) |
+| Autocomplete alamat | Peta + daftar setelah alamat dipilih |
+|---|---|
+| ![Saran alamat](docs/tangkapan-layar/faskes-1-autocomplete.png) | ![Peta dan daftar](docs/tangkapan-layar/faskes-2-peta-daftar.png) |
 
 | Detail fasilitas | Petunjuk arah | RS Nasional (SIRS) |
 |---|---|---|
@@ -130,14 +130,14 @@ Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 |---|---|
 | [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
-| [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **24 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
+| [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **26 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
 | [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 10 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
 | [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs-3325-rs-di-database). |
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
-| [`uji-*.mjs`](.) | **30 berkas uji** — 26 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). |
+| [`uji-*.mjs`](.) | **33 berkas uji** — 28 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 5 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -182,7 +182,7 @@ pahami-sehat/
 ├── README.md
 ├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
 ├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
-├── uji-*.mjs                  ← 30 berkas uji (26 tanpa jaringan)
+├── uji-*.mjs                  ← 33 berkas uji (28 tanpa jaringan)
 ├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
@@ -193,7 +193,7 @@ pahami-sehat/
 │   ├── .env.example
 │   ├── public/ocr/            ← mesin OCR: worker, core WASM, data bahasa (17 MB)
 │   ├── scripts/               ← salin-prototipe, mampatkan-dist, bebaskan-port
-│   ├── server/                ← backend Express (24 berkas)
+│   ├── server/                ← backend Express (29 berkas)
 │   ├── src/                   ← frontend React: App.jsx, lib/, data/, components/
 │   ├── api/index.js           ← pintu masuk serverless Vercel
 │   ├── index.html
@@ -206,7 +206,7 @@ pahami-sehat/
     │   ├── css/
     │   ├── js/
     │   └── assets/
-    ├── tangkapan-layar/       ← 24 tangkapan layar
+    ├── tangkapan-layar/       ← 26 tangkapan layar
     ├── skema-database.sql
     ├── sumber-hls-sf12.txt
     └── verifikasi-*.md
@@ -844,13 +844,27 @@ Memberi rute `routed-car` lalu menamainya "sepeda motor" adalah persis
 kebohongan yang dilarang pada pekerjaan ini. `OSRM_MODA.motor` bernilai `null`
 dengan sengaja — bukan karena lupa diisi.
 
-Valhalla memberi hasil yang berbeda untuk ketiga moda:
+Valhalla memberi angka yang berbeda untuk ketiga moda. Contoh terukur 4 Nov
+2026 (rute Monas → RSPAD Gatot Soebroto):
 
 | Moda | Jarak | Waktu | Langkah |
 |---|---|---|---|
 | Jalan kaki | 2,14 km | ±30 menit | 24 |
 | Sepeda motor | 4,54 km | ±18 menit | 14 |
 | Mobil | 4,54 km | ±15 menit | 14 |
+
+> **Batas yang disebut apa adanya (diukur ulang 5 Nov 2026).** Untuk jalan
+> kaki, Valhalla memang mengambil jalur berbeda (1,68 km / 21 menit vs
+> 2,369 km / 6–7 menit) — inilah yang membuat tombol moda berguna. Tetapi
+> untuk **motor dan mobil, Valhalla sering memberi geometri yang SAMA PERSIS**
+> dan hanya waktunya berbeda (motor_scooter 6,5 menit vs auto 6,3 menit pada
+> rute Malioboro → Stasiun Tugu). Diperiksa langsung ke
+> `valhalla1.openstreetmap.de` dengan payload identik, jadi ini sifat
+> layanannya, **bukan** bug `rute-perjalanan.js`: costing-nya sudah berbeda dan
+> `uji-rute-perjalanan.mjs` memastikan pemetaannya benar. Yang **tidak**
+> diklaim lagi adalah bahwa tiga moda *selalu* menghasilkan tiga rute berbeda;
+> pada jalan perkotaan tanpa larangan sepeda motor, jalan yang dilalui memang
+> sama.
 
 Valhalla **tidak** mendukung `id-ID` (diukur: `language=id-ID` tetap Inggris),
 jadi instruksi diterjemahkan sendiri di `terjemahkanManuver()`. Pola yang tidak
@@ -1314,8 +1328,8 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 4 Nov 2026: **26 berkas lulus, 0 gagal,
-±4 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
+memperbarui daftar di mana pun. Diukur 5 Nov 2026: **28 berkas lulus, 0 gagal,
+±5 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
 atau API key sengaja dikeluarkan dan dijalankan terpisah (lihat bawah) — supaya
 gerbang ini tidak bergantung pada keadaan mesin.
 
@@ -1324,6 +1338,8 @@ uji tertentu):
 
 ```bash
 node uji-batas.mjs        # batas panjang & laju tiap rute
+node uji-tingkat.mjs      # tingkat baca: server & klien memilih bawaan yang sama (baru, 5 Nov)
+node uji-dokumentasi.mjs  # angka di README sama dengan isi repo (baru, 5 Nov)
 node uji-ekstrak.mjs      # penarikan konten dari HTML sumber
 node uji-kata-kunci.mjs   # pencocokan kata kunci topik
 node uji-teks.mjs         # perapian teks & pemotongan kalimat
@@ -1941,6 +1957,37 @@ Disebut di sini supaya tidak ada yang mengira lebih dari kenyataannya:
 - Angka akurasi OCR berasal dari tiga foto uji, bukan pengukuran besar.
 - Belum ada uji otomatis untuk mesin OCR, pengenalan suara, pemutaran suara,
   papan klip, dan tampilan mode Inggris — semuanya masih diuji manual.
+- **Rute motor dan mobil sering identik.** Untuk jalan perkotaan tanpa larangan
+  sepeda motor, Valhalla mengembalikan geometri yang sama untuk kedua moda dan
+  hanya waktunya berbeda (§ [Petunjuk arah](#petunjuk-arah--osrm-dan-valhalla-masing-masing-pada-yang-benar-benar-didukungnya)).
+  Yang benar-benar berbeda adalah jalan kaki.
+- **Konteks percakapan hilang tanpa database.** Riwayat di peramban tetap utuh,
+  tetapi pertanyaan lanjutan yang tidak menyebut topiknya ("terus gimana?")
+  dijawab tanpa konteks ketika MariaDB tidak menyala. Ini perilaku yang sudah
+  ada sedari awal, sekarang disebut juga di sini.
+- **Pemakaian serentak dibatasi peramban, bukan server.** Diukur 5 Nov 2026:
+  satu pengguna (satu pertanyaan pada satu waktu) mendapat jawaban dalam
+  **6–21 detik**. Lima belas pertanyaan yang dibuka serentak memakan
+  **43–132 detik** karena permintaan ke layanan model mengantre. Untuk pemakaian
+  perorangan di laptop ini tidak terasa; untuk kelas atau presentasi paralel
+  perlu satu server per penguji atau pertanyaan yang sudah disiapkan.
+
+### Perbaikan 5 Nov 2026 — dan buktinya
+
+Tiga hal diperbaiki hari itu, masing-masing dengan bukti yang bisa diulang:
+
+| Perbaikan | Bukti |
+|---|---|
+| **Tingkat baca bawaan** `anak` → `dewasa` di server *dan* klien | `POST /api/tanya {"pertanyaan":"apa saja gejala stroke?"}` (tanpa `tingkat`) dulu menjawab `kunci:"anak"`, 578 karakter bergaya 9–11 tahun; sekarang `kunci:"dewasa"`, 872 karakter. Dijaga **`uji-tingkat.mjs`** (18 pemeriksaan) dan masuk CI |
+| **0 kerentanan dependensi** (dari 6: 5 high + 1 moderate) | `body-parser` ^2.4.0, `qs` ^6.17.1, `follow-redirects` ^1.16.2, `axios` ^1.21.0 dipasang sebagai dependensi langsung karena `express@5.3.0` (versi terbaru) dan `msedge-tts@2.1.1` masih menarik versi rentan. `npm audit` sekarang: **`found 0 vulnerabilities`**. Suara neural **diuji ulang sungguhan**: 33.264 byte audio dalam 1,2 detik |
+| **Pencatatan kegagalan model** | `/api/verifikasi` sekali menjawab `unparsed` tanpa meninggalkan jejak apa pun di log. Sekarang `mintaJson()` mencetak `jalur`, `finish_reason`, jumlah token, dan 160 karakter awal jawaban mentah — untuk **8 jalur** yang punya percobaan ulang. Tanpa pertanyaan pengguna |
+
+Ditambah dua uji baru yang **mengunci dokumen**: `uji-tingkat.mjs` dan
+`uji-dokumentasi.mjs` (menghitung uji, tangkapan layar, dan berkas server
+langsung dari folder, lalu membandingkannya dengan angka di README). Keduanya
+masuk CI. Sekalian, `uji-halaman-penjelasan.mjs` diperbaiki: ia menuntut
+**tepat tiga** tangkapan layar padahal halaman sudah menampilkan **enam** dan
+keenamnya termuat (1440×900) — yang salah adalah ujinya, bukan halamannya.
 
 ### Konten harian: sumbernya, dan setua apa isinya
 

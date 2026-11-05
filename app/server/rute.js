@@ -196,11 +196,22 @@ function saringHasil(out, hasilCari) {
  * KOSONG — pengguna melihat gelembung hampa tanpa penjelasan. Satu percobaan
  * ulang jauh lebih murah daripada satu jawaban kosong.
  *
+ * `jalur` hanya untuk LOG, dan wajib diisi pemanggil ("berita", "verifikasi",
+ * …). Alasannya nyata (diukur 5 Nov 2026): `/api/verifikasi` sekali menjawab
+ * `unparsed` padahal empat percobaan berikutnya dengan klaim yang SAMA berhasil.
+ * Saat kejadian itu terjadi, log server TIDAK mencatat apa pun — jadi satu-
+ * satunya cara menemukan sebabnya adalah menebak dan mengulang manual. Dengan
+ * `finish_reason` dan potongan jawaban mentah di log, penyebabnya langsung
+ * terlihat: `length` berarti jatah token habis (angka di batasInput.js perlu
+ * diukur ulang), selain itu berarti model memang menulis teks di luar JSON.
+ * Log TIDAK memuat pertanyaan pengguna — hanya potongan jawaban model.
+ *
  * @returns {Promise<{json: object|null, usage: object|null, mentah: string}>}
  */
-async function mintaJson({ messages, maxTokens, coba = 2 }) {
+async function mintaJson({ messages, maxTokens, coba = 2, jalur = 'tidak-diketahui' }) {
   let usage = null
   let mentah = ''
+  let selesai = null
   for (let i = 0; i < coba; i++) {
     const h = await chat({
       messages:
@@ -219,9 +230,19 @@ async function mintaJson({ messages, maxTokens, coba = 2 }) {
     })
     usage = h.usage ?? usage
     mentah = h.text
+    selesai = h.finish ?? null
     const json = ambilJson(h.text)
     if (json) return { json, usage, mentah: h.text }
   }
+  // Tidak terbaca SETELAH semua percobaan. Selalu dicatat: tanpa ini, satu-
+  // satunya jejaknya adalah pesan "Model tidak mengembalikan JSON" di layar.
+  console.warn(
+    `[mintaJson] ${jalur}: balasan tak terbaca setelah ${coba} percobaan` +
+      ` | finish_reason=${selesai ?? 'tidak ada'}` +
+      ` | token_keluar=${usage?.completion_tokens ?? '?'}` +
+      ` | panjang=${mentah.length}` +
+      ` | awal=${JSON.stringify(mentah.slice(0, 160))}`,
+  )
   return { json: null, usage, mentah }
 }
 
@@ -1222,6 +1243,7 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
         { role: 'user', content: p.user },
       ],
       maxTokens: MAKS_TOKEN.berita,
+      jalur: 'tanya/berita',
     })
 
     // Model gagal dua kali? Tetap jawab dari daftar RSS — jangan kirim
@@ -1269,6 +1291,7 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
         { role: 'user', content: ps.user },
       ],
       maxTokens: MAKS_TOKEN.tanya,
+      jalur: 'tanya/santai',
     })
     const santai = bentukHasil(json, tingkat)
     catatKonteks(idSesi, 'pengguna', pertanyaan)
@@ -1304,6 +1327,7 @@ rute.post('/api/tanya', batasTanya, bungkus(async (req, res) => {
       { role: 'user', content: p.user },
     ],
     maxTokens: MAKS_TOKEN.tanya,
+    jalur: 'tanya',
   })
 
   const out = saringHasil(bentukHasil(json, tingkat), hasilCari)
@@ -1343,6 +1367,7 @@ rute.post('/api/sederhanakan', batasCari, bungkus(async (req, res) => {
       { role: 'user', content: p.user },
     ],
     maxTokens: MAKS_TOKEN.sederhanakan,
+    jalur: 'sederhanakan',
   })
 
   const out = bentukHasil(json, tingkat)
@@ -1367,6 +1392,7 @@ rute.post('/api/verifikasi', batasVerifikasi, bungkus(async (req, res) => {
       { role: 'user', content: p.user },
     ],
     maxTokens: MAKS_TOKEN.verifikasi,
+    jalur: 'verifikasi',
   })
 
   const keluar = bentukHasil(json, tingkat, { verdictKey: 'verdict' })
@@ -1471,6 +1497,7 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
             { role: 'user', content: p.user },
           ],
           maxTokens: MAKS_TOKEN.berita,
+          jalur: 'stream/berita/ulang',
         })
         usageBerita = ulang.usage ?? usageBerita
         if (ulang.json) {
@@ -1523,6 +1550,7 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
                   { role: 'user', content: ps.user },
                 ],
                 maxTokens: MAKS_TOKEN.tanya,
+                jalur: 'stream/santai/ulang',
               })
             ).json,
             tingkat,
@@ -1586,6 +1614,7 @@ rute.post('/api/tanya/stream', batasTanya, bungkus(async (req, res) => {
           { role: 'user', content: p.user },
         ],
         maxTokens: MAKS_TOKEN.tanya,
+        jalur: 'stream/tanya/ulang',
       })
       usageFinal = ulang.usage ?? usageFinal
       if (ulang.json) final = saringHasil(bentukHasil(ulang.json, tingkat), hasilCari)

@@ -76,10 +76,7 @@ const KAMUS = {
 
     // fasilitas kesehatan terdekat
     'nav.faskes': 'Fasilitas Kesehatan',
-    'faskes.eyebrow': 'Layanan Terdekat',
     'faskes.judul': 'Fasilitas Kesehatan Terdekat',
-    'faskes.deskripsi':
-      'Temukan rumah sakit, puskesmas, klinik, praktik mandiri, apotek, laboratorium, dan fasilitas lain di sekitar Anda. Data berasal dari OpenStreetMap.',
     'faskes.pakaiLokasi': 'Pakai lokasi saya',
     'faskes.perbaruiLokasi': 'Perbarui lokasi',
     'faskes.izinkanLokasi': 'Izinkan akses lokasi',
@@ -98,9 +95,14 @@ const KAMUS = {
     'faskes.mencariLokasi': 'Mencari lokasi…',
     'faskes.lokasiTidakDitemukan': 'Lokasi tidak ditemukan. Coba kata kunci lain.',
     'faskes.lokasiGalatCari': 'Pencarian lokasi sedang tidak dapat dihubungi. Coba lagi.',
-    'faskes.belumLokasi': 'Lokasi belum ditentukan',
-    'faskes.belumLokasiSub':
-      'Izinkan akses lokasi, atau cari nama tempat secara manual. Daftar fasilitas akan muncul setelah lokasi diketahui.',
+    /*
+     * Kartu "peta kosong" sebelum lokasi ditentukan (tata letak 5 Nov 2026).
+     * Judul dan keterangannya SENGAJA tidak menyebut istilah teknis: yang
+     * dibutuhkan pengguna adalah tahu bahwa peta akan muncul di sini sesudah
+     * lokasi dipilih — bukan penjelasan bahwa komponennya belum dirender.
+     */
+    'faskes.petaKosongJudul': 'Peta dan fasilitas kesehatan',
+    'faskes.petaKosongSub': 'Pilih lokasi untuk melihat rumah sakit dan fasilitas kesehatan terdekat.',
     'faskes.cariFaskes': 'Cari nama, alamat, atau jenis layanan',
     'faskes.cariFaskesLabel': 'Pencarian fasilitas kesehatan',
     'faskes.hapusCari': 'Hapus pencarian',
@@ -117,18 +119,23 @@ const KAMUS = {
     'faskes.dariSimpanan': 'dari simpanan',
 
     /* --- Input lokasi: ketik alamat / pilih wilayah ---------------------- */
-    'lokasi.judul': 'Tentukan lokasi pencarian',
+    /*
+     * Kunci di bawah ditambahkan 5 Nov 2026 mengikuti tata letak baru: satu
+     * judul "Cari lokasi Anda", satu kolom isian, lalu tombol metode sejajar.
+     * Sebelumnya metode dipilih lewat tab kecil di atas kolom isian, yang
+     * membuat "Ketik Alamat" dan "Pilih Wilayah" terlihat sebagai dua MODE yang
+     * saling meniadakan. Tombol sejajar menyatakan kedudukan yang sebenarnya:
+     * cara setara untuk menentukan lokasi.
+     *
+     * Tombol "Pilih di Peta" beserta kunci-kuncinya (pilihDiPeta,
+     * pilihTitikPeta, pilihTitikAktif, titikDipilih, pakaiTitikIni,
+     * batalPilihTitik, titikTanpaWilayah) DIHAPUS 5 Nov 2026 bersama fiturnya.
+     */
+    'lokasi.cariJudul': 'Cari lokasi Anda',
+    'lokasi.metodeLain': 'Atau tentukan lokasi dengan:',
     'lokasi.ketikAlamat': 'Ketik Alamat',
     'lokasi.pilihWilayah': 'Pilih Wilayah',
     'lokasi.tombolCari': 'Cari Lokasi',
-    'lokasi.pilihTitikPeta': 'Pilih titik di peta',
-    'lokasi.pilihTitikAktif': 'Klik peta untuk memilih titik',
-    'lokasi.titikDipilih': 'Titik dipilih dari peta',
-    'lokasi.pakaiTitikIni': 'Pakai titik ini',
-    'lokasi.batalPilihTitik': 'Batal',
-    'lokasi.titikTanpaWilayah':
-      'Titik ini dipilih dari peta. Wilayahnya diambil dari layanan pencarian alamat; kalau layanan tidak mengenalinya, wilayah dibiarkan kosong.',
-    'lokasi.pakaiGps': 'Pakai GPS',
     'lokasi.labelAlamat': 'Alamat lokasi pencarian',
     'lokasi.placeholder': 'Masukkan alamat, nama jalan, gedung, desa, atau kecamatan...',
     'lokasi.hapus': 'Hapus alamat',
@@ -709,10 +716,7 @@ const KAMUS = {
 
     // nearest health facilities
     'nav.faskes': 'Health Facilities',
-    'faskes.eyebrow': 'Nearby Services',
     'faskes.judul': 'Nearby Health Facilities',
-    'faskes.deskripsi':
-      'Find hospitals, community health centres, clinics, private practices, pharmacies, laboratories and other facilities around you. Data comes from OpenStreetMap.',
     'faskes.pakaiLokasi': 'Use my location',
     'faskes.perbaruiLokasi': 'Update location',
     'faskes.izinkanLokasi': 'Allow location access',
@@ -731,9 +735,8 @@ const KAMUS = {
     'faskes.mencariLokasi': 'Searching for a location…',
     'faskes.lokasiTidakDitemukan': 'Location not found. Try another keyword.',
     'faskes.lokasiGalatCari': 'Location search is unreachable. Please try again.',
-    'faskes.belumLokasi': 'No location yet',
-    'faskes.belumLokasiSub':
-      'Allow location access, or search for a place manually. The facility list appears once a location is known.',
+    'faskes.petaKosongJudul': 'Map and health facilities',
+    'faskes.petaKosongSub': 'Choose a location to see nearby hospitals and health facilities.',
     'faskes.cariFaskes': 'Search name, address, or service type',
     'faskes.cariFaskesLabel': 'Health facility search',
     'faskes.hapusCari': 'Clear search',
@@ -749,18 +752,11 @@ const KAMUS = {
     'faskes.jumlah': '{n} facilities found',
     'faskes.dariSimpanan': 'from cache',
 
-    'lokasi.judul': 'Choose the search location',
+    'lokasi.cariJudul': 'Find your location',
+    'lokasi.metodeLain': 'Or set the location with:',
     'lokasi.ketikAlamat': 'Type an Address',
     'lokasi.pilihWilayah': 'Choose a Region',
     'lokasi.tombolCari': 'Search Location',
-    'lokasi.pilihTitikPeta': 'Pick a point on the map',
-    'lokasi.pilihTitikAktif': 'Click the map to pick a point',
-    'lokasi.titikDipilih': 'Point picked from the map',
-    'lokasi.pakaiTitikIni': 'Use this point',
-    'lokasi.batalPilihTitik': 'Cancel',
-    'lokasi.titikTanpaWilayah':
-      'This point was picked from the map. Its region comes from the address lookup service; if the service does not recognise it, the region is left empty.',
-    'lokasi.pakaiGps': 'Use GPS',
     'lokasi.labelAlamat': 'Address of the search location',
     'lokasi.placeholder': 'Enter an address, street name, building, village, or district...',
     'lokasi.hapus': 'Clear address',

@@ -77,7 +77,28 @@ export const TINGKAT = {
   },
 }
 
-export const TINGKAT_DEFAULT = 'anak'
+/**
+ * Tingkat baca bila permintaan TIDAK menyebut tingkatnya.
+ *
+ * KENAPA 'dewasa', BUKAN 'anak' (diperbaiki 5 Nov 2026): bawaannya dulu
+ * 'anak', dan akibatnya terukur pada permintaan yang sah tetapi tanpa field
+ * `tingkat` — misalnya klien lain, curl, atau integrasi:
+ *
+ *   POST /api/tanya {"pertanyaan":"apa saja gejala stroke?"}
+ *   -> tingkat {kunci:"anak"}, jawaban 578 karakter bergaya untuk pembaca
+ *      9–11 tahun
+ *
+ * Pengguna yang tidak menyebut tingkat sedang TIDAK meminta versi anak-anak;
+ * mereka hanya tidak memilih. Menjawab orang umum dengan kalimat 8 kata tanpa
+ * penjelasan istilah membuat aplikasi terasa meremehkan — dan itu justru
+ * berlawanan dengan masalah yang disasar (orang dewasa yang sulit memahami
+ * istilah medis). Antarmuka sendiri SELALU mengirim tingkat dari setelan
+ * (bawaannya `TINGKAT_DEFAULT` di src/data/tingkat.js), dan setelan itu juga
+ * 'dewasa' — jadi kedua sisi sekarang sepakat.
+ *
+ * Tingkat anak tetap tersedia dan tetap dipakai bila dipilih pengguna.
+ */
+export const TINGKAT_DEFAULT = 'dewasa'
 
 /**
  * Batas panjang jawaban per tingkat.

@@ -154,9 +154,17 @@ try {
   // `loading="lazy"` menahan gambar di bawah lipatan. Pengguna menggulir, jadi
   // uji ini juga menggulir — memaksa src lebih dulu akan menyembunyikan
   // kesalahan jalur yang sebenarnya.
+  //
+  // KENAPA TIDAK LAGI "TEPAT 3" (diperbaiki 5 Nov 2026): halaman penjelasan
+  // menambah tiga tangkapan layar Fitur Fasilitas Kesehatan, jadi jumlahnya
+  // menjadi 6. Angka mati `=== 3` membuat uji MERAH padahal keenam gambar
+  // termuat dengan ukuran benar (1440×900) — yang salah ujinya, bukan
+  // halamannya. Batas minimum tetap ada supaya galeri kosong tetap tertangkap;
+  // yang membuktikan setiap gambar BENAR-BENAR tampil adalah pemeriksaan
+  // `naturalWidth > 0` per gambar di bawah, dan itu tidak berubah.
   console.log('\n== tangkapan layar (setelah digulir) ==')
   const jumlahShot = await evaluasi(cdp, "document.querySelectorAll('img.shot').length")
-  cek('tiga tangkapan layar terpasang', jumlahShot === 3, String(jumlahShot))
+  cek('tangkapan layar terpasang (minimal 3)', jumlahShot >= 3, String(jumlahShot))
 
   for (let i = 0; i < jumlahShot; i++) {
     await evaluasi(

@@ -795,7 +795,9 @@ export default function App() {
         >
         <main
           id="konten"
-          className="flex-1 px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-4 [@media(min-height:1200px)]:py-[clamp(1.25rem,1rem+1vw,2.25rem)]"
+          // Padding atas/bawah menyusut bertahap di layar pendek — lihat
+          // catatan pada <footer> di bawah. `py-4` tetap dipakai mulai 820 px.
+          className="flex-1 px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-4 [@media(max-height:820px)]:py-3 [@media(max-height:720px)]:py-2.5 [@media(min-height:1200px)]:py-[clamp(1.25rem,1rem+1vw,2.25rem)]"
         >
           <div className="mx-auto w-full max-w-[86rem]">
             {active === 'beranda' ? (
@@ -985,7 +987,21 @@ export default function App() {
           pesan={t('galat.bawahPesan')}
           t={t}
         >
-        <footer className="border-t border-line-200 bg-white px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-5">
+        {/*
+         * PADDING VERTIKAL FOOTER DIBERI SYARAT TINGGI LAYAR (5 Nov 2026).
+         *
+         * Diukur pada laptop 1366×700: header 57 + footer 61 = 118 px (17% dari
+         * layar) hanya untuk dua baris keterangan. Sisanya harus menampung judul,
+         * tab, kartu lokasi, dan isi fitur. Akibatnya halaman Fasilitas
+         * Kesehatan meluap di layar itu — dan yang dikorbankan lebih dulu
+         * adalah area yang berguna.
+         *
+         * Mulai tinggi 820 px, `py-5` tetap seperti semula. Di bawahnya padding
+         * dikurangi bertahap. Ini BUKAN mengubah tata letak desain — jarak
+         * antar-kartu dan ukuran target sentuh (44 px) tidak disentuh; yang
+         * dihemat hanya ruang mati di kerangka halaman.
+         */}
+        <footer className="border-t border-line-200 bg-white px-[clamp(1rem,0.35rem+2.1vw,2.5rem)] py-5 [@media(max-height:820px)]:py-3 [@media(max-height:720px)]:py-2">
           <div className="mx-auto flex w-full max-w-[86rem] flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <p className="text-[0.8rem] font-semibold text-navy-700">
               Pahami Sehat <span className="font-normal text-muted-500">· Created by NØCTURNE</span>

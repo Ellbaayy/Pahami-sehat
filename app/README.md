@@ -157,7 +157,7 @@ app/
     ├── data/dummy.js         konten statis
     ├── components/layout/    Sidebar, TopBar, MobileDrawer, nav (7 menu)
     ├── components/ui/        Card, Button, SourcePills, PoinKunci, Peringatan
-    ├── components/faskes/    FaskesPanel, RsNasionalPanel, InputLokasi, PemilihTitik,
+    ├── components/faskes/    FaskesPanel, RsNasionalPanel, InputLokasi,
     │                         PemilihWilayah,
     │                         PanelNavigasi, kategoriWarna
     └── components/dashboard/ panel tiap halaman
