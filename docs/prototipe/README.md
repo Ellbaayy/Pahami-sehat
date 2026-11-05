@@ -46,8 +46,8 @@ docs/prototipe/
 │   ├── qr-pahami-sehat.png
 │   ├── fonts/pjs-var.woff2
 │   ├── ilustrasi/      # hero, masalah, konsep, alur, fitur, produk, kuesioner, klaim, tenang
-│   └── tangkapan-layar/ # 6 PNG ASLI dari aplikasi (RS nasional, autocomplete,
-│                        #   peta+daftar, detail, petunjuk arah, pilih titik)
+│   └── tangkapan-layar/ # 5 PNG ASLI dari aplikasi (RS nasional, autocomplete,
+│                        #   peta+daftar, detail, petunjuk arah)
 └── Pahami-Sehat.jpeg   # gambar referensi desain (source of truth)
 ```
 
@@ -83,7 +83,7 @@ karena keduanya dibaca sebagai daftar isi.
    Sumber, Berita Kesehatan Harian, dan Fasilitas Kesehatan Terdekat &
    Petunjuk Arah
 8. `#produk` — mockup laptop + mockup ponsel (**ilustrasi tata letak**) dan
-   **tiga tangkapan layar asli** dari aplikasi yang berjalan
+   **lima tangkapan layar asli** dari aplikasi yang berjalan
 9. `#kuesioner` — **Cek Tingkat Literasi Kesehatan** (instrumen HLS-SF12)
 10. `#sumber` — **Daftar Rujukan**
 11. `#etika` — **Privasi, Etika AI, dan Jejaknya**
@@ -125,7 +125,7 @@ node uji-halaman-penjelasan.mjs    # 18 pemeriksaan
 ```
 
 Yang diperiksa: enam kartu fitur, penyebutan wilayah bertingkat dan tiga moda,
-**ketiga tangkapan layar benar-benar termuat** (`naturalWidth` 1440×900 — bukan
+**kelima tangkapan layar benar-benar termuat** (`naturalWidth` 1440×900 — bukan
 sekadar tag `<img>` yang terpasang), tidak ada gambar rusak, tidak ada luapan
 mendatar di 1366×700 maupun 375×812, dan semua tautan jangkar punya tujuan.
 

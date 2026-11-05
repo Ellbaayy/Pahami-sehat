@@ -46,6 +46,35 @@ async function main() {
   // bersihkan sisa cara lama (dulu disalin ke public/prototipe/)
   await rm(PUBLIK_LAMA, { recursive: true, force: true })
 
+  /*
+   * BERSIHKAN HASIL SALINAN LAMA DULU — jangan menimpa di atasnya.
+   *
+   * KENAPA PENTING (5 Nov 2026): `cp` hanya MENAMBAH dan MENIMPA, tidak pernah
+   * menghapus. Ketika `faskes-5-pilih-titik.png` dihapus dari sumber, salinannya
+   * tetap tinggal di `dist/assets/tangkapan-layar/` — dan server terus
+   * menyajikannya. Akibatnya `uji-halaman-penjelasan.mjs` LULUS di laptop
+   * (gambar 404 di git "ditemukan" di dist) padahal di CI yang mulai dari
+   * repo bersih uji itu GAGAL. Itu hijau palsu yang menyembunyikan cacat
+   * sungguhan selama berhari-hari.
+   *
+   * Yang dibersihkan hanya jalur milik halaman penjelasan; `dist/app/` milik
+   * Vite (outDir-nya sendiri) dan dibangun ulang sesudah ini.
+   */
+  for (const sisa of [
+    join(DIST, 'index.html'),
+    join(DIST, 'index.html.gz'),
+    join(DIST, 'privasi.html'),
+    join(DIST, 'privasi.html.gz'),
+    join(DIST, 'assets'),
+    join(DIST, 'css'),
+    join(DIST, 'js'),
+    join(DIST, 'prototipe'),
+    join(DIST, 'README.md'),
+    join(DIST, 'Pahami-Sehat.jpeg'),
+  ]) {
+    await rm(sisa, { recursive: true, force: true })
+  }
+
   // Dua salinan diperlukan karena keduanya memakai tautan relatif (css/, js/,
   // assets/) — jadi asetnya harus ada di kedua tempat.
   await mkdir(DIST, { recursive: true })

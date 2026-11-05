@@ -1151,7 +1151,7 @@ dilayani dari MySQL dalam **62 ms** (dari 50 detik).
 ### Halaman penjelasan ikut diperbarui
 
 `docs/prototipe/index.html` sekarang punya **enam** kartu fitur (sebelumnya
-lima) dan menampilkan **tiga tangkapan layar asli** dari aplikasi yang berjalan
+lima) dan menampilkan **lima tangkapan layar asli** dari aplikasi yang berjalan
 — bukan mockup. Gambarnya dihasilkan `ambil-tangkapan.mjs`, yang menolak
 menyimpan berkas di bawah 20 KB supaya tangkapan gagal tidak lolos:
 
@@ -1359,7 +1359,7 @@ node uji-rs-sirs.mjs      # rumah sakit SIRS: jumlah, wilayah, koordinat, filter
 node uji-geocoding.mjs    # deteksi wilayah dari `address` Nominatim nyata, 38 peta ISO (37)
 node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)
 node uji-rute-perjalanan.mjs  # rute: tiga moda, polyline6, terjemahan instruksi, tautan Maps (44)
-node uji-halaman-penjelasan.mjs  # halaman depan: 6 kartu, 3 tangkapan layar termuat (butuh server + Chrome)
+node uji-halaman-penjelasan.mjs  # halaman depan: 6 kartu, 5 tangkapan layar termuat (butuh server + Chrome)
 node uji-peramban.mjs     # peramban sungguhan: 7 halaman × 2 bahasa (butuh server + Chrome)
 ```
 
@@ -1446,7 +1446,7 @@ node verifikasi-judul.mjs # buktikan setiap judul artikel Wikipedia benar-benar 
 node periksa-istilah.mjs  # periksa calon istilah baru sebelum masuk peta
 node uji-jawaban.mjs      # tembak /api/tanya server lokal, baca JAWABANNYA
 node uji-sumber.mjs --jaringan  # buktikan sumbernya benar-benar ada
-node ambil-tangkapan.mjs  # ambil 3 tangkapan layar fitur fasilitas (butuh server + Chrome)
+node ambil-tangkapan.mjs  # ambil 5 tangkapan layar fitur fasilitas (butuh server + Chrome)
 ```
 
 Fitur Fasilitas Kesehatan memakai empat layanan luar. Semuanya **gratis dan
