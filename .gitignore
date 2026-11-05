@@ -37,3 +37,10 @@ npm-debug.log*
 # Berkas kerja sementara di akar repo (bukan bagian produk)
 /reference.png
 
+# Video demo: MP4 hasil rekaman IKUT di-commit (8 MB, syarat submission lomba),
+# tetapi frame mentah dan hasil sementara tidak — itu bisa puluhan MB dan
+# selalu bisa dibuat ulang dari rekam-video-demo.mjs.
+/video/frame/
+/video/cek-caption/
+/video/daftar-potong.txt
+

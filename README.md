@@ -137,7 +137,7 @@ Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
-| [`uji-*.mjs`](.) | **33 berkas uji** — 28 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 5 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
+| [`uji-*.mjs`](.) | **34 berkas uji** — 28 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs`, `uji-halaman-penjelasan.mjs`, dan `uji-kering-video.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 5 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -182,7 +182,7 @@ pahami-sehat/
 ├── README.md
 ├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
 ├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
-├── uji-*.mjs                  ← 33 berkas uji (28 tanpa jaringan)
+├── uji-*.mjs                  ← 34 berkas uji (28 tanpa jaringan)
 ├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
@@ -1861,6 +1861,31 @@ video demo 3–5 menit **tanpa narasi peserta**, dan aplikasi harus bisa dijalan
 di localhost saat Grand Final.
 
 Tim: **NØCTURNE**.
+
+### Video demo
+
+**Sudah ada:** [`video/pahami-sehat-demo.mp4`](video/pahami-sehat-demo.mp4) —
+**260,8 detik (4,35 menit)**, 1440×900, h264, **tanpa audio** (sesuai ketentuan
+"tanpa narasi peserta"), 8,2 MB. Sembilan adegan berurutan dengan judul di layar:
+halaman penjelasan → Beranda → Tanya AI → Cek Klaim → Fasilitas Kesehatan →
+Rumah Sakit Nasional → Kuesioner → Pengaturan → privasi.
+
+Direkam dari aplikasi yang **benar-benar berjalan** di localhost, bukan animasi
+atau mockup: jawaban AI yang tampil adalah jawaban sungguhan beserta tujuh
+sumbernya, dan daftar fasilitas adalah hasil permintaan nyata ke OpenStreetMap.
+
+```bash
+npm --prefix app run build       # halaman penjelasan masuk ke dist/
+npm --prefix app run server      # terminal lain
+node uji-kering-video.mjs        # buktikan selektor naskah bekerja (tanpa rekam)
+node rekam-video-demo.mjs        # rekam (±4,5 menit)
+./rakit-video.sh                 # rakit + caption -> video/pahami-sehat-demo.mp4
+```
+
+Diperiksa `periksa-caption.mjs` (mengambil frame pada detik tertentu) dan
+`node uji-kering-video.mjs` (24 pemeriksaan selektor tanpa merekam). Naskah
+latihan live demo untuk Grand Final ada di
+[`docs/latihan-live-demo.md`](docs/latihan-live-demo.md).
 
 ---
 
