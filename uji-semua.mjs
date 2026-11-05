@@ -80,6 +80,12 @@ const BUTUH_LUAR = new Set([
    */
   'uji-kering-video.mjs',
   /*
+   * Sama, dan khusus untuk alur Fasilitas Kesehatan yang paling rawan:
+   * butuh server + Chrome + Overpass hidup (44 detik memuat 664 fasilitas).
+   * Dijalankan manual sebelum merekam: `node uji-kering-faskes-video.mjs`.
+   */
+  'uji-kering-faskes-video.mjs',
+  /*
    * Memanggil layanan publik SUNGGUHAN (Photon, Nominatim, OSRM, Valhalla)
    * untuk membuktikan klaim tentang kemampuannya — termasuk bahwa OSRM publik
    * TIDAK mendukung motor. Itu tidak boleh masuk gerbang tanpa jaringan:
