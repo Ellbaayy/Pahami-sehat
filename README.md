@@ -916,9 +916,9 @@ Nominatim, OSRM, dan Valhalla semuanya layanan publik tanpa kunci.
   bukan "tidak ada fasilitas" — `overpass.osm.ch` berperilaku begitu karena
   hanya memuat data Swiss.
 
-### Dua cara menentukan lokasi: ketik alamat, atau pilih wilayah
+### Cara menentukan lokasi: ketik alamat, atau pilih wilayah
 
-Menu **Fasilitas Kesehatan Terdekat** punya dua tab metode lokasi. Keduanya
+Menu **Fasilitas Kesehatan Terdekat** punya dua tombol metode lokasi. Keduanya
 memakai **sistem pencarian fasilitas yang sama** dan koordinat yang sama-sama
 disimpan sebagai `lokasi` tunggal — jadi hasilnya bisa dibandingkan, tetapi
 **tidak pernah dicampur**.
@@ -928,6 +928,11 @@ disimpan sebagai `lokasi` tunggal — jadi hasilnya bisa dibandingkan, tetapi
 | **Ketik alamat** | koordinat hasil geocoding Nominatim | bisa presisi sampai bangunan, atau hanya pusat kota — dan itu **disebutkan** |
 | **Pilih wilayah** | titik referensi wilayah dari Nominatim | **PERKIRAAN** (pusat wilayah), dengan peringatan tertulis |
 | **Pakai GPS** | koordinat perangkat | tetap tersedia, bukan satu-satunya cara |
+
+Tombol "Pilih di Peta" (klik peta untuk menentukan titik) **dihapus 5 Nov 2026**.
+Klik pada peta kini hanya berfungsi untuk memilih fasilitas dari daftar, bukan
+untuk memindahkan titik asal. Pencarian titik asal yang presisi tetap bisa
+dilakukan lewat kolom alamat.
 
 Mengganti metode **mengosongkan** titik dari metode sebelumnya. Tanpa itu,
 pengguna pindah ke "pilih wilayah" tetapi pencarian masih memakai koordinat
@@ -977,35 +982,24 @@ tertangkap sebelum masuk:
 Wilayah yang tidak berhasil dikenali **tidak ditebak**: koordinatnya tetap
 dipakai, dan antarmuka menulis "wilayah tidak berhasil dikenali dari sumber".
 
-#### Interaksi peta: klik untuk memilih titik
+#### Interaksi peta
 
-Selain mengetik alamat, pengguna bisa **mengklik peta** untuk memilih titik —
-jalan keluar untuk alamat yang tidak ditemukan geocoder (gang tanpa nama, rumah
-di dalam kompleks, area baru).
+Peta dipakai untuk **menampilkan** titik asal, penanda fasilitas, jalur rute,
+dan memilih fasilitas dari daftar. Mengklik peta **tidak** mengubah lokasi
+pencarian.
 
-Aturan yang dipegang:
+Fitur lama "klik peta untuk memilih titik" (beserta geocoding balik lewat
+`/api/alamat/titik`, panel "Pakai titik ini", dan komponen `PemilihTitik`)
+dihapus 5 Nov 2026 atas permintaan pengguna. Endpoint `/api/alamat/titik` tetap
+ada karena masih dipakai geocoding balik saat pengguna memilih saran alamat.
 
-- Titik datang dari **klik pengguna**, bukan tebakan.
-- Alamat dan wilayahnya ditanyakan ke server (`/api/alamat/titik`, geocoding
-  balik). Klien tidak mengarang nama wilayah dari koordinat.
-- Titik itu **belum** dipakai untuk mencari sampai pengguna menekan "Pakai titik
-  ini". Tanpa langkah konfirmasi, satu klik tak sengaja akan memicu ulang seluruh
-  pencarian fasilitas.
-- Klik pada **penanda** diabaikan: Leaflet meneruskan klik penanda ke peta, jadi
-  tanpa penjagaan ini memilih fasilitas sekaligus memindahkan titik asal.
-- Penanda titik asal diberi label sesuai **sumbernya** ("Lokasi GPS Anda",
-  "Alamat yang Anda pilih", "Pusat wilayah yang Anda pilih (perkiraan)", "Titik
-  yang Anda tentukan") — menulis "Lokasi Anda" untuk semuanya adalah kebohongan
-  kecil yang membuat pengguna mengira aplikasi tahu posisi presisinya.
+Penanda titik asal diberi label sesuai **sumbernya** ("Lokasi GPS Anda",
+"Alamat yang Anda pilih", "Pusat wilayah yang Anda pilih (perkiraan)") —
+menulis "Lokasi Anda" untuk semuanya adalah kebohongan kecil yang membuat
+pengguna mengira aplikasi tahu posisi presisinya.
 
-Diuji di peramban: klik peta di Kwitang → geocoding balik mengembalikan
-**DKI Jakarta / Kota Administrasi Jakarta Pusat / Senen / Kwitang** beserta nama
-jalan, lalu "Pakai titik ini" memakai koordinat itu untuk mencari.
-
-Satu bug React yang tertangkap di sini, dan jenisnya mudah terulang:
-`setKlikPeta(fn)` **menjalankan** `fn` sebagai updater, bukan menyimpannya —
-karena React memperlakukan argumen fungsi pada setter sebagai `prev => next`.
-Handler klik harus dibungkus: `setKlikPeta(() => fn)`.
+Klik pada **penanda fasilitas** dipakai untuk memilih fasilitas tersebut dari
+peta; klik pada area kosong tidak melakukan apa pun.
 
 #### Keyboard dan Enter
 
