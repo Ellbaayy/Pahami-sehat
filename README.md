@@ -1864,26 +1864,39 @@ Tim: **NØCTURNE**.
 
 ### Video demo
 
-**Sudah ada:** [`video/pahami-sehat-demo.mp4`](video/pahami-sehat-demo.mp4) —
-**260,8 detik (4,35 menit)**, 1440×900, h264, **tanpa audio** (sesuai ketentuan
-"tanpa narasi peserta"), 8,2 MB. Sembilan adegan berurutan dengan judul di layar:
-halaman penjelasan → Beranda → Tanya AI → Cek Klaim → Fasilitas Kesehatan →
-Rumah Sakit Nasional → Kuesioner → Pengaturan → privasi.
+**Sudah ada:** [`video/pahami-sehat-final.mp4`](video/pahami-sehat-final.mp4) —
+**277,52 detik (4,63 menit)**, 1440×900, h264, **tanpa audio** (sesuai ketentuan
+"tanpa narasi peserta"), 11 MB. Strukturnya tiga bagian:
+
+| Bagian | Durasi | Isi |
+|---|---|---|
+| **Intro** | 5 s | Logo dan nama tim **NØCTURNE**, "mempersembahkan", lalu Pahami Sehat |
+| **Isi** | 257,9 s | Sembilan adegan: halaman penjelasan → Beranda → Tanya AI → Cek Klaim → Fasilitas Kesehatan → Rumah Sakit Nasional → Kuesioner → Pengaturan → privasi |
+| **Outro** | 9 s | NØCTURNE, kalimat penutup, tiga angka (7 sumber · 3.325 RS · 4 tingkat baca), LOGICODIX 2026 |
 
 Direkam dari aplikasi yang **benar-benar berjalan** di localhost, bukan animasi
 atau mockup: jawaban AI yang tampil adalah jawaban sungguhan beserta tujuh
-sumbernya, dan daftar fasilitas adalah hasil permintaan nyata ke OpenStreetMap.
+sumbernya, dan daftar fasilitas (664–806 fasilitas) adalah hasil permintaan
+nyata ke OpenStreetMap.
 
 ```bash
 npm --prefix app run build       # halaman penjelasan masuk ke dist/
 npm --prefix app run server      # terminal lain
 node uji-kering-video.mjs        # buktikan selektor naskah bekerja (tanpa rekam)
-node rekam-video-demo.mjs        # rekam (±4,5 menit)
-./rakit-video.sh                 # rakit + caption -> video/pahami-sehat-demo.mp4
+node uji-kering-faskes-video.mjs # khusus alur Fasilitas Kesehatan (cetak jumlah)
+node buat-intro-outro.mjs        # intro.mp4 (5 s) + outro.mp4 (9 s)
+node rekam-video-demo.mjs        # rekam isi (±4,5 menit)
+./rakit-video.sh                 # isi + caption + sambung -> pahami-sehat-final.mp4
 ```
 
-Diperiksa `periksa-caption.mjs` (mengambil frame pada detik tertentu) dan
-`node uji-kering-video.mjs` (24 pemeriksaan selektor tanpa merekam). Naskah
+`rakit-video.sh` bekerja dua tahap: merakit **isi bersih** (tanpa caption) lebih
+dulu, lalu membakar caption yang **sudah digeser sebesar durasi intro**. Pemisahan
+ini mencegah caption terbakar dua kali dan membuat pergeseran bisa diulang tanpa
+merekam ulang.
+
+Diperiksa `periksa-caption.mjs` (mengambil frame pada detik tertentu — pakai
+`-ss` **setelah** `-i`, kalau sebelum `-i` ia selalu mengambil caption pertama)
+dan `node uji-kering-video.mjs` (24 pemeriksaan selektor tanpa merekam). Naskah
 latihan live demo untuk Grand Final ada di
 [`docs/latihan-live-demo.md`](docs/latihan-live-demo.md).
 
