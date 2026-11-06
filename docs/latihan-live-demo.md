@@ -71,7 +71,22 @@ lalu muat ulang tab aplikasi.
 Kalimat di bawah ini **contoh**, bukan hafalan wajib. Yang wajib adalah
 urutan dan durasinya.
 
-### 0:00–1:00 — Masalah, satu kalimat
+**Ukur, jangan menebak.** Ada pengukur waktu untuk latihan ini:
+
+```bash
+node latihan-demo.mjs              # mode manual: tekan Enter tiap segmen selesai
+node latihan-demo.mjs --otomatis   # hitung mundur sendiri, kamu tinggal ikuti
+```
+
+Skrip itu mencetak target tiap segmen, mengukur durasi nyata, lalu
+menampilkan segmen mana yang melewati target lebih dari 5 detik beserta
+berapa banyak yang harus dipotong. Angka targetnya diambil dari naskah ini —
+kalau naskah berubah, ubah keduanya bersamaan.
+
+> Total target **6:40**, sisa **0:20** dari batas 7:00 — disisakan untuk
+> transisi, membuka tab, dan hal yang tidak terduga. Jangan mengejar pas 7:00.
+
+### 0:00–0:50 — Masalah, satu kalimat
 
 > "Hasil SKI 2023: 27,8% penduduk Indonesia tidak punya jaminan kesehatan.
 > Dan yang lebih sering terjadi bukan 'tidak mau ke fasilitas kesehatan',
@@ -80,7 +95,7 @@ urutan dan durasinya.
 Sebut **satu** angka saja, yang sudah diverifikasi. Jangan menumpuk angka —
 juri menilai Problem-Solution Fit, bukan statistik.
 
-### 1:00–2:00 — Halaman penjelasan (Tab 1)
+### 0:50–1:40 — Halaman penjelasan (Tab 1)
 
 Gulir **pelan**, tunjuk tiga hal:
 
@@ -93,7 +108,7 @@ Gulir **pelan**, tunjuk tiga hal:
 > Jangan menggulir cepat. Juri butuh waktu membaca; layar yang berhenti
 > justru terbaca sebagai percaya diri.
 
-### 2:00–4:00 — Tanya AI (Tab 2) — INI INTI DEMO
+### 1:40–3:35 — Tanya AI (Tab 2) — INI INTI DEMO
 
 Klik **Tanya AI**, ketik **satu** pertanyaan yang sudah dilatih:
 
@@ -112,7 +127,7 @@ Saat jawaban muncul, tunjuk **tiga** hal, tidak lebih:
 3. **Tombol tingkat baca** — ganti ke **Anak-anak** (9–11 tahun), tunjukkan
    jawabannya menjadi lebih pendek. Ini bukti fitur, bukan klaim.
 
-### 4:00–5:00 — Cek Klaim
+### 3:35–4:30 — Cek Klaim
 
 Klik **Cek Klaim** → **Pakai contoh** (contohnya sudah terisi: "Vaksin MMR
 menyebabkan autisme pada anak.") → **Periksa klaim**.
@@ -122,7 +137,7 @@ Tunggu hasil, tunjuk **putusan** — salah satu dari tiga ini:
 > Kalimat kunci: "Aplikasi ini berani bilang **belum bisa dipastikan** kalau
 > sumbernya memang tidak cukup. Itu yang membedakannya dari chatbot biasa."
 
-### 5:00–6:30 — Fasilitas Kesehatan
+### 4:30–5:50 — Fasilitas Kesehatan
 
 Klik **Fasilitas Kesehatan** → **Pilih Wilayah** → pilih provinsi →
 kabupaten. Tunggu daftar dan peta.
@@ -138,7 +153,7 @@ Lalu tunjuk:
 - Tab **Rumah Sakit Nasional** — "3.325 rumah sakit resmi Kemenkes,
   dari database, bukan dari peta, karena sumbernya tidak punya koordinat."
 
-### 6:30–7:00 — Kuesioner + penutup
+### 5:50–6:40 — Kuesioner + penutup
 
 Klik **Kuesioner**, jawab satu pertanyaan, tunjuk progresnya.
 
