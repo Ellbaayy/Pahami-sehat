@@ -43,4 +43,7 @@ npm-debug.log*
 /video/frame/
 /video/cek-caption/
 /video/daftar-potong.txt
+# berkas antara perakitan (dibuat ulang tiap ./rakit-video.sh, jangan di-commit)
+/video/isi-bersih.mp4
+/video/isi-bercaption.mp4
 
