@@ -52,7 +52,7 @@ import {
 import { kontenHarianLengkap } from './konten.js'
 import { faskesSekitar, daftarKategori, jarakMeter } from './faskes.js'
 import { ambilWilayah, cascadeTitik, titikNama, kodeSah, tingkatDariKode } from './wilayah.js'
-import { fasilitasSekitarDb, simpanBanyak, ambilFasilitas, cakupanLengkap, catatCakupan } from './faskesDb.js'
+import { fasilitasSekitarDb, simpanBanyak, ambilFasilitas, cakupanInfo, catatCakupan } from './faskesDb.js'
 import { ambilRute, tautanGoogleMaps, COSTING } from './rute-perjalanan.js'
 import { cariRsSirs, rsSirsMenurutKode, pilihanFilterSirs, ringkasanSirs } from './rsSirs.js'
 import {
@@ -754,9 +754,14 @@ rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
     const adaIsiDb = Array.isArray(dariDb) && dariDb.length > 0
 
     if (adaIsiDb) {
-      // Lengkap atau tidak? Cakupan dicatat per titik+radius saat pengambilan.
-      const lengkap = await cakupanLengkap(lat, lon, radius)
-      if (lengkap) {
+      /*
+       * Cakupan dicari yang MENCAKUP titik ini, bukan yang titiknya sama persis.
+       * Catatan disimpan pada titik yang dibulatkan ~1,1 km, jadi permintaan
+       * yang bergeser sedikit dulu dianggap "belum pernah diambil" dan menunggu
+       * Overpass puluhan detik padahal datanya sudah ada.
+       */
+      const cakupan = await cakupanInfo(lat, lon, radius)
+      if (cakupan) {
         const fasilitas = dariDb
           .map((b) => ({
             ...b,
@@ -785,8 +790,30 @@ rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
               lisensi: 'ODbL 1.0',
             },
           ],
-          diambilPada: new Date().toISOString(),
+          diambilPada: cakupan.diambil,
+          // Jujur soal umur data: `basi` true berarti simpanan lebih tua dari
+          // 6 jam. Angkanya tetap disajikan (jauh lebih baik daripada menunggu
+          // 40 detik), tetapi antarmuka bisa menyebut kapan data diambil.
+          basi: !cakupan.segar,
+          cakupanJarakM: cakupan.jarakM,
         })
+        /*
+         * Segarkan di LATAR BELAKANG kalau simpanannya sudah basi. Pengguna
+         * tidak menunggu; permintaan berikutnya mendapat data baru. Batasnya
+         * lebih longgar (60 detik) karena tidak ada yang menatap layar.
+         */
+        if (!cakupan.segar) {
+          faskesSekitar({ lat, lon, radius, batasMs: 60_000 })
+            .then((baru) => {
+              const utuh = !(baru.dipotong > 0)
+              return simpanBanyak(baru.fasilitas.map((f) => ({ ...f, kode_osm: f.id }))).then(() =>
+                utuh && baru.fasilitas.length
+                  ? catatCakupan(lat, lon, radius, baru.fasilitas.length)
+                  : null,
+              )
+            })
+            .catch(() => null)
+        }
         return
       }
       // Ada isi tapi cakupannya tidak diketahui -> jangan percaya sebagai

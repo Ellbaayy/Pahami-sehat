@@ -1209,6 +1209,38 @@ database; kalau MariaDB mati, ia menjawab dari
 `dari: "berkas"` — aplikasi tetap hidup, dan sumber angkanya tidak
 disembunyikan.
 
+### Tombol "Cari" tidak lagi membuat juri menunggu
+
+Overpass (sumber OSM) butuh **37–49 detik** untuk area yang belum pernah
+diambil. Terukur 7 Nov 2026: permintaan pertama di Yogyakarta memakan
+**57,9 detik** hanya untuk menampilkan hasil yang sebenarnya sudah ada di
+database. Tiga perubahan menutupnya:
+
+1. **Semua cermin Overpass dijalankan bersamaan**, bukan berurutan — yang
+   tercepat menang. Dulu cermin pertama yang menggantung 70 detik menahan
+   seluruh permintaan sebelum cermin kedua dicoba.
+2. **Batas waktu yang dilihat pengguna: 9,5 detik** (`FASKES_BATAS_MS`).
+   Kalau tidak ada cermin yang menjawab sampai batas itu, aplikasi memakai
+   simpanan database (ditandai `dariSimpanan`) atau menjawab "coba lagi" —
+   tidak pernah menggantung satu menit.
+3. **Cakupan dicocokkan dengan toleransi**, bukan hanya titik yang sama
+   persis. Catatan cakupan pada satu titik berlaku untuk permintaan di
+   sekitarnya selama radius catatan masih menutupi jarak + radius yang
+   diminta. Dulu geseran 900 m saja sudah dianggap "belum pernah diambil".
+
+Sebelum demo, panaskan lokasi yang akan ditunjukkan — **dengan radius lebih
+besar** daripada yang akan dipakai saat demo (mis. panaskan 10 km, demo 5 km),
+supaya geseran titik tetap terlayani:
+
+```bash
+node panaskan-faskes.mjs --tempat "Danurejan, Yogyakarta" --radius 10000
+node panaskan-faskes.mjs --daftar lokasi-demo.txt        # satu lokasi per baris
+```
+
+Sesudah dipanaskan, terukur: **0,010–0,032 detik** dari database (dulu 57,9
+detik). Data yang lebih tua dari 6 jam tetap disajikan cepat dengan penanda
+`basi: true` sambil disegarkan di latar belakang.
+
 ### Hasil radius tidak lagi dipotong diam-diam
 
 Terukur 4 Nov 2026: Jakarta Pusat radius 5 km **selalu** berhenti di **600**
@@ -1439,7 +1471,7 @@ node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
 node uji-wilayah.mjs      # wilayah bertingkat: validasi kode, cascade, titik referensi (38)
 node uji-rs-sirs.mjs      # rumah sakit SIRS: jumlah, wilayah, koordinat, filter, sinkron ulang (50)
-node uji-statistik-faskes.mjs  # statistik nasional: total 49.548, cakupan, kaitan kategori (36)
+node uji-statistik-faskes.mjs  # statistik nasional: total 49.548, cakupan, kaitan kategori (39)
 node uji-geocoding.mjs    # deteksi wilayah dari `address` Nominatim nyata, 38 peta ISO (37)
 node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)
 node uji-rute-perjalanan.mjs  # rute: tiga moda, polyline6, terjemahan instruksi, tautan Maps (44)

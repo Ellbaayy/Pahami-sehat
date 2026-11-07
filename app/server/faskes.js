@@ -76,15 +76,21 @@ const CERMIN_DATA_INDONESIA = new Set([
 
 /** Batas aman: satu permintaan gabungan, bukan satu per kategori. */
 const TIMEOUT_MS = 70_000
+
 /**
- * Anggaran waktu TOTAL untuk seluruh cermin.
+ * BATAS WAKTU YANG DILIHAT PENGGUNA.
  *
- * Tanpa ini, lima cermin yang semuanya menggantung berarti pengguna menunggu
- * 5 × 70 s = 350 detik sebelum melihat galat — jauh lebih buruk daripada
- * "gagal cepat lalu coba lagi". Diukur: cermin yang berfungsi menjawab dalam
- * 37–49 detik untuk radius 3 km.
+ * Diukur 7 Nov 2026: cermin yang sehat menjawab 3-5 km dalam 37-49 detik.
+ * Selama menunggu itu layar hanya menampilkan "mencari...", dan untuk demo di
+ * depan juri itu terlalu lama. Karena itu semua cermin sekarang dijalankan
+ * BERSAMAAN dan permintaan diberi batas ini: mana pun yang menjawab lebih
+ * dulu dipakai, dan kalau tidak ada yang menjawab sampai batas, pemanggil
+ * memakai simpanan database (kalau ada) atau memberi tahu pengguna untuk
+ * mencoba lagi - bukan menggantung satu menit.
+ *
+ * Bisa diubah lewat FASKES_BATAS_MS (mis. 20000 saat menyiapkan data).
  */
-const ANGGARAN_TOTAL_MS = 100_000
+const BATAS_CEPAT_MS = Number(process.env.FASKES_BATAS_MS || 9_500)
 /*
  * Batas atas jumlah hasil per permintaan.
  *
@@ -503,7 +509,9 @@ export function buangDuplikat(daftar) {
  */
 export function queryOverpass(lat, lon, radiusM) {
   const r = Math.round(radiusM)
-  return `[out:json][timeout:${Math.round(TIMEOUT_MS / 1000) - 5}];
+  // Batas di sisi Overpass dibuat sedikit di bawah batas kita, supaya server
+  // berhenti menghitung query yang jawabannya sudah tidak ditunggu.
+  return `[out:json][timeout:${Math.max(3, Math.round(BATAS_CEPAT_MS / 1000) - 1)}];
 (
   nwr["amenity"~"^(hospital|clinic|doctors|dentist|pharmacy)$"](around:${r},${lat},${lon});
   nwr["healthcare"](around:${r},${lat},${lon});
@@ -687,12 +695,65 @@ export function _kosongkanSimpanan() {
 /* ------------------------------------------------------------- publik ---- */
 
 /**
+ * Jalankan semua cermin BERSAMAAN, ambil yang pertama berhasil.
+ *
+ * Mengembalikan `{ elemen, dipakai, keadaan, kosongTepercaya, batasWaktu }`.
+ * Tidak melempar galat: kegagalan semua cermin dilaporkan lewat nilai balik,
+ * supaya pemanggil bisa memutuskan memakai simpanan database atau memberi tahu
+ * pengguna.
+ */
+function balapanCermin(daftar, query, batasMs) {
+  return new Promise((selesai) => {
+    const keadaan = []
+    let beres = false
+    let gagal = 0
+    let kosongTepercaya = 0
+
+    const tutup = (hasil) => {
+      if (beres) return
+      beres = true
+      clearTimeout(jam)
+      selesai(hasil)
+    }
+
+    const jam = setTimeout(() => {
+      tutup({ elemen: null, dipakai: null, keadaan, kosongTepercaya, batasWaktu: true })
+    }, batasMs)
+
+    for (const cermin of daftar) {
+      const mulai = Date.now()
+      ambilCermin(cermin, query, batasMs)
+        .then((el) => {
+          keadaan.push({ nama: 'OpenStreetMap (Overpass)', url: cermin, ok: true, ms: Date.now() - mulai })
+          tutup({ elemen: el, dipakai: cermin, keadaan, kosongTepercaya, batasWaktu: false })
+        })
+        .catch((e) => {
+          if (e?.kosong && CERMIN_DATA_INDONESIA.has(cermin)) kosongTepercaya++
+          keadaan.push({
+            nama: 'OpenStreetMap (Overpass)',
+            url: cermin,
+            ok: false,
+            ms: Date.now() - mulai,
+            galat: String(e?.message ?? 'gagal'),
+          })
+          gagal++
+          if (gagal === daftar.length) {
+            tutup({ elemen: null, dipakai: null, keadaan, kosongTepercaya, batasWaktu: false })
+          }
+        })
+    }
+
+    if (daftar.length === 0) tutup({ elemen: null, dipakai: null, keadaan, kosongTepercaya, batasWaktu: false })
+  })
+}
+
+/**
  * Cari fasilitas kesehatan di sekitar satu titik.
  *
  * @param {{ lat:number, lon:number, radius?:number }} opsi
  * @returns {Promise<object>} daftar fasilitas + keadaan tiap sumber data
  */
-export async function faskesSekitar({ lat, lon, radius = 5000 } = {}) {
+export async function faskesSekitar({ lat, lon, radius = 5000, batasMs } = {}) {
   const a = Number(lat)
   const b = Number(lon)
   if (!koordinatSah(a, b)) {
@@ -714,45 +775,40 @@ export async function faskesSekitar({ lat, lon, radius = 5000 } = {}) {
   // punya apa pun di area itu (sah), sedangkan null berarti tidak ada satu pun
   // cermin yang menjawab (galat). Membedakannya mencegah "tidak ada fasilitas
   // di sini" dan "sumbernya sedang mati" terlihat sama di antarmuka.
-  let elemen = null
-  let dipakai = null
-  // Berapa CERMIN TEPERCAYA yang bilang "kosong". Satu saja tidak cukup.
-  let kosongTepercaya = 0
+  // Diisi `balapanCermin` di bawah. `[]` dan `null` berbeda: nol elemen berarti
+  // sumber MENJAWAB tetapi tidak punya apa pun di area itu (sah), sedangkan
+  // null berarti tidak ada satu pun cermin yang menjawab (galat). Membedakannya
+  // mencegah "tidak ada fasilitas di sini" dan "sumbernya sedang mati" terlihat
+  // sama di antarmuka.
+  let elemen
+  let dipakai
+  let kosongTepercaya
 
-  const mulaiTotal = Date.now()
-  for (const cermin of CERMIN) {
-    const sisa = ANGGARAN_TOTAL_MS - (Date.now() - mulaiTotal)
-    if (sisa < 8_000) {
-      keadaan.push({
-        nama: 'OpenStreetMap (Overpass)',
-        url: cermin,
-        ok: false,
-        ms: 0,
-        galat: 'dilewati: anggaran waktu habis',
-      })
-      continue
-    }
-    const mulai = Date.now()
-    try {
-      elemen = await ambilCermin(cermin, query, Math.min(TIMEOUT_MS, sisa))
-      dipakai = cermin
-      keadaan.push({ nama: 'OpenStreetMap (Overpass)', url: cermin, ok: true, ms: Date.now() - mulai })
-      break
-    } catch (e) {
-      if (e?.kosong) {
-        // Balasan kosong hanya dianggap bukti kalau cerminnya memang memuat
-        // data Indonesia. Dari cermin Swiss, kosong berarti "tidak ada data
-        // untuk wilayah ini", bukan "wilayah ini kosong".
-        if (CERMIN_DATA_INDONESIA.has(cermin)) kosongTepercaya++
-      }
-      keadaan.push({
-        nama: 'OpenStreetMap (Overpass)',
-        url: cermin,
-        ok: false,
-        ms: Date.now() - mulai,
-        galat: String(e?.message ?? 'gagal'),
-      })
-    }
+  /*
+   * SEMUA CERMIN DIJALANKAN BERSAMAAN.
+   *
+   * Versi lama mencoba berurutan: kalau cermin pertama menggantung 70 detik,
+   * pengguna menunggu 70 detik sebelum cermin kedua dicoba - padahal cermin
+   * kedua bisa saja menjawab dalam 5 detik. Yang dibutuhkan bukan "cermin
+   * cadangan", melainkan "yang tercepat menang".
+   *
+   * Batasnya satu: BATAS_CEPAT_MS. Sisa cermin yang belum menjawab diabaikan
+   * (AbortSignal.timeout mematikan koneksinya).
+   */
+  const batas = Number(batasMs) > 0 ? Number(batasMs) : BATAS_CEPAT_MS
+  const balapan = await balapanCermin(CERMIN, query, batas)
+  for (const k of balapan.keadaan) keadaan.push(k)
+  elemen = balapan.elemen
+  dipakai = balapan.dipakai
+  kosongTepercaya = balapan.kosongTepercaya
+  if (balapan.batasWaktu) {
+    keadaan.push({
+      nama: 'OpenStreetMap (Overpass)',
+      url: '(semua cermin)',
+      ok: false,
+      ms: batas,
+      galat: `batas waktu ${batas} ms tercapai; cermin yang lambat diabaikan`,
+    })
   }
 
   /*

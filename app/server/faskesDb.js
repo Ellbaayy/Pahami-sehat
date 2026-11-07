@@ -12,7 +12,7 @@
  */
 
 import { eksekusi, dbSiap } from './db.js'
-import { KATEGORI } from './faskes.js'
+import { KATEGORI, jarakMeter } from './faskes.js'
 
 /**
  * Umur simpan satu baris fasilitas.
@@ -230,15 +230,57 @@ export async function catatCakupan(lat, lon, radiusM, jumlah) {
  * 5 km di titik ini, permintaan 2 km pasti tercakup.
  */
 export async function cakupanLengkap(lat, lon, radiusM) {
-  if (!(await pastikanTabelCakupan())) return false
-  const r = await eksekusi(
-    `SELECT jumlah FROM cakupan_faskes
-      WHERE lat_bulat = ? AND lon_bulat = ? AND radius_m >= ?
-        AND diambil > DATE_SUB(NOW(), INTERVAL ? SECOND)
-      ORDER BY radius_m ASC LIMIT 1`,
-    [bulatkan(lat), bulatkan(lon), Math.round(radiusM), Math.floor(CAKUPAN_SEGAR_MS / 1000)],
+  const info = await cakupanInfo(lat, lon, radiusM)
+  return Boolean(info?.segar)
+}
+
+/**
+ * Cari catatan cakupan yang MENCAKUP titik ini — bukan hanya yang titiknya sama.
+ *
+ * KENAPA TIDAK PERSIS: catatan disimpan pada titik yang dibulatkan ~1,1 km.
+ * Kalau pengguna menggeser peta sedikit, membuka lagi besok, atau memilih
+ * kecamatan yang titik referensinya bergeser, permintaan dianggap "belum
+ * pernah diambil" — lalu menunggu Overpass puluhan detik padahal datanya sudah
+ * ada. Contoh nyata: pemanasan di -7,79/110,37 tidak menolong permintaan di
+ * -7,798/110,372.
+ *
+ * Aturannya: catatan sah kalau jarak pusat catatan ke titik yang diminta,
+ * DITAMBAH radius yang diminta, masih muat di radius catatan. Radius catatan
+ * 5 km bisa melayani permintaan 3 km dari titik yang berjarak sampai 2 km.
+ *
+ * Mengembalikan `{ jumlah, diambil, segar }` atau null. `segar` false berarti
+ * data ada tetapi lebih tua dari CAKUPAN_SEGAR_MS — masih boleh dipakai
+ * sebagai jawaban cepat, asal pengguna diberi tahu umurnya.
+ */
+export async function cakupanInfo(lat, lon, radiusM) {
+  if (!(await pastikanTabelCakupan())) return null
+  const r = Math.round(radiusM)
+  const a = Number(lat)
+  const b = Number(lon)
+  // Kotak pencarian: 0,5 derajat ~ 55 km, cukup untuk radius maksimum 50 km.
+  const kotak = 0.5
+  const baris = await eksekusi(
+    `SELECT lat_bulat, lon_bulat, radius_m, jumlah, diambil,
+            TIMESTAMPDIFF(SECOND, diambil, NOW()) AS umur
+       FROM cakupan_faskes
+      WHERE lat_bulat BETWEEN ? AND ? AND lon_bulat BETWEEN ? AND ?
+      ORDER BY diambil DESC`,
+    [a - kotak, a + kotak, b - kotak, b + kotak],
   )
-  return Array.isArray(r) && r.length > 0
+  if (!Array.isArray(baris) || baris.length === 0) return null
+
+  for (const c of baris) {
+    const jarak = jarakMeter(a, b, Number(c.lat_bulat), Number(c.lon_bulat))
+    if (Number(c.radius_m) >= jarak + r) {
+      return {
+        jumlah: Number(c.jumlah),
+        diambil: c.diambil,
+        segar: Number(c.umur) < Math.floor(CAKUPAN_SEGAR_MS / 1000),
+        jarakM: Math.round(jarak),
+      }
+    }
+  }
+  return null
 }
 
 /** Hapus catatan cakupan — untuk uji. */
@@ -295,7 +337,7 @@ export async function fasilitasSekitarDb(lat, lon, radiusM, { limit = 5000 } = {
    * sengaja TIDAK menjanjikan objek {daftar, dipotong}: fungsi ini tetap
    * mengembalikan array supaya semua pemanggil lama tidak rusak. Kalau batas
    * ini suatu saat terlewati lagi, angkanya akan kembali terlihat wajar — jadi
-   * pemanggil yang butuh kepastian harus memeriksa `cakupanLengkap()`.
+   * pemanggil yang butuh kepastian harus memeriksa `cakupanInfo()`.
    */
   const r = await eksekusi(
     `${PILIH}
