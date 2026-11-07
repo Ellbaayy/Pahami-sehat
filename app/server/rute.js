@@ -67,6 +67,7 @@ import {
   tanya,
 } from './db.js'
 import { bahasaJawaban } from './bahasa.js'
+import { ringkasanStatistik } from './statistikFaskes.js'
 
 /* ---------------------------------------------------------------- util ---- */
 
@@ -898,6 +899,93 @@ rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
 rute.get('/api/faskes/kategori', batasMeta, (_req, res) => {
   res.json({ ok: true, kategori: daftarKategori() })
 })
+
+/**
+ * Statistik fasilitas nasional — angka laporan resmi, bukan hasil pemetaan.
+ *
+ * Kenapa dibaca dari database lebih dulu: angkanya bisa diperbarui tanpa
+ * menyentuh kode (impor-statistik-faskes.mjs). Kalau database mati, dipakai
+ * angka dari `server/statistikFaskes.js` — aplikasi tetap menjawab, dan
+ * `dari` menyebut sumber mana yang dipakai supaya tidak menyesatkan.
+ *
+ * Peringatan yang SELALU ikut dikirim: angka Kemenkes hanya mencakup fasilitas
+ * yang sudah mengimplementasikan sistem data dan aplikasi kesehatan, bukan
+ * seluruh fasilitas nasional.
+ */
+rute.get('/api/statistik-faskes', batasMeta, bungkus(async (req, res) => {
+  const kata = String(req.query?.cari ?? '').trim().toLowerCase()
+  const dasar = ringkasanStatistik()
+  let dari = 'berkas'
+  let kemenkes = dasar.kemenkes
+  let bpjs = dasar.bpjs
+
+  const baris = await tanya(
+    `SELECT lembaga, periode, jenis, jumlah, cakupan, kode_kategori, catatan
+       FROM statistik_faskes
+      ORDER BY lembaga, jumlah DESC`,
+  )
+
+  // Katalog rujukan juga dibaca dari database supaya penambahan/penggantian
+  // sumber tidak menuntut perubahan kode. Gagal -> pakai daftar dari berkas.
+  let sumberData = dasar.sumberData
+  const rujukan = await tanya(
+    `SELECT nama, penerbit, jenis, data, tautan, catatan
+       FROM sumber_data_faskes
+      ORDER BY id`,
+  )
+  if (Array.isArray(rujukan) && rujukan.length > 0) sumberData = rujukan
+
+  if (Array.isArray(baris) && baris.length > 0) {
+    dari = 'database'
+    const rapikan = (b) => ({
+      lembaga: b.lembaga,
+      jenis: b.jenis,
+      jumlah: Number(b.jumlah),
+      kodeKategori: b.kode_kategori,
+      catatan: b.catatan,
+    })
+    const km = baris.filter((b) => b.lembaga === 'Kemenkes')
+    const bp = baris.filter((b) => b.lembaga === 'BPJS Kesehatan')
+    if (km.length > 0) {
+      kemenkes = {
+        periode: km[0].periode,
+        lembaga: 'Kemenkes',
+        cakupan: km[0].cakupan,
+        baris: km.map(rapikan),
+        total: km.reduce((n, b) => n + Number(b.jumlah), 0),
+      }
+    }
+    if (bp.length > 0) {
+      bpjs = {
+        periode: bp[0].periode,
+        lembaga: 'BPJS Kesehatan',
+        cakupan: bp[0].cakupan,
+        baris: bp.map(rapikan),
+        total: bp.reduce((n, b) => n + Number(b.jumlah), 0),
+      }
+    }
+  }
+
+  // Penyaringan sederhana supaya "dicari gampang" juga berlaku di endpoint.
+  const cocok = (b) =>
+    !kata ||
+    b.jenis.toLowerCase().includes(kata) ||
+    String(b.kodeKategori ?? '').toLowerCase().includes(kata) ||
+    b.lembaga.toLowerCase().includes(kata)
+
+  const saring = (kelompok) => ({ ...kelompok, baris: kelompok.baris.filter(cocok) })
+
+  res.json({
+    ok: true,
+    dari,
+    cari: kata || null,
+    kemenkes: saring(kemenkes),
+    bpjs: saring(bpjs),
+    sumberData,
+    peringatan:
+      'Angka Kemenkes 2024 hanya mencakup fasilitas yang telah mengimplementasikan sistem data dan aplikasi kesehatan — bukan jumlah seluruh fasilitas kesehatan nasional. Angka BPJS adalah pembanding dengan cara hitung berbeda, jangan dijumlahkan.',
+  })
+}))
 
 /**
  * Cari lokasi berdasarkan nama tempat — dipakai bila izin GPS ditolak.

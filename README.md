@@ -158,7 +158,7 @@ tab Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 | [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | Mengambil 10 tangkapan dashboard: 7 halaman pada 1440×900, 2 tampilan ponsel, 1 mode kontras tinggi. Jawaban Tanya AI dan putusan Cek Klaim diambil dari permintaan sungguhan. |
 | [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | Mengambil 5 tangkapan Fasilitas Kesehatan lewat Chrome + CDP (peta Leaflet tidak pernah "tenang", jadi harness biasa timeout). |
 | [`ambil-tangkapan-prototipe.mjs`](ambil-tangkapan-prototipe.mjs) | Mengambil 10 bagian halaman penjelasan + 2 tampilan ponsel, menggulir per bagian dan menunggu posisi gulir benar-benar sampai. |
-| [`uji-*.mjs`](.) | **33 berkas uji** — 28 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
+| [`uji-*.mjs`](.) | **34 berkas uji** — 29 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -211,7 +211,7 @@ pahami-sehat/
 ├── README.md
 ├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
 ├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
-├── uji-*.mjs                  ← 33 berkas uji (28 tanpa jaringan)
+├── uji-*.mjs                  ← 34 berkas uji (29 tanpa jaringan)
 ├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
@@ -222,7 +222,7 @@ pahami-sehat/
 │   ├── .env.example
 │   ├── public/ocr/            ← mesin OCR: worker, core WASM, data bahasa (17 MB)
 │   ├── scripts/               ← salin-prototipe, mampatkan-dist, bebaskan-port
-│   ├── server/                ← backend Express (29 berkas)
+│   ├── server/                ← backend Express (30 berkas)
 │   ├── src/                   ← frontend React: App.jsx, lib/, data/, components/
 │   ├── api/index.js           ← pintu masuk serverless Vercel
 │   ├── index.html
@@ -656,6 +656,7 @@ lebih berbahaya daripada tidak ada penyaring.
 | GET | `/api/rs/filter` | pilihan filter (provinsi, kabupaten, jenis, kelas, kepemilikan) |
 | GET | `/api/rs/ringkasan` | jumlah RS, berapa berkoordinat, waktu sinkron terakhir |
 | GET | `/api/rs/:kode` | rincian satu rumah sakit menurut kode SIRS |
+| GET | `/api/statistik-faskes` | statistik fasilitas nasional (Kemenkes 2024, pembanding BPJS) + rujukan; `?cari=` menyaring |
 
 Galat selalu berbentuk `{ ok: false, code, pesan }` — `code` sengaja dipakai UI
 untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
@@ -1155,6 +1156,59 @@ node uji-rs-sirs.mjs                                    # 50 pemeriksaan
 
 Laporan lengkap: [`docs/laporan-impor-sirs.md`](docs/laporan-impor-sirs.md).
 
+### Statistik fasilitas nasional — angka resmi, dan artinya
+
+Peta fasilitas menjawab "apa yang ada di sekitar saya". Pertanyaan lain —
+"berapa jumlah puskesmas di Indonesia" — tidak bisa dijawab dari peta, karena
+OpenStreetMap tidak lengkap. Untuk itu dipakai angka laporan resmi, disimpan di
+tabel `statistik_faskes`.
+
+**Kemenkes 2024** — fasilitas yang telah mengimplementasikan sistem data dan
+aplikasi kesehatan:
+
+| Jenis fasilitas | Jumlah |
+|---|---:|
+| Rumah sakit | 3.681 |
+| Puskesmas | 11.542 |
+| Laboratorium kesehatan | 602 |
+| Klinik | 18.590 |
+| Praktik mandiri | 15.060 |
+| Unit transfusi darah | 73 |
+| **Total** | **49.548** |
+
+> **49.548 bukan jumlah seluruh fasilitas kesehatan nasional.** Itu jumlah pada
+> enam kategori di atas yang sudah tersambung sistem data dan aplikasi
+> kesehatan; fasilitas yang belum tersambung tidak ikut dihitung. Kalimat ini
+> disimpan di kolom `cakupan` pada setiap baris, ikut di respons API, dan
+> diperiksa `uji-statistik-faskes.mjs` — supaya angka ini tidak pernah dikutip
+> sebagai "total faskes Indonesia".
+
+**BPJS Kesehatan, September 2026** (pembanding, cara hitung berbeda — jangan
+dijumlahkan dengan angka Kemenkes): 23.862 FKTP · 3.221 RS/Klinik Utama ·
+6.631 apotek/optik.
+
+Rujukan pengembangan yang tercatat di `sumber_data_faskes`:
+
+| Sumber | Data yang tersedia |
+|---|---|
+| Kemenkes — Profil Kesehatan Indonesia 2025 | Statistik kesehatan nasional |
+| BPS — Statistik Fasilitas Kesehatan 2025 | Rumah sakit dan puskesmas menurut provinsi |
+| SATUSEHAT Data | Dashboard dan dataset kesehatan |
+| BPJS Kesehatan | Jumlah faskes mitra JKN |
+
+```bash
+node impor-statistik-faskes.mjs                 # simpan / perbarui (idempoten)
+node impor-statistik-faskes.mjs --kering        # lihat angkanya saja, tanpa menulis
+node impor-statistik-faskes.mjs --cari klinik   # cari tanpa menyentuh database
+node uji-statistik-faskes.mjs                   # 39 pemeriksaan, tanpa jaringan
+```
+
+Endpoint `GET /api/statistik-faskes` (bisa `?cari=klinik`) membaca dari
+database; kalau MariaDB mati, ia menjawab dari
+[`app/server/statistikFaskes.js`](app/server/statistikFaskes.js) dan menyebut
+`dari: "berkas"` — aplikasi tetap hidup, dan sumber angkanya tidak
+disembunyikan.
+
 ### Hasil radius tidak lagi dipotong diam-diam
 
 Terukur 4 Nov 2026: Jakarta Pusat radius 5 km **selalu** berhenti di **600**
@@ -1351,8 +1405,8 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 7 Nov 2026: **28 berkas lulus, 0 gagal,
-±4,7 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
+memperbarui daftar di mana pun. Diukur 7 Nov 2026: **29 berkas lulus, 0 gagal,
+±25 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
 atau API key sengaja dikeluarkan dan dijalankan terpisah (lihat bawah) — supaya
 gerbang ini tidak bergantung pada keadaan mesin.
 
@@ -1385,6 +1439,7 @@ node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
 node uji-wilayah.mjs      # wilayah bertingkat: validasi kode, cascade, titik referensi (38)
 node uji-rs-sirs.mjs      # rumah sakit SIRS: jumlah, wilayah, koordinat, filter, sinkron ulang (50)
+node uji-statistik-faskes.mjs  # statistik nasional: total 49.548, cakupan, kaitan kategori (36)
 node uji-geocoding.mjs    # deteksi wilayah dari `address` Nominatim nyata, 38 peta ISO (37)
 node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)
 node uji-rute-perjalanan.mjs  # rute: tiga moda, polyline6, terjemahan instruksi, tautan Maps (44)

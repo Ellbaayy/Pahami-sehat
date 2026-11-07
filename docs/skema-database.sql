@@ -301,3 +301,58 @@ CREATE TABLE IF NOT EXISTS fasilitas (
   CONSTRAINT fk_fasilitas_kategori FOREIGN KEY (kategori_id)
     REFERENCES kategori_fasilitas (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- 11. STATISTIK FASILITAS NASIONAL
+--     Angka acuan dari laporan resmi — BUKAN hasil pemetaan OSM dan BUKAN
+--     tambahan dari tabel `fasilitas`. Keduanya menjawab pertanyaan berbeda:
+--     `fasilitas` = titik yang berhasil dipetakan, tabel ini = jumlah menurut
+--     laporan lembaga.
+--
+--     PERINGATAN: angka Kemenkes 2024 (total 49.548) adalah jumlah fasilitas
+--     yang SUDAH MENGIMPLEMENTASIKAN sistem data dan aplikasi kesehatan pada
+--     enam kategori — bukan jumlah seluruh fasilitas kesehatan nasional.
+--     Karena itu kalimat cakupan WAJIB ikut tersimpan di setiap baris: angka
+--     tanpa cakupan gampang dikutip sebagai "total faskes Indonesia".
+--
+--     Angka BPJS adalah pembanding dengan cara hitung berbeda; jangan
+--     dijumlahkan dengan angka Kemenkes.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS statistik_faskes (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  lembaga       VARCHAR(80)  NOT NULL,   -- 'Kemenkes' / 'BPJS Kesehatan'
+  periode       VARCHAR(30)  NOT NULL,   -- '2024' / 'September 2026'
+  jenis         VARCHAR(80)  NOT NULL,   -- 'Puskesmas', 'FKTP', ...
+  jumlah        INT UNSIGNED NOT NULL,
+  cakupan       VARCHAR(300) NOT NULL,   -- apa yang sebenarnya dihitung
+  -- Padanan kategori peta OSM; NULL kalau laporan ini tidak punya padanannya
+  -- (mis. unit transfusi darah tidak dipetakan sebagai kategori tersendiri).
+  kode_kategori VARCHAR(40)  NULL,
+  catatan       VARCHAR(200) NULL,
+  dicatat       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+                             ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_statistik (lembaga, periode, jenis),
+  KEY idx_statistik_lembaga (lembaga, periode)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------------
+-- 12. SUMBER DATA RESMI UNTUK PENGEMBANGAN
+--     Daftar rujukan yang dipakai mengembangkan aplikasi (profil kesehatan,
+--     portal data, aplikasi DFO). Bukan pengganti tabel `sumber`: `sumber`
+--     dipakai untuk mengutip isi jawaban medis, tabel ini untuk mencatat
+--     bahan acuan data fasilitas.
+--
+--     tautan dibiarkan NULL kalau alamat pastinya belum diperiksa — menebak
+--     URL resmi lebih buruk daripada mengosongkannya.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sumber_data_faskes (
+  id       INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nama     VARCHAR(160) NOT NULL,
+  penerbit VARCHAR(120) NOT NULL,
+  jenis    VARCHAR(40)  NOT NULL,   -- 'profil' / 'statistik' / 'dashboard'
+  data     VARCHAR(200) NULL,       -- apa yang tersedia di sumber ini
+  tautan   VARCHAR(400) NULL,
+  catatan  VARCHAR(300) NULL,
+  dicatat  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_sumber_data (nama)
+) ENGINE=InnoDB;
