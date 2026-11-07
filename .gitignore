@@ -47,3 +47,6 @@ npm-debug.log*
 /video/isi-bersih.mp4
 /video/isi-bercaption.mp4
 
+
+# Cadangan intro/outro sebelum pindah ke Remotion (lokal saja)
+video/*.lama.mp4
