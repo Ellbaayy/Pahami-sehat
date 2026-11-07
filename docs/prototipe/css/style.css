@@ -491,12 +491,16 @@ textarea{resize:vertical;min-height:76px}
 .src-card{
   display:flex;align-items:center;gap:.65rem;background:#fff;border:1px solid var(--line);
   border-radius:10px;padding:.6rem .75rem;transition:border-color .18s,transform .18s;
+  /* Nama domain panjang (mis. medlineplus.gov/autismspectrumdisorder.html) tidak
+     boleh melebarkan kartu melebihi kolomnya — tanpa ini halaman meluber 17px
+     di layar 375px. */
+  min-width:0;max-width:100%;
 }
 .src-card:hover{border-color:var(--blue);transform:translateX(3px)}
 .src-ic{font-size:1.1rem;line-height:0}
 .src-body{display:flex;flex-direction:column;min-width:0}
 .src-body strong{font-size:.86rem;color:var(--navy)}
-.src-body small{font-size:.74rem;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.src-body small{font-size:.74rem;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .src-arrow{margin-left:auto;font-size:1.2rem;color:var(--blue);font-weight:800}
 .vr-note{font-size:.74rem;color:#4C7A68;margin:.6rem 0 0}
 
