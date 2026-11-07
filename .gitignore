@@ -50,3 +50,6 @@ npm-debug.log*
 
 # Cadangan intro/outro sebelum pindah ke Remotion (lokal saja)
 video/*.lama.mp4
+
+# state agen (rencana/kerja lokal) — jangan masuk repo publik
+.hermes/
