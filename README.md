@@ -158,7 +158,7 @@ tab Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 | [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | Mengambil 10 tangkapan dashboard: 7 halaman pada 1440×900, 2 tampilan ponsel, 1 mode kontras tinggi. Jawaban Tanya AI dan putusan Cek Klaim diambil dari permintaan sungguhan. |
 | [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | Mengambil 5 tangkapan Fasilitas Kesehatan lewat Chrome + CDP (peta Leaflet tidak pernah "tenang", jadi harness biasa timeout). |
 | [`ambil-tangkapan-prototipe.mjs`](ambil-tangkapan-prototipe.mjs) | Mengambil 10 bagian halaman penjelasan + 2 tampilan ponsel, menggulir per bagian dan menunggu posisi gulir benar-benar sampai. |
-| [`uji-*.mjs`](.) | **34 berkas uji** — 29 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
+| [`uji-*.mjs`](.) | **35 berkas uji** — 30 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -211,7 +211,7 @@ pahami-sehat/
 ├── README.md
 ├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
 ├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
-├── uji-*.mjs                  ← 34 berkas uji (29 tanpa jaringan)
+├── uji-*.mjs                  ← 35 berkas uji (30 tanpa jaringan)
 ├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
@@ -1437,7 +1437,7 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 7 Nov 2026: **29 berkas lulus, 0 gagal,
+memperbarui daftar di mana pun. Diukur 7 Nov 2026: **30 berkas lulus, 0 gagal,
 ±25 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
 atau API key sengaja dikeluarkan dan dijalankan terpisah (lihat bawah) — supaya
 gerbang ini tidak bergantung pada keadaan mesin.
@@ -1472,6 +1472,13 @@ node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
 node uji-wilayah.mjs      # wilayah bertingkat: validasi kode, cascade, titik referensi (38)
 node uji-rs-sirs.mjs      # rumah sakit SIRS: jumlah, wilayah, koordinat, filter, sinkron ulang (50)
 node uji-statistik-faskes.mjs  # statistik nasional: total 49.548, cakupan, kaitan kategori (39)
+node uji-cn.mjs                  # penggabung kelas Tailwind: kelas terakhir menang (8)
+node uji-ukuran-bundel.mjs       # pagar ukuran bundel: index.js < 460 KB (1)
+node uji-peramban.mjs           # peramban sungguhan: 7 halaman × 2 bahasa (105)
+node uji-dokumentasi.mjs         # angka di README sama dengan isi repo (35)
+node uji-semua.mjs              # satu perintah untuk semuanya (29)
+node uji-jam.mjs                # jam acuan dari header internet (17)
+node uji-rotasi.mjs             # rotasi daftar konten harian (22)
 node uji-geocoding.mjs    # deteksi wilayah dari `address` Nominatim nyata, 38 peta ISO (37)
 node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)
 node uji-rute-perjalanan.mjs  # rute: tiga moda, polyline6, terjemahan instruksi, tautan Maps (44)
