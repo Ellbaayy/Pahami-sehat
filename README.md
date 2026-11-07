@@ -83,9 +83,11 @@ penjelas dan dua sumber NIH di bawahnya.
 | ![Beranda di HP](docs/tangkapan-layar/dashboard-hp-1-beranda.png) | ![Menu HP](docs/tangkapan-layar/dashboard-hp-2-menu.png) |
 
 **Mode kontras tinggi** — satu sakelar di Pengaturan: teks jadi hitam penuh,
-huruf dasar membesar 112%, garis dan batas fokus dipertebal:
+huruf dasar membesar 112%, garis dan batas fokus dipertebal. Tangkapan di bawah
+diambil di **Beranda** dengan mode itu menyala — di halaman Pengaturan sendiri
+bedanya nyaris tak terlihat karena teksnya memang sudah gelap:
 
-![Mode kontras tinggi](docs/tangkapan-layar/dashboard-kontras-tinggi.png)
+![Beranda dalam mode kontras tinggi](docs/tangkapan-layar/dashboard-kontras-tinggi.png)
 
 ### Fasilitas Kesehatan Terdekat
 
@@ -1875,6 +1877,19 @@ Prinsip: **jangan panggil jaringan kalau hasilnya bisa dipakai ulang.**
 
 ---
 
+## Tim
+
+**NØCTURNE** — tim peserta LOGICODIX 2026, subtema *Inclusive Health & Well-being*.
+
+| Nama | Peran |
+|---|---|
+| **Gesang Hemas Bayu Sekti** | Ketua Tim · Inovator, Developer & Video Demo |
+| **Rafsanjani Castro Satria Chandra** | Inovator & Developer |
+| **Najwa Azahra Purnomo Putri** | Inovator & Analis |
+| **Matthew Randyka Jesa** | Inovator & Analis |
+
+---
+
 ## Konteks lomba (LOGICODIX 2026)
 
 Indikator penilaian: Problem-Solution Fit 25% · Technology Innovation 25% ·
@@ -1887,7 +1902,7 @@ Ketentuan yang mengikat: karya MVP berbasis Web/Mobile, source code di repo GitH
 video demo 3–5 menit **tanpa narasi peserta**, dan aplikasi harus bisa dijalankan
 di localhost saat Grand Final.
 
-Tim: **NØCTURNE**.
+Tim: **NØCTURNE**, empat orang — nama dan perannya di bagian [Tim](#tim).
 
 ### Video demo
 

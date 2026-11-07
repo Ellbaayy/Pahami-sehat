@@ -346,8 +346,16 @@ async function main() {
   )
   if (!sakelar) throw new Error('sakelar kontras tinggi tidak ditemukan di Pengaturan')
   await jeda(1200)
+
+  // Tangkapan diambil di BERANDA, bukan di Pengaturan: di halaman setelan
+  // efeknya nyaris tak terlihat (teksnya memang sudah gelap), sehingga
+  // gambar terlihat sama dengan tampilan normal. Di Beranda, teks hitam
+  // pekat, huruf 112%, dan garis 2px langsung terlihat.
+  await pilih('Beranda')
+  await jeda(900)
   await simpan('dashboard-kontras-tinggi.png')
   // kembalikan supaya tangkapan ponsel di bawah memakai tampilan normal
+  await pilih('Pengaturan')
   await evaluasi(
     cdp,
     `(() => {
