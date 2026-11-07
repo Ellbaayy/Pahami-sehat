@@ -72,20 +72,6 @@ const BUTUH_LUAR = new Set([
   // `node uji-halaman-penjelasan.mjs`.
   'uji-halaman-penjelasan.mjs',
   /*
-   * Uji kering naskah video: butuh server hidup + Chrome + aplikasi yang
-   * benar-benar menjawab (memanggil model untuk membuktikan penanda
-   * "Sumber jawaban" muncul). Itu tiga ketergantungan mesin sekaligus —
-   * tidak boleh menjadi gerbang `npm test`. Dijalankan manual sebelum
-   * merekam: `node uji-kering-video.mjs`.
-   */
-  'uji-kering-video.mjs',
-  /*
-   * Sama, dan khusus untuk alur Fasilitas Kesehatan yang paling rawan:
-   * butuh server + Chrome + Overpass hidup (44 detik memuat 664 fasilitas).
-   * Dijalankan manual sebelum merekam: `node uji-kering-faskes-video.mjs`.
-   */
-  'uji-kering-faskes-video.mjs',
-  /*
    * Memanggil layanan publik SUNGGUHAN (Photon, Nominatim, OSRM, Valhalla)
    * untuk membuktikan klaim tentang kemampuannya — termasuk bahwa OSRM publik
    * TIDAK mendukung motor. Itu tidak boleh masuk gerbang tanpa jaringan:

@@ -37,19 +37,9 @@ npm-debug.log*
 # Berkas kerja sementara di akar repo (bukan bagian produk)
 /reference.png
 
-# Video demo: MP4 hasil rekaman IKUT di-commit (8 MB, syarat submission lomba),
-# tetapi frame mentah dan hasil sementara tidak — itu bisa puluhan MB dan
-# selalu bisa dibuat ulang dari rekam-video-demo.mjs.
-/video/frame/
-/video/cek-caption/
-/video/daftar-potong.txt
-# berkas antara perakitan (dibuat ulang tiap ./rakit-video.sh, jangan di-commit)
-/video/isi-bersih.mp4
-/video/isi-bercaption.mp4
-
-
-# Cadangan intro/outro sebelum pindah ke Remotion (lokal saja)
-video/*.lama.mp4
-
 # state agen (rencana/kerja lokal) — jangan masuk repo publik
 .hermes/
+
+# Berkas video (dibuat di luar repo sejak 7 Nov 2026): rekaman, frame mentah,
+# dan hasil sementara tidak di-commit.
+video/

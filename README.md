@@ -158,7 +158,7 @@ tab Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 | [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | Mengambil 10 tangkapan dashboard: 7 halaman pada 1440×900, 2 tampilan ponsel, 1 mode kontras tinggi. Jawaban Tanya AI dan putusan Cek Klaim diambil dari permintaan sungguhan. |
 | [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | Mengambil 5 tangkapan Fasilitas Kesehatan lewat Chrome + CDP (peta Leaflet tidak pernah "tenang", jadi harness biasa timeout). |
 | [`ambil-tangkapan-prototipe.mjs`](ambil-tangkapan-prototipe.mjs) | Mengambil 10 bagian halaman penjelasan + 2 tampilan ponsel, menggulir per bagian dan menunggu posisi gulir benar-benar sampai. |
-| [`uji-*.mjs`](.) | **35 berkas uji** — 28 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs`, `uji-halaman-penjelasan.mjs`, dan `uji-kering-video.mjs` dan `uji-kering-faskes-video.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
+| [`uji-*.mjs`](.) | **33 berkas uji** — 28 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -211,7 +211,7 @@ pahami-sehat/
 ├── README.md
 ├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
 ├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
-├── uji-*.mjs                  ← 35 berkas uji (28 tanpa jaringan)
+├── uji-*.mjs                  ← 33 berkas uji (28 tanpa jaringan)
 ├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
@@ -1902,58 +1902,10 @@ Ketentuan yang mengikat: karya MVP berbasis Web/Mobile, source code di repo GitH
 video demo 3–5 menit **tanpa narasi peserta**, dan aplikasi harus bisa dijalankan
 di localhost saat Grand Final.
 
+Video demo **tidak disimpan di repo ini** — pembuatannya di luar repo, dan folder
+`video/` sengaja diabaikan `.gitignore` supaya berkas besar tidak ikut ter-commit.
+
 Tim: **NØCTURNE**, empat orang — nama dan perannya di bagian [Tim](#tim).
-
-### Video demo
-
-**Sudah ada:** [`video/pahami-sehat-final.mp4`](video/pahami-sehat-final.mp4) —
-**269,77 detik (4,50 menit)**, 1440×900, 30 fps, h264, **tanpa audio** (sesuai
-ketentuan "tanpa narasi peserta"), 4,8 MB. Strukturnya tiga bagian:
-
-| Bagian | Durasi | Isi |
-|---|---|---|
-| **Intro** | 5 s | Logo dan nama tim **NØCTURNE**, "mempersembahkan", lalu Pahami Sehat |
-| **Isi** | 255,8 s | Sembilan adegan: halaman penjelasan → Beranda → Tanya AI → Cek Klaim → Fasilitas Kesehatan → Rumah Sakit Nasional → Kuesioner → Pengaturan → privasi |
-| **Outro** | 9 s | NØCTURNE, kalimat penutup, tiga angka (7 sumber · 3.325 RS · 4 tingkat baca), LOGICODIX 2026 |
-
-Direkam dari aplikasi yang **benar-benar berjalan** di localhost, bukan animasi
-atau mockup: jawaban AI yang tampil adalah jawaban sungguhan beserta tujuh
-sumbernya, dan daftar fasilitas (664–806 fasilitas) adalah hasil permintaan
-nyata ke OpenStreetMap.
-
-Sejak **7 Nov 2026** intro dan outro dirender **Remotion**, di proyek terpisah
-[`video/remotion/`](video/remotion/CATATAN.md) (tidak masuk `app/`): dua
-komposisi 1440×900 pada 30 fps. Hasilnya setara dengan pipeline lama (beda
-< 2/255 per piksel) tetapi bisa dirender ulang tanpa merekam layar.
-`buat-intro-outro.mjs` (HTML + CDP) masih ada di repo sebagai pipeline lama dan
-**tidak dipakai lagi** — jangan jalankan kalau ingin hasil yang sekarang.
-
-```bash
-npm --prefix app run build       # halaman penjelasan masuk ke dist/
-npm --prefix app run server      # terminal lain
-node uji-kering-video.mjs        # buktikan selektor naskah bekerja (tanpa rekam)
-node uji-kering-faskes-video.mjs # khusus alur Fasilitas Kesehatan (cetak jumlah)
-
-# 1) intro (5 s) + outro (9 s) lewat Remotion — terukur 9,4 s dan 13,5 s
-cd video/remotion
-npm run render:intro && npm run render:outro && node verifikasi.mjs   # harus exit=0
-cp out/intro.mp4 ../intro.mp4 && cp out/outro.mp4 ../outro.mp4
-cd ../..
-
-node rekam-video-demo.mjs        # 2) rekam isi (±4,5 menit)
-./rakit-video.sh                 # 3) isi + caption + sambung -> pahami-sehat-final.mp4
-```
-
-`rakit-video.sh` bekerja dua tahap: merakit **isi bersih** (tanpa caption) lebih
-dulu, lalu membakar caption yang **sudah digeser sebesar durasi intro**. Pemisahan
-ini mencegah caption terbakar dua kali dan membuat pergeseran bisa diulang tanpa
-merekam ulang.
-
-Diperiksa `periksa-caption.mjs` (mengambil frame pada detik tertentu — pakai
-`-ss` **setelah** `-i`, kalau sebelum `-i` ia selalu mengambil caption pertama)
-dan `node uji-kering-video.mjs` (24 pemeriksaan selektor tanpa merekam). Naskah
-latihan live demo untuk Grand Final ada di
-[`docs/latihan-live-demo.md`](docs/latihan-live-demo.md).
 
 ---
 
@@ -2084,7 +2036,6 @@ keenamnya termuat (1440×900) — yang salah adalah ujinya, bukan halamannya.
 | **Putusan Cek Klaim diperjelas** | Lencana menyebut subjeknya ("Klaim …"), tiap putusan diberi satu kalimat penjelas, dan daftar sumber tidak pernah kosong tanpa keterangan. `tidak_didukung` kini hanya dipakai bila sumber resmi menyatakan sebaliknya — klaim yang tidak dibahas sumber mana pun menjadi `tidak_bisa_dipastikan`. Terlihat pada tangkapan [Cek Klaim](#aplikasi--tujuh-menu) |
 | **Sumber angka halaman penjelasan dilengkapi** | "Kelas 12,8" kini bersumber Ayre dkk. (2024); campak ditulis **73 kematian (69 sepanjang 2025 + 4 sampai minggu ke-7 2026)**; imunisasi menyebut selisih WHO 84,2% vs UNICEF/Kemenkes 84,5%; lansia dan remaja diberi rujukan. Rincian: `docs/verifikasi-klaim-tambahan.md` |
 | **Luapan 17 px di layar 375 px** | Kartu sumber pada contoh Cek Klaim memuat domain panjang (`medlineplus.gov/autismspectrumdisorder.html`) tanpa `min-width:0`, sehingga grid melebar ke **392 px**. Ditambahkan `min-width:0` + `max-width:100%` pada `.src-card` dan `.src-body small`. Diuji `uji-peramban.mjs`: **105 lulus, 0 gagal** |
-| **Intro/outro video lewat Remotion** | `video/remotion/` — Intro 150 frame, Outro 270 frame, 30 fps, 1440×900. `node verifikasi.mjs` memeriksa durasi, resolusi, dan tidak adanya audio; video final dirakit ulang menjadi **269,77 s** |
 
 Uji pada hari itu: `npm test` **28 lulus, 0 gagal**; `uji-peramban.mjs` **105 lulus, 0 gagal**.
 
