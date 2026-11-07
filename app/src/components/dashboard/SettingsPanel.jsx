@@ -5,6 +5,15 @@ import { TINGKAT } from '../../data/tingkat'
 import { BAHASA } from '../../data/bahasa'
 import * as Switch from '@radix-ui/react-switch'
 
+const KELAS_SAKELAR =
+  'relative h-11 w-[3.25rem] shrink-0 rounded-full border border-line-300 bg-surface-200 ' +
+  'transition-colors data-[state=checked]:border-brand-500 data-[state=checked]:bg-brand-500 ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500'
+
+const KELAS_KNOB =
+  'block h-7 w-7 translate-x-2 rounded-full bg-white shadow transition-transform ' +
+  'data-[state=checked]:translate-x-[1.25rem]'
+
 function Row({ title, description, control }) {
   return (
     <div className="flex flex-col gap-y-3 px-[clamp(0.95rem,0.85rem+0.4vw,1.35rem)] py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4">
@@ -47,17 +56,37 @@ export default function SettingsPanel({
             <Switch.Root
               checked={settings.kontras}
               onCheckedChange={(v) => set('kontras', v)}
-              className="relative h-7 w-12 shrink-0 rounded-full border border-line-300 bg-surface-200 transition-colors data-[state=checked]:border-brand-500 data-[state=checked]:bg-brand-500"
-              aria-label={t('pengaturan.kontrasTinggi')}
+              className={KELAS_SAKELAR}
+              aria-label={t('set.kontras')}
             >
-              <Switch.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[1.375rem]" />
+              <Switch.Thumb className={KELAS_KNOB} />
+            </Switch.Root>
+          }
+        />
+
+        <Row
+          title={
+            <span className="inline-flex items-center gap-2">
+              <Volume2 className="size-4 text-sky-700" aria-hidden="true" />
+              {t('set.tts')}
+            </span>
+          }
+          description={t('set.ttsSub')}
+          control={
+            <Switch.Root
+              checked={settings.tts}
+              onCheckedChange={(v) => set('tts', v)}
+              className={KELAS_SAKELAR}
+              aria-label={t('set.tts')}
+            >
+              <Switch.Thumb className={KELAS_KNOB} />
             </Switch.Root>
           }
         />
 
         {/*
           PEMILIH SUARA.
-          
+
           Dua pilihan yang berdiri sendiri: bahasa dan jenis suara. Daftar
           bahasanya memuat "Otomatis" di urutan pertama, dan itu memang
           bawaannya — jawaban berbahasa Jawa/Sunda dibacakan dengan suara yang
@@ -72,37 +101,52 @@ export default function SettingsPanel({
         <Row
           title={
             <span className="inline-flex items-center gap-2">
-              <Volume2 className="size-4 text-sky-700" aria-hidden="true" />
-              {t('set.tts')}
+              <Volume2 className="size-4 text-brand-700" aria-hidden="true" />
+              {t('set.suara')}
             </span>
           }
-          description={t('set.ttsSub')}
+          description={t('set.suaraSub')}
           control={
-            <Switch.Root
-              checked={settings.tts}
-              onCheckedChange={(v) => set('tts', v)}
-              className="relative h-7 w-12 shrink-0 rounded-full border border-line-300 bg-surface-200 transition-colors data-[state=checked]:border-brand-500 data-[state=checked]:bg-brand-500"
-              aria-label={t('set.tts')}
-            >
-              <Switch.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[1.375rem]" />
-            </Switch.Root>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                aria-label={t('set.suaraBahasa')}
+                value={settings.suaraBahasa}
+                onChange={(e) => set('suaraBahasa', e.target.value)}
+                className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              >
+                <option value="auto">{t('set.suaraOtomatis')}</option>
+                <option value="id">{t('set.suaraId')}</option>
+                <option value="jv">{t('set.suaraJv')}</option>
+                <option value="su">{t('set.suaraSu')}</option>
+                <option value="en">{t('set.suaraEn')}</option>
+              </select>
+              <select
+                aria-label={t('set.suaraJenis')}
+                value={settings.suaraJenis}
+                onChange={(e) => set('suaraJenis', e.target.value)}
+                className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              >
+                <option value="p">{t('set.suaraPerempuan')}</option>
+                <option value="l">{t('set.suaraLaki')}</option>
+              </select>
+            </div>
           }
         />
 
         <Row
           title={
             <span className="inline-flex items-center gap-2">
-              <Languages className="size-4 text-sky-700" aria-hidden="true" />
+              <Languages className="size-4 text-brand-700" aria-hidden="true" />
               {t('set.bahasa')}
             </span>
           }
           description={t('set.bahasaSub')}
           control={
             <select
+              aria-label={t('set.bahasa')}
               value={settings.lang}
               onChange={(e) => set('lang', e.target.value)}
               className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-              aria-label={t('set.bahasa')}
             >
               {BAHASA.map((b) => (
                 <option key={b.kunci} value={b.kunci}>

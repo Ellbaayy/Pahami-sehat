@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { ArrowLeft, Activity } from 'lucide-react'
 import logo from '../../assets/logo-mark.png'
 import { NAV_ITEMS } from './nav'
@@ -21,10 +20,6 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
         <Dialog.Overlay className="absolute inset-0 z-40 bg-navy-900/45 backdrop-blur-[2px]" />
         <Dialog.Content
           id="mobile-drawer"
-          ref={(el) => {
-            const panelRef = useRef(null)
-            panelRef.current = el
-          }}
           className="rise absolute inset-y-0 left-0 flex w-[min(19rem,84vw)] flex-col border-r border-line-200 bg-white shadow-2xl"
         >
           <div className="flex items-center gap-3 border-b border-line-100 px-4 py-3.5">

@@ -28,7 +28,7 @@ export default function TombolDengar({
   t = (k) => k,
 }) {
   const [bicara, setBicara] = useState(false)
-  const [error, setError] = useState(null)
+  const [, setError] = useState(null)
 
   useEffect(() => {
     // kalau komponen dilepas saat sedang bicara, hentikan
