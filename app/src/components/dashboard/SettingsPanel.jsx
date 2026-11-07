@@ -3,30 +3,7 @@ import { Card, SectionHeading } from '../ui/primitives'
 import { cn } from '../../lib/cn'
 import { TINGKAT } from '../../data/tingkat'
 import { BAHASA } from '../../data/bahasa'
-
-function Switch({ checked, onChange, label }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
-        checked ? 'bg-brand-500' : 'bg-surface-300',
-      )}
-    >
-      <span
-        className={cn(
-          'absolute top-1 left-1 size-5 rounded-full bg-white shadow transition-transform duration-200',
-          checked && 'translate-x-5',
-        )}
-      />
-    </button>
-  )
-}
+import * as Switch from '@radix-ui/react-switch'
 
 function Row({ title, description, control }) {
   return (
@@ -59,6 +36,84 @@ export default function SettingsPanel({
 
       <Card className="divide-y divide-line-100 overflow-hidden">
         <Row
+          title={
+            <span className="inline-flex items-center gap-2">
+              <Contrast className="size-4 text-brand-700" aria-hidden="true" />
+              {t('set.kontras')}
+            </span>
+          }
+          description={t('set.kontrasSub')}
+          control={
+            <Switch.Root
+              checked={settings.kontras}
+              onCheckedChange={(v) => set('kontras', v)}
+              className="relative h-7 w-12 shrink-0 rounded-full border border-line-300 bg-surface-200 transition-colors data-[state=checked]:border-brand-500 data-[state=checked]:bg-brand-500"
+              aria-label={t('pengaturan.kontrasTinggi')}
+            >
+              <Switch.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[1.375rem]" />
+            </Switch.Root>
+          }
+        />
+
+        {/*
+          PEMILIH SUARA.
+          
+          Dua pilihan yang berdiri sendiri: bahasa dan jenis suara. Daftar
+          bahasanya memuat "Otomatis" di urutan pertama, dan itu memang
+          bawaannya — jawaban berbahasa Jawa/Sunda dibacakan dengan suara yang
+          sesuai tanpa pengguna perlu mengatur apa pun.
+
+          Kalau pengguna MEMILIH bahasa tertentu, pilihannya MENANG dan tebakan
+          otomatis tidak dijalankan. Itu penting: sebelumnya pilihan seperti ini
+          tidak ada, sehingga pengguna yang memakai bahasa Indonesia tetap bisa
+          dibacakan dengan suara Jawa karena tebakan otomatis salah membaca
+          kalimatnya.
+        */}
+        <Row
+          title={
+            <span className="inline-flex items-center gap-2">
+              <Volume2 className="size-4 text-sky-700" aria-hidden="true" />
+              {t('set.tts')}
+            </span>
+          }
+          description={t('set.ttsSub')}
+          control={
+            <Switch.Root
+              checked={settings.tts}
+              onCheckedChange={(v) => set('tts', v)}
+              className="relative h-7 w-12 shrink-0 rounded-full border border-line-300 bg-surface-200 transition-colors data-[state=checked]:border-brand-500 data-[state=checked]:bg-brand-500"
+              aria-label={t('set.tts')}
+            >
+              <Switch.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[1.375rem]" />
+            </Switch.Root>
+          }
+        />
+
+        <Row
+          title={
+            <span className="inline-flex items-center gap-2">
+              <Languages className="size-4 text-sky-700" aria-hidden="true" />
+              {t('set.bahasa')}
+            </span>
+          }
+          description={t('set.bahasaSub')}
+          control={
+            <select
+              value={settings.lang}
+              onChange={(e) => set('lang', e.target.value)}
+              className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              aria-label={t('set.bahasa')}
+            >
+              {BAHASA.map((b) => (
+                <option key={b.kunci} value={b.kunci}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+          }
+        />
+
+        <Row
           title={t('set.tingkat')}
           description={t('set.tingkatSub')}
           control={
@@ -86,113 +141,6 @@ export default function SettingsPanel({
                 </button>
               ))}
             </div>
-          }
-        />
-
-        <Row
-          title={
-            <span className="inline-flex items-center gap-2">
-              <Contrast className="size-4 text-brand-700" aria-hidden="true" />
-              {t('set.kontras')}
-            </span>
-          }
-          description={t('set.kontrasSub')}
-          control={
-            <Switch
-              checked={settings.kontras}
-              onChange={(v) => set('kontras', v)}
-              label={t('set.kontras')}
-            />
-          }
-        />
-
-        <Row
-          title={
-            <span className="inline-flex items-center gap-2">
-              <Volume2 className="size-4 text-sky-700" aria-hidden="true" />
-              {t('set.tts')}
-            </span>
-          }
-          description={t('set.ttsSub')}
-          control={
-            <Switch
-              checked={settings.tts}
-              onChange={(v) => set('tts', v)}
-              label={t('set.tts')}
-            />
-          }
-        />
-
-        {/*
-          PEMILIH SUARA.
-          
-          Dua pilihan yang berdiri sendiri: bahasa dan jenis suara. Daftar
-          bahasanya memuat "Otomatis" di urutan pertama, dan itu memang
-          bawaannya — jawaban berbahasa Jawa/Sunda dibacakan dengan suara yang
-          sesuai tanpa pengguna perlu mengatur apa pun.
-
-          Kalau pengguna MEMILIH bahasa tertentu, pilihannya MENANG dan tebakan
-          otomatis tidak dijalankan. Itu penting: sebelumnya pilihan seperti ini
-          tidak ada, sehingga pengguna yang memakai bahasa Indonesia tetap bisa
-          dibacakan dengan suara Jawa karena tebakan otomatis salah membaca
-          kalimatnya.
-        */}
-        <Row
-          title={
-            <span className="inline-flex items-center gap-2">
-              <Volume2 className="size-4 text-brand-700" aria-hidden="true" />
-              {t('set.suara')}
-            </span>
-          }
-          description={t('set.suaraSub')}
-          control={
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                aria-label={t('set.suaraBahasa')}
-                value={settings.suaraBahasa}
-                onChange={(e) => set('suaraBahasa', e.target.value)}
-                className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-              >
-                <option value="auto">{t('set.suaraOtomatis')}</option>
-                <option value="id">{t('set.suaraId')}</option>
-                <option value="jv">{t('set.suaraJv')}</option>
-                <option value="su">{t('set.suaraSu')}</option>
-                <option value="en">{t('set.suaraEn')}</option>
-              </select>
-              <select
-                aria-label={t('set.suaraJenis')}
-                value={settings.suaraJenis}
-                onChange={(e) => set('suaraJenis', e.target.value)}
-                className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-              >
-                <option value="p">{t('set.suaraPerempuan')}</option>
-                <option value="l">{t('set.suaraLaki')}</option>
-              </select>
-            </div>
-          }
-        />
-
-        <Row
-          title={
-            <span className="inline-flex items-center gap-2">
-              <Languages className="size-4 text-brand-700" aria-hidden="true" />
-              {t('set.bahasa')}
-            </span>
-          }
-          description={t('set.bahasaSub')}
-          control={
-            <select
-              aria-label={t('set.bahasa')}
-              value={settings.lang}
-              onChange={(e) => set('lang', e.target.value)}
-              className="h-11 rounded-xl border border-line-200 bg-white px-3.5 text-[0.88rem] font-semibold text-navy-700 transition-colors hover:border-line-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-            >
-              {BAHASA.map((b) => (
-                <option key={b.kunci} value={b.kunci}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
           }
         />
       </Card>
