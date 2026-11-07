@@ -337,9 +337,17 @@ const KAMUS = {
     'ver.tombol': 'Periksa klaim',
     'ver.label': 'Klaim yang akan diperiksa',
     'ver.proses': 'Mencocokkan klaim dengan sumber resmi…',
-    'ver.didukung': 'Didukung sumber',
-    'ver.tidakDidukung': 'Tidak didukung sumber',
+    'ver.didukung': 'Klaim didukung sumber resmi',
+    'ver.tidakDidukung': 'Klaim tidak didukung sumber resmi',
     'ver.tidakPasti': 'Belum bisa dipastikan',
+    // Kalimat penjelas di bawah lencana putusan. Tanpa ini, "tidak didukung
+    // sumber" bisa dibaca sebagai "jawaban aplikasi ini tidak punya sumber" —
+    // padahal yang dinilai adalah KLAIM-nya. Diukur 7 Nov 2026: pengguna
+    // membaca lencana itu sebagai keraguan aplikasi terhadap dirinya sendiri.
+    'ver.artiDidukung': 'Sumber resmi yang diperiksa menyatakan hal yang sama. Tautannya ada di bawah.',
+    'ver.artiTidakDidukung': 'Sumber resmi yang diperiksa tidak mendukung klaim ini, dan sebagian menyatakan sebaliknya. Tautan sumbernya tetap ditampilkan di bawah.',
+    'ver.artiTidakPasti': 'Sumber yang ditemukan belum cukup untuk memutuskan. Aplikasi tidak memaksakan jawaban.',
+    'ver.tanpaSumber': 'Pencarian tidak menemukan dokumen resmi yang bisa ditautkan untuk klaim ini.',
 
     // suara — hanya tombol mikrofon di kotak isian Tanya AI yang tersisa
     'suara.tidakDidukung': 'Peramban ini belum mendukung pengenalan suara — coba Chrome atau Edge',
@@ -940,9 +948,13 @@ const KAMUS = {
     'ver.tombol': 'Check claim',
     'ver.label': 'Claim to check',
     'ver.proses': 'Matching the claim against official sources…',
-    'ver.didukung': 'Supported by sources',
-    'ver.tidakDidukung': 'Not supported by sources',
-    'ver.tidakPasti': 'Cannot be determined',
+    'ver.didukung': 'Claim supported by official sources',
+    'ver.tidakDidukung': 'Claim not supported by official sources',
+    'ver.tidakPasti': 'Cannot be determined yet',
+    'ver.artiDidukung': 'The official sources checked say the same thing. Their links are below.',
+    'ver.artiTidakDidukung': 'The official sources checked do not support this claim, and some say the opposite. Their links are still shown below.',
+    'ver.artiTidakPasti': 'The sources found are not enough to decide. The app does not force an answer.',
+    'ver.tanpaSumber': 'The search found no official document that can be linked for this claim.',
 
     'suara.tidakDidukung': 'This browser does not support speech recognition yet — try Chrome or Edge',
     'suara.ariaMulai': 'Start recording',

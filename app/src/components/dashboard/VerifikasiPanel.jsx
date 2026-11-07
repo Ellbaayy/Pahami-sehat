@@ -66,6 +66,14 @@ export default function VerifikasiPanel({
 
   const v = hasil ? VERDICT[hasil.verdict] ?? VERDICT.tidak_bisa_dipastikan : null
   const labelVerdict = { didukung: t('ver.didukung'), tidak_didukung: t('ver.tidakDidukung'), tidak_bisa_dipastikan: t('ver.tidakPasti') }
+  // Penjelas putusan: lencana saja tidak cukup. "Klaim tidak didukung sumber
+  // resmi" tanpa kalimat ini masih bisa dibaca sebagai "jawaban aplikasi tidak
+  // punya sumber" — padahal yang dinilai adalah klaim yang ditempel pengguna.
+  const artiVerdict = {
+    didukung: t('ver.artiDidukung'),
+    tidak_didukung: t('ver.artiTidakDidukung'),
+    tidak_bisa_dipastikan: t('ver.artiTidakPasti'),
+  }
 
   return (
     <div className="flex flex-col gap-3 [@media(min-height:1200px)]:gap-[clamp(1rem,1.6vw,1.75rem)]">
@@ -165,12 +173,18 @@ export default function VerifikasiPanel({
         </Card>
       ) : hasil && v ? (
         <Card className="rise p-3 [@media(min-height:1200px)]:p-[clamp(1rem,0.85rem+0.7vw,1.6rem)]">
-          <div className={`mb-3 inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 ${v.kelas}`}>
+          <div
+            data-putusan={hasil.verdict}
+            className={`mb-1 inline-flex max-w-full items-center gap-2 rounded-xl border px-3.5 py-2 ${v.kelas}`}
+          >
             <v.Ikon className="size-4 shrink-0" aria-hidden="true" />
             <span className="text-[0.86rem] font-bold">
               {labelVerdict[hasil.verdict] ?? t('ver.tidakPasti')}
             </span>
           </div>
+          <p className="mb-3 text-[0.8rem] leading-snug text-muted-500">
+            {artiVerdict[hasil.verdict] ?? artiVerdict.tidak_bisa_dipastikan}
+          </p>
 
           <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-navy-800">
             {hasil.jawaban}
@@ -180,11 +194,20 @@ export default function VerifikasiPanel({
             <TombolDengar teks={hasil.jawaban} bahasa={suaraBahasa} jenis={suaraJenis} t={t} />
           </div>
           <PoinKunci items={hasil.poinKunci} t={t} />
-          <SourcePills
-            sources={hasil.sumber}
-            negative={hasil.verdict === 'tidak_didukung'}
-            t={t}
-          />
+          {hasil.sumber?.length ? (
+            <SourcePills
+              sources={hasil.sumber}
+              negative={hasil.verdict === 'tidak_didukung'}
+              t={t}
+            />
+          ) : (
+            // Daftar sumber kosong TIDAK boleh tampil sebagai ruang kosong:
+            // pembaca akan menyimpulkan aplikasi tidak punya dasar apa pun.
+            // Kalimat ini menyatakan keadaannya, bukan menyembunyikannya.
+            <p className="mt-3 border-t border-dashed border-line-200 pt-3 text-[0.8rem] leading-snug text-amber-700">
+              {t('ver.tanpaSumber')}
+            </p>
+          )}
           {hasil.catatan ? (
             <p className="mt-2 text-[0.82rem] text-muted-500">{hasil.catatan}</p>
           ) : null}

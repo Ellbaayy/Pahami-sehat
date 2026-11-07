@@ -749,11 +749,38 @@ export function promptVerifikasi({
 
 TUGAS: nilai apakah klaim berikut didukung dokumen resmi.
 
+ARTI PUTUSAN — jangan tertukar, ketiganya berbeda:
+- "didukung"              = dokumen resmi menyatakan hal yang SAMA dengan klaim.
+- "tidak_didukung"        = ada dokumen resmi yang menyatakan SEBALIKNYA, atau bukti
+                            resmi bertentangan dengan klaim. Putusan ini tentang KLAIM
+                            yang diperiksa, bukan tentang aplikasi.
+- "tidak_bisa_dipastikan" = tidak ada dokumen resmi yang membahas klaim itu, atau
+                            buktinya belum cukup. Ini BUKAN "salah" — jangan pakai
+                            "tidak_didukung" hanya karena tidak menemukan dukungan.
+                            Kalau tidak ada sumber yang membahasnya sama sekali,
+                            putusannya "tidak_bisa_dipastikan".
+
 ATURAN PENTING:
 - Kalau kamu tidak menemukan dasar yang kuat, jawab dengan jujur bahwa klaim itu
   TIDAK bisa dipastikan. Jangan memaksakan verdict.
 - Jangan mengarang dokumen, nomor, atau tautan untuk memperkuat jawaban.
 - Bedakan "salah" dari "belum bisa dipastikan" — keduanya berbeda.
+- Untuk "tidak_didukung": sebutkan dokumen mana yang menyatakan sebaliknya.
+  Kalimat pertama menjawab klaimnya — bukan mengulang penjelasan umum penyakitnya.
+  Kalau ternyata tidak ada dokumen yang membahas klaimnya, putusannya
+  "tidak_bisa_dipastikan", bukan "tidak_didukung".
+- Field "sumber" WAJIB berisi dokumen yang benar-benar dipakai, dengan URL persis
+  dari hasil pencarian. Kosongkan HANYA kalau tidak ada satu pun hasil pencarian
+  yang membahas klaimnya.
+- HANYA cantumkan sumber yang benar-benar membahas topik klaim. Kalau hasil pencarian
+  cuma membahas kata yang mirip (mis. "darah" untuk klaim tentang minuman), JANGAN
+  dicantumkan sebagai sumber — tulis terus terang bahwa tidak ada dokumen resmi yang
+  membahas klaim itu. Sumber yang tidak nyambung lebih merusak kepercayaan daripada
+  tidak ada sumber.
+- Kalau tidak ada sumber yang membahas klaimnya, jawab SINGKAT: nyatakan tidak ada
+  dokumen resmi yang membahasnya, lalu sarankan memeriksanya ke tenaga kesehatan.
+  Jangan menjelaskan topik yang hanya mirip katanya — itu membuat jawaban tampak
+  menjawab padahal tidak.
 
 ${RUBRIK}
 
@@ -956,7 +983,9 @@ export function promptVerifikasiDenganCari({
 ${blokPencarian(rapikanHasil(hasilCari))}
 
 KELUARAN TAMBAHAN — sertakan field "sumber" berisi objek {judul, penerbit, url}
-dari hasil pencarian di atas. Verdict harus didasarkan pada hasil pencarian itu.`,
+dari hasil pencarian di atas. Verdict harus didasarkan pada hasil pencarian itu.
+Kalau hasil pencarian kosong, tulis "sumber": [] dan jelaskan di "catatan" bahwa
+pencarian tidak menemukan dokumen resmi — jangan mengisi dengan dokumen karangan.`,
     user: dasar.user,
   }
 }

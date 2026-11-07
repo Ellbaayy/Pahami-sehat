@@ -151,16 +151,24 @@ Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 Setiap angka di bagian **Latar Belakang & Masalah** diusahakan punya rujukan yang
 bisa dibuka. Empat angka kunci ("Kunci Temuan") sudah dilacak sampai **PDF
 dokumen primernya** — diunduh dan teks penuhnya diekstrak, bukan dari abstrak
-pihak ketiga. Tiga angka yang belum ditemukan sumbernya **ditandai terbuka** di
+pihak ketiga. Angka yang belum punya sumber tetap **ditandai terbuka** di
 halaman dengan label `perlu rujukan`, bukan dihapus diam-diam dan bukan
 diklaim seolah ada sumbernya.
 
-Verifikasi itu juga menemukan **dua kekeliruan** yang sudah dibetulkan:
+Satu angka yang tadinya tanpa sumber — **"materi kesehatan setara kelas 12,8"** —
+sekarang punya rujukannya: Ayre dkk. (2024), *Journal of General Internal
+Medicine* 39(4):573–577, doi:10.1007/s11606-023-08469-w. Studi itu mengukur 26
+teks informasi kesehatan dari situs web ternama (Australia, bahasa Inggris):
+rata-rata **kelas 12,8** dengan SMOG, sedangkan targetnya kelas 8. Sifat studi
+itu disebut apa adanya di halaman — bukan survei materi Indonesia.
+
+Verifikasi itu juga menemukan **tiga kekeliruan** yang sudah dibetulkan:
 
 | Dulu tertulis | Yang benar |
 |---|---|
 | Cakupan imunisasi "turun 95% → 80%" | 93,7% (2019) → 84,5% (2021). Angka 95% adalah **target** kekebalan kelompok, bukan capaian |
 | Remaja 15–18 tahun "72% literasi rendah" | Dari responden yang berliterasi rendah, kelompok 15–18 tahun adalah **proporsi terbesar (72%)** — bukan 72% remaja berliterasi rendah |
+| Puskesmas tanpa dokter "50% di Maluku & Papua" | 48,18% hanya untuk **Papua** (Papua Barat 42,07%; **Maluku 23,45%**; nasional 6,9%, SISDMK 2020) |
 
 Laporan lengkapnya ada di `docs/verifikasi-klaim-kesehatan.md`,
 `docs/verifikasi-klaim-tambahan.md`, dan `docs/verifikasi-studi-literasi-kesehatan.md`.

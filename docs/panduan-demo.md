@@ -94,7 +94,7 @@ Yang ditunjukkan, berurutan:
 
 - Beranda: sapaan, empat lencana kemampuan.
 - Pindah ke halaman penjelasan, bagian **Masalah** (30 detik): satu angka yang punya rujukan
-  lengkap, dan satu angka yang **ditandai "sumber belum ditemukan"** — tunjukkan bahwa penandaan
+  lengkap, dan satu butir yang masih **ditandai "perlu rujukan"** — tunjukkan bahwa penandaan
   itu disengaja.
 - Bagian **Konsep**: Terpahami · Terjangkau · Tersambung · Terpercaya.
 

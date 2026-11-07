@@ -30,19 +30,31 @@ Catatan: `web_extract` tidak berfungsi di mesin ini; `browser_exec` dan `curl`/`
 
 ## B. "Materi kesehatan setara kelas 12,8" (tingkat keterbacaan materi edukasi kesehatan)
 
-**STATUS: TIDAK DITEMUKAN**
+**STATUS: TERBUKTI** (sebagai temuan studi internasional — bukan survei materi Indonesia)
 
-**SUMBER:** TIDAK DITEMUKAN
+**SUMBER:**
+- Judul: *New Frontiers in Health Literacy: Using ChatGPT to Simplify Health Information for People in the Community*
+- Penulis: Julie Ayre, Olivia Mac, Kirsten McCaffery, Brad R. McKay, Mingyi Liu, Yi Shi, Atria Rezwan, Adam G. Dunn
+- Penerbit: Journal of General Internal Medicine, 39(4), 573–577 (terbit daring 8 Nov 2023; nomor Maret 2024)
+- DOI: https://doi.org/10.1007/s11606-023-08469-w · PMC: https://pmc.ncbi.nlm.nih.gov/articles/PMC10973278/
+- Afiliasi: Sydney Health Literacy Lab, The University of Sydney, Australia
 
-**KUTIPAN VERBATIM:** —
+**KUTIPAN VERBATIM (abstrak):**
+> "On average, original texts were written at grade 12.8 (SD = 2.2) and revised to grade 11.0 (SD = 1.2), p < 0.001."
 
-**CARA DITEMUKAN:** 4 kueri berbeda (Indonesia & Inggris): "keterbacaan materi kesehatan Indonesia Flesch-Kincaid kelas 12"; "readability Indonesian health education materials grade level 12.8"; "keterbacaan bahan ajar kesehatan 12,8 tingkat kelas"; "Kemenkes media edukasi kesehatan Flesch Kincaid grade level". Tidak ada satu pun sumber yang melaporkan angka grade level **12,8** untuk materi kesehatan berbahasa Indonesia.
+**KUTIPAN VERBATIM (hasil):**
+> "On average, the 26 original texts had a grade 12.8 reading level."
 
-**CATATAN (near-miss yang perlu diketahui):**
-- Studi keterbacaan artikel kesehatan WHO berbahasa Inggris (Alinea, Vol. 10 No. 2, 2021) melaporkan rata-rata **Fog Index 12,55** — mendekati 12,8 tetapi bukan angka yang sama, dan bukan materi berbahasa Indonesia.
-- Studi Australia (NSW) melaporkan "a typical text was written at about a grade 12 reading level" (bukan 12,8) — https://pmc.ncbi.nlm.nih.gov/articles/PMC10148726/
-- Studi berbahasa Indonesia yang ada memakai Cloze Procedure atau Flesch Reading Ease (skor negatif), bukan grade level desimal.
-- **Kesimpulan: klaim 12,8 belum dapat dibuktikan. Kemungkinan angka ini keliru, berasal dari sumber yang salah kutip, atau dari studi yang tidak terindeks. Perlakukan sebagai tidak terverifikasi.**
+**KUTIPAN VERBATIM (tabel 2, catatan):**
+> "Target for grade reading score is grade 8, there is no target for complex language"
+
+**CARA DITEMUKAN:** kueri `Flesch-Kincaid "grade 12.8" health information average` → abstrak PMC10973278 memuat angka persisnya. Diverifikasi dengan membaca teks penuh di PMC (bukan abstrak pihak ketiga).
+
+**CATATAN PENTING:**
+- Objek studinya **26 teks informasi kesehatan dari situs web ternama**, berbahasa Inggris, di Australia. Ini **bukan** materi kesehatan berbahasa Indonesia dan bukan materi Kemenkes.
+- Karena itu angka 12,8 dipakai sebagai **bukti internasional** bahwa materi kesehatan umumnya jauh di atas kemampuan pembaca umum; bukti untuk Indonesia tetap dari Malini dkk. (2025): 33% problematik dan 16,2% inadekuat.
+- Alat ukurnya **SMOG** (Simple Measure of Gobbledygook), bukan Flesch-Kincaid — jangan menyebutnya Flesch-Kincaid saat mengutip.
+- Near-miss lama (Fog Index 12,55 pada teks WHO; "about grade 12" pada studi NSW) **tidak dipakai lagi** — angka 12,8 sekarang punya sumber primer sendiri.
 
 ---
 
@@ -123,7 +135,7 @@ Data lebih baru (akhir 2024): Papua Pegunungan 62,57%, Papua Tengah 45,60%, Papu
 | Klaim | Status | Sumber utama | Angka riil |
 |---|---|---|---|
 | A. 33% problematik, 16,2% inadekuat | **TERBUKTI** | Malini et al., J. Public Health (Germany) 33(3):591–598, Mar 2025 | 33% problematik; 16,2% inadekuat |
-| B. Materi kesehatan setara kelas 12,8 | **TIDAK DITEMUKAN** | — | tidak ada sumber dengan grade level 12,8 (near-miss: Fog Index 12,55 pada teks WHO berbahasa Inggris) |
+| B. Materi kesehatan setara kelas 12,8 | **TERBUKTI** (studi internasional, bukan materi Indonesia) | Ayre et al., J. Gen. Intern. Med. 39(4):573–577 (2024) | rata-rata grade 12,8 (SD 2,2) pada 26 teks kesehatan; target grade 8 |
 | C. Masela: 6/10 cerita lisan; 25% nakes; 10% media | **TERBUKTI** (laporan jurnalistik) | Adipatra Kenaro, humaniora.id, 7 Nov 2025 | 60% / 25% / 10% / 5% — dari grafik artikel, bukan studi akademik |
 | D1. 27,8% tanpa jaminan kesehatan | **TERBUKTI** | SKI 2023 via Kompas.id | 27,8% (SKI 2023); 27,6% (Susenas BPS 2023) |
 | D2. 50% Puskesmas Maluku & Papua tanpa dokter | **TERBUKTI-DENGAN-ANGKA-BERBEDA** | SISDMK 2020 via JagaIndonesia | Papua 48,18%; Papua Barat 42,07%; Maluku 23,45%; nasional 6,9% |
@@ -133,7 +145,7 @@ Data lebih baru (akhir 2024): Papua Pegunungan 62,57%, Papua Tengah 45,60%, Papu
 ## Rekomendasi Sitasi
 
 - **A:** Malini H, Efendi F, Kadar KS, Lenggogeni DP, Sari YP. Health literacy and associated factors among patients with chronic diseases in Indonesia. *Journal of Public Health (Germany)*. 2025;33(3):591–598. doi:10.1007/s10389-023-02035-8
-- **B:** Jangan sitasi angka 12,8 tanpa sumber. Jika perlu, gunakan temuan yang benar-benar ada (Fog Index 12,55 pada teks kesehatan WHO) dengan deskripsi yang tepat.
+- **B:** Ayre J, Mac O, McCaffery K, McKay BR, Liu M, Shi Y, Rezwan A, Dunn AG. New Frontiers in Health Literacy: Using ChatGPT to Simplify Health Information for People in the Community. *Journal of General Internal Medicine*. 2024;39(4):573–577. doi:10.1007/s11606-023-08469-w — sebutkan bahwa objeknya 26 teks kesehatan berbahasa Inggris dari situs web ternama (Australia), bukan materi Indonesia.
 - **C:** Kenaro A. "Kebenaran Terlambat Datang Dari Pulau yang Tak Tersentuh Sinyal." *humaniora.id*, 7 November 2025. (sebutkan bahwa data berasal dari grafik laporan jurnalistik, bukan survei akademik)
 - **D1:** Kementerian Kesehatan RI. *Survei Kesehatan Indonesia (SKI) 2023*; dilaporkan Kompas.id. (pembanding: Susenas BPS 2023 = 27,6%)
 - **D2:** Kementerian Kesehatan RI, Sistem Informasi SDM Kesehatan (SISDMK) 2020; dikutip JagaIndonesia.com, 2023. Sebut angka per provinsi secara spesifik, jangan generalisasi "Maluku & Papua = 50%".

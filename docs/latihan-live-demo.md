@@ -132,7 +132,7 @@ Saat jawaban muncul, tunjuk **tiga** hal, tidak lebih:
 Klik **Cek Klaim** → **Pakai contoh** (contohnya sudah terisi: "Vaksin MMR
 menyebabkan autisme pada anak.") → **Periksa klaim**.
 Tunggu hasil, tunjuk **putusan** — salah satu dari tiga ini:
-**Didukung sumber** / **Tidak didukung sumber** / **Belum bisa dipastikan**.
+**Klaim didukung sumber resmi** / **Klaim tidak didukung sumber resmi** / **Belum bisa dipastikan**.
 
 > Kalimat kunci: "Aplikasi ini berani bilang **belum bisa dipastikan** kalau
 > sumbernya memang tidak cukup. Itu yang membedakannya dari chatbot biasa."
