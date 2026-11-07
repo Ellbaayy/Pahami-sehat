@@ -10,20 +10,21 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > (`deepseek-v4-1-flash` lewat Kenari.id) dari server Express sendiri, dan
 > setiap jawaban disertai sumber yang bisa dibuka pengguna.
 >
-> **Status tiap fitur — apa adanya (diperiksa ulang 20 Okt 2026):**
+> **Status tiap fitur — apa adanya (diperiksa ulang 7 Nov 2026):**
 >
 > | Fitur | Keadaan |
 > |---|---|
 > | Tanpa akun | **Tidak ada halaman masuk, tidak ada pendaftaran, tidak ada sesi.** Aplikasi langsung terbuka di Beranda; riwayat, kuesioner, dan setelan tinggal di `localStorage` peramban |
 > | Tanya AI + sumber | berjalan. Pencarian memakai kata kunci terpilih, bukan kalimat pengguna apa adanya |
 > | Sederhanakan teks | berjalan (4 tingkat baca), menjadi salah satu mode di komposer Tanya AI |
-> | Cek klaim | berjalan (verdict + sumber) |
+> | Cek klaim | berjalan. Tiga putusan (`didukung`, `tidak_didukung`, `tidak_bisa_dipastikan`) dengan **lencana yang menyebut subjeknya** ("Klaim …"), satu kalimat penjelas per putusan, dan daftar sumber yang tidak pernah kosong tanpa keterangan. `tidak_didukung` hanya dipakai bila sumber resmi menyatakan sebaliknya |
+> | Fasilitas Kesehatan | berjalan. Lokasi lewat **ketik alamat** atau **pilih wilayah** (GPS pilihan, bukan syarat); **322 fasilitas** pada uji Malioboro 7 Nov 2026, petunjuk arah tiga moda, dan **3.325 RS** resmi SIRS Kemenkes. Data OSM dipetakan sukarela — field kosong ditulis "Tidak tercatat", bukan dikarang |
 > | Suara dibacakan | **berjalan sebagai suara neural Microsoft — hanya di versi yang dijalankan di komputer sendiri.** Diukur ulang 20 Okt 2026: `POST /api/suara` menjawab `200 audio/mpeg`, berkas 24 kHz mono 48 kbps, 17.424 byte untuk satu kalimat, 0,80 detik. Di Vercel tetap **`502`** (diukur ulang 20 Okt 2026) karena fungsi serverless tidak bisa mempertahankan WebSocket — batas platform, bukan bug. Rincian: `app/server/suara.js` |
 > | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya. Butuh konteks aman (`https://` atau `localhost`) |
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
 > | Riwayat obrolan | berjalan. Tersimpan di peramban (bukan server), maksimal **20 obrolan** (`MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan penghapusan **bisa dibatalkan**. **Tidak lagi ditampilkan di Beranda** — hanya lewat menu **Riwayat** |
 > | Berita kesehatan harian | berjalan. Pertanyaan seperti "berita terbaru hari ini" dijawab dari **RSS** (Detik Health, WHO, Google News) — bukan dari ensiklopedia, karena Wikipedia tidak punya berita harian. Setiap berita disebutkan **nama medianya** dan **umurnya**, dan lonceng pemberitahuan berbunyi kalau ada berita segar (diperiksa maksimal sekali sehari) |
-> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **323 kunci** kamus. Judul tab peramban ikut halaman ("Tanya AI — Pahami Sehat"), bukan satu judul untuk semuanya |
+> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **496 kunci** kamus. Judul tab peramban ikut halaman ("Tanya AI — Pahami Sehat"), bukan satu judul untuk semuanya |
 
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
@@ -36,31 +37,44 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 ## Tampilan
 
 Tangkapan layar di bawah diambil langsung dari aplikasi yang berjalan
-(`npm run server`) — bukan gambar desain. **21 berkas** di
-[`docs/tangkapan-layar/`](docs/tangkapan-layar/) diambil ulang **20 Okt 2026**,
-sesudah halaman login dihapus dan kartu privasi di Pengaturan dibuang. **Tiga
-berkas** (`faskes-*.png`, **4 Nov 2026**) menyusul untuk fitur Fasilitas
-Kesehatan Terdekat, diambil lewat `ambil-tangkapan.mjs` pada **1440×900**.
+(`npm run server`) — bukan gambar desain. **27 berkas** di
+[`docs/tangkapan-layar/`](docs/tangkapan-layar/), seluruhnya diambil ulang
+**7 Nov 2026** oleh tiga skrip yang ikut di repo:
 
-Dashboard diambil pada **1280×577** (laptop), ponsel **390×844** dengan DPR 2
-(780×1688 piksel), dan mode kontras tinggi **1440×900**. Yang terlihat di bagian
-**Produk** adalah mockup perangkat, dan itu memang ilustrasi di dalam halaman —
-sisanya tampilan sungguhan.
+| Skrip | Yang diambil |
+|---|---|
+| [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | 7 halaman dashboard (1440×900), ponsel (390×844, DPR 2), dan mode kontras tinggi |
+| [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | 5 tangkapan Fasilitas Kesehatan: tab RS nasional, autocomplete alamat, peta + daftar, detail, petunjuk arah |
+| [`ambil-tangkapan-prototipe.mjs`](ambil-tangkapan-prototipe.mjs) | 10 bagian halaman penjelasan (1440×900) + 2 tampilan ponsel |
 
-> Tangkapan layar dashboard di bawah diambil **sebelum** menu ketujuh ada, jadi
-> sidebar-nya masih 6 menu. Yang memperlihatkan keadaan sekarang adalah tiga
-> gambar Fasilitas Kesehatan di bagian bawah — itulah fitur terbaru, dan
-> sidebar-nya sudah 7 menu.
+Desktop diambil pada **1440×900**, ponsel **390×844 dengan DPR 2**
+(780×1688 piksel). Ketiga skrip menolak menyimpan berkas di bawah 20 KB, jadi
+tangkapan yang gagal tidak lolos diam-diam ke halaman publik.
 
-### Aplikasi — dashboard
+Jawaban AI di halaman **Tanya AI** dan putusan di **Cek Klaim** bukan contoh
+yang ditempel: keduanya diambil dari permintaan sungguhan ke model dan ke
+`/api/verifikasi` saat skrip berjalan.
+
+### Aplikasi — tujuh menu
 
 | Beranda | Tanya AI | Cek Klaim |
 |---|---|---|
 | ![Beranda](docs/tangkapan-layar/dashboard-1-beranda.png) | ![Tanya AI](docs/tangkapan-layar/dashboard-2-tanya-ai.png) | ![Cek Klaim](docs/tangkapan-layar/dashboard-3-cek-klaim.png) |
 
-| Riwayat | Kuesioner | Pengaturan |
+| Fasilitas Kesehatan | Riwayat | Kuesioner |
 |---|---|---|
-| ![Riwayat](docs/tangkapan-layar/dashboard-4-riwayat.png) | ![Kuesioner](docs/tangkapan-layar/dashboard-5-kuesioner.png) | ![Pengaturan](docs/tangkapan-layar/dashboard-6-pengaturan.png) |
+| ![Fasilitas Kesehatan](docs/tangkapan-layar/dashboard-4-faskes.png) | ![Riwayat](docs/tangkapan-layar/dashboard-5-riwayat.png) | ![Kuesioner](docs/tangkapan-layar/dashboard-6-kuesioner.png) |
+
+| Pengaturan |
+|---|
+| ![Pengaturan](docs/tangkapan-layar/dashboard-7-pengaturan.png) |
+
+Tiga hal yang perlu diperhatikan saat melihatnya: sidebar sudah **7 menu**
+(Fasilitas Kesehatan masuk 4 Nov 2026, di antara Cek Klaim dan Riwayat);
+jawaban Tanya AI tampil bersama **daftar sumber yang bisa dibuka**; dan Cek
+Klaim menampilkan lencana putusan yang menyebut subjeknya — *"Klaim tidak
+didukung sumber resmi"* untuk klaim vaksin MMR–autisme — beserta kalimat
+penjelas dan dua sumber NIH di bawahnya.
 
 **Tampilan di ponsel** — sidebar berubah jadi menu gulir:
 
@@ -68,14 +82,15 @@ sisanya tampilan sungguhan.
 |---|---|
 | ![Beranda di HP](docs/tangkapan-layar/dashboard-hp-1-beranda.png) | ![Menu HP](docs/tangkapan-layar/dashboard-hp-2-menu.png) |
 
-**Mode kontras tinggi** — satu sakelar: teks jadi hitam penuh, huruf dasar
-membesar 112%, garis dan batas fokus dipertebal:
+**Mode kontras tinggi** — satu sakelar di Pengaturan: teks jadi hitam penuh,
+huruf dasar membesar 112%, garis dan batas fokus dipertebal:
 
 ![Mode kontras tinggi](docs/tangkapan-layar/dashboard-kontras-tinggi.png)
 
-### Fasilitas Kesehatan Terdekat (4 Nov 2026)
+### Fasilitas Kesehatan Terdekat
 
-Diambil lewat `ambil-tangkapan.mjs` pada 1440×900, memakai jalur **ketik
+Fitur ini masuk **4 Nov 2026**; tangkapan di bawah diambil ulang **7 Nov 2026**
+lewat `ambil-tangkapan.mjs` pada 1440×900, memakai jalur **ketik
 alamat** ("Malioboro Yogyakarta") — alur yang menyerupai Google Maps dan yang
 ingin ditunjukkan. Skrip menulis ke `docs/tangkapan-layar/` **dan** ke
 `docs/prototipe/assets/tangkapan-layar/` sekaligus; halaman penjelasan memakai
@@ -90,13 +105,14 @@ halaman terus menampilkan gambar lama tanpa pesan apa pun.
 |---|---|---|
 | ![Detail fasilitas](docs/tangkapan-layar/faskes-3-detail.png) | ![Petunjuk arah](docs/tangkapan-layar/faskes-4-petunjuk-arah.png) | ![RS Nasional](docs/tangkapan-layar/faskes-0-rs-nasional.png) |
 
-Yang perlu diperhatikan saat melihatnya: sidebar **7 menu**; tiap saran alamat
-menyebut kota dan provinsinya supaya "Malioboro" tidak tertukar antara yang di
-Surabaya dan yang di Yogyakarta; setelah alamat dipilih, wilayah terdeteksi
-sampai kelurahan (**Danurejan / Sosrokusuman**) dan **324 fasilitas** muncul;
-panel petunjuk arah menampilkan tiga moda beserta jarak/waktu/langkah dan
-menyebut titik awalnya sebagai **"alamat yang Anda pilih"**, bukan GPS; tab
-Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
+Yang perlu diperhatikan: sidebar **7 menu**; tiap saran alamat menyebut kota
+dan provinsinya supaya "Malioboro" tidak tertukar antara yang di Surabaya dan
+yang di Yogyakarta; setelah alamat dipilih, wilayah terdeteksi sampai
+kelurahan (**Danurejan / Sosrokusuman**) dan **322 fasilitas** muncul (angka
+ini bergerak mengikuti data OpenStreetMap — saat diukur 4 Nov 2026 jumlahnya
+324); panel petunjuk arah menampilkan tiga moda beserta jarak/waktu/langkah
+dan menyebut titik awalnya sebagai **"alamat yang Anda pilih"**, bukan GPS;
+tab Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 
 ### Halaman penjelasan (prototype)
 
@@ -104,7 +120,7 @@ Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 |---|---|---|
 | ![Pembuka](docs/tangkapan-layar/prototype-1-hero.png) | ![Masalah](docs/tangkapan-layar/prototype-2-masalah.png) | ![Konsep](docs/tangkapan-layar/prototype-3-konsep.png) |
 
-| Alur enam langkah | Fitur utama (20 Okt) | Lanjutan fitur |
+| Alur enam langkah | Fitur utama | Lanjutan fitur |
 |---|---|---|
 | ![Alur](docs/tangkapan-layar/prototype-4-alur.png) | ![Fitur](docs/tangkapan-layar/prototype-5-fitur.png) | ![Fitur lanjutan](docs/tangkapan-layar/prototype-6-fitur-lanjut.png) |
 
@@ -117,10 +133,10 @@ Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 | ![Etika](docs/tangkapan-layar/prototype-10-etika.png) | ![Prototype HP](docs/tangkapan-layar/prototype-hp-1-hero.png) | ![Prototype HP masalah](docs/tangkapan-layar/prototype-hp-2-masalah.png) |
 
 > Mockup perangkat di bagian **Produk** menampilkan **menu yang sama** dengan
-> aplikasi sungguhan (Beranda, Tanya AI, Cek Klaim, Riwayat, Kuesioner,
-> Pengaturan) — "Sederhanakan", "Suara", dan "Pindai Foto" tidak berdiri sendiri
-> karena ketiganya sudah menjadi bagian dari Tanya AI (mode di komposer, tombol
-> mikrofon, dan tombol kamera).
+> aplikasi sungguhan (Beranda, Tanya AI, Cek Klaim, Fasilitas Kesehatan,
+> Riwayat, Kuesioner, Pengaturan) — "Sederhanakan", "Suara", dan "Pindai Foto"
+> tidak berdiri sendiri karena ketiganya sudah menjadi bagian dari Tanya AI
+> (mode di komposer, tombol mikrofon, dan tombol kamera).
 
 ---
 
@@ -130,14 +146,17 @@ Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 |---|---|
 | [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
-| [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **26 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
+| [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **27 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
 | [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 10 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
 | [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs-3325-rs-di-database). |
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
-| [`uji-*.mjs`](.) | **35 berkas uji** — 28 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs`, `uji-halaman-penjelasan.mjs`, dan `uji-kering-video.mjs` dan `uji-kering-faskes-video.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 5 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
+| [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | Mengambil 10 tangkapan dashboard: 7 halaman pada 1440×900, 2 tampilan ponsel, 1 mode kontras tinggi. Jawaban Tanya AI dan putusan Cek Klaim diambil dari permintaan sungguhan. |
+| [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | Mengambil 5 tangkapan Fasilitas Kesehatan lewat Chrome + CDP (peta Leaflet tidak pernah "tenang", jadi harness biasa timeout). |
+| [`ambil-tangkapan-prototipe.mjs`](ambil-tangkapan-prototipe.mjs) | Mengambil 10 bagian halaman penjelasan + 2 tampilan ponsel, menggulir per bagian dan menunggu posisi gulir benar-benar sampai. |
+| [`uji-*.mjs`](.) | **35 berkas uji** — 28 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs`, `uji-halaman-penjelasan.mjs`, dan `uji-kering-video.mjs` dan `uji-kering-faskes-video.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -214,7 +233,7 @@ pahami-sehat/
     │   ├── css/
     │   ├── js/
     │   └── assets/
-    ├── tangkapan-layar/       ← 26 tangkapan layar
+    ├── tangkapan-layar/       ← 27 tangkapan layar
     ├── skema-database.sql
     ├── sumber-hls-sf12.txt
     └── verifikasi-*.md
@@ -1330,8 +1349,8 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 5 Nov 2026: **28 berkas lulus, 0 gagal,
-±5 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
+memperbarui daftar di mana pun. Diukur 7 Nov 2026: **28 berkas lulus, 0 gagal,
+±4,7 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
 atau API key sengaja dikeluarkan dan dijalankan terpisah (lihat bawah) — supaya
 gerbang ini tidak bergantung pada keadaan mesin.
 
@@ -1590,8 +1609,8 @@ per kalimat dibaca model sebagai batas seluruh jawaban.
 diambil dari agregasi beberapa putaran.
 
 Yang **tidak** bisa diuji dari terminal — karena butuh peramban sungguhan —
-diuji manual di `/app/`: mesin OCR, pengenalan suara, pemutaran suara, papan
-klip, dan tampilan mode Inggris.
+diuji manual di `/app/`: mesin OCR, pengenalan suara, pemutaran suara, dan
+papan klip.
 
 ---
 
@@ -1873,13 +1892,13 @@ Tim: **NØCTURNE**.
 ### Video demo
 
 **Sudah ada:** [`video/pahami-sehat-final.mp4`](video/pahami-sehat-final.mp4) —
-**277,52 detik (4,63 menit)**, 1440×900, h264, **tanpa audio** (sesuai ketentuan
-"tanpa narasi peserta"), 11 MB. Strukturnya tiga bagian:
+**269,77 detik (4,50 menit)**, 1440×900, 30 fps, h264, **tanpa audio** (sesuai
+ketentuan "tanpa narasi peserta"), 4,8 MB. Strukturnya tiga bagian:
 
 | Bagian | Durasi | Isi |
 |---|---|---|
 | **Intro** | 5 s | Logo dan nama tim **NØCTURNE**, "mempersembahkan", lalu Pahami Sehat |
-| **Isi** | 257,9 s | Sembilan adegan: halaman penjelasan → Beranda → Tanya AI → Cek Klaim → Fasilitas Kesehatan → Rumah Sakit Nasional → Kuesioner → Pengaturan → privasi |
+| **Isi** | 255,8 s | Sembilan adegan: halaman penjelasan → Beranda → Tanya AI → Cek Klaim → Fasilitas Kesehatan → Rumah Sakit Nasional → Kuesioner → Pengaturan → privasi |
 | **Outro** | 9 s | NØCTURNE, kalimat penutup, tiga angka (7 sumber · 3.325 RS · 4 tingkat baca), LOGICODIX 2026 |
 
 Direkam dari aplikasi yang **benar-benar berjalan** di localhost, bukan animasi
@@ -1887,14 +1906,27 @@ atau mockup: jawaban AI yang tampil adalah jawaban sungguhan beserta tujuh
 sumbernya, dan daftar fasilitas (664–806 fasilitas) adalah hasil permintaan
 nyata ke OpenStreetMap.
 
+Sejak **7 Nov 2026** intro dan outro dirender **Remotion**, di proyek terpisah
+[`video/remotion/`](video/remotion/CATATAN.md) (tidak masuk `app/`): dua
+komposisi 1440×900 pada 30 fps. Hasilnya setara dengan pipeline lama (beda
+< 2/255 per piksel) tetapi bisa dirender ulang tanpa merekam layar.
+`buat-intro-outro.mjs` (HTML + CDP) masih ada di repo sebagai pipeline lama dan
+**tidak dipakai lagi** — jangan jalankan kalau ingin hasil yang sekarang.
+
 ```bash
 npm --prefix app run build       # halaman penjelasan masuk ke dist/
 npm --prefix app run server      # terminal lain
 node uji-kering-video.mjs        # buktikan selektor naskah bekerja (tanpa rekam)
 node uji-kering-faskes-video.mjs # khusus alur Fasilitas Kesehatan (cetak jumlah)
-node buat-intro-outro.mjs        # intro.mp4 (5 s) + outro.mp4 (9 s)
-node rekam-video-demo.mjs        # rekam isi (±4,5 menit)
-./rakit-video.sh                 # isi + caption + sambung -> pahami-sehat-final.mp4
+
+# 1) intro (5 s) + outro (9 s) lewat Remotion — terukur 9,4 s dan 13,5 s
+cd video/remotion
+npm run render:intro && npm run render:outro && node verifikasi.mjs   # harus exit=0
+cp out/intro.mp4 ../intro.mp4 && cp out/outro.mp4 ../outro.mp4
+cd ../..
+
+node rekam-video-demo.mjs        # 2) rekam isi (±4,5 menit)
+./rakit-video.sh                 # 3) isi + caption + sambung -> pahami-sehat-final.mp4
 ```
 
 `rakit-video.sh` bekerja dua tahap: merakit **isi bersih** (tanpa caption) lebih
@@ -1996,7 +2028,8 @@ Disebut di sini supaya tidak ada yang mengira lebih dari kenyataannya:
   bahasa Indonesia (dan itu disengaja).
 - Angka akurasi OCR berasal dari tiga foto uji, bukan pengukuran besar.
 - Belum ada uji otomatis untuk mesin OCR, pengenalan suara, pemutaran suara,
-  papan klip, dan tampilan mode Inggris — semuanya masih diuji manual.
+  dan papan klip — semuanya masih diuji manual. Tampilan mode Inggris **sudah**
+  diuji otomatis: `uji-peramban.mjs` menjalankan 7 halaman × 2 bahasa.
 - **Rute motor dan mobil sering identik.** Untuk jalan perkotaan tanpa larangan
   sepeda motor, Valhalla mengembalikan geometri yang sama untuk kedua moda dan
   hanya waktunya berbeda (§ [Petunjuk arah](#petunjuk-arah--osrm-dan-valhalla-masing-masing-pada-yang-benar-benar-didukungnya)).
@@ -2028,6 +2061,17 @@ langsung dari folder, lalu membandingkannya dengan angka di README). Keduanya
 masuk CI. Sekalian, `uji-halaman-penjelasan.mjs` diperbaiki: ia menuntut
 **tepat tiga** tangkapan layar padahal halaman sudah menampilkan **enam** dan
 keenamnya termuat (1440×900) — yang salah adalah ujinya, bukan halamannya.
+
+### Perbaikan 7 Nov 2026 — dan buktinya
+
+| Perbaikan | Bukti |
+|---|---|
+| **Putusan Cek Klaim diperjelas** | Lencana menyebut subjeknya ("Klaim …"), tiap putusan diberi satu kalimat penjelas, dan daftar sumber tidak pernah kosong tanpa keterangan. `tidak_didukung` kini hanya dipakai bila sumber resmi menyatakan sebaliknya — klaim yang tidak dibahas sumber mana pun menjadi `tidak_bisa_dipastikan`. Terlihat pada tangkapan [Cek Klaim](#aplikasi--tujuh-menu) |
+| **Sumber angka halaman penjelasan dilengkapi** | "Kelas 12,8" kini bersumber Ayre dkk. (2024); campak ditulis **73 kematian (69 sepanjang 2025 + 4 sampai minggu ke-7 2026)**; imunisasi menyebut selisih WHO 84,2% vs UNICEF/Kemenkes 84,5%; lansia dan remaja diberi rujukan. Rincian: `docs/verifikasi-klaim-tambahan.md` |
+| **Luapan 17 px di layar 375 px** | Kartu sumber pada contoh Cek Klaim memuat domain panjang (`medlineplus.gov/autismspectrumdisorder.html`) tanpa `min-width:0`, sehingga grid melebar ke **392 px**. Ditambahkan `min-width:0` + `max-width:100%` pada `.src-card` dan `.src-body small`. Diuji `uji-peramban.mjs`: **105 lulus, 0 gagal** |
+| **Intro/outro video lewat Remotion** | `video/remotion/` — Intro 150 frame, Outro 270 frame, 30 fps, 1440×900. `node verifikasi.mjs` memeriksa durasi, resolusi, dan tidak adanya audio; video final dirakit ulang menjadi **269,77 s** |
+
+Uji pada hari itu: `npm test` **28 lulus, 0 gagal**; `uji-peramban.mjs` **105 lulus, 0 gagal**.
 
 ### Konten harian: sumbernya, dan setua apa isinya
 

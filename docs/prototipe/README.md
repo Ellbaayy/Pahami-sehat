@@ -100,9 +100,10 @@ karena keduanya dibaca sebagai daftar isi.
 > layar **asli** dari aplikasi yang berjalan — peta + daftar fasilitas, panel
 > detail fasilitas, dan panel petunjuk arah.
 
-Kartu **Fasilitas Kesehatan** memuat **enam** tangkapan layar asli: tab Rumah
+Kartu **Fasilitas Kesehatan** memuat **lima** tangkapan layar asli: tab Rumah
 Sakit Nasional (3.325 RS SIRS), autocomplete alamat, peta + daftar setelah
-alamat dipilih, detail fasilitas, petunjuk arah, dan pemilihan titik di peta.
+alamat dipilih, detail fasilitas, dan petunjuk arah. (Pemilihan titik di peta
+dihapus 3 Nov 2026 — gambarnya ikut dibuang, bukan dibiarkan menyesatkan.)
 Semuanya dihasilkan `ambil-tangkapan.mjs` di akar repo (butuh server hidup di
 `:8787`), yang **menolak menyimpan berkas di bawah 20 KB** supaya tangkapan
 gagal tidak lolos diam-diam ke halaman publik.
