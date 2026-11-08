@@ -161,6 +161,7 @@ Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`impor-statistik-faskes.mjs`](impor-statistik-faskes.mjs) | **Pengisi statistik fasilitas nasional** — 6 kategori Kemenkes 2024 + pembanding BPJS, beserta 4 rujukan pengembangan. `--cari`/`--kering`, aman diulang. Lihat [Statistik fasilitas nasional](#statistik-fasilitas-nasional--angka-resmi-dan-artinya). |
+| [`lengkapi-wilayah-faskes.mjs`](lengkapi-wilayah-faskes.mjs) | **Pengisi provinsi/kabupaten untuk 4.098 faskes OpenStreetMap** lewat geocoding balik Nominatim (1 permintaan/detik, ±70 menit). Memakai kode ISO 3166-2 karena wilayah DKI Jakarta tidak punya field `state`. Aman diulang: hanya baris yang provinsinya masih kosong yang diproses; `--kering` dan `--batas N` untuk mencoba. |
 | [`panaskan-faskes.mjs`](panaskan-faskes.mjs) | **Pemanas simpanan faskes sebelum demo** — mengisi `fasilitas` + `cakupan_faskes` untuk lokasi yang akan ditunjukkan, supaya tombol Cari menjawab dari database. Lihat [Tombol "Cari"](#tombol-cari-tidak-lagi-membuat-juri-menunggu). |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
@@ -226,6 +227,7 @@ pahami-sehat/
 ├── periksa-istilah.mjs
 ├── panen-pengetahuan.mjs
 ├── impor-statistik-faskes.mjs ← statistik nasional (Kemenkes/BPJS) ke MySQL
+├── lengkapi-wilayah-faskes.mjs ← isi provinsi faskes OSM (geocoding balik)
 ├── panaskan-faskes.mjs       ← pemanas simpanan faskes sebelum demo
 ├── mermaid-diagram.png
 ├── app/                       ← PRODUK UTAMA (React + Express + Tailwind)
