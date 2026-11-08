@@ -152,13 +152,34 @@ export async function cascadeTitik(wilayah, namaWilayah, panggil) {
       tingkat: 'desa',
       kueri: `${namaWilayah.desa}, ${namaWilayah.kecamatan}, ${namaWilayah.kabupaten}`,
     })
+    if (ada(namaWilayah.kabupaten)) {
+      urutan.push({
+        tingkat: 'desa',
+        kueri: `${namaWilayah.desa}, ${namaWilayah.kecamatan}`,
+      })
+    }
   }
   if (wilayah?.tingkat === 'desa' || wilayah?.tingkat === 'kecamatan') {
     if (ada(namaWilayah.kecamatan) && ada(namaWilayah.kabupaten)) {
-      urutan.push({
-        tingkat: 'kecamatan',
-        kueri: `Kantor Kecamatan ${namaWilayah.kecamatan}, ${namaWilayah.kabupaten}`,
-      })
+      /*
+       * BEBERAPA BENTUK KUERI, BUKAN SATU.
+       *
+       * Diukur 8 Nov 2026: `Kantor Kecamatan Danurejan, Kota Yogyakarta` TIDAK
+       * ditemukan Nominatim, sehingga setiap permintaan kecamatan jatuh ke
+       * titik pusat KOTA — peta bergeser ke tengah kota dan daftar fasilitas
+       * menampilkan wilayah yang salah. Bentuk tanpa kata "Kantor" menemukannya
+       * (tipe `administrative`), dan `pilihHasilNominatim()` sudah menerima
+       * hasil administrative untuk tingkat kecamatan.
+       *
+       * Urutannya: "Kecamatan X, Kota Y" dulu (sering mengembalikan kantor
+       * kecamatan), lalu nama polos (tipe administrative), lalu "Kantor
+       * Kecamatan X, Kota Y" sebagai usaha terakhir.
+       */
+      const kec = namaWilayah.kecamatan
+      const kab = namaWilayah.kabupaten
+      urutan.push({ tingkat: 'kecamatan', kueri: `Kecamatan ${kec}, ${kab}` })
+      urutan.push({ tingkat: 'kecamatan', kueri: `${kec}, ${kab}` })
+      urutan.push({ tingkat: 'kecamatan', kueri: `Kantor Kecamatan ${kec}, ${kab}` })
     }
   }
   if (ada(namaWilayah.kabupaten) && ada(namaWilayah.provinsi)) {

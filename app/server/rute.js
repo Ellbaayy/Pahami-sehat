@@ -46,6 +46,7 @@ import {
   MAKS_TANYA,
   MAKS_TOKEN,
   MAKS_VERIFIKASI,
+  anggaranBerikutnya,
   SIMPANAN_HEALTH_MS,
   teksDari,
 } from './batasInput.js'
@@ -213,6 +214,8 @@ async function mintaJson({ messages, maxTokens, coba = 2, jalur = 'tidak-diketah
   let usage = null
   let mentah = ''
   let selesai = null
+  // Anggaran token yang boleh NAIK antar percobaan — lihat anggaranBerikutnya().
+  let anggaran = maxTokens
   for (let i = 0; i < coba; i++) {
     const h = await chat({
       messages:
@@ -227,13 +230,24 @@ async function mintaJson({ messages, maxTokens, coba = 2, jalur = 'tidak-diketah
                   'HANYA satu objek JSON valid, tanpa rencana, tanpa penjelasan, tanpa pagar kode.',
               },
             ],
-      ...(maxTokens ? { maxTokens } : {}),
+      ...(anggaran ? { maxTokens: anggaran } : {}),
     })
     usage = h.usage ?? usage
     mentah = h.text
     selesai = h.finish ?? null
     const json = ambilJson(h.text)
     if (json) return { json, usage, mentah: h.text }
+
+    /*
+     * TERPOTONG BUKAN SAMA DENGAN TIDAK BISA DIBACA.
+     *
+     * `finish_reason: length` berarti model kehabisan jatah token — sering
+     * karena ia menulis kalimat penalaran lebih dulu. Mengulang dengan jatah
+     * yang sama akan berhenti di tempat yang sama, jadi percobaan berikutnya
+     * diberi jatah lebih besar.
+     */
+    const naik = anggaranBerikutnya(anggaran, selesai)
+    if (naik) anggaran = naik
   }
   // Tidak terbaca SETELAH semua percobaan. Selalu dicatat: tanpa ini, satu-
   // satunya jejaknya adalah pesan "Model tidak mengembalikan JSON" di layar.

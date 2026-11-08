@@ -12,7 +12,7 @@
  *   - pembersihan memori: kunci mati dibuang, tidak tumbuh terus
  */
 import { batasi, ipPemanggil } from './app/server/batas.js'
-import { teksDari } from './app/server/batasInput.js'
+import { teksDari, anggaranBerikutnya } from './app/server/batasInput.js'
 
 let gagal = 0
 function cek(nama, dapat, harus) {
@@ -133,6 +133,21 @@ cek('boolean ditolak', teksDari(true), '')
 cek('null ditolak', teksDari(null), '')
 cek('undefined ditolak', teksDari(undefined), '')
 cek('string kosong ditolak', teksDari('   '), '')
+
+/*
+ * Jatah token saat jawaban terpotong (finish_reason: length).
+ * Terukur 8 Nov 2026: model menulis kalimat penalaran lebih dulu, jatah 2.000
+ * habis, JSON tidak pernah ditutup, pengguna menerima jawaban kosong.
+ * Mengulang dengan jatah yang SAMA akan gagal dengan cara yang sama.
+ */
+cek('terpotong: jatah naik dua kali lipat', anggaranBerikutnya(2000, 'length'), 4000)
+cek('terpotong: dari 3000 jadi 6000', anggaranBerikutnya(3000, 'length'), 6000)
+cek('terpotong: dibatasi 8000', anggaranBerikutnya(6000, 'length'), 8000)
+cek('terpotong: tidak pernah melewati 8000', anggaranBerikutnya(8000, 'length'), 8000)
+cek('berhenti normal: tidak diulang', anggaranBerikutnya(2000, 'stop'), null)
+cek('tanpa finish_reason: tidak diulang', anggaranBerikutnya(2000, null), null)
+cek('anggaran kosong: pakai bawaan tanya', anggaranBerikutnya(undefined, 'length'), 4000)
+cek('anggaran rusak: tidak menghasilkan NaN', Number.isFinite(anggaranBerikutnya('abc', 'length')), true)
 
 console.log(gagal === 0 ? '\nSEMUA LULUS' : `\n${gagal} UJI GAGAL`)
 process.exit(gagal === 0 ? 0 : 1)

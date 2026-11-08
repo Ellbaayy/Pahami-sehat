@@ -54,6 +54,28 @@ export const MAKS_TOKEN = {
   verifikasi: 2800,
 }
 
+/**
+ * Jatah token untuk percobaan ULANG saat jawaban terpotong.
+ *
+ * KENAPA ADA (terukur 8 Nov 2026): `deepseek-v4-1-flash` kadang menulis
+ * kalimat penalaran di dalam `content` ("Let me write a JSON response in
+ * Indonesian…") meski `reasoning_effort: none` sudah dipasang. Kalau itu
+ * terjadi, jatah 2.000 token habis sebelum JSON ditutup — `finish_reason`
+ * menjadi `length` dan pengguna menerima jawaban KOSONG.
+ *
+ * Mengulang dengan jatah yang SAMA akan gagal dengan cara yang sama. Karena
+ * itu percobaan berikutnya diberi dua kali lipat, dibatasi 8.000 supaya satu
+ * jawaban tidak pernah menelan biaya tak terbatas.
+ *
+ * Mengembalikan `null` kalau tidak perlu diulang.
+ */
+export function anggaranBerikutnya(anggaran, finishReason) {
+  if (finishReason !== 'length') return null
+  const dasar = Number(anggaran ?? MAKS_TOKEN.tanya)
+  if (!Number.isFinite(dasar) || dasar <= 0) return MAKS_TOKEN.tanya * 2
+  return Math.min(8000, Math.round(dasar * 2))
+}
+
 /** Laju permintaan: per alamat IP per menit, dan total per-instance per menit. */
 export const LAJU = {
   tanya: { maks: 20, maksTotal: 300 },

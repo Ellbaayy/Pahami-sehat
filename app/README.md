@@ -6,7 +6,7 @@
 > [`../README.md`](../README.md).
 
 Dashboard edukasi kesehatan **Pahami Sehat** — React di depan, Express di belakang,
-model AI **`deepseek-v4-1-flash`** lewat **Kenari.id**.
+model AI **`deepseek-v4-flash`** lewat **Kenari.id**.
 
 ## Stack
 
@@ -15,7 +15,7 @@ model AI **`deepseek-v4-1-flash`** lewat **Kenari.id**.
 | Frontend | React 19 + Vite 8, Tailwind CSS 4 (`@tailwindcss/vite`), Lucide React |
 | Peta | **Leaflet 1.9** + `leaflet.markercluster` 1.5 — ubin OpenStreetMap |
 | Backend | Node + Express 5 (`express`, `mysql2`, `msedge-tts`, `tesseract.js`) |
-| Model | Kenari.id, [OI]-compatible, default `deepseek-v4-1-flash` |
+| Model | Kenari.id, [OI]-compatible, default `deepseek-v4-flash` |
 | Database | MariaDB lewat XAMPP — **opsional**: bahan (berita, konten, pengetahuan) dan fasilitas kesehatan yang sudah pernah diambil |
 
 ## Alamat saat disajikan

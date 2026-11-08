@@ -32,7 +32,7 @@ export const config = {
   port: Number(process.env.PORT || 8787),
   apiKey: required('KENARI_API_KEY'),
   baseUrl: (process.env.KENARI_BASE_URL || 'https://kenari.id/v1').replace(/\/+$/, ''),
-  model: process.env.KENARI_MODEL || 'deepseek-v4-1-flash',
+  model: process.env.KENARI_MODEL || 'deepseek-v4-flash',
   /** batas token output; Kenari tidak menolak hingga 4000 pada akun saldo 0 */
   maxTokens: Number(process.env.MAX_TOKENS || 1500),
   temperature: Number(process.env.TEMPERATURE || 0.3),
@@ -40,8 +40,11 @@ export const config = {
    * Seberapa banyak model boleh "berpikir" sebelum menjawab.
    *
    * BAWAAN 'none' — INI PENTING, JANGAN DIUBAH TANPA MENGUKUR.
-   * `deepseek-v4-1-flash` adalah model PENALARAN: ia menghasilkan token
-   * `reasoning_content` yang IKUT memakan jatah `max_tokens`. Diukur 15 Okt 2026
+   * Model penalaran (`deepseek-v4-1-flash`, dipakai sampai 8 Nov 2026)
+   * menghasilkan token `reasoning_content` yang IKUT memakan jatah
+   * `max_tokens` — dan pada 8 Nov 2026 ia mulai menulis penalarannya ke dalam
+   * `content`, sehingga jawaban terpotong walau setelan ini 'none'. Sejak itu
+   * aplikasi memakai `deepseek-v4-flash` (bukan model penalaran). Diukur 15 Okt 2026
    * dengan pertanyaan yang sama dan batas 120 token:
    *
    *   dasar                    48 token (41 di antaranya penalaran)

@@ -177,6 +177,49 @@ const melempar = await cascadeTitik(
 )
 cek('panggil melempar -> null, tidak ikut melempar', melempar === null)
 
+/*
+ * REGRESI 8 Nov 2026: kueri "Kantor Kecamatan X, Kota Y" TIDAK ditemukan
+ * Nominatim untuk banyak kecamatan (Danurejan terukur kosong). Dulu itu
+ * membuat setiap pilihan kecamatan jatuh ke titik pusat KOTA — peta bergeser
+ * dan daftar fasilitas menampilkan wilayah yang salah, tanpa galat apa pun.
+ * Sekarang cascade harus mencoba bentuk lain dan tetap berhenti di kecamatan.
+ */
+const kueriDicoba = []
+const hanyaPolos = await cascadeTitik(
+  { kode: '34.71.04', nama: 'Danurejan', tingkat: 'kecamatan' },
+  { provinsi: 'DI Yogyakarta', kabupaten: 'Kota Yogyakarta', kecamatan: 'Danurejan', desa: '' },
+  async (tingkat, kueri) => {
+    kueriDicoba.push(kueri)
+    // Hanya bentuk polos ("Danurejan, Kota Yogyakarta") yang menjawab.
+    if (tingkat === 'kecamatan' && kueri === 'Danurejan, Kota Yogyakarta') {
+      return { lat: -7.7931435, lon: 110.3676732, label: 'Danurejan, Kota Yogyakarta' }
+    }
+    return null
+  },
+)
+cek('kecamatan: bentuk kueri lain dicoba sebelum menyerah', kueriDicoba.length >= 2, kueriDicoba.join(' | '))
+cek('kecamatan: berhenti di kecamatan, bukan jatuh ke kota', hanyaPolos?.presisi === 'kecamatan', String(hanyaPolos?.presisi))
+cek('kecamatan: koordinat dari kueri polos dipakai', hanyaPolos?.lat === -7.7931435, String(hanyaPolos?.lat))
+const kueriKantor = []
+const hanyaKantor = await cascadeTitik(
+  { kode: '34.71.04', nama: 'Danurejan', tingkat: 'kecamatan' },
+  { provinsi: 'DI Yogyakarta', kabupaten: 'Kota Yogyakarta', kecamatan: 'Danurejan', desa: '' },
+  async (tingkat, kueri) => {
+    kueriKantor.push(kueri)
+    // Hanya bentuk "Kantor Kecamatan ..." yang menjawab.
+    if (kueri.startsWith('Kantor Kecamatan')) {
+      return { lat: -7.7931, lon: 110.3676, label: 'Kantor Kecamatan Danurejan' }
+    }
+    return null
+  },
+)
+cek(
+  'kecamatan: "Kantor Kecamatan" tetap dicoba sebagai usaha terakhir',
+  kueriKantor.some((k) => k.startsWith('Kantor Kecamatan')),
+  kueriKantor.join(' | '),
+)
+cek('kecamatan: hasil dari bentuk kantor dipakai', hanyaKantor?.presisi === 'kecamatan', String(hanyaKantor?.presisi))
+
 console.log('')
 console.log(gagal === 0 ? `SEMUA LULUS — ${lulus} pemeriksaan` : `${lulus} lulus, ${gagal} GAGAL`)
 process.exit(gagal === 0 ? 0 : 1)

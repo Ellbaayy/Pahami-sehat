@@ -7,7 +7,7 @@ Masalah yang disasar: informasi kesehatan di Indonesia bukan langka, tapi sering
 sampai dan tidak dipahami oleh yang paling membutuhkan.
 
 > Status: **MVP berjalan.** Fitur AI memanggil model sungguhan
-> (`deepseek-v4-1-flash` lewat Kenari.id) dari server Express sendiri, dan
+> (`deepseek-v4-flash` lewat Kenari.id) dari server Express sendiri, dan
 > setiap jawaban disertai sumber yang bisa dibuka pengguna.
 >
 > **Status tiap fitur — apa adanya (diperiksa ulang 7 Nov 2026):**
@@ -281,7 +281,7 @@ flowchart TB
   end
 
   subgraph Luar["Layanan luar"]
-    K["Kenari.id<br/>deepseek-v4-1-flash"]
+    K["Kenari.id<br/>deepseek-v4-flash"]
     W["Wikipedia bahasa Indonesia"]
     M["MedlinePlus<br/>wsearch.nlm.nih.gov"]
     N["RSS berita kesehatan<br/>Detik Health · WHO · Google News"]
@@ -711,12 +711,38 @@ untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
   costing Valhalla lewat daftar tertutup tiga entri, jadi moda asing ditolak
   alih-alih diam-diam jadi "mobil".
 
+### Model diganti 8 Nov 2026 — dan alasannya
+
+Diuji ulang menjelang Grand Final, `deepseek-v4-1-flash` mulai **menulis
+kalimat penalarannya ke dalam `content`** meski `KENARI_REASONING_EFFORT=none`:
+"Let me write a JSON response in Indonesian…". Jatah 2.000 token habis untuk
+penalaran, `finish_reason` menjadi `length`, dan **Tanya AI menjawab kosong**
+(`code: unparsed`). Terukur pada tiga percobaan berturut-turut: satu gagal,
+dua berhasil, masing-masing 40–57 detik — terlalu lambat dan terlalu rapuh
+untuk dinilai juri.
+
+Sekarang aplikasi memakai **`deepseek-v4-flash`** dari penyedia yang sama.
+Diukur dengan prompt asli `promptTanyaDenganCari()`:
+
+| Model | Waktu | JSON sah | Catatan |
+|---|---:|---|---|
+| `deepseek-v4-1-flash` | 19,7 s | ya | sesekali menulis penalaran lalu terpotong |
+| **`deepseek-v4-flash`** | **7,0–8,1 s** | **3/3 ya** | dipakai sekarang |
+| `glm-5-3-flash` | 17,5 s | ya | lebih lambat |
+| `agnes-2-5-flash:free` | 4,0 s | ya | jalur gratis, kuota tidak dijamin |
+
+Selain itu `mintaJson()` sekarang **menaikkan jatah token** kalau percobaan
+pertama berakhir `finish_reason: length` (`anggaranBerikutnya()` di
+`batasInput.js`, diuji `uji-batas.mjs`) — mengulang dengan jatah yang sama
+hanya akan gagal dengan cara yang sama.
+
 ### Jawaban kosong tidak boleh terjadi — dan cara membuktikannya
 
 Diukur 15 Okt 2026: dua fitur pernah menjawab **KOSONG** — "berikan aku berita
 terkini" dan Sederhanakan untuk teks medis panjang. Penyebabnya bukan prompt,
-melainkan **jatah token**: model `deepseek-v4-1-flash` adalah model *reasoning*,
-dan token `reasoning_content` yang ia hasilkan **ikut memakan `max_tokens`**.
+melainkan **jatah token**: model `deepseek-v4-1-flash` (yang dipakai saat itu)
+adalah model *reasoning*, dan token `reasoning_content` yang ia hasilkan **ikut
+memakan `max_tokens`**.
 Jawabannya belum sempat ditulis, jatahnya sudah habis (`finish_reason: length`),
 JSON-nya terpotong, dan pengguna melihat gelembung hampa.
 
@@ -1481,7 +1507,7 @@ node uji-sitasi.mjs       # jejak sumber (butuh MariaDB; dilewati tanpa DB)
 node uji-server.mjs       # kompresi, 404 JSON, galat klien
 node uji-skor-hls.mjs     # skor HLS-SF12: indeks 0–50 & empat kategori
 node uji-statis.mjs       # kompresi & cache berkas statis (HARUS sesudah build)
-node uji-wilayah.mjs      # wilayah bertingkat: validasi kode, cascade, titik referensi (38)
+node uji-wilayah.mjs      # wilayah bertingkat: validasi kode, cascade, titik referensi (43)
 node uji-rs-sirs.mjs      # rumah sakit SIRS: jumlah, wilayah, koordinat, filter, sinkron ulang (50)
 node uji-statistik-faskes.mjs  # statistik nasional: total 49.548, cakupan, kaitan kategori (39)
 node uji-cn.mjs                  # penggabung kelas Tailwind: kelas terakhir menang (8)

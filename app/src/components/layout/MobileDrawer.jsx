@@ -20,6 +20,12 @@ export default function MobileDrawer({ open, onClose, active, onSelect, t = (k) 
         <Dialog.Overlay className="absolute inset-0 z-40 bg-navy-900/45 backdrop-blur-[2px]" />
         <Dialog.Content
           id="mobile-drawer"
+          /*
+           * Radix sudah menangani fokus dan Escape, tetapi tidak memasang
+           * aria-modal pada semua versi. Tanpa atribut ini pembaca layar
+           * masih bisa menjelajah isi halaman di belakang laci.
+           */
+          aria-modal="true"
           className="rise absolute inset-y-0 left-0 flex w-[min(19rem,84vw)] flex-col border-r border-line-200 bg-white shadow-2xl"
         >
           <div className="flex items-center gap-3 border-b border-line-100 px-4 py-3.5">
