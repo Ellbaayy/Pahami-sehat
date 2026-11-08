@@ -295,10 +295,10 @@ jobs:
         # skor tidak diam-diam kembali menjadi persentase buatan sendiri.
         run: node uji-skor-hls.mjs
 
-      - name: Uji peramban otomatis (6 halaman × 2 bahasa)
+      - name: Uji peramban otomatis (7 halaman × 2 bahasa)
         # Satu-satunya uji yang memeriksa LAYAR, bukan kode: judul halaman
         # tampil, tepat satu h1, tanpa luapan horizontal di 1280x800 dan
-        # 375x812, tanpa galat runtime — untuk 6 halaman × 2 bahasa.
+        # 375x812, tanpa galat runtime — untuk 7 halaman × 2 bahasa.
         #
         # Butuh server hidup dan Chrome. Runner ubuntu-latest sudah membawa
         # google-chrome-stable, jadi langkah ini benar-benar menguji. Kunci
