@@ -736,6 +736,21 @@ pertama berakhir `finish_reason: length` (`anggaranBerikutnya()` di
 `batasInput.js`, diuji `uji-batas.mjs`) — mengulang dengan jatah yang sama
 hanya akan gagal dengan cara yang sama.
 
+### Audit 8 Nov 2026 — empat cacat, semuanya diperbaiki
+
+Diperiksa ulang seluruh produk sebelum Grand Final (20 endpoint, 25 pertanyaan,
+7 halaman × 2 bahasa, database, dan alur demo). Empat cacat nyata ditemukan:
+
+| Cacat | Gejala | Perbaikan |
+|---|---|---|
+| Pilih kecamatan meleset | memilih **kecamatan** memusatkan peta di **kota**, jadi daftar fasilitas menampilkan wilayah yang salah — tanpa galat apa pun | `cascadeTitik()` mencoba beberapa bentuk kueri; terukur Danurejan presisi `kecamatan` (−7,79314) |
+| Model lambat/terpotong | Tanya AI menjawab **kosong** (`code: unparsed`), 40–57 detik | model pindah ke `deepseek-v4-flash` + jatah token naik saat terpotong |
+| HTTP 500 saat model lambat | 3 dari 25 pertanyaan gagal dengan 500 setelah 50 detik | ulang sekali otomatis; kalau tetap lambat → **503 `model_lambat`** dengan pesan jelas |
+| "Rontgen dada" tanpa sumber | 1 dari 25 pertanyaan keluar 0 sumber | kunci dipindah dari `Radiografi` (337 karakter) ke `Sinar-X` (765 karakter) |
+
+Sesudah perbaikan, `node uji-jawaban.mjs` (25 pertanyaan, model sungguhan):
+**0 gagal, 0 tanpa sumber, 0 menolak padahal ada, 0 mendiagnosis**.
+
 ### Jawaban kosong tidak boleh terjadi — dan cara membuktikannya
 
 Diukur 15 Okt 2026: dua fitur pernah menjawab **KOSONG** — "berikan aku berita
