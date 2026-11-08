@@ -68,8 +68,14 @@ cek(
   'Pemeriksaan fisik',
 )
 cek('pemeriksaan penunjang (tanpa kata tanya)', kataKunciPencarian('pemeriksaan penunjang'), 'Pemeriksaan fisik')
-cek('rontgen dada tidak jatuh jadi "rontgen"', kataKunciPencarian('Apa itu rontgen dada?'), 'Radiografi')
-cek('rontgen -> Radiografi', kataKunciPencarian('rontgen itu apa'), 'Radiografi')
+/*
+ * 8 Nov 2026: target dipindah dari 'Radiografi' ke 'Sinar-X'. Artikel
+ * 'Radiografi' hanya punya 337 karakter pengantar sehingga jawaban sering
+ * keluar tanpa satu pun sumber (terlihat pada uji 25 pertanyaan). 'Sinar-X'
+ * membahas hal yang sama dengan isi jauh lebih panjang.
+ */
+cek('rontgen dada tidak jatuh jadi "rontgen"', kataKunciPencarian('Apa itu rontgen dada?'), 'Sinar-X')
+cek('rontgen -> Sinar-X', kataKunciPencarian('rontgen itu apa'), 'Sinar-X')
 cek('usg -> Ultrasonografi medis', kataKunciPencarian('Apa itu USG?'), 'Ultrasonografi medis')
 cek('mri -> Pencitraan resonansi magnetik', kataKunciPencarian('Apa itu MRI?'), 'Pencitraan resonansi magnetik')
 cek('ekg -> Elektrokardiografi', kataKunciPencarian('Apa itu EKG?'), 'Elektrokardiografi')
@@ -314,7 +320,7 @@ cek('semua kunci PETA_PENCARIAN dikenali ISTILAH_CARI', pencarianTidakTerpakai, 
 // Istilah pencarian harus benar-benar dikenali saat muncul di kalimat.
 const contoh = [
   ['pemeriksaan penunjang', 'Pemeriksaan fisik'],
-  ['rontgen', 'Radiografi'],
+  ['rontgen', 'Sinar-X'],
   ['usg', 'Ultrasonografi medis'],
   ['mri', 'Pencitraan resonansi magnetik'],
   ['ekg', 'Elektrokardiografi'],
@@ -352,7 +358,7 @@ if (!pakaiJaringan) {
   // Pertanyaan yang dulu mendapat 0 sumber.
   const TANYA = [
     ['Apa yang perlu saya ketahui tentang pemeriksaan penunjang?', 'Pemeriksaan fisik'],
-    ['Apa itu rontgen dada?', 'Radiografi'],
+    ['Apa itu rontgen dada?', 'Sinar-X'],
     ['Apa itu USG?', 'Ultrasonografi medis'],
     ['Apa itu MRI?', 'Pencitraan resonansi magnetik'],
     ['Apa itu EKG?', 'Elektrokardiografi'],

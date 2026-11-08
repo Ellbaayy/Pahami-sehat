@@ -380,9 +380,16 @@ export const PETA_PENCARIAN = {
   'pemeriksaan penunjang': 'Pemeriksaan fisik',
   'pemeriksaan fisik': 'Pemeriksaan fisik',
   'pemeriksaan laboratorium': 'Laboratorium klinik',
-  'rontgen dada': 'Radiografi',
-  'rontgen thorax': 'Radiografi',
-  rontgen: 'Radiografi',
+  /*
+   * Diukur 8 Nov 2026: 'Radiografi' hanya punya 337 karakter pengantar,
+   * sehingga jawaban sering keluar TANPA satu pun sumber (terlihat pada uji
+   * 25 pertanyaan: "Apa itu rontgen dada?" -> 0 sumber). 'Sinar-X' membahas
+   * hal yang sama dengan isi jauh lebih panjang (765 karakter) dan itulah
+   * yang dipakai sekarang.
+   */
+  'rontgen dada': 'Sinar-X',
+  'rontgen thorax': 'Sinar-X',
+  rontgen: 'Sinar-X',
   radiologi: 'Radiologi',
   usg: 'Ultrasonografi medis',
   mri: 'Pencitraan resonansi magnetik',
