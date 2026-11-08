@@ -217,21 +217,38 @@ async function mintaJson({ messages, maxTokens, coba = 2, jalur = 'tidak-diketah
   // Anggaran token yang boleh NAIK antar percobaan — lihat anggaranBerikutnya().
   let anggaran = maxTokens
   for (let i = 0; i < coba; i++) {
-    const h = await chat({
-      messages:
-        i === 0
-          ? messages
-          : [
-              ...messages,
-              {
-                role: 'system',
-                content:
-                  'Balasan sebelumnya tidak bisa dibaca sebagai JSON. Balas ULANG sekarang: ' +
-                  'HANYA satu objek JSON valid, tanpa rencana, tanpa penjelasan, tanpa pagar kode.',
-              },
-            ],
-      ...(anggaran ? { maxTokens: anggaran } : {}),
-    })
+    let h
+    try {
+      h = await chat({
+        messages:
+          i === 0
+            ? messages
+            : [
+                ...messages,
+                {
+                  role: 'system',
+                  content:
+                    'Balasan sebelumnya tidak bisa dibaca sebagai JSON. Balas ULANG sekarang: ' +
+                    'HANYA satu objek JSON valid, tanpa rencana, tanpa penjelasan, tanpa pagar kode.',
+                },
+              ],
+        ...(anggaran ? { maxTokens: anggaran } : {}),
+      })
+    } catch (e) {
+      /*
+       * GALAT JARINGAN / BATAS WAKTU DIULANG SEKALI.
+       *
+       * Diukur 8 Nov 2026: dua pertanyaan dari 25 gagal HTTP 500 karena
+       * panggilan model melewati batas 50 detik (`DOMException TimeoutError`).
+       * Satu percobaan ulang jauh lebih murah daripada membuat pengguna
+       * menekan tombol lagi — dan jauh lebih baik daripada layar "kesalahan
+       * server" di depan juri. Galat 4xx (kunci salah, kuota habis) TIDAK
+       * diulang: mengulanginya tidak akan berubah hasilnya.
+       */
+      const status = Number(e?.status ?? 0)
+      if (i + 1 < coba && (status === 0 || status >= 500)) continue
+      throw e
+    }
     usage = h.usage ?? usage
     mentah = h.text
     selesai = h.finish ?? null

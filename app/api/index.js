@@ -52,7 +52,22 @@ app.use((err, _req, res, _next) => {
     return res.status(statusKlien).json({ ok: false, code: 'permintaan_tidak_sah', pesan })
   }
 
-  console.error('[galat]', err?.message ?? err)
+  // Batas waktu model -> 503 dengan kode yang bisa ditampilkan antarmuka.
+  const pesanGalat = String(err?.message ?? '')
+  const kehabisanWaktu =
+    err?.name === 'TimeoutError' ||
+    err?.name === 'AbortError' ||
+    /aborted due to timeout|timeout/i.test(pesanGalat)
+  if (kehabisanWaktu) {
+    console.error('[galat] batas waktu:', pesanGalat)
+    return res.status(503).json({
+      ok: false,
+      code: 'model_lambat',
+      pesan: 'Model AI tidak menjawab dalam batas waktu. Coba lagi sebentar lagi.',
+    })
+  }
+
+  console.error('[galat]', pesanGalat || err)
   res.status(500).json({ ok: false, code: 'galat_server', pesan: 'Terjadi kesalahan. Coba lagi.' })
 })
 
