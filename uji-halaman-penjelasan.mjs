@@ -127,27 +127,23 @@ try {
     'judul bagian "Enam cara informasi"',
     /Enam cara informasi/.test(await evaluasi(cdp, 'document.body.innerText')),
   )
+  /*
+   * Kartu nomor 6 berubah 8 Nov 2026: dari "Fasilitas Kesehatan Terdekat &
+   * Petunjuk Arah" menjadi "Pencarian Fasilitas Kesehatan Nasional". Tab
+   * radius dihapus, jadi pemeriksaan teks lama (pemilihan wilayah bertingkat,
+   * tiga moda, "bukan lalu lintas langsung") TIDAK BOLEH dipertahankan —
+   * memeriksa teks yang sudah sengaja dihapus membuat uji merah selamanya.
+   *
+   * Yang diperiksa sekarang adalah klaim yang MEMANG ada di halaman.
+   */
+  const teks = await evaluasi(cdp, 'document.body.innerText')
+  cek('kartu Fasilitas Kesehatan Nasional ada', teks.includes('Pencarian Fasilitas Kesehatan Nasional'))
+  cek('menyebut jumlah faskes yang dicakup', /7\.423|7\.4\d\d/.test(teks))
+  cek('menyebut dua sumber data', /SIRS/.test(teks) && /OpenStreetMap/.test(teks))
+  cek('menyebut saringan wilayah', /provinsi/i.test(teks) && /kabupaten/i.test(teks))
   cek(
-    'kartu Fasilitas Kesehatan Terdekat ada',
-    (await evaluasi(cdp, "document.body.innerText")).includes('Fasilitas Kesehatan Terdekat'),
-  )
-  cek(
-    'menyebut pemilihan wilayah bertingkat',
-    /Provinsi\s*→\s*Kota\/Kabupaten\s*→\s*Kecamatan\s*→\s*Desa\/Kelurahan/.test(
-      await evaluasi(cdp, 'document.body.innerText'),
-    ),
-  )
-  cek(
-    'menyebut tiga moda petunjuk arah',
-    /jalan kaki, sepeda motor, dan mobil/i.test(await evaluasi(cdp, 'document.body.innerText')),
-  )
-  cek(
-    'menyebut batas 40–50 detik secara terbuka',
-    (await evaluasi(cdp, 'document.body.innerText')).includes('40–50 detik'),
-  )
-  cek(
-    'menyebut estimasi bukan lalu lintas langsung',
-    /bukan\s*<\/?[a-z]*>?\s*lalu lintas langsung/i.test(await evaluasi(cdp, 'document.body.innerHTML')),
+    'menyebut koordinat tidak dikarang',
+    /Lokasi di peta belum tersedia/i.test(teks) || /tidak.*koordinat/i.test(teks),
   )
 
   // ---- tangkapan layar harus BENAR-BENAR termuat ----
