@@ -12,6 +12,7 @@
  *   - pembersihan memori: kunci mati dibuang, tidak tumbuh terus
  */
 import { batasi, ipPemanggil } from './app/server/batas.js'
+import { LAJU } from './app/server/batasInput.js'
 import { teksDari, anggaranBerikutnya } from './app/server/batasInput.js'
 
 let gagal = 0
@@ -148,6 +149,41 @@ cek('berhenti normal: tidak diulang', anggaranBerikutnya(2000, 'stop'), null)
 cek('tanpa finish_reason: tidak diulang', anggaranBerikutnya(2000, null), null)
 cek('anggaran kosong: pakai bawaan tanya', anggaranBerikutnya(undefined, 'length'), 4000)
 cek('anggaran rusak: tidak menghasilkan NaN', Number.isFinite(anggaranBerikutnya('abc', 'length')), true)
+
+/*
+ * Batas pencarian fasilitas NASIONAL.
+ *
+ * Diukur 8 Nov 2026: pengguna mengubah jenis + provinsi + kabupaten lalu
+ * mengetik nama, dan dalam hitungan detik sudah 4 permintaan. Batas lama
+ * (30/menit, dipakai bersama endpoint radius yang memanggil Overpass) terlalu
+ * ketat untuk endpoint yang hanya membaca MySQL — beberapa kali mengubah
+ * saringan saja sudah memicu 429.
+ */
+cek('batas nasional lebih longgar dari batas radius', LAJU.faskesNasional.maks > LAJU.faskes.maks, true)
+cek('batas nasional minimal 100 per menit', LAJU.faskesNasional.maks >= 100, true)
+cek('batas total nasional ikut naik', LAJU.faskesNasional.maksTotal > LAJU.faskes.maksTotal, true)
+
+/*
+ * Header Retry-After wajib ada pada 429. Tanpa itu, panel tidak bisa tahu
+ * berapa lama harus menunggu, dan itulah yang membuat halaman "stuck" —
+ * pengguna menunggu tanpa petunjuk kapan boleh mencoba lagi.
+ */
+const pembatasNasional = batasi({ maks: 3, nama: 'pencarian fasilitas nasional' })
+const reqUji = buatReq('10.9.9.9')
+let statusTerakhir = 200
+let retryTerakhir = null
+for (let i = 0; i < 4; i++) {
+  const res = buatRes()
+  pembatasNasional(reqUji, res, () => {
+    statusTerakhir = 200
+  })
+  if (res.kode) {
+    statusTerakhir = res.kode
+    retryTerakhir = res.header['Retry-After'] ?? null
+  }
+}
+cek('permintaan ke-4 ditolak', statusTerakhir, 429)
+cek('Retry-After dikirim saat ditolak', typeof retryTerakhir === 'string' && Number(retryTerakhir) > 0, true)
 
 console.log(gagal === 0 ? '\nSEMUA LULUS' : `\n${gagal} UJI GAGAL`)
 process.exit(gagal === 0 ? 0 : 1)

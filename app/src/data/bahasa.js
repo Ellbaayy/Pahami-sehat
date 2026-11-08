@@ -172,6 +172,11 @@ const KAMUS = {
     'faskesNasional.bukaPeta': 'Lihat peta',
     'faskesNasional.tanpaKoordinat': 'Lokasi di peta belum tersedia',
     'faskesNasional.situs': 'Situs',
+    'faskesNasional.mencobaDalam': 'mencoba lagi dalam',
+    'faskesNasional.detik': 'detik',
+    'faskesNasional.cobaLagi': 'Coba lagi',
+    'faskesNasional.hasilLamaDipakai':
+      'Hasil di bawah adalah hasil pencarian sebelumnya, bukan hasil terbaru.',
     'faskesNasional.sebelumnya': 'Sebelumnya',
     'faskesNasional.berikutnya': 'Berikutnya',
     'faskesNasional.keHalaman': 'Ke halaman',
@@ -816,6 +821,11 @@ const KAMUS = {
     'faskesNasional.bukaPeta': 'View map',
     'faskesNasional.tanpaKoordinat': 'Map location not available',
     'faskesNasional.situs': 'Website',
+    'faskesNasional.mencobaDalam': 'retrying in',
+    'faskesNasional.detik': 'seconds',
+    'faskesNasional.cobaLagi': 'Try again',
+    'faskesNasional.hasilLamaDipakai':
+      'The results below are from the previous search, not the latest one.',
     'faskesNasional.sebelumnya': 'Previous',
     'faskesNasional.berikutnya': 'Next',
     'faskesNasional.keHalaman': 'Go to page',

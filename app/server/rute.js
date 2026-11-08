@@ -505,6 +505,13 @@ const batasVerifikasi = batasi({ ...LAJU.verifikasi, nama: 'permintaan' })
 const batasSuara = batasi({ ...LAJU.suara, nama: 'permintaan suara' })
 const batasKonten = batasi({ ...LAJU.konten, nama: 'permintaan konten' })
 const batasFaskes = batasi({ ...LAJU.faskes, nama: 'pencarian fasilitas' })
+/*
+ * Pembatas terpisah untuk pencarian nasional. Endpoint ini HANYA membaca
+ * MySQL — tidak memanggil Overpass — jadi tidak perlu seketat `batasFaskes`.
+ * Dipakai bersama oleh /nasional, /nasional/filter, /nasional/ringkasan,
+ * dan /nasional/:id.
+ */
+const batasFaskesNasional = batasi({ ...LAJU.faskesNasional, nama: 'pencarian fasilitas nasional' })
 const batasHealth = batasi({ ...LAJU.health, nama: 'pemeriksaan kesehatan' })
 const batasMeta = batasi({ ...LAJU.meta, nama: 'permintaan meta' })
 const batasBerita = batasi({ ...LAJU.berita, nama: 'ringkasan berita' })
@@ -972,7 +979,7 @@ rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
  *
  * `?cari=` menyaring nama/alamat, `?kategori=` menyaring jenis fasilitas.
  */
-rute.get('/api/faskes/nasional', batasFaskes, bungkus(async (req, res) => {
+rute.get('/api/faskes/nasional', batasFaskesNasional, bungkus(async (req, res) => {
   const q = req.query ?? {}
   const angka = (v) => (Number.isFinite(Number(v)) ? Number(v) : null)
 
@@ -1008,7 +1015,7 @@ rute.get('/api/faskes/nasional', batasFaskes, bungkus(async (req, res) => {
 }))
 
 /** Pilihan filter untuk daftar fasilitas nasional (kategori, provinsi, sumber, …). */
-rute.get('/api/faskes/nasional/filter', batasMeta, bungkus(async (_req, res) => {
+rute.get('/api/faskes/nasional/filter', batasFaskesNasional, bungkus(async (_req, res) => {
   const f = await pilihanFilterNasional()
   if (!f) {
     res.status(503).json({ ok: false, code: 'db_mati', pesan: 'Database sedang tidak tersambung.' })
@@ -1019,7 +1026,7 @@ rute.get('/api/faskes/nasional/filter', batasMeta, bungkus(async (_req, res) => 
 }))
 
 /** Ringkasan isi database fasilitas nasional — dipakai kepala halaman. */
-rute.get('/api/faskes/nasional/ringkasan', batasMeta, bungkus(async (_req, res) => {
+rute.get('/api/faskes/nasional/ringkasan', batasFaskesNasional, bungkus(async (_req, res) => {
   const r = await ringkasanNasional()
   if (!r) {
     res.status(503).json({ ok: false, code: 'db_mati', pesan: 'Database sedang tidak tersambung.' })
@@ -1030,7 +1037,7 @@ rute.get('/api/faskes/nasional/ringkasan', batasMeta, bungkus(async (_req, res) 
 }))
 
 /** Rincian satu fasilitas nasional menurut id database. */
-rute.get('/api/faskes/nasional/:id', batasMeta, bungkus(async (req, res) => {
+rute.get('/api/faskes/nasional/:id', batasFaskesNasional, bungkus(async (req, res) => {
   const id = Number(req.params.id)
   if (!Number.isFinite(id) || id <= 0) {
     res.status(400).json({ ok: false, code: 'id_tidak_sah' })

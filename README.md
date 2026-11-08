@@ -1513,7 +1513,7 @@ Daftar per berkas (jalankan langsung dari akar repo kalau sedang menelusuri satu
 uji tertentu):
 
 ```bash
-node uji-batas.mjs        # batas panjang & laju tiap rute
+node uji-batas.mjs        # batas panjang & laju tiap rute (46)
 node uji-tingkat.mjs      # tingkat baca: server & klien memilih bawaan yang sama (baru, 5 Nov)
 node uji-dokumentasi.mjs  # angka di README sama dengan isi repo (baru, 5 Nov)
 node uji-ekstrak.mjs      # penarikan konten dari HTML sumber
@@ -1547,7 +1547,7 @@ node uji-semua.mjs              # satu perintah untuk semuanya (32)
 node uji-jam.mjs                # jam acuan dari header internet (17)
 node uji-rotasi.mjs             # rotasi daftar konten harian (22)
 node uji-faskes-db.mjs          # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)
-node uji-faskes-nasional.mjs    # pencarian faskes nasional: paginasi, saringan, koordinat (dilewati tanpa MariaDB; 36)
+node uji-faskes-nasional.mjs    # pencarian faskes nasional: paginasi, saringan, koordinat (dilewati tanpa MariaDB; 37)
 node uji-bahasa.mjs             # kesehatan kamus id/en (kunci seimbang, tak menganggur) (25)
 node uji-geocoding.mjs    # deteksi wilayah dari `address` Nominatim nyata, 38 peta ISO (37)
 node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)

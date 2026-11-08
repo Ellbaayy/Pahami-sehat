@@ -102,6 +102,21 @@ export const LAJU = {
    */
   faskes: { maks: 30, maksTotal: 300 },
   /**
+   * Pencarian fasilitas NASIONAL — batasnya lebih longgar dari `faskes`.
+   *
+   * Kenapa: `faskes` (30/menit) dipasang karena setiap permintaan tanpa
+   * simpanan memanggil Overpass, layanan sukareka yang membalas 429 bila
+   * dihujani. Endpoint nasional TIDAK memanggil layanan luar sama sekali —
+   * ia hanya membaca tabel `fasilitas` di MySQL sendiri.
+   *
+   * Diukur 8 Nov 2026: pengguna mengubah jenis + provinsi + kabupaten lalu
+   * mengetik nama, dan dalam hitungan detik sudah 4 permintaan. Dengan
+   * 30/menit, beberapa kali mengubah saringan saja sudah memicu 429, dan
+   * panelnya diam di tempat karena hasil lama dibuang. 180/menit cukup
+   * longgar untuk pemakaian wajar, tetap membatasi penyalahgunaan.
+   */
+  faskesNasional: { maks: 180, maksTotal: 1200 },
+  /**
    * Pemeriksaan kesehatan dipanggil berkala oleh aplikasi (tiap 30 detik per
    * tab), jadi batasnya lebih longgar — tetapi TIDAK tanpa batas seperti dulu.
    * Sebelumnya endpoint ini terbuka bebas sambil memanggil Kenari setiap kali.

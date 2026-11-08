@@ -26,6 +26,16 @@ import { Card } from '../ui/primitives'
 const PER_HALAMAN = 25
 
 /** Ambil JSON dengan penanganan galat yang menyebut sebabnya, bukan "gagal". */
+/**
+ * Ambil JSON, dan saat gagal sertakan SEBABNYA dalam bentuk yang bisa dipakai
+ * pemanggil — bukan hanya teks.
+ *
+ * Kenapa perlu: pembatas laju membalas 429 dengan header `Retry-After`. Dulu
+ * semua kegagalan menjadi satu string, sehingga panel tidak bisa membedakan
+ * "server sibuk, tunggu 44 detik" dari "database mati". Akibatnya panel
+ * menghapus daftar yang sudah tampil dan diam di tempat — persis keluhan
+ * "stuck di situ aja" pada 8 Nov 2026.
+ */
 async function ambilJson(url, signal) {
   const res = await fetch(url, { signal })
   const teks = await res.text()
@@ -33,10 +43,17 @@ async function ambilJson(url, signal) {
   try {
     j = JSON.parse(teks)
   } catch {
-    throw new Error(`balasan bukan JSON (HTTP ${res.status})`)
+    const galat = new Error(`balasan bukan JSON (HTTP ${res.status})`)
+    galat.status = res.status
+    throw galat
   }
   if (!res.ok || j?.ok === false) {
-    throw new Error(j?.pesan || `HTTP ${res.status}`)
+    const galat = new Error(j?.pesan || `HTTP ${res.status}`)
+    galat.status = res.status
+    galat.kode = j?.code ?? null
+    const tunggu = Number(res.headers.get('Retry-After'))
+    galat.tungguDetik = Number.isFinite(tunggu) && tunggu > 0 ? tunggu : null
+    throw galat
   }
   return j
 }
@@ -82,25 +99,78 @@ export default function FaskesNasionalPanel({ t = (k) => k }) {
   const [memuat, setMemuat] = useState(false)
   const [galat, setGalat] = useState(null)
   const [nomorHalaman, setNomorHalaman] = useState('')
+  /** Sisa detik sebelum boleh mencoba lagi (diisi dari header Retry-After). */
+  const [tunggu, setTunggu] = useState(0)
   const batalRef = useRef(null)
 
   /* ---------------------------------------------------------- filter ----- */
-  useEffect(() => {
-    const kendali = new AbortController()
-    ambilJson('/api/faskes/nasional/filter', kendali.signal)
-      .then((j) => setFilter(j))
-      .catch((e) => {
-        if (e.name !== 'AbortError') setGalatFilter(e.message)
-      })
-    return () => kendali.abort()
-  }, [])
+  /*
+   * Muatan filter MENCOBA ULANG SENDIRI, dan itu bukan kemewahan.
+   *
+   * Diukur 8 Nov 2026: saat batas permintaan habis, `/nasional/filter` ikut
+   * kena 429 pada saat halaman dibuka. Versi sebelumnya menyerah sekali lalu
+   * berhenti — akibatnya dropdown jenis/provinsi KOSONG SELAMANYA dan panel
+   * tidak bisa dipakai sama sekali sampai halaman dimuat ulang. Itulah
+   * "stuck di situ aja" yang dilaporkan.
+   *
+   * Sekarang: kegagalan karena batas diulang otomatis setelah Retry-After
+   * habis (maksimal 5 kali). Kegagalan lain tetap dilaporkan apa adanya,
+   * karena mengulang "database mati" tidak akan menolong siapa pun.
+   */
+  const [filterMuatUlang, setFilterMuatUlang] = useState(0)
 
   useEffect(() => {
     const kendali = new AbortController()
-    ambilJson('/api/faskes/nasional/ringkasan', kendali.signal)
-      .then((j) => setRingkasan(j))
-      .catch(() => null)
-    return () => kendali.abort()
+    let timer = null
+    let sisaCoba = 5
+
+    const muatFilter = async () => {
+      try {
+        const j = await ambilJson('/api/faskes/nasional/filter', kendali.signal)
+        setFilter(j)
+        setGalatFilter(null)
+      } catch (e) {
+        if (e.name === 'AbortError') return
+        setGalatFilter(e.message)
+        const bolehUlang = e.status === 429 && sisaCoba > 0
+        if (bolehUlang) {
+          sisaCoba -= 1
+          timer = setTimeout(muatFilter, (e.tungguDetik ?? 5) * 1000)
+        }
+      }
+    }
+    muatFilter()
+
+    return () => {
+      kendali.abort()
+      if (timer) clearTimeout(timer)
+    }
+  }, [filterMuatUlang])
+
+  useEffect(() => {
+    const kendali = new AbortController()
+    let timer = null
+    let sisaCoba = 5
+
+    const muatRingkasan = async () => {
+      try {
+        const j = await ambilJson('/api/faskes/nasional/ringkasan', kendali.signal)
+        setRingkasan(j)
+      } catch (e) {
+        if (e.name === 'AbortError') return
+        if (e.status === 429 && sisaCoba > 0) {
+          sisaCoba -= 1
+          timer = setTimeout(muatRingkasan, (e.tungguDetik ?? 5) * 1000)
+        }
+        // Ringkasan hanya hiasan kepala panel; kegagalannya tidak dilaporkan.
+      }
+    }
+    muatRingkasan()
+
+    return () => {
+      kendali.abort()
+      if (timer) clearTimeout(timer)
+    }
   }, [])
 
   /* ------------------------------------------------------ pencarian ----- */
@@ -139,7 +209,13 @@ export default function FaskesNasionalPanel({ t = (k) => k }) {
     } catch (e) {
       if (e.name !== 'AbortError') {
         setGalat(e.message)
-        setHasil(null)
+        /*
+         * Hasil LAMA sengaja TIDAK dibuang. Dulu `setHasil(null)` dipanggil di
+         * sini, sehingga satu 429 menghapus 25 kartu yang sudah terbaca dan
+         * meninggalkan layar kosong tanpa jalan keluar. Sekarang daftarnya
+         * tetap ada; pengguna hanya diberi tahu bahwa pembaruan tertunda.
+         */
+        if (e.tungguDetik) setTunggu(e.tungguDetik)
       }
     } finally {
       if (!kendali.signal.aborted) setMemuat(false)
@@ -149,6 +225,34 @@ export default function FaskesNasionalPanel({ t = (k) => k }) {
   useEffect(() => {
     muat()
   }, [muat])
+
+  /*
+   * Hitung mundur setelah kena batas, lalu coba lagi SENDIRI.
+   *
+   * Sebelum ini, pengguna harus menunggu 44 detik lalu mengubah sesuatu
+   * secara manual supaya permintaan jalan lagi — dan tidak ada petunjuk
+   * bahwa itulah yang perlu dilakukan. Sekarang tinggal menunggu.
+   */
+  useEffect(() => {
+    if (tunggu <= 0) return
+    const id = setTimeout(() => setTunggu((t) => t - 1), 1000)
+    return () => clearTimeout(id)
+  }, [tunggu])
+
+  useEffect(() => {
+    if (tunggu !== 0 || !galat) return
+    // Tunggu habis: ulangi permintaan terakhir.
+    muat()
+    // `galat` sengaja tidak masuk daftar ketergantungan: efek ini hanya
+    // dipicu saat hitungan mencapai nol, bukan setiap kali galat berubah.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tunggu])
+
+  const cobaSendiri = () => {
+    setTunggu(0)
+    setGalat(null)
+    muat()
+  }
 
   /* ------------------------------------------------------- turunan ----- */
   const daftarKabupaten = useMemo(() => {
@@ -337,17 +441,63 @@ export default function FaskesNasionalPanel({ t = (k) => k }) {
         </div>
 
         {galatFilter ? (
-          <p className="mt-2 flex items-start gap-1.5 text-[0.78rem] text-rose-700">
-            <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-            {t('faskesNasional.filterGagal')}: {galatFilter}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <p className="flex items-start gap-1.5 text-[0.78rem] text-rose-700">
+              <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+              {t('faskesNasional.filterGagal')}: {galatFilter}
+            </p>
+            <button
+              type="button"
+              onClick={() => setFilterMuatUlang((n) => n + 1)}
+              className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-line-200 bg-white px-2 text-[0.76rem] font-semibold text-navy-800"
+            >
+              <RotateCcw className="size-3" aria-hidden="true" />
+              {t('faskesNasional.cobaLagi')}
+            </button>
+          </div>
         ) : null}
       </Card>
 
       {/* Hasil */}
       {galat ? (
-        <Card className="p-4">
-          <p className="text-[0.85rem] text-rose-700">{galat}</p>
+        <Card className="border-amber-300 bg-amber-50 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-start gap-1.5 text-[0.85rem] text-amber-900">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span>
+                {/*
+                  Server sudah menulis "Coba lagi dalam 46 detik" di pesannya.
+                  Kalau hitung mundur ditambahkan apa adanya, kalimatnya
+                  menjadi dobel ("...46 detik. mencoba lagi dalam 43 detik")
+                  dan angka yang lebih besar terbaca lebih dulu. Jadi kalimat
+                  dari server itu DIBUANG, lalu ditampilkan satu hitung mundur
+                  yang benar-benar berjalan.
+                */}
+                {tunggu > 0
+                  ? galat.replace(/\s*Coba lagi dalam \d+ detik\.?/i, '')
+                  : galat}
+                {tunggu > 0 ? (
+                  <>
+                    {' '}
+                    <strong className="tabular-nums">
+                      {t('faskesNasional.mencobaDalam')} {tunggu} {t('faskesNasional.detik')}
+                    </strong>
+                  </>
+                ) : null}
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={cobaSendiri}
+              className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg border border-amber-400 bg-white px-2.5 text-[0.8rem] font-semibold text-amber-900"
+            >
+              <RotateCcw className="size-3.5" aria-hidden="true" />
+              {t('faskesNasional.cobaLagi')}
+            </button>
+          </div>
+          {hasil ? (
+            <p className="mt-1.5 text-[0.78rem] text-amber-800">{t('faskesNasional.hasilLamaDipakai')}</p>
+          ) : null}
         </Card>
       ) : null}
 
