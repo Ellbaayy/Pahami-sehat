@@ -18,7 +18,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Tanya AI + sumber | berjalan. Pencarian memakai kata kunci terpilih, bukan kalimat pengguna apa adanya |
 > | Sederhanakan teks | berjalan (4 tingkat baca), menjadi salah satu mode di komposer Tanya AI |
 > | Cek klaim | berjalan. Tiga putusan (`didukung`, `tidak_didukung`, `tidak_bisa_dipastikan`) dengan **lencana yang menyebut subjeknya** ("Klaim …"), satu kalimat penjelas per putusan, dan daftar sumber yang tidak pernah kosong tanpa keterangan. `tidak_didukung` hanya dipakai bila sumber resmi menyatakan sebaliknya |
-> | Fasilitas Kesehatan | berjalan. **Pencarian nasional seluruh faskes** (7.423 baris: 3.325 RS resmi SIRS Kemenkes + 4.098 fasilitas OpenStreetMap) dengan saringan jenis, provinsi, kabupaten/kota, sumber, dan kelas RS. Tab "Fasilitas Terdekat" dihapus 8 Nov 2026. Field yang tidak ada di sumbernya dibiarkan kosong, bukan dikarang |
+> | Fasilitas Kesehatan | berjalan. **Pencarian nasional seluruh faskes** (21.477 baris: 3.325 RS resmi SIRS Kemenkes + 18.152 fasilitas OpenStreetMap) dengan saringan jenis, provinsi, kabupaten/kota, sumber, dan kelas RS. Tab "Fasilitas Terdekat" dihapus 8 Nov 2026. Field yang tidak ada di sumbernya dibiarkan kosong, bukan dikarang |
 > | Suara dibacakan | **berjalan sebagai suara neural Microsoft — hanya di versi yang dijalankan di komputer sendiri.** Diukur ulang 20 Okt 2026: `POST /api/suara` menjawab `200 audio/mpeg`, berkas 24 kHz mono 48 kbps, 17.424 byte untuk satu kalimat, 0,80 detik. Di Vercel tetap **`502`** (diukur ulang 20 Okt 2026) karena fungsi serverless tidak bisa mempertahankan WebSocket — batas platform, bukan bug. Rincian: `app/server/suara.js` |
 > | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya. Butuh konteks aman (`https://` atau `localhost`) |
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
@@ -94,8 +94,8 @@ bedanya nyaris tak terlihat karena teksnya memang sudah gelap:
 Halaman ini **berubah 8 Nov 2026**. Sebelumnya ada dua tab — "Fasilitas
 Terdekat" (pencarian radius di atas peta) dan "Rumah Sakit Nasional" (3.325 RS
 SIRS). Tab radius dihapus, dan daftar nasional diperluas menjadi **seluruh
-fasilitas kesehatan** yang datanya kami miliki: **7.423 baris** — 3.325 rumah
-sakit resmi Kemenkes (SIRS) dan 4.098 fasilitas OpenStreetMap (klinik,
+fasilitas kesehatan** yang datanya kami miliki: **21.477 baris** — 3.325 rumah
+sakit resmi Kemenkes (SIRS) dan 18.152 fasilitas OpenStreetMap (klinik,
 puskesmas, apotek, laboratorium, praktik mandiri, dan lainnya).
 
 Saringan yang tersedia: nama/alamat, jenis fasilitas (10 kategori), provinsi,
@@ -113,9 +113,9 @@ kode — kategori atau provinsi baru ikut muncul tanpa mengubah apa pun.
 
 ![Tampilan ponsel](docs/tangkapan-layar/faskes-4-hp.png)
 
-Yang perlu diperhatikan: angka di kepala panel (**7.423 fasilitas · 4.098
+Yang perlu diperhatikan: angka di kepala panel (**21.477 fasilitas · 18.152
 berkoordinat**) berasal dari database dan ikut berubah kalau datanya berubah;
-pencarian "siloam" menyaring dari 7.423 menjadi **54** hasil; memilih provinsi
+pencarian "siloam" menyaring dari 21.477 menjadi **79** hasil; memilih provinsi
 mengaktifkan dropdown kabupaten/kota; dan **sebagian besar rumah sakit SIRS
 tidak punya koordinat** — baris seperti itu tetap ditampilkan dengan penanda
 "Lokasi di peta belum tersedia", bukan diberi titik karangan.
@@ -161,7 +161,8 @@ Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`impor-statistik-faskes.mjs`](impor-statistik-faskes.mjs) | **Pengisi statistik fasilitas nasional** — 6 kategori Kemenkes 2024 + pembanding BPJS, beserta 4 rujukan pengembangan. `--cari`/`--kering`, aman diulang. Lihat [Statistik fasilitas nasional](#statistik-fasilitas-nasional--angka-resmi-dan-artinya). |
-| [`lengkapi-wilayah-faskes.mjs`](lengkapi-wilayah-faskes.mjs) | **Pengisi provinsi/kabupaten untuk 4.098 faskes OpenStreetMap** lewat geocoding balik Nominatim (1 permintaan/detik, ±70 menit). Memakai kode ISO 3166-2 karena wilayah DKI Jakarta tidak punya field `state`. Aman diulang: hanya baris yang provinsinya masih kosong yang diproses; `--kering` dan `--batas N` untuk mencoba. |
+| [`tarik-faskes-nasional.mjs`](tarik-faskes-nasional.mjs) | **Penarik faskes nasional dari OpenStreetMap** — 38 provinsi lewat kode ISO 3166-2 (nama provinsi didapat tanpa geocoding), kueri `nwr` karena apotek/klinik sering dipetakan sebagai bangunan. Idempoten lewat `kode_osm` unik. ±42 menit untuk seluruh Indonesia; `--provinsi ID-JB` untuk satu provinsi. |
+| [`petakan-kabupaten-faskes.mjs`](petakan-kabupaten-faskes.mjs) | **Pengisi kabupaten/kota dari batas wilayah resmi** — geoBoundaries ADM2 (519 kab/kota, sumber BPS, CC BY 3.0 IGO), titik-di-dalam-poligon. Terukur: 17.684 baris terisi, 20 tidak jatuh di poligon mana pun (dibiarkan NULL). |
 | [`panaskan-faskes.mjs`](panaskan-faskes.mjs) | **Pemanas simpanan faskes sebelum demo** — mengisi `fasilitas` + `cakupan_faskes` untuk lokasi yang akan ditunjukkan, supaya tombol Cari menjawab dari database. Lihat [Tombol "Cari"](#tombol-cari-tidak-lagi-membuat-juri-menunggu). |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
@@ -666,7 +667,7 @@ lebih berbahaya daripada tidak ada penyaring.
 | POST | `/api/suara` | teks → MP3 (suara neural) |
 | GET | `/api/faskes` | fasilitas kesehatan di sekitar satu titik (Overpass/OpenStreetMap) |
 | GET | `/api/faskes/kategori` | sepuluh kategori fasilitas yang dipakai antarmuka |
-| GET | `/api/faskes/nasional` | **pencarian seluruh faskes nasional** — 7.423 baris (SIRS + OpenStreetMap); `?cari=&kategori=&provinsi=&kabupaten=&sumber=&kelas=&koordinat=1&halaman=&perHalaman=&urut=` |
+| GET | `/api/faskes/nasional` | **pencarian seluruh faskes nasional** — 21.477 baris (SIRS + OpenStreetMap); `?cari=&kategori=&provinsi=&kabupaten=&sumber=&kelas=&koordinat=1&halaman=&perHalaman=&urut=` |
 | GET | `/api/faskes/nasional/filter` | pilihan saringan nasional dari database: kategori, provinsi, kabupaten, sumber, kelas, jenis, kepemilikan |
 | GET | `/api/faskes/nasional/ringkasan` | jumlah total, berkoordinat, SIRS, OSM, tanpa provinsi, dan per kategori |
 | GET | `/api/faskes/nasional/:id` | rincian satu fasilitas nasional menurut id database |

@@ -22,8 +22,16 @@
 
 import { eksekusi } from './db.js'
 
-/** Batas atas satu halaman. */
-const MAKS_HALAMAN = 500
+/**
+ * Batas atas `perHalaman` (jumlah baris per halaman).
+ *
+ * JANGAN dipakai untuk membatasi NOMOR halaman. Versi sebelumnya memakai satu
+ * angka yang sama untuk keduanya, dan efeknya terukur 8 Nov 2026: pengguna
+ * meminta halaman 861 dari 860, nomornya "dibetulkan" menjadi 500, lalu
+ * server mengirim 25 baris HALAMAN 500 — data yang bukan permintaannya,
+ * tanpa satu pun tanda bahwa permintaannya di luar jangkauan.
+ */
+const MAKS_PER_HALAMAN = 500
 
 const KOLOM = `
   f.id, f.kode_osm, f.kode_rs, f.nama, f.kategori_id, k.label AS kategori,
@@ -150,9 +158,14 @@ export async function cariFaskesNasional({
 
   const where = syarat.length ? `WHERE ${syarat.join(' AND ')}` : ''
 
-  const di = Math.min(Math.max(Number(halaman) || 1, 1), MAKS_HALAMAN)
-  const n = Math.min(Math.max(Number(perHalaman) || 25, 1), MAKS_HALAMAN)
-  const offset = (di - 1) * n
+  /*
+   * Nomor halaman TIDAK dibatasi di sini. Kalau permintaan melewati halaman
+   * terakhir, hasilnya harus KOSONG — bukan dilipat ke halaman lain. `offset`
+   * yang besar cukup dikembalikan sebagai daftar kosong oleh MySQL.
+   */
+  const n = Math.min(Math.max(Number(perHalaman) || 25, 1), MAKS_PER_HALAMAN)
+  const diminta = Math.max(Number(halaman) || 1, 1)
+  const offset = (diminta - 1) * n
 
   // Urutan harus STABIL antar halaman, kalau tidak ada baris yang terlewat
   // atau muncul dua kali saat pengguna menekan "berikutnya".
@@ -178,7 +191,7 @@ export async function cariFaskesNasional({
   return {
     daftar: baris.map(rapikan),
     total,
-    halaman: di,
+    halaman: diminta,
     perHalaman: n,
     jumlahHalaman: Math.max(1, Math.ceil(total / n)),
   }

@@ -63,9 +63,16 @@ const irisan = (h2?.daftar ?? []).filter((f) => id1.has(f.id))
 cek('halaman 1 dan 2 tidak berbagi baris', irisan.length === 0, `irisan=${irisan.length}`)
 cek('total sama di kedua halaman', h1?.total === h2?.total)
 
-const halamanJauh = await cariFaskesNasional({ halaman: 999999, perHalaman: 25 })
-cek('halaman di luar jangkauan tidak melempar galat', halamanJauh !== null)
-cek('halaman di luar jangkauan kosong', (halamanJauh?.daftar.length ?? -1) === 0)
+/*
+ * Halaman dibatasi MAKS_HALAMAN (500) di `faskesNasional.js`. Jadi "halaman
+ * yang tidak ada" harus dihitung dari totalnya, bukan dikarang 999999:
+ * dengan 21 ribu baris, halaman 500 MASIH berisi data, dan uji yang memakai
+ * angka karangan akan merah padahal perilakunya benar.
+ */
+const halamanTerakhir = semua?.jumlahHalaman ?? 1
+const halamanLewat = await cariFaskesNasional({ halaman: halamanTerakhir + 1, perHalaman: 25 })
+cek('halaman di luar jangkauan tidak melempar galat', halamanLewat !== null)
+cek('halaman di luar jangkauan kosong', (halamanLewat?.daftar.length ?? -1) === 0)
 
 console.log('\n3. saringan menyempitkan')
 const rs = await cariFaskesNasional({ kategori: 'rumah-sakit', perHalaman: 5 })
@@ -109,11 +116,23 @@ console.log('\n6. koordinat tidak dikarang')
 const koord = await cariFaskesNasional({ hanyaKoordinat: true, perHalaman: 50 })
 cek('saringan berkoordinat jalan', (koord?.total ?? 0) > 0, `total=${koord?.total}`)
 cek('semua baris punya adaKoordinat=true', (koord?.daftar ?? []).every((x) => x.adaKoordinat === true))
-const semuaBaris = await cariFaskesNasional({ perHalaman: 50 })
+/*
+ * Baris SIRS diambil lewat saringannya sendiri, BUKAN dari halaman pertama
+ * daftar umum. Sejak data OSM lengkap (18 ribu baris), halaman pertama yang
+ * diurutkan menurut nama hampir selalu berisi OSM yang semuanya berkoordinat —
+ * kalau diperiksa dari situ, uji ini merah padahal perilakunya benar.
+ */
+const sirsTanpaKoordinat = await cariFaskesNasional({ sumber: 'SIRS Kemenkes', perHalaman: 50 })
 cek(
   'baris tanpa koordinat tetap muncul di daftar',
-  (semuaBaris?.daftar ?? []).some((x) => x.adaKoordinat === false),
-  'semua baris halaman pertama punya koordinat — periksa apakah baris SIRS disembunyikan',
+  (sirsTanpaKoordinat?.daftar ?? []).some((x) => x.adaKoordinat === false),
+  'semua baris SIRS punya koordinat — periksa apakah baris tanpa titik disembunyikan',
+)
+cek(
+  'baris tanpa koordinat tidak diberi titik karangan',
+  (sirsTanpaKoordinat?.daftar ?? [])
+    .filter((x) => x.adaKoordinat === false)
+    .every((x) => x.lat === null && x.lon === null),
 )
 
 console.log('\n7. pilihan filter dari database')
