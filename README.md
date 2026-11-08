@@ -149,10 +149,12 @@ tab Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 | [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
 | [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **27 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
-| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 10 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
+| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 12 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`, `statistik_faskes`, `sumber_data_faskes`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
 | [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs-3325-rs-di-database). |
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
+| [`impor-statistik-faskes.mjs`](impor-statistik-faskes.mjs) | **Pengisi statistik fasilitas nasional** — 6 kategori Kemenkes 2024 + pembanding BPJS, beserta 4 rujukan pengembangan. `--cari`/`--kering`, aman diulang. Lihat [Statistik fasilitas nasional](#statistik-fasilitas-nasional--angka-resmi-dan-artinya). |
+| [`panaskan-faskes.mjs`](panaskan-faskes.mjs) | **Pemanas simpanan faskes sebelum demo** — mengisi `fasilitas` + `cakupan_faskes` untuk lokasi yang akan ditunjukkan, supaya tombol Cari menjawab dari database. Lihat [Tombol "Cari"](#tombol-cari-tidak-lagi-membuat-juri-menunggu). |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
 | [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | Mengambil 10 tangkapan dashboard: 7 halaman pada 1440×900, 2 tampilan ponsel, 1 mode kontras tinggi. Jawaban Tanya AI dan putusan Cek Klaim diambil dari permintaan sungguhan. |
@@ -216,6 +218,8 @@ pahami-sehat/
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
 ├── panen-pengetahuan.mjs
+├── impor-statistik-faskes.mjs ← statistik nasional (Kemenkes/BPJS) ke MySQL
+├── panaskan-faskes.mjs       ← pemanas simpanan faskes sebelum demo
 ├── mermaid-diagram.png
 ├── app/                       ← PRODUK UTAMA (React + Express + Tailwind)
 │   ├── .env                   ← API key Kenari (JANGAN di-commit, mode 600)
@@ -251,11 +255,12 @@ ke aplikasi.
 
 ```mermaid
 flowchart TB
-  subgraph Peramban["Peramban — React 19 + Vite 8 + Tailwind 4"]
+  subgraph Peramban["Peramban — React 19 + Vite 8 + Tailwind 4 + Radix"]
     UI["Antarmuka (7 menu)<br/>Beranda · Tanya AI · Cek Klaim · Fasilitas Kesehatan<br/>Riwayat · Kuesioner · Pengaturan"]
     OCR["Mesin OCR<br/>tesseract.js / WebAssembly"]
     LS[("localStorage<br/>sesi · kuesioner · setelan")]
     PETA["Peta Leaflet + OpenStreetMap<br/>ubin + penanda berkelompok"]
+    RADIX["Radix primitives<br/>sakelar · laci menu · tooltip<br/>fokus & Escape ditangani pustaka"]
   end
 
   subgraph Server["Express 5 — lokal; Vercel Serverless saat produksi"]
@@ -269,8 +274,10 @@ flowchart TB
     T2[("konten")]
     T3[("pengetahuan<br/>salinan berlabel tanggal")]
     T4[("sumber")]
+    T5[("percakapan<br/>teks 7 hari, tanpa identitas")]
     T6[("dokumen · sitasi<br/>jejak sumber yang dikutip")]
     T7[("wilayah · kategori_fasilitas<br/>fasilitas + sumber & kedaluwarsa")]
+    T8[("statistik_faskes · sumber_data_faskes<br/>angka resmi Kemenkes & BPJS, 7 Nov 2026")]
   end
 
   subgraph Luar["Layanan luar"]
@@ -291,6 +298,7 @@ flowchart TB
   UI <--> LS
   UI --> OCR
   UI --> PETA
+  UI --> RADIX
   OCR -.->|"tidak pernah keluar<br/>dari perangkat"| OCR
 
   R -->|"kata kunci terpilih"| W
@@ -317,13 +325,15 @@ flowchart TB
   DBJ --> T2
   DBJ --> T3
   DBJ --> T4
+  DBJ --> T5
   DBJ --> T6
   DBJ --> T7
+  DBJ --> T8
 
   classDef store fill:#eef,stroke:#446,color:#113
   classDef opsional fill:#ffe9c9,stroke:#a63,color:#420,stroke-dasharray:4 3
   class LS store
-  class T1,T2,T3,T4,T6,T7 store
+  class T1,T2,T3,T4,T5,T6,T7,T8 store
   class DBJ opsional
 ```
 
@@ -427,6 +437,8 @@ Dibuktikan ulang 20 Okt 2026 dengan `DB_MATI=1`:
 | `wilayah` | **kode wilayah administratif** 4 tingkat (provinsi → desa/kelurahan), kode bertitik disimpan apa adanya | (baru, 4 Nov 2026) |
 | `kategori_fasilitas` | sepuluh kategori fasilitas kesehatan + warna penandanya | (baru, 4 Nov 2026) |
 | `fasilitas` | fasilitas kesehatan hasil Overpass, **beserta `sumber`, `sumber_url`, `diperbarui_pada`, dan `kedaluwarsa_pada`** | `.cache-faskes.json` |
+| `statistik_faskes` | **angka resmi** fasilitas nasional (Kemenkes 2024: 6 kategori, total 49.548; pembanding BPJS September 2026), **beserta kalimat cakupannya** | (baru, 7 Nov 2026) |
+| `sumber_data_faskes` | **4 rujukan pengembangan** (Profil Kesehatan Indonesia 2025, Statistik Faskes BPS 2025, SATUSEHAT Data, Data Faskes Mitra JKN) + data yang tersedia di masing-masing | (baru, 7 Nov 2026) |
 
 Tidak ada tabel akun di skema mana pun. `skema-database.sql` malah
 menjalankan `DROP TABLE IF EXISTS riwayat, setelan, pengguna` untuk
@@ -787,7 +799,7 @@ Endpoint untuk memeriksa: `GET /api/health` (status db) dan `GET /api/db`
 (hitungan + contoh baris, bukan seluruh isi tabel).
 
 **Diverifikasi pada XAMPP sungguhan (4 Nov 2026):** MariaDB **10.4.32** dari
-`/opt/lampp`, port 3306, basis data `pahami_sehat`, seluruh 10 tabel terbentuk
+`/opt/lampp`, port 3306, basis data `pahami_sehat`, seluruh 12 tabel terbentuk
 dari `docs/skema-database.sql`, dan `/api/health` melaporkan
 `db: { aktif: true, host: "127.0.0.1", port: 3306 }`. `uji-faskes-db.mjs`
 **12/12 lulus** di server yang sama — bukan hanya di instance uji terpisah.
