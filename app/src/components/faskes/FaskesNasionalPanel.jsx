@@ -81,6 +81,7 @@ export default function FaskesNasionalPanel({ t = (k) => k }) {
   const [hasil, setHasil] = useState(null)
   const [memuat, setMemuat] = useState(false)
   const [galat, setGalat] = useState(null)
+  const [nomorHalaman, setNomorHalaman] = useState('')
   const batalRef = useRef(null)
 
   /* ---------------------------------------------------------- filter ----- */
@@ -175,6 +176,22 @@ export default function FaskesNasionalPanel({ t = (k) => k }) {
   }
 
   const totalHalaman = hasil?.jumlahHalaman ?? 1
+
+  /**
+   * Pindah ke halaman yang diketik pengguna.
+   *
+   * Sengaja TIDAK memakai `Math.min/Math.max` untuk membetulkan masukan yang
+   * salah: masukan "0" atau "9999" bukan permintaan yang bisa ditebak
+   * maksudnya, dan diam-diam membetulkannya membuat pengguna mengira
+   * ketikannya diabaikan. Yang dipakai hanya ketikan yang sah.
+   */
+  const lompatHalaman = (e) => {
+    e.preventDefault()
+    const n = Number(nomorHalaman)
+    setNomorHalaman('')
+    if (!Number.isFinite(n) || n < 1 || n > totalHalaman) return
+    setHalaman(n)
+  }
 
   return (
     <div className="space-y-3">
@@ -415,29 +432,79 @@ export default function FaskesNasionalPanel({ t = (k) => k }) {
             ))}
           </ul>
 
+          {/*
+            Dua kelompok, bukan satu deret panjang.
+
+            Diukur 8 Nov 2026 pada lebar jendela 700 px: deret tunggal berisi
+            lima elemen berukuran 481 px dan "Berikutnya" terlempar ke baris
+            kedua sendirian — terlihat seperti tombol rusak. Dengan dua
+            kelompok, masing-masing tetap utuh dan boleh turun baris bersama.
+          */}
           {totalHalaman > 1 ? (
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setHalaman((h) => Math.max(1, h - 1))}
-                disabled={hasil.halaman <= 1}
-                className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line-200 bg-white px-3 text-[0.82rem] font-semibold text-navy-800 disabled:opacity-40"
-              >
-                <ChevronLeft className="size-4" aria-hidden="true" />
-                {t('faskesNasional.sebelumnya')}
-              </button>
-              <span className="text-[0.82rem] tabular-nums text-muted-600">
-                {hasil.halaman} / {totalHalaman}
-              </span>
-              <button
-                type="button"
-                onClick={() => setHalaman((h) => Math.min(totalHalaman, h + 1))}
-                disabled={hasil.halaman >= totalHalaman}
-                className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line-200 bg-white px-3 text-[0.82rem] font-semibold text-navy-800 disabled:opacity-40"
-              >
-                {t('faskesNasional.berikutnya')}
-                <ChevronRight className="size-4" aria-hidden="true" />
-              </button>
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setHalaman((h) => Math.max(1, h - 1))}
+                  disabled={hasil.halaman <= 1}
+                  className="inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-xl border border-line-200 bg-white px-3 text-[0.82rem] font-semibold text-navy-800 disabled:opacity-40"
+                >
+                  <ChevronLeft className="size-4" aria-hidden="true" />
+                  {t('faskesNasional.sebelumnya')}
+                </button>
+
+                <span
+                  aria-live="polite"
+                  className="whitespace-nowrap px-1 text-[0.85rem] tabular-nums text-muted-600"
+                >
+                  {t('faskesNasional.halamanSekarang')}{' '}
+                  <strong className="font-bold text-navy-900">{hasil.halaman}</strong>
+                  <span className="mx-0.5">/</span>
+                  {totalHalaman}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setHalaman((h) => Math.min(totalHalaman, h + 1))}
+                  disabled={hasil.halaman >= totalHalaman}
+                  className="inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-xl border border-line-200 bg-white px-3 text-[0.82rem] font-semibold text-navy-800 disabled:opacity-40"
+                >
+                  {t('faskesNasional.berikutnya')}
+                  <ChevronRight className="size-4" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/*
+                Kotak nomor halaman untuk melompat langsung. Daftar ini bisa
+                mencapai 860 halaman; menekan "Berikutnya" ratusan kali bukan
+                cara yang masuk akal untuk sampai ke halaman yang dituju.
+
+                Nilai yang diketik diperiksa lebih dulu: bukan angka, nol, atau
+                melewati halaman terakhir tidak memindahkan apa pun. Tanpa
+                pemeriksaan itu, ketikan "0" mengirim ?halaman=0 dan pengguna
+                tidak tahu mengapa tidak terjadi apa-apa.
+              */}
+              <form onSubmit={lompatHalaman} className="flex items-center gap-1.5">
+                <label htmlFor="nomor-halaman" className="sr-only">
+                  {t('faskesNasional.nomorHalaman')}
+                </label>
+                <input
+                  id="nomor-halaman"
+                  type="text"
+                  inputMode="numeric"
+                  value={nomorHalaman}
+                  onChange={(e) => setNomorHalaman(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="No."
+                  aria-label={t('faskesNasional.nomorHalaman')}
+                  className="h-11 w-16 shrink-0 rounded-xl border border-line-200 bg-white px-2 text-center text-[0.85rem] tabular-nums text-navy-900"
+                />
+                <button
+                  type="submit"
+                  className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-xl border border-line-200 bg-white px-3 text-[0.82rem] font-semibold text-navy-800 transition hover:border-brand-300 hover:text-brand-800"
+                >
+                  {t('faskesNasional.keHalaman')}
+                </button>
+              </form>
             </div>
           ) : null}
         </>

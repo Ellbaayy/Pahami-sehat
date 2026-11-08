@@ -174,6 +174,9 @@ const KAMUS = {
     'faskesNasional.situs': 'Situs',
     'faskesNasional.sebelumnya': 'Sebelumnya',
     'faskesNasional.berikutnya': 'Berikutnya',
+    'faskesNasional.keHalaman': 'Ke halaman',
+    'faskesNasional.nomorHalaman': 'Nomor halaman yang dituju',
+    'faskesNasional.halamanSekarang': 'Halaman',
 
     /* --- Rumah sakit nasional (SIRS Kemenkes) ------------------------------ */
     
@@ -815,6 +818,9 @@ const KAMUS = {
     'faskesNasional.situs': 'Website',
     'faskesNasional.sebelumnya': 'Previous',
     'faskesNasional.berikutnya': 'Next',
+    'faskesNasional.keHalaman': 'Go to page',
+    'faskesNasional.nomorHalaman': 'Target page number',
+    'faskesNasional.halamanSekarang': 'Page',
 
     
     
