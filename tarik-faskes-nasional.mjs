@@ -149,6 +149,25 @@ async function tarikSatuProvinsi(kodeIso, batasDetik = 180) {
       }
       const j = await res.json()
       const elemen = Array.isArray(j?.elements) ? j.elements : []
+
+      /*
+       * DAFTAR KOSONG DARI CERMIN = KEGAGALAN, BUKAN "PROVINSI INI TIDAK
+       * PUNYA FASILITAS".
+       *
+       * Diukur 8 Nov 2026: Jawa Tengah mengembalikan 0 elemen setelah 185
+       * detik (tepat di batas waktu) dan Yogyakarta 0 elemen padahal kueri
+       * yang sama dijalankan manual memberi 743 elemen. Cermin yang kelebihan
+       * beban membalas HTTP 200 dengan badan kosong — kalau dipercaya, data
+       * satu provinsi hilang tanpa satu pun pesan galat.
+       *
+       * Karena itu hasil kosong diperlakukan sebagai kegagalan: coba cermin
+       * berikutnya, dan kalau semuanya kosong, laporkan sebagai GAGAL.
+       */
+      if (!elemen.length) {
+        galatTerakhir = `${url}: balasan kosong (0 elemen)`
+        continue
+      }
+
       return { elemen, sumber: url }
     } catch (e) {
       galatTerakhir = `${url}: ${e?.message ?? e}`
@@ -232,7 +251,13 @@ async function utama() {
         const kab = (e.tags?.['addr.city'] || e.tags?.['addr.county'] || '').trim() || null
 
         baris.push([
-          `osm/${e.type}/${e.id}`,
+          /*
+           * Format `node/123`, TANPA awalan `osm/`. Baris lama dari pencarian
+           * radius memakai format ini juga; awalan `osm/` membuat tarikan baru
+           * tidak pernah cocok dengan baris lama, sehingga seluruh 4.098 baris
+           * tergandakan (diukur 8 Nov 2026: 3.963 duplikat).
+           */
+          `${e.type}/${e.id}`,
           nama.slice(0, 255),
           idKategori.get(kat.kategori) ?? null,
           kat.subkategori ? String(kat.subkategori).slice(0, 120) : null,
