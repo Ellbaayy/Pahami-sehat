@@ -408,6 +408,19 @@ async function main() {
    * tangkapan berikutnya akan ikut sempit.
    * ====================================================================== */
   console.log('  tampilan HP…')
+  // Reset SEMUA saringan lebih dulu. Tangkapan ponsel yang masih membawa
+  // saringan dari langkah sebelumnya terlihat seperti keadaan awal padahal
+  // bukan, dan itu menyesatkan pembaca README.
+  await evaluasi(
+    cdp,
+    `(() => {
+      const b = [...document.querySelectorAll('main button')]
+        .find(e => /Atur ulang/i.test(e.textContent));
+      if (b) b.click();
+      return !!b;
+    })()`,
+  )
+  await jeda(1500)
   await cdp.kirim('Emulation.setDeviceMetricsOverride', {
     width: 390,
     height: 844,
@@ -415,8 +428,18 @@ async function main() {
     mobile: true,
   })
   await jeda(1200)
-  await evaluasi(cdp, 'window.scrollTo(0, 0)')
-  await jeda(600)
+  // Digulir sampai daftar hasilnya ikut terlihat. Kalau dimulai dari paling
+  // atas, yang terekam hanya kartu penjelasan + saringan, dan pembaca README
+  // tidak bisa menilai apakah daftarnya masih terbaca di layar ponsel.
+  await evaluasi(
+    cdp,
+    `(() => {
+      const li = document.querySelector('main ul li');
+      if (li) li.scrollIntoView({ block: 'start' });
+      return !!li;
+    })()`,
+  )
+  await jeda(900)
   await simpan('faskes-4-hp.png')
 
   cdp.tutup()
