@@ -31,92 +31,83 @@ const KAMUS = {
     'nav.tutupSidebar': 'Tutup sidebar',
     'nav.bukaSidebar': 'Buka sidebar',
     // pemilihan wilayah administratif
-    'wil.judul': 'Pilih wilayah',
-    'wil.catatan':
-      'Pilih provinsi, kota/kabupaten, kecamatan, lalu desa/kelurahan. Lokasi yang dipilih adalah wilayah administratif, bukan posisi GPS Anda.',
-    'wil.provinsi': 'Provinsi',
-    'wil.kabupaten': 'Kota/Kabupaten',
-    'wil.kecamatan': 'Kecamatan',
-    'wil.desa': 'Desa/Kelurahan',
-    'wil.pilih': 'Pilih',
-    'wil.aturUlang': 'Atur ulang',
-    'wil.pakaiGps': 'Pakai GPS',
-    'wil.gunakan': 'Gunakan lokasi ini',
-    'wil.aktif': 'Lokasi aktif',
-    'wil.ubah': 'Ubah wilayah',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // rute perjalanan
-    'rute.tutup': 'Tutup petunjuk arah',
-    'rute.judul': 'Petunjuk arah',
-    'rute.moda': 'Moda transportasi',
-    'rute.jalanKaki': 'Jalan kaki',
-    'rute.motor': 'Sepeda motor',
-    'rute.mobil': 'Mobil',
-    'rute.menghitung': 'Menghitung rute…',
-    'rute.ringkas': '{jarak} km · sekitar {menit} menit',
-    'rute.ringkasKurangSatuMenit': '{jarak} km · kurang dari 1 menit',
-    'rute.catatanWaktu':
-      'Estimasi waktu dihitung dari profil kecepatan rute, bukan kondisi lalu lintas langsung.',
-    'rute.googleMaps': 'Buka di Google Maps',
-    'rute.galat': 'Rute belum dapat dihitung.',
-    'rute.butuhLokasi': 'Tentukan lokasi Anda lebih dulu',
-    'rute.asalAlamat': 'Titik awal: alamat yang Anda pilih',
-    'rute.asalManual': 'Titik awal: titik yang Anda tentukan di peta',
-    'rute.asalNama': 'Titik awal: lokasi yang Anda cari',
-    'rute.asalGps': 'Titik awal: lokasi GPS Anda',
-    'rute.asalWilayah':
-      'Titik awal: titik referensi wilayah administratif, bukan posisi Anda secara presisi.',
-    'wil.galat': 'Daftar wilayah belum dapat dimuat. Coba lagi.',
-    'wil.presisi':
-      'Pusat pencarian memakai titik referensi tingkat {tingkat}. Ini bukan posisi Anda secara presisi.',
-    'wil.titikGagal': 'Titik referensi wilayah ini belum tersedia. Pilih wilayah lain atau pakai GPS.',
-    'wil.tingkat.provinsi': 'provinsi',
-    'wil.tingkat.kabupaten': 'kota/kabupaten',
-    'wil.tingkat.kecamatan': 'kecamatan',
-    'wil.tingkat.desa': 'desa/kelurahan',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     // fasilitas kesehatan terdekat
     'nav.faskes': 'Fasilitas Kesehatan',
-    'faskes.judul': 'Fasilitas Kesehatan Terdekat',
-    'faskes.pakaiLokasi': 'Pakai lokasi saya',
-    'faskes.perbaruiLokasi': 'Perbarui lokasi',
-    'faskes.izinkanLokasi': 'Izinkan akses lokasi',
-    'faskes.lokasiBelum': 'Lokasi belum diketahui',
-    'faskes.lokasiTerdeteksi': 'Lokasi Anda',
-    'faskes.dariGps': 'dari GPS',
-    'faskes.gpsDitolak':
-      'Izin lokasi ditolak. Gunakan kolom pencarian lokasi di bawah untuk menentukan lokasi secara manual.',
-    'faskes.gpsTakDidukung':
-      'Peramban ini tidak menyediakan layanan lokasi. Gunakan pencarian lokasi manual.',
-    'faskes.gpsGalat':
-      'Lokasi tidak dapat dibaca saat ini. Coba lagi, atau gunakan pencarian lokasi manual.',
-    'faskes.cariLokasi': 'Cari nama tempat, jalan, atau koordinat',
-    'faskes.cariLokasiLabel': 'Pencarian lokasi manual',
-    'faskes.cari': 'Cari',
-    'faskes.mencariLokasi': 'Mencari lokasi…',
-    'faskes.lokasiTidakDitemukan': 'Lokasi tidak ditemukan. Coba kata kunci lain.',
-    'faskes.lokasiGalatCari': 'Pencarian lokasi sedang tidak dapat dihubungi. Coba lagi.',
+    'faskes.judul': 'Fasilitas Kesehatan',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     /*
      * Kartu "peta kosong" sebelum lokasi ditentukan (tata letak 5 Nov 2026).
      * Judul dan keterangannya SENGAJA tidak menyebut istilah teknis: yang
      * dibutuhkan pengguna adalah tahu bahwa peta akan muncul di sini sesudah
      * lokasi dipilih — bukan penjelasan bahwa komponennya belum dirender.
      */
-    'faskes.petaKosongJudul': 'Peta dan fasilitas kesehatan',
-    'faskes.petaKosongSub': 'Pilih lokasi untuk melihat rumah sakit dan fasilitas kesehatan terdekat.',
-    'faskes.cariFaskes': 'Cari nama, alamat, atau jenis layanan',
-    'faskes.cariFaskesLabel': 'Pencarian fasilitas kesehatan',
-    'faskes.hapusCari': 'Hapus pencarian',
-    'faskes.radius': 'Radius pencarian',
-    'faskes.urutan': 'Urutan',
-    'faskes.darurat': 'Darurat',
-    'faskes.memuat': 'Mengambil data fasilitas…',
-    'faskes.gagalMuat': 'Data fasilitas belum berhasil diambil',
-    'faskes.dipotong':
-      'Menampilkan {tampil} fasilitas terdekat, dari {n} yang ditemukan dalam radius ini. Sisanya ({sisa}) tidak dimuat karena melewati batas tampilan.',
-    'faskes.memuatLama':
-      'Pengambilan pertama untuk lokasi baru memerlukan waktu karena data diambil langsung dari OpenStreetMap. Lokasi yang sudah pernah dibuka dimuat dari simpanan.',
-    'faskes.jumlah': '{n} fasilitas ditemukan',
-    'faskes.dariSimpanan': 'dari simpanan',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /* --- Input lokasi: ketik alamat / pilih wilayah ---------------------- */
     /*
@@ -131,109 +122,131 @@ const KAMUS = {
      * pilihTitikPeta, pilihTitikAktif, titikDipilih, pakaiTitikIni,
      * batalPilihTitik, titikTanpaWilayah) DIHAPUS 5 Nov 2026 bersama fiturnya.
      */
-    'lokasi.cariJudul': 'Cari lokasi Anda',
-    'lokasi.metodeLain': 'Atau tentukan lokasi dengan:',
-    'lokasi.ketikAlamat': 'Ketik Alamat',
-    'lokasi.pilihWilayah': 'Pilih Wilayah',
-    'lokasi.tombolCari': 'Cari Lokasi',
-    'lokasi.labelAlamat': 'Alamat lokasi pencarian',
-    'lokasi.placeholder': 'Masukkan alamat, nama jalan, gedung, desa, atau kecamatan...',
-    'lokasi.hapus': 'Hapus alamat',
-    'lokasi.contohAlamat':
-      'Contoh: “Jl. Malioboro No. 52, Yogyakarta”, “Universitas Indonesia Depok”, atau “Kecamatan Cikarang Selatan”. Kode pos juga bisa disertakan.',
-    'lokasi.pilihSalahSatu':
-      'Ada beberapa kemungkinan. Pilih yang paling sesuai — jangan langsung dipakai otomatis.',
-    'lokasi.wilayahResmiMenyusul': 'wilayah resmi menyusul setelah dipilih',
-    'lokasi.wilayahTidakDikenalPanjang':
-      'Wilayah administratif titik ini tidak berhasil dikenali dari sumber. Koordinatnya tetap dipakai, tetapi wilayahnya tidak ditebak.',
-    'lokasi.tidakDiketahui': 'tidak diketahui dari sumber',
-    'lokasi.tidakDitemukan': 'Alamat tidak ditemukan. Coba tulis lebih lengkap, atau pakai pilihan wilayah.',
-    'lokasi.layananMati':
-      'Layanan pencarian alamat sedang tidak dapat diakses. Coba lagi, atau tentukan lokasi lewat pilihan wilayah.',
-    'lokasi.kuota':
-      'Layanan pencarian alamat sedang membatasi permintaan. Tunggu sebentar, atau pakai pilihan wilayah.',
-    'lokasi.alamatTerpilih': 'Alamat terpilih',
-    'lokasi.wilayahPerkiraan':
-      'Titik dari pilihan wilayah adalah PERKIRAAN (pusat wilayah), bukan lokasi presisi Anda. Jarak dan fasilitas terdekat dihitung dari titik itu.',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    /* --- Fasilitas kesehatan nasional (semua faskes) ----------------------- */
+    'faskesNasional.judul': 'Pencarian Fasilitas Kesehatan Nasional',
+    'faskesNasional.catatanKepala':
+      'Seluruh fasilitas kesehatan yang datanya kami miliki: rumah sakit resmi Kemenkes dan fasilitas OpenStreetMap. Saring menurut jenis, provinsi, atau sumber.',
+    'faskesNasional.sumberLabel': 'Sumber data',
+    'faskesNasional.sumber':
+      'Gabungan dua sumber: SIRS Kementerian Kesehatan RI (rumah sakit resmi) dan OpenStreetMap (klinik, puskesmas, apotek, laboratorium, dan lainnya). Kolom yang tidak tersedia di sumbernya dibiarkan kosong, bukan diisi tebakan.',
+    'faskesNasional.totalFaskes': 'fasilitas',
+    'faskesNasional.berkoordinat': 'berkoordinat',
+    'faskesNasional.cariNama': 'Cari nama atau alamat fasilitas',
+    'faskesNasional.aturUlang': 'Atur ulang',
+    'faskesNasional.kategori': 'Jenis fasilitas',
+    'faskesNasional.provinsi': 'Provinsi',
+    'faskesNasional.kabupaten': 'Kabupaten / Kota',
+    'faskesNasional.kelas': 'Kelas rumah sakit',
+    'faskesNasional.semuaKategori': 'Semua jenis',
+    'faskesNasional.semuaProvinsi': 'Semua provinsi',
+    'faskesNasional.semuaKabupaten': 'Semua kabupaten/kota',
+    'faskesNasional.pilihProvinsiDulu': 'Pilih provinsi dulu',
+    'faskesNasional.semuaSumber': 'Semua sumber',
+    'faskesNasional.semuaKelas': 'Semua kelas',
+    'faskesNasional.hanyaBerkoordinat': 'Hanya yang punya koordinat',
+    'faskesNasional.filterGagal': 'Pilihan filter tidak dapat dimuat',
+    'faskesNasional.memuat': 'Memuat data fasilitas…',
+    'faskesNasional.memperbarui': 'memperbarui…',
+    'faskesNasional.hasil': 'fasilitas ditemukan',
+    'faskesNasional.halaman': 'halaman',
+    'faskesNasional.tidakAda': 'Tidak ada fasilitas yang cocok dengan saringan ini.',
+    'faskesNasional.bukaPeta': 'Lihat peta',
+    'faskesNasional.tanpaKoordinat': 'Lokasi di peta belum tersedia',
+    'faskesNasional.situs': 'Situs',
+    'faskesNasional.sebelumnya': 'Sebelumnya',
+    'faskesNasional.berikutnya': 'Berikutnya',
 
     /* --- Rumah sakit nasional (SIRS Kemenkes) ------------------------------ */
-    'rs.judul': 'Rumah Sakit Nasional',
-    'rs.sumber':
-      'Daftar resmi SIRS Kementerian Kesehatan RI. Setiap baris berasal dari sumber itu; kolom yang tidak tersedia di sumber dibiarkan kosong, bukan diisi tebakan.',
-    'rs.totalRs': 'rumah sakit',
-    'rs.tanpaKoordinatSemua': 'sumber ini tidak menyediakan koordinat',
-    'rs.cariNama': 'Cari nama atau alamat rumah sakit',
-    'rs.aturUlang': 'Atur ulang',
-    'rs.provinsi': 'Provinsi',
-    'rs.kabupaten': 'Kabupaten / Kota',
-    'rs.jenis': 'Jenis',
-    'rs.kelas': 'Kelas',
-    'rs.kepemilikan': 'Kepemilikan',
-    'rs.semuaProvinsi': 'Semua provinsi',
-    'rs.semuaKabupaten': 'Semua kabupaten/kota',
-    'rs.pilihProvinsiDulu': 'Pilih provinsi dulu',
-    'rs.semuaJenis': 'Semua jenis',
-    'rs.semuaKelas': 'Semua kelas',
-    'rs.semuaKepemilikan': 'Semua kepemilikan',
-    'rs.kelasLabel': 'Kelas',
-    'rs.memuat': 'Memuat data rumah sakit…',
-    'rs.jumlah': '{n} rumah sakit',
-    'rs.gagal': 'Data belum berhasil dimuat',
-    'rs.galatDb':
-      'Daftar ini tersimpan di MySQL dan sekarang tidak tersambung. Nyalakan XAMPP lalu coba lagi.',
-    'rs.cobaLagi': 'Coba lagi',
-    'rs.kosong': 'Tidak ada rumah sakit yang cocok dengan filter ini.',
-    'rs.sebelumnya': 'Sebelumnya',
-    'rs.berikutnya': 'Berikutnya',
-    'rs.dari': 'dari',
-    'rs.adaKoordinat': 'Ada koordinat',
-    'rs.tanpaKoordinat': 'Tanpa koordinat',
-    'rs.catatanSumber':
-      'SIRS tidak menyediakan koordinat, kecamatan, kelurahan, email, maupun website untuk rumah sakit. Karena itu rumah sakit dari daftar ini belum bisa ditampilkan sebagai titik di peta atau dipakai untuk petunjuk arah. Untuk pencarian di sekitar lokasi, gunakan tab Fasilitas Terdekat.',
-    'rs.tabTerdekat': 'Fasilitas Terdekat',
-    'rs.tabNasional': 'Rumah Sakit Nasional',
-    'rs.tabNasionalCatatan': 'Daftar resmi Kemenkes, tanpa koordinat',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     /*
      * Dipakai HANYA saat sumber gagal dan isi database dipakai sebagai
      * cadangan. Kalimatnya harus menyebut bahwa ini bukan tarikan terbaru —
      * menyembunyikan itu membuat angka lama tampak seperti data terkini.
      */
-    'faskes.sebagian':
-      'Sumber data sedang tidak dapat dihubungi. Yang tampil adalah data yang tersimpan sebelumnya, jadi jumlahnya bisa belum lengkap.',
-    'faskes.kosong': 'Tidak ada fasilitas yang cocok dengan pencarian dan filter Anda.',
-    'faskes.galatSumber':
-      'Data fasilitas belum dapat diambil dari sumbernya. Coba lagi beberapa saat lagi.',
-    'faskes.galatJaringan': 'Sambungan ke server terputus. Periksa jaringan Anda.',
-    'faskes.galatUmum': 'Terjadi masalah saat mengambil data fasilitas.',
-    'faskes.cobaLagi': 'Coba lagi',
-    'faskes.tutup': 'Tutup detail',
-    'faskes.tidakAdaData': 'Tidak tercatat',
-    'faskes.tidakDiketahui': 'Tidak diketahui',
-    'faskes.igdAda': 'Tersedia IGD',
-    'faskes.igdTidak': 'Tidak ada IGD',
-    'faskes.lihatLokasi': 'Lihat Lokasi',
-    'faskes.petunjukArah': 'Petunjuk Arah',
-    'faskes.hubungi': 'Hubungi',
-    'faskes.website': 'Website',
-    'faskes.laporkan': 'Laporkan',
-    'faskes.catatanSumber':
-      'Data fasilitas berasal dari OpenStreetMap (lisensi ODbL). Kelengkapan dan kemutakhiran berbeda antarwilayah; kolom yang tidak tercatat ditampilkan sebagai tidak ada data.',
-    'faskes.sumberJudul': 'Sumber data',
-    'faskes.diambilPada': 'Diambil pada',
-    'faskes.detail.alamat': 'Alamat',
-    'faskes.detail.koordinat': 'Koordinat',
-    'faskes.detail.telepon': 'Telepon',
-    'faskes.detail.jam': 'Jam operasional',
-    'faskes.detail.layanan': 'Layanan',
-    'faskes.detail.igd': 'IGD',
-    'faskes.detail.sumber': 'Sumber',
-    'faskes.detail.wilayah': 'Wilayah',
-    'faskes.detail.email': 'Email',
-    'faskes.detail.verifikasi': 'Status verifikasi',
-    'faskes.terverifikasi': 'Terverifikasi',
-    'faskes.perluDicek': 'Perlu dicek ulang',
-    'faskes.belumDiverifikasi': 'Belum diverifikasi',
-    'faskes.kat.semua': 'Semua Fasilitas',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     'faskes.kat.rumah-sakit': 'Rumah Sakit',
     'faskes.kat.puskesmas': 'Puskesmas',
     'faskes.kat.klinik': 'Klinik',
@@ -244,9 +257,9 @@ const KAMUS = {
     'faskes.kat.kesehatan-masyarakat': 'Kesehatan Masyarakat',
     'faskes.kat.tradisional': 'Kesehatan Tradisional',
     'faskes.kat.khusus': 'Fasilitas Khusus',
-    'faskes.urut.jarak-dekat': 'Jarak terdekat',
-    'faskes.urut.jarak-jauh': 'Jarak terjauh',
-    'faskes.urut.nama': 'Nama fasilitas',
+    
+    
+    
 
     // umum
     'umum.terhubung': 'Terhubung',
@@ -679,181 +692,196 @@ const KAMUS = {
     'nav.tutupSidebar': 'Collapse sidebar',
     'nav.bukaSidebar': 'Expand sidebar',
     // administrative region picker
-    'wil.judul': 'Choose a region',
-    'wil.catatan':
-      'Pick a province, city/regency, district, then village. The selected location is an administrative area, not your GPS position.',
-    'wil.provinsi': 'Province',
-    'wil.kabupaten': 'City/Regency',
-    'wil.kecamatan': 'District',
-    'wil.desa': 'Village',
-    'wil.pilih': 'Select',
-    'wil.aturUlang': 'Reset',
-    'wil.pakaiGps': 'Use GPS',
-    'wil.gunakan': 'Use this location',
-    'wil.aktif': 'Active location',
-    'wil.ubah': 'Change region',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // travel directions
-    'rute.tutup': 'Close directions',
-    'rute.judul': 'Directions',
-    'rute.moda': 'Travel mode',
-    'rute.jalanKaki': 'Walking',
-    'rute.motor': 'Motorcycle',
-    'rute.mobil': 'Car',
-    'rute.menghitung': 'Calculating route…',
-    'rute.ringkas': '{jarak} km · about {menit} minutes',
-    'rute.ringkasKurangSatuMenit': '{jarak} km · under 1 minute',
-    'rute.catatanWaktu':
-      'Travel time is estimated from the route speed profile, not live traffic conditions.',
-    'rute.googleMaps': 'Open in Google Maps',
-    'rute.galat': 'The route could not be calculated.',
-    'rute.butuhLokasi': 'Set your location first',
-    'rute.asalAlamat': 'Starting point: the address you picked',
-    'rute.asalManual': 'Starting point: the point you picked on the map',
-    'rute.asalNama': 'Starting point: the location you searched',
-    'rute.asalGps': 'Starting point: your GPS location',
-    'rute.asalWilayah':
-      'Starting point: administrative region reference point, not your precise position.',
-    'wil.galat': 'Region list could not be loaded. Please try again.',
-    'wil.presisi':
-      'The search centre uses a {tingkat}-level reference point. This is not your precise position.',
-    'wil.titikGagal': 'No reference point is available for this region. Choose another region or use GPS.',
-    'wil.tingkat.provinsi': 'province',
-    'wil.tingkat.kabupaten': 'city/regency',
-    'wil.tingkat.kecamatan': 'district',
-    'wil.tingkat.desa': 'village',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     // nearest health facilities
     'nav.faskes': 'Health Facilities',
-    'faskes.judul': 'Nearby Health Facilities',
-    'faskes.pakaiLokasi': 'Use my location',
-    'faskes.perbaruiLokasi': 'Update location',
-    'faskes.izinkanLokasi': 'Allow location access',
-    'faskes.lokasiBelum': 'Location unknown',
-    'faskes.lokasiTerdeteksi': 'Your location',
-    'faskes.dariGps': 'from GPS',
-    'faskes.gpsDitolak':
-      'Location permission was denied. Use the location search field below to set your location manually.',
-    'faskes.gpsTakDidukung':
-      'This browser does not provide location services. Use the manual location search.',
-    'faskes.gpsGalat':
-      'Location could not be read right now. Try again, or use the manual location search.',
-    'faskes.cariLokasi': 'Search a place name, street, or coordinates',
-    'faskes.cariLokasiLabel': 'Manual location search',
-    'faskes.cari': 'Search',
-    'faskes.mencariLokasi': 'Searching for a location…',
-    'faskes.lokasiTidakDitemukan': 'Location not found. Try another keyword.',
-    'faskes.lokasiGalatCari': 'Location search is unreachable. Please try again.',
-    'faskes.petaKosongJudul': 'Map and health facilities',
-    'faskes.petaKosongSub': 'Choose a location to see nearby hospitals and health facilities.',
-    'faskes.cariFaskes': 'Search name, address, or service type',
-    'faskes.cariFaskesLabel': 'Health facility search',
-    'faskes.hapusCari': 'Clear search',
-    'faskes.radius': 'Search radius',
-    'faskes.urutan': 'Sort order',
-    'faskes.darurat': 'Emergency',
-    'faskes.memuat': 'Loading facilities…',
-        'faskes.gagalMuat': 'Facility data could not be retrieved',
-    'faskes.dipotong':
-      'Showing the {tampil} nearest facilities out of {n} found within this radius. The remaining {sisa} are not loaded because they exceed the display limit.',
-    'faskes.memuatLama':
-      'The first load for a new location takes a while because data is fetched directly from OpenStreetMap. Locations already opened are loaded from cache.',
-    'faskes.jumlah': '{n} facilities found',
-    'faskes.dariSimpanan': 'from cache',
+    'faskes.judul': 'Health Facilities',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    
+    
 
-    'lokasi.cariJudul': 'Find your location',
-    'lokasi.metodeLain': 'Or set the location with:',
-    'lokasi.ketikAlamat': 'Type an Address',
-    'lokasi.pilihWilayah': 'Choose a Region',
-    'lokasi.tombolCari': 'Search Location',
-    'lokasi.labelAlamat': 'Address of the search location',
-    'lokasi.placeholder': 'Enter an address, street name, building, village, or district...',
-    'lokasi.hapus': 'Clear address',
-    'lokasi.contohAlamat':
-      'Examples: “Jl. Malioboro No. 52, Yogyakarta”, “Universitas Indonesia Depok”, or “Kecamatan Cikarang Selatan”. A postcode may be included.',
-    'lokasi.pilihSalahSatu': 'There are several possibilities. Pick the right one — none is chosen for you.',
-    'lokasi.wilayahResmiMenyusul': 'official region follows after selection',
-    'lokasi.wilayahTidakDikenalPanjang':
-      'The administrative region of this point could not be recognised from the source. Its coordinates are still used, but the region is not guessed.',
-    'lokasi.tidakDiketahui': 'not provided by the source',
-    'lokasi.tidakDitemukan': 'Address not found. Try a more complete address, or use the region picker.',
-    'lokasi.layananMati':
-      'The address lookup service is unreachable. Try again, or set the location using the region picker.',
-    'lokasi.kuota': 'The address lookup service is rate-limiting requests. Wait a moment, or use the region picker.',
-    'lokasi.alamatTerpilih': 'Selected address',
-    'lokasi.wilayahPerkiraan':
-      'A point from the region picker is an APPROXIMATION (the regional centre), not your precise position. Distances and nearby facilities are measured from that point.',
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
-    'rs.judul': 'National Hospitals',
-    'rs.sumber':
-      'Official list from the Indonesian Ministry of Health SIRS. Every row comes from that source; fields the source does not provide are left empty rather than guessed.',
-    'rs.totalRs': 'hospitals',
-    'rs.tanpaKoordinatSemua': 'this source provides no coordinates',
-    'rs.cariNama': 'Search hospital name or address',
-    'rs.aturUlang': 'Reset',
-    'rs.provinsi': 'Province',
-    'rs.kabupaten': 'Regency / City',
-    'rs.jenis': 'Type',
-    'rs.kelas': 'Class',
-    'rs.kepemilikan': 'Ownership',
-    'rs.semuaProvinsi': 'All provinces',
-    'rs.semuaKabupaten': 'All regencies/cities',
-    'rs.pilihProvinsiDulu': 'Choose a province first',
-    'rs.semuaJenis': 'All types',
-    'rs.semuaKelas': 'All classes',
-    'rs.semuaKepemilikan': 'All ownership',
-    'rs.kelasLabel': 'Class',
-    'rs.memuat': 'Loading hospital data…',
-    'rs.jumlah': '{n} hospitals',
-    'rs.gagal': 'Data could not be loaded',
-    'rs.galatDb': 'This list is stored in MySQL and is currently unreachable. Start XAMPP and try again.',
-    'rs.cobaLagi': 'Try again',
-    'rs.kosong': 'No hospital matches these filters.',
-    'rs.sebelumnya': 'Previous',
-    'rs.berikutnya': 'Next',
-    'rs.dari': 'of',
-    'rs.adaKoordinat': 'Has coordinates',
-    'rs.tanpaKoordinat': 'No coordinates',
-    'rs.catatanSumber':
-      'SIRS does not provide coordinates, district, village, email, or website for hospitals. Hospitals from this list therefore cannot be shown as map points or used for directions. For a search around your location, use the Nearby Facilities tab.',
-    'rs.tabTerdekat': 'Nearby Facilities',
-    'rs.tabNasional': 'National Hospitals',
-    'rs.tabNasionalCatatan': 'Official Ministry of Health list, no coordinates',
-    'faskes.sebagian':
-      'The data source cannot be reached right now. These are previously stored results, so the list may be incomplete.',
-    'faskes.kosong': 'No facilities match your search and filters.',
-    'faskes.galatSumber':
-      'Facility data could not be retrieved from its source. Please try again shortly.',
-    'faskes.galatJaringan': 'The connection to the server was lost. Check your network.',
-    'faskes.galatUmum': 'Something went wrong while loading facility data.',
-    'faskes.cobaLagi': 'Try again',
-    'faskes.tutup': 'Close details',
-    'faskes.tidakAdaData': 'Not recorded',
-    'faskes.tidakDiketahui': 'Unknown',
-    'faskes.igdAda': 'Emergency unit available',
-    'faskes.igdTidak': 'No emergency unit',
-    'faskes.lihatLokasi': 'View Location',
-    'faskes.petunjukArah': 'Directions',
-    'faskes.hubungi': 'Call',
-    'faskes.website': 'Website',
-    'faskes.laporkan': 'Report',
-    'faskes.catatanSumber':
-      'Facility data comes from OpenStreetMap (ODbL licence). Coverage and freshness vary by region; fields that are not recorded are shown as not recorded.',
-    'faskes.sumberJudul': 'Data source',
-    'faskes.diambilPada': 'Retrieved on',
-    'faskes.detail.alamat': 'Address',
-    'faskes.detail.koordinat': 'Coordinates',
-    'faskes.detail.telepon': 'Phone',
-    'faskes.detail.jam': 'Opening hours',
-    'faskes.detail.layanan': 'Services',
-    'faskes.detail.igd': 'Emergency',
-    'faskes.detail.sumber': 'Source',
-    'faskes.detail.wilayah': 'Region',
-    'faskes.detail.email': 'Email',
-    'faskes.detail.verifikasi': 'Verification status',
-    'faskes.terverifikasi': 'Verified',
-    'faskes.perluDicek': 'Needs re-checking',
-    'faskes.belumDiverifikasi': 'Not verified',
-    'faskes.kat.semua': 'All Facilities',
+    'faskesNasional.judul': 'National Health Facility Search',
+    'faskesNasional.catatanKepala':
+      'Every health facility whose data we hold: official Ministry of Health hospitals and OpenStreetMap facilities. Filter by type, province, or source.',
+    'faskesNasional.sumberLabel': 'Data source',
+    'faskesNasional.sumber':
+      'Combines two sources: SIRS from the Indonesian Ministry of Health (official hospitals) and OpenStreetMap (clinics, community health centres, pharmacies, laboratories, and more). Fields the source does not provide are left empty rather than guessed.',
+    'faskesNasional.totalFaskes': 'facilities',
+    'faskesNasional.berkoordinat': 'with coordinates',
+    'faskesNasional.cariNama': 'Search facility name or address',
+    'faskesNasional.aturUlang': 'Reset',
+    'faskesNasional.kategori': 'Facility type',
+    'faskesNasional.provinsi': 'Province',
+    'faskesNasional.kabupaten': 'Regency / City',
+    'faskesNasional.kelas': 'Hospital class',
+    'faskesNasional.semuaKategori': 'All types',
+    'faskesNasional.semuaProvinsi': 'All provinces',
+    'faskesNasional.semuaKabupaten': 'All regencies/cities',
+    'faskesNasional.pilihProvinsiDulu': 'Choose a province first',
+    'faskesNasional.semuaSumber': 'All sources',
+    'faskesNasional.semuaKelas': 'All classes',
+    'faskesNasional.hanyaBerkoordinat': 'Only those with coordinates',
+    'faskesNasional.filterGagal': 'Filter options could not be loaded',
+    'faskesNasional.memuat': 'Loading facility data…',
+    'faskesNasional.memperbarui': 'updating…',
+    'faskesNasional.hasil': 'facilities found',
+    'faskesNasional.halaman': 'page',
+    'faskesNasional.tidakAda': 'No facility matches this filter.',
+    'faskesNasional.bukaPeta': 'View map',
+    'faskesNasional.tanpaKoordinat': 'Map location not available',
+    'faskesNasional.situs': 'Website',
+    'faskesNasional.sebelumnya': 'Previous',
+    'faskesNasional.berikutnya': 'Next',
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     'faskes.kat.rumah-sakit': 'Hospitals',
     'faskes.kat.puskesmas': 'Community Health Centres',
     'faskes.kat.klinik': 'Clinics',
@@ -864,9 +892,9 @@ const KAMUS = {
     'faskes.kat.kesehatan-masyarakat': 'Public Health',
     'faskes.kat.tradisional': 'Traditional Medicine',
     'faskes.kat.khusus': 'Specialised Facilities',
-    'faskes.urut.jarak-dekat': 'Nearest first',
-    'faskes.urut.jarak-jauh': 'Farthest first',
-    'faskes.urut.nama': 'Facility name',
+    
+    
+    
 
     'umum.terhubung': 'Connected',
     'umum.memeriksa': 'Checking server…',

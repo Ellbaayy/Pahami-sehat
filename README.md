@@ -18,7 +18,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Tanya AI + sumber | berjalan. Pencarian memakai kata kunci terpilih, bukan kalimat pengguna apa adanya |
 > | Sederhanakan teks | berjalan (4 tingkat baca), menjadi salah satu mode di komposer Tanya AI |
 > | Cek klaim | berjalan. Tiga putusan (`didukung`, `tidak_didukung`, `tidak_bisa_dipastikan`) dengan **lencana yang menyebut subjeknya** ("Klaim …"), satu kalimat penjelas per putusan, dan daftar sumber yang tidak pernah kosong tanpa keterangan. `tidak_didukung` hanya dipakai bila sumber resmi menyatakan sebaliknya |
-> | Fasilitas Kesehatan | berjalan. Lokasi lewat **ketik alamat** atau **pilih wilayah** (GPS pilihan, bukan syarat); **322 fasilitas** pada uji Malioboro 7 Nov 2026, petunjuk arah tiga moda, dan **3.325 RS** resmi SIRS Kemenkes. Data OSM dipetakan sukarela — field kosong ditulis "Tidak tercatat", bukan dikarang |
+> | Fasilitas Kesehatan | berjalan. **Pencarian nasional seluruh faskes** (7.423 baris: 3.325 RS resmi SIRS Kemenkes + 4.098 fasilitas OpenStreetMap) dengan saringan jenis, provinsi, kabupaten/kota, sumber, dan kelas RS. Tab "Fasilitas Terdekat" dihapus 8 Nov 2026. Field yang tidak ada di sumbernya dibiarkan kosong, bukan dikarang |
 > | Suara dibacakan | **berjalan sebagai suara neural Microsoft — hanya di versi yang dijalankan di komputer sendiri.** Diukur ulang 20 Okt 2026: `POST /api/suara` menjawab `200 audio/mpeg`, berkas 24 kHz mono 48 kbps, 17.424 byte untuk satu kalimat, 0,80 detik. Di Vercel tetap **`502`** (diukur ulang 20 Okt 2026) karena fungsi serverless tidak bisa mempertahankan WebSocket — batas platform, bukan bug. Rincian: `app/server/suara.js` |
 > | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya. Butuh konteks aman (`https://` atau `localhost`) |
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
@@ -44,7 +44,7 @@ Tangkapan layar di bawah diambil langsung dari aplikasi yang berjalan
 | Skrip | Yang diambil |
 |---|---|
 | [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | 7 halaman dashboard (1440×900), ponsel (390×844, DPR 2), dan mode kontras tinggi |
-| [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | 5 tangkapan Fasilitas Kesehatan: tab RS nasional, autocomplete alamat, peta + daftar, detail, petunjuk arah |
+| [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | 5 tangkapan Fasilitas Kesehatan: daftar nasional, saringan jenis, pencarian nama, saringan wilayah, tampilan ponsel |
 | [`ambil-tangkapan-prototipe.mjs`](ambil-tangkapan-prototipe.mjs) | 10 bagian halaman penjelasan (1440×900) + 2 tampilan ponsel |
 
 Desktop diambil pada **1440×900**, ponsel **390×844 dengan DPR 2**
@@ -89,32 +89,39 @@ bedanya nyaris tak terlihat karena teksnya memang sudah gelap:
 
 ![Beranda dalam mode kontras tinggi](docs/tangkapan-layar/dashboard-kontras-tinggi.png)
 
-### Fasilitas Kesehatan Terdekat
+### Fasilitas Kesehatan Nasional
 
-Fitur ini masuk **4 Nov 2026**; tangkapan di bawah diambil ulang **7 Nov 2026**
-lewat `ambil-tangkapan.mjs` pada 1440×900, memakai jalur **ketik
-alamat** ("Malioboro Yogyakarta") — alur yang menyerupai Google Maps dan yang
-ingin ditunjukkan. Skrip menulis ke `docs/tangkapan-layar/` **dan** ke
-`docs/prototipe/assets/tangkapan-layar/` sekaligus; halaman penjelasan memakai
-folder kedua, dan sebelum ini skrip hanya menulis ke yang pertama sehingga
-halaman terus menampilkan gambar lama tanpa pesan apa pun.
+Halaman ini **berubah 8 Nov 2026**. Sebelumnya ada dua tab — "Fasilitas
+Terdekat" (pencarian radius di atas peta) dan "Rumah Sakit Nasional" (3.325 RS
+SIRS). Tab radius dihapus, dan daftar nasional diperluas menjadi **seluruh
+fasilitas kesehatan** yang datanya kami miliki: **7.423 baris** — 3.325 rumah
+sakit resmi Kemenkes (SIRS) dan 4.098 fasilitas OpenStreetMap (klinik,
+puskesmas, apotek, laboratorium, praktik mandiri, dan lainnya).
 
-| Autocomplete alamat | Peta + daftar setelah alamat dipilih |
+Saringan yang tersedia: nama/alamat, jenis fasilitas (10 kategori), provinsi,
+kabupaten/kota, sumber data, kelas rumah sakit, dan "hanya yang punya
+koordinat". Semua pilihan saringan dibaca dari database, bukan daftar tetap di
+kode — kategori atau provinsi baru ikut muncul tanpa mengubah apa pun.
+
+| Daftar nasional (tanpa saringan) | Saringan jenis fasilitas |
 |---|---|
-| ![Saran alamat](docs/tangkapan-layar/faskes-1-autocomplete.png) | ![Peta dan daftar](docs/tangkapan-layar/faskes-2-peta-daftar.png) |
+| ![Daftar nasional](docs/tangkapan-layar/faskes-0-daftar-nasional.png) | ![Saringan jenis](docs/tangkapan-layar/faskes-1-saringan-jenis.png) |
 
-| Detail fasilitas | Petunjuk arah | RS Nasional (SIRS) |
-|---|---|---|
-| ![Detail fasilitas](docs/tangkapan-layar/faskes-3-detail.png) | ![Petunjuk arah](docs/tangkapan-layar/faskes-4-petunjuk-arah.png) | ![RS Nasional](docs/tangkapan-layar/faskes-0-rs-nasional.png) |
+| Pencarian nama ("siloam") | Saringan wilayah |
+|---|---|
+| ![Pencarian nama](docs/tangkapan-layar/faskes-2-pencarian-nama.png) | ![Saringan wilayah](docs/tangkapan-layar/faskes-3-saringan-wilayah.png) |
 
-Yang perlu diperhatikan: sidebar **7 menu**; tiap saran alamat menyebut kota
-dan provinsinya supaya "Malioboro" tidak tertukar antara yang di Surabaya dan
-yang di Yogyakarta; setelah alamat dipilih, wilayah terdeteksi sampai
-kelurahan (**Danurejan / Sosrokusuman**) dan **322 fasilitas** muncul (angka
-ini bergerak mengikuti data OpenStreetMap — saat diukur 4 Nov 2026 jumlahnya
-324); panel petunjuk arah menampilkan tiga moda beserta jarak/waktu/langkah
-dan menyebut titik awalnya sebagai **"alamat yang Anda pilih"**, bukan GPS;
-tab Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
+![Tampilan ponsel](docs/tangkapan-layar/faskes-4-hp.png)
+
+Yang perlu diperhatikan: angka di kepala panel (**7.423 fasilitas · 4.098
+berkoordinat**) berasal dari database dan ikut berubah kalau datanya berubah;
+pencarian "siloam" menyaring dari 7.423 menjadi **54** hasil; memilih provinsi
+mengaktifkan dropdown kabupaten/kota; dan **sebagian besar rumah sakit SIRS
+tidak punya koordinat** — baris seperti itu tetap ditampilkan dengan penanda
+"Lokasi di peta belum tersedia", bukan diberi titik karangan.
+
+Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
+`ambil-tangkapan.mjs` pada 1440×900 (dan 390×844 untuk tampilan ponsel).
 
 ### Halaman penjelasan (prototype)
 
@@ -158,9 +165,9 @@ tab Rumah Sakit Nasional memuat **3.325 RS** dengan penyaring lengkap.
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
 | [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | Mengambil 10 tangkapan dashboard: 7 halaman pada 1440×900, 2 tampilan ponsel, 1 mode kontras tinggi. Jawaban Tanya AI dan putusan Cek Klaim diambil dari permintaan sungguhan. |
-| [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | Mengambil 5 tangkapan Fasilitas Kesehatan lewat Chrome + CDP (peta Leaflet tidak pernah "tenang", jadi harness biasa timeout). |
+| [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | Mengambil 5 tangkapan Fasilitas Kesehatan lewat Chrome + CDP, termasuk mengetik sungguhan untuk membuktikan pencarian menyaring. |
 | [`ambil-tangkapan-prototipe.mjs`](ambil-tangkapan-prototipe.mjs) | Mengambil 10 bagian halaman penjelasan + 2 tampilan ponsel, menggulir per bagian dan menunggu posisi gulir benar-benar sampai. |
-| [`uji-*.mjs`](.) | **36 berkas uji** — 31 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
+| [`uji-*.mjs`](.) | **37 berkas uji** — 32 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -213,7 +220,7 @@ pahami-sehat/
 ├── README.md
 ├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
 ├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
-├── uji-*.mjs                  ← 36 berkas uji (31 tanpa jaringan)
+├── uji-*.mjs                  ← 37 berkas uji (32 tanpa jaringan)
 ├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
@@ -226,7 +233,7 @@ pahami-sehat/
 │   ├── .env.example
 │   ├── public/ocr/            ← mesin OCR: worker, core WASM, data bahasa (17 MB)
 │   ├── scripts/               ← salin-prototipe, mampatkan-dist, bebaskan-port
-│   ├── server/                ← backend Express (30 berkas)
+│   ├── server/                ← backend Express (31 berkas)
 │   ├── src/                   ← frontend React: App.jsx, lib/, data/, components/
 │   ├── api/index.js           ← pintu masuk serverless Vercel
 │   ├── index.html
@@ -657,6 +664,10 @@ lebih berbahaya daripada tidak ada penyaring.
 | POST | `/api/suara` | teks → MP3 (suara neural) |
 | GET | `/api/faskes` | fasilitas kesehatan di sekitar satu titik (Overpass/OpenStreetMap) |
 | GET | `/api/faskes/kategori` | sepuluh kategori fasilitas yang dipakai antarmuka |
+| GET | `/api/faskes/nasional` | **pencarian seluruh faskes nasional** — 7.423 baris (SIRS + OpenStreetMap); `?cari=&kategori=&provinsi=&kabupaten=&sumber=&kelas=&koordinat=1&halaman=&perHalaman=&urut=` |
+| GET | `/api/faskes/nasional/filter` | pilihan saringan nasional dari database: kategori, provinsi, kabupaten, sumber, kelas, jenis, kepemilikan |
+| GET | `/api/faskes/nasional/ringkasan` | jumlah total, berkoordinat, SIRS, OSM, tanpa provinsi, dan per kategori |
+| GET | `/api/faskes/nasional/:id` | rincian satu fasilitas nasional menurut id database |
 | GET | `/api/faskes/cari-lokasi` | cari lokasi menurut nama tempat (Nominatim) |
 | GET | `/api/wilayah` | daftar wilayah administratif bertingkat (`tingkat=provinsi\|kabupaten\|kecamatan\|desa` + `induk=<kode>`) |
 | GET | `/api/wilayah/titik` | titik referensi sebuah wilayah beserta tingkat ketelitiannya |
@@ -1181,10 +1192,10 @@ bukan diasumsikan:
 | email / website | tidak ada |
 | status operasional | tidak ada sebagai field |
 
-Karena itu rumah sakit SIRS **tidak** ditampilkan sebagai titik di peta. Ada tab
-terpisah: **"Fasilitas Terdekat"** (radius, Leaflet) dan **"Rumah Sakit
-Nasional"** (daftar + filter). Mencampurnya akan membuat RS tanpa koordinat
-tampil seolah punya lokasi akurat.
+Karena itu rumah sakit SIRS **tidak** ditampilkan sebagai titik di peta. Sejak
+8 Nov 2026 seluruh faskes ada di satu daftar nasional, dan baris tanpa koordinat
+diberi penanda **"Lokasi di peta belum tersedia"** — tidak diberi titik
+karangan. Tombol peta hanya muncul untuk baris yang benar-benar berkoordinat.
 
 **Sinkronisasi ulang aman dan idempoten.** Diuji: tarikan kedua menghasilkan
 **0 baru, 3.325 tidak berubah, 3.325 kode unik**. RS yang tidak lagi muncul
@@ -1490,7 +1501,7 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 7 Nov 2026: **31 berkas lulus, 0 gagal,
+memperbarui daftar di mana pun. Diukur 8 Nov 2026: **32 berkas lulus, 0 gagal,
 ±25 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
 atau API key sengaja dikeluarkan dan dijalankan terpisah (lihat bawah) — supaya
 gerbang ini tidak bergantung pada keadaan mesin.
@@ -1528,11 +1539,12 @@ node uji-statistik-faskes.mjs  # statistik nasional: total 49.548, cakupan, kait
 node uji-cn.mjs                  # penggabung kelas Tailwind: kelas terakhir menang (8)
 node uji-ukuran-bundel.mjs       # pagar ukuran bundel: index.js < 460 KB (1)
 node uji-peramban.mjs           # peramban sungguhan: 7 halaman × 2 bahasa (105)
-node uji-dokumentasi.mjs         # angka di README sama dengan isi repo (35)
-node uji-semua.mjs              # satu perintah untuk semuanya (30)
+node uji-dokumentasi.mjs         # angka di README sama dengan isi repo (37)
+node uji-semua.mjs              # satu perintah untuk semuanya (32)
 node uji-jam.mjs                # jam acuan dari header internet (17)
 node uji-rotasi.mjs             # rotasi daftar konten harian (22)
 node uji-faskes-db.mjs          # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)
+node uji-faskes-nasional.mjs    # pencarian faskes nasional: paginasi, saringan, koordinat (dilewati tanpa MariaDB; 36)
 node uji-bahasa.mjs             # kesehatan kamus id/en (kunci seimbang, tak menganggur) (25)
 node uji-geocoding.mjs    # deteksi wilayah dari `address` Nominatim nyata, 38 peta ISO (37)
 node uji-faskes-db.mjs    # penyimpanan fasilitas di MySQL (dilewati tanpa MariaDB; 12)

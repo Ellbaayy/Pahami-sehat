@@ -240,184 +240,184 @@ async function main() {
   await jeda(2000)
 
   /* ====================================================================== *
-   * TANGKAPAN 0: TAB RS NASIONAL (SIRS)
+   * TANGKAPAN 0: DAFTAR NASIONAL APA ADANYA
    *
-   * Diambil PALING AWAL karena tidak butuh lokasi sama sekali — daftarnya
-   * berasal dari database, bukan dari pencarian sekitar titik. Kalau diambil
-   * belakangan, halaman sudah penuh peta dan daftar fasilitas sehingga tab
-   * yang ingin ditonjolkan justru tenggelam.
+   * Diambil lebih dulu, tanpa satu pun filter aktif, supaya angka besar
+   * (7.423 fasilitas) terlihat. Angka ini berasal dari database, bukan
+   * dikarang — kalau database berubah, tangkapan ini ikut berubah.
    * ====================================================================== */
-  console.log('  tab RS Nasional…')
-  await evaluasi(
-    cdp,
-    `(() => {
-      const b = [...document.querySelectorAll('main [role="tab"], main button')]
-        .find(e => /Rumah Sakit Nasional/i.test(e.textContent));
-      if (b) b.click();
-      return !!b;
-    })()`,
-  )
-  await jeda(2500)
-  const adaRs = await tungguSampai(
+  console.log('  daftar nasional…')
+  const adaDaftar = await tungguSampai(
     async () =>
       (await evaluasi(
         cdp,
         `(() => {
           const t = document.querySelector('main')?.innerText || '';
-          return /rumah sakit/i.test(t) && /\\d{3,}/.test(t);
+          const m = t.match(/([\\d\\.]+)\\s*fasilitas ditemukan/);
+          return m ? Number(m[1].replace(/\\./g, '')) : 0;
         })()`,
-      )) === true,
-    30000,
+      )) > 1000,
+    40000,
     800,
   )
-  if (adaRs) {
-    await simpan('faskes-0-rs-nasional.png')
+  if (adaDaftar) {
+    await simpan('faskes-0-daftar-nasional.png')
   } else {
-    console.log('  (tab RS Nasional tidak siap — dilewati)')
+    throw new Error('daftar nasional tidak memuat hasil — server/database mati?')
   }
 
   /* ====================================================================== *
-   * TANGKAPAN 1-2: PENCARIAN ALAMAT (fitur baru)
+   * TANGKAPAN 1: SARINGAN JENIS FASILITAS
    *
-   * Jalur ketik alamat, bukan jalur wilayah: inilah yang menyerupai Google
-   * Maps dan yang ingin ditunjukkan. Kandidat dipilih dari daftar saran
-   * SUNGGUHAN (Photon), bukan diketik lalu ditekan Enter tanpa melihat.
+   * Memilih "Rumah Sakit" membuktikan saringan benar-benar menyaring: angka
+   * turun dari 7.423 menjadi jumlah rumah sakit saja.
    * ====================================================================== */
-  console.log('  kembali ke tab Cari Fasilitas…')
-  await evaluasi(
+  console.log('  saringan jenis…')
+  const angkaAwal = await evaluasi(
     cdp,
     `(() => {
-      const b = [...document.querySelectorAll('main [role="tab"], main button')]
-        .find(e => /Fasilitas Terdekat/i.test(e.textContent));
-      if (b) b.click();
-      return !!b;
+      const t = document.querySelector('main')?.innerText || '';
+      const m = t.match(/([\\d\\.]+)\\s*fasilitas ditemukan/);
+      return m ? Number(m[1].replace(/\\./g, '')) : 0;
     })()`,
   )
-  await jeda(1500)
-
-  console.log('  mengetik alamat…')
   await evaluasi(
     cdp,
     `(() => {
-      const i = document.getElementById('input-alamat');
-      if (!i) return false;
-      i.focus();
-      const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-      set.call(i, 'Malioboro Yogyakarta');
-      i.dispatchEvent(new Event('input', { bubbles: true }));
+      const s = document.querySelectorAll('main select')[0];
+      if (!s) return false;
+      const o = [...s.options].find(o => o.value === 'rumah-sakit');
+      if (!o) return false;
+      s.value = o.value;
+      s.dispatchEvent(new Event('change', { bubbles: true }));
       return true;
     })()`,
   )
-
-  // Tunggu daftar saran benar-benar terisi — bukan sekadar jeda tetap.
-  const adaSaran = await tungguSampai(
+  const angkaSaring = await tungguSampai(
     async () =>
-      (await evaluasi(cdp, `document.querySelectorAll('#alamat-saran li').length > 0`)) === true,
-    30000,
-    500,
+      (await evaluasi(
+        cdp,
+        `(() => {
+          const t = document.querySelector('main')?.innerText || '';
+          const m = t.match(/([\\d\\.]+)\\s*fasilitas ditemukan/);
+          return m ? Number(m[1].replace(/\\./g, '')) : 0;
+        })()`,
+      )) > 0,
+    20000,
+    600,
   )
-  if (!adaSaran) throw new Error('saran alamat tidak muncul — Photon hidup? coba lagi')
-  await jeda(700)
-  await simpan('faskes-1-autocomplete.png')
+  if (!angkaSaring) throw new Error('saringan jenis tidak menghasilkan apa pun')
+  await jeda(800)
+  await simpan('faskes-1-saringan-jenis.png')
 
-  // Pilih saran pertama, lalu tunggu wilayah terdeteksi.
-  console.log('  memilih saran…')
+  /* ====================================================================== *
+   * TANGKAPAN 2: PENCARIAN NAMA
+   *
+   * Diketik sungguhan lewat CDP (bukan disetel lewat JS) supaya yang terekam
+   * adalah perilaku yang dilihat pengguna, termasuk jeda 350 ms-nya.
+   * ====================================================================== */
+  console.log('  pencarian nama…')
   await evaluasi(
     cdp,
     `(() => {
-      const b = document.querySelector('#alamat-saran li button');
-      if (b) b.click();
-      return !!b;
+      const s = document.querySelectorAll('main select')[0];
+      if (s) { s.value = ''; s.dispatchEvent(new Event('change', { bubbles: true })); }
+      return true;
     })()`,
   )
+  await jeda(600)
+  await evaluasi(
+    cdp,
+    `(() => {
+      const i = document.querySelector('main input[type="search"]');
+      if (i) i.focus();
+      return !!i;
+    })()`,
+  )
+  for (const huruf of 'siloam') {
+    await cdp.kirim('Input.dispatchKeyEvent', { type: 'keyDown', text: huruf })
+    await cdp.kirim('Input.dispatchKeyEvent', { type: 'keyUp' })
+    await jeda(70)
+  }
+  const adaCari = await tungguSampai(
+    async () =>
+      (await evaluasi(
+        cdp,
+        `(() => {
+          const t = document.querySelector('main')?.innerText || '';
+          const m = t.match(/([\\d\\.]+)\\s*fasilitas ditemukan/);
+          const n = m ? Number(m[1].replace(/\\./g, '')) : 0;
+          return n > 0 && n < 200;
+        })()`,
+      )) === true,
+    20000,
+    600,
+  )
+  if (!adaCari) throw new Error('pencarian nama tidak menyaring hasil')
+  await jeda(700)
+  await simpan('faskes-2-pencarian-nama.png')
 
+  /* ====================================================================== *
+   * TANGKAPAN 3: SARINGAN WILAYAH (bertahap)
+   *
+   * Provinsi saja dulu: memilih provinsi mengaktifkan dropdown kabupaten,
+   * dan itu yang ingin terlihat di gambar.
+   * ====================================================================== */
+  console.log('  saringan wilayah…')
+  await evaluasi(
+    cdp,
+    `(() => {
+      const i = document.querySelector('main input[type="search"]');
+      if (i) { i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); }
+      return true;
+    })()`,
+  )
+  await jeda(700)
+  await evaluasi(
+    cdp,
+    `(() => {
+      const sel = document.querySelectorAll('main select');
+      if (!sel[1]) return false;
+      const o = [...sel[1].options].find(o => /jawa timur/i.test(o.text));
+      if (!o) return false;
+      sel[1].value = o.value;
+      sel[1].dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    })()`,
+  )
   const adaWilayah = await tungguSampai(
     async () =>
       (await evaluasi(
         cdp,
         `(() => {
-          const t = document.querySelector('main')?.innerText || '';
-          return /Provinsi/.test(t) && /Kecamatan/.test(t);
+          const sel = document.querySelectorAll('main select');
+          return !!(sel[2] && !sel[2].disabled && sel[2].options.length > 2);
         })()`,
       )) === true,
-    45000,
-    800,
+    20000,
+    600,
   )
-  if (!adaWilayah) throw new Error('wilayah tidak terdeteksi setelah memilih alamat')
-
-  // Tunggu fasilitas benar-benar datang (bisa 40-50 detik untuk wilayah baru).
-  const adaDataAlamat = await tungguSampai(
-    async () =>
-      (await evaluasi(
-        cdp,
-        `(() => {
-          const t = document.querySelector('main')?.innerText || '';
-          return /fasilitas ditemukan/.test(t) && document.querySelectorAll('.leaflet-marker-icon').length > 0;
-        })()`,
-      )) === true,
-    150000,
-    1000,
-  )
-  if (!adaDataAlamat) throw new Error('fasilitas dari alamat tidak siap')
-  await jeda(2500)
-  await simpan('faskes-2-peta-daftar.png')
+  if (!adaWilayah) throw new Error('saringan provinsi tidak mengaktifkan kabupaten')
+  await jeda(800)
+  await simpan('faskes-3-saringan-wilayah.png')
 
   /* ====================================================================== *
-   * TANGKAPAN 3: DETAIL FASILITAS
+   * TANGKAPAN 4: HP 375 px
+   *
+   * Diambil terakhir karena ukuran viewport diubah: setelah ini semua
+   * tangkapan berikutnya akan ikut sempit.
    * ====================================================================== */
-  const kartu = await evaluasi(
-    cdp,
-    `(() => {
-      const m = document.querySelector('main');
-      const k = [...m.querySelectorAll('button')].filter(e => {
-        const s = e.textContent;
-        return s.length < 240 && (s.indexOf(' km') > 0 || s.indexOf(' m') > 0);
-      });
-      const t = k[0];
-      if (t) t.click();
-      return t ? t.innerText.replace(/\\n/g, ' | ').slice(0, 50) : null;
-    })()`,
-  )
-  console.log('  kartu:', kartu)
-  await jeda(2000)
-  await simpan('faskes-3-detail.png')
-
-  /* ====================================================================== *
-   * TANGKAPAN 4: PETUNJUK ARAH (jalan kaki, supaya beda dari mobil)
-   * ====================================================================== */
-  await evaluasi(
-    cdp,
-    `(() => {
-      const b = [...document.querySelectorAll('main button')]
-        .find(e => /Petunjuk Arah/i.test(e.textContent));
-      if (b) b.click();
-      return !!b;
-    })()`,
-  )
-  const adaRute = await tungguSampai(
-    async () =>
-      (await evaluasi(
-        cdp,
-        `(() => {
-          const t = document.querySelector('main')?.innerText || '';
-          return /km · sekitar|kurang dari 1 menit/.test(t) && document.querySelectorAll('ol li').length > 0;
-        })()`,
-      )) === true,
-    60000,
-    800,
-  )
-  if (!adaRute) throw new Error('rute tidak muncul')
-
-  await evaluasi(
-    cdp,
-    `(() => {
-      const b = [...document.querySelectorAll('main button')].find(e => e.textContent.trim() === 'Jalan kaki');
-      if (b) b.click();
-      return !!b;
-    })()`,
-  )
-  await jeda(3000)
-  await simpan('faskes-4-petunjuk-arah.png')
+  console.log('  tampilan HP…')
+  await cdp.kirim('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+  })
+  await jeda(1200)
+  await evaluasi(cdp, 'window.scrollTo(0, 0)')
+  await jeda(600)
+  await simpan('faskes-4-hp.png')
 
   cdp.tutup()
   console.log('\nselesai — berkas di docs/tangkapan-layar/')

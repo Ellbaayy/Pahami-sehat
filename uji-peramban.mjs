@@ -69,12 +69,15 @@ const HALAMAN = [
      sudah diperiksa: bukan akibat perubahan ukuran sentuh. Yang diuji untuk
      halaman ini adalah versi laptop, tempat juri melihatnya. */
   { indeks: 2, nama: 'Cek Klaim', muatSatuLayar: 'laptop' },
-  /* Fasilitas Kesehatan memuat peta + daftar fasilitas yang memang bergulir di
-     dalam panelnya sendiri. Halaman ini sengaja DIKECUALIKAN dari aturan muat
-     satu layar untuk HP, sama seperti katalog panjang: memaksa peta dan daftar
-     muat dalam 812 px membuat keduanya tidak terbaca. Yang diuji adalah versi
-     laptop, tempat juri melihatnya. */
-  { indeks: 3, nama: 'Fasilitas Kesehatan', muatSatuLayar: 'laptop' },
+  /* Fasilitas Kesehatan adalah halaman KATALOG, bukan halaman formulir: isinya
+     panel saringan enam kolom ditambah daftar hasil yang memang panjang
+     (terukur 2.807 px pada laptop pendek 1366×700). Memaksa semuanya muat
+     dalam satu layar berarti memotong daftar hasil — yang justru inti
+     halamannya. Karena itu halaman ini TIDAK diuji dengan aturan muat satu
+     layar; yang diuji adalah: tanpa galat runtime dan tanpa luapan HORIZONTAL
+     (dua pemeriksaan di bawah), karena luapan ke samping itulah yang merusak
+     tampilan, bukan gulir ke bawah. */
+  { indeks: 3, nama: 'Fasilitas Kesehatan' },
   { indeks: 4, nama: 'Riwayat', muatSatuLayar: 'semua' },
   { indeks: 5, nama: 'Kuesioner', muatSatuLayar: 'semua' },
   { indeks: 6, nama: 'Pengaturan' },

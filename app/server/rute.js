@@ -57,6 +57,12 @@ import { fasilitasSekitarDb, simpanBanyak, ambilFasilitas, cakupanInfo, catatCak
 import { ambilRute, tautanGoogleMaps, COSTING } from './rute-perjalanan.js'
 import { cariRsSirs, rsSirsMenurutKode, pilihanFilterSirs, ringkasanSirs } from './rsSirs.js'
 import {
+  cariFaskesNasional,
+  faskesNasionalMenurutId,
+  pilihanFilterNasional,
+  ringkasanNasional,
+} from './faskesNasional.js'
+import {
   keteranganDb,
   ambilBerita,
   hitungBeritaSegar,
@@ -952,6 +958,91 @@ rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
       keadaan: e?.keadaan ?? [],
     })
   }
+}))
+
+/**
+ * SELURUH fasilitas kesehatan nasional — pengganti daftar "Rumah Sakit
+ * Nasional" yang dulu hanya berisi rumah sakit SIRS.
+ *
+ * Isinya 7.423 baris dari dua sumber: 3.325 rumah sakit resmi Kemenkes (SIRS)
+ * dan 4.098 fasilitas OpenStreetMap (klinik, puskesmas, apotek, laboratorium,
+ * praktik mandiri, dan seterusnya). Keduanya TIDAK digabung menjadi satu baris
+ * — satu fasilitas bisa muncul di kedua sumber, dan menggabungkannya berarti
+ * mengarang keyakinan bahwa keduanya entitas yang sama.
+ *
+ * `?cari=` menyaring nama/alamat, `?kategori=` menyaring jenis fasilitas.
+ */
+rute.get('/api/faskes/nasional', batasFaskes, bungkus(async (req, res) => {
+  const q = req.query ?? {}
+  const angka = (v) => (Number.isFinite(Number(v)) ? Number(v) : null)
+
+  const hasil = await cariFaskesNasional({
+    cari: q.cari ? String(q.cari).slice(0, 120) : null,
+    kategori: q.kategori ? String(q.kategori).slice(0, 40) : null,
+    provinsi: q.provinsi ? String(q.provinsi).slice(0, 80) : null,
+    kabupaten: q.kabupaten ? String(q.kabupaten).slice(0, 80) : null,
+    sumber: q.sumber ? String(q.sumber).slice(0, 40) : null,
+    kelas: q.kelas ? String(q.kelas).slice(0, 20) : null,
+    jenis: q.jenis ? String(q.jenis).slice(0, 40) : null,
+    kepemilikan: q.kepemilikan ? String(q.kepemilikan).slice(0, 60) : null,
+    hanyaKoordinat: String(q.koordinat ?? '') === '1',
+    igd: String(q.igd ?? '') === '1',
+    buka24: String(q.buka24 ?? '') === '1',
+    urut: q.urut ? String(q.urut).slice(0, 20) : 'nama',
+    halaman: angka(q.halaman) ?? 1,
+    perHalaman: angka(q.perHalaman) ?? 25,
+  })
+
+  if (!hasil) {
+    res.status(503).json({
+      ok: false,
+      code: 'db_mati',
+      pesan:
+        'Data fasilitas nasional tersimpan di MySQL dan database sedang tidak tersambung. Nyalakan XAMPP (MySQL) lalu coba lagi.',
+    })
+    return
+  }
+
+  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')
+  res.json({ ok: true, ...hasil })
+}))
+
+/** Pilihan filter untuk daftar fasilitas nasional (kategori, provinsi, sumber, …). */
+rute.get('/api/faskes/nasional/filter', batasMeta, bungkus(async (_req, res) => {
+  const f = await pilihanFilterNasional()
+  if (!f) {
+    res.status(503).json({ ok: false, code: 'db_mati', pesan: 'Database sedang tidak tersambung.' })
+    return
+  }
+  res.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=1200')
+  res.json({ ok: true, ...f })
+}))
+
+/** Ringkasan isi database fasilitas nasional — dipakai kepala halaman. */
+rute.get('/api/faskes/nasional/ringkasan', batasMeta, bungkus(async (_req, res) => {
+  const r = await ringkasanNasional()
+  if (!r) {
+    res.status(503).json({ ok: false, code: 'db_mati', pesan: 'Database sedang tidak tersambung.' })
+    return
+  }
+  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')
+  res.json({ ok: true, ...r })
+}))
+
+/** Rincian satu fasilitas nasional menurut id database. */
+rute.get('/api/faskes/nasional/:id', batasMeta, bungkus(async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id) || id <= 0) {
+    res.status(400).json({ ok: false, code: 'id_tidak_sah' })
+    return
+  }
+  const f = await faskesNasionalMenurutId(id)
+  if (!f) {
+    res.status(404).json({ ok: false, code: 'faskes_tidak_ditemukan' })
+    return
+  }
+  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')
+  res.json({ ok: true, faskes: f })
 }))
 
 rute.get('/api/faskes/kategori', batasMeta, (_req, res) => {
