@@ -10,6 +10,11 @@
 #
 # Yang TIDAK dijalankan di sini, dan alasannya disebut apa adanya:
 #   - uji-jawaban.mjs  -> butuh server lokal + KENARI_API_KEY (rahasia)
+#   - uji-layanan-peta.mjs -> memanggil Photon/Nominatim/OSRM/Valhalla SUNGGUHAN;
+#     tanpa internet, kegagalan jaringannya terbaca sebagai "klaimnya salah".
+#   - uji-faskes-nasional.mjs -> membaca 21.477 baris faskes dari MySQL. Runner
+#     tidak punya MySQL, jadi di sana ia mencetak DILEWATI lalu keluar 0: hijau
+#     yang tidak memeriksa apa pun. Dijalankan di laptop dengan XAMPP hidup.
 #   - uji-sumber.mjs --jaringan, ukur-*, verifikasi-judul.mjs, periksa-istilah.mjs
 #     -> butuh jaringan ke Wikipedia/MedlinePlus; jaringannya bisa berubah dan
 #        membuat CI merah padahal kode kita tidak salah. Dijalankan manual.
@@ -75,6 +80,14 @@ jobs:
         # setelah await yang bisa balapan.
         working-directory: app
         run: npm run lint
+
+      - name: Uji penggabung kelas UI (`cn`)
+        # Tanpa jaringan. Menjaga `cn('p-4', 'p-2')` menghasilkan SATU kelas
+        # (yang terakhir menang) — dulu dua kelas keluar dan pemenangnya
+        # ditentukan urutan di CSS, bukan urutan pemanggilan, sehingga bug
+        # tampilan tidak bisa diprediksi dari kodenya. Sudah ada sejak 7 Nov 2026
+        # tetapi belum pernah terdaftar di CI.
+        run: node uji-cn.mjs
 
       - name: Uji batas panjang & laju rute
         run: node uji-batas.mjs
@@ -203,6 +216,14 @@ jobs:
         # pihak ketiga.
         run: node uji-faskes.mjs
 
+      - name: Uji statistik fasilitas nasional (angka & cakupan)
+        # Tanpa jaringan dan tanpa DB: angkanya dibaca dari berkas. Menjaga agar
+        # 49.548 milik Kemenkes tidak pernah dikutip sebagai "jumlah seluruh
+        # faskes Indonesia", kalimat cakupannya tetap menempel pada angkanya,
+        # dan setiap kategori punya rujukan yang benar-benar ada. Sudah ada
+        # sejak 7 Nov 2026 tetapi belum pernah terdaftar di CI.
+        run: node uji-statistik-faskes.mjs
+
       - name: Uji wilayah administratif (kode, normalisasi, cascade titik)
         # Tanpa jaringan: validasi bentuk kode per tingkat, turunan kode induk,
         # pemilihan hasil Nominatim (menolak kavling/sekolah/polsek), dan
@@ -281,6 +302,14 @@ jobs:
       - name: Build produksi
         working-directory: app
         run: npm run build
+
+      - name: Uji pagar ukuran bundel
+        # HARUS SESUDAH build: batas 520 KB diukur dari `app/dist/app/assets`.
+        # Menjaga agar pustaka UI baru tidak masuk tanpa disadari — satu impor
+        # Radix tambahan bisa menambah puluhan KB dan tidak menggagalkan apa pun
+        # selain uji ini. Sudah ada sejak 8 Nov 2026 tetapi belum pernah
+        # terdaftar di CI; kalau dilewati, batasnya tidak menjaga apa pun.
+        run: node uji-ukuran-bundel.mjs
 
       - name: Uji penyajian berkas statis (kompresi & cache)
         # HARUS SESUDAH build: uji ini memeriksa `dist/` yang sungguhan.
