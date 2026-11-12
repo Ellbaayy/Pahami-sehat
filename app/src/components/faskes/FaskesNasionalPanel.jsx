@@ -13,7 +13,7 @@
  *
  * BATAS YANG DISEBUT TERBUKA
  * --------------------------
- * Sebagian besar data SIRS tidak punya koordinat. Baris seperti itu tetap
+ * Seluruh 3.325 data SIRS belum punya koordinat. Baris seperti itu tetap
  * ditampilkan (dengan penanda "lokasi di peta belum tersedia"), TIDAK
  * disembunyikan dan TIDAK diberi koordinat karangan. Tombol petunjuk arah
  * hanya muncul untuk baris yang benar-benar punya koordinat.
