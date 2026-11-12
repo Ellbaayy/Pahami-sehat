@@ -164,7 +164,11 @@ function cariChrome() {
   return null
 }
 
-async function tungguCdp(batasMs = 20000) {
+async function tungguCdp(batasMs = 40000) {
+  // Batas 20 detik pernah tidak cukup di runner GitHub (12 Nov 2026): Chrome
+  // hidup, port CDP belum terbuka, dan uji gagal dengan sebab yang tidak
+  // terbaca. Di laptop Chrome siap <1 detik; batas panjang ini hanya biaya
+  // saat mesin memang sibuk.
   const akhir = Date.now() + batasMs
   while (Date.now() < akhir) {
     try {

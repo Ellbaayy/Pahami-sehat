@@ -19,10 +19,6 @@ import { join } from 'node:path'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8787'
 const PORT_CDP = 9334
-// Profil sementara DIBUAT dulu, bukan diserahkan ke Chrome: kalau induknya tidak
-// ada, Chrome bisa keluar sebelum membuka port CDP dan pesannya hilang karena
-// stderr-nya dulu dibuang.
-const PROFIL = mkdtempSync(join(tmpdir(), 'pahami-uji-landing-'))
 
 let gagal = 0
 const cek = (nama, lulus, bukti = '') => {
@@ -96,32 +92,74 @@ if (!bin) {
   process.exit(1)
 }
 
-const chrome = spawn(
-  bin,
-  ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars',
-    '--no-first-run', '--no-default-browser-check',
-    `--remote-debugging-port=${PORT_CDP}`, `--user-data-dir=${PROFIL}`, 'about:blank'],
-  // stderr DITANGKAP, bukan dibuang: kalau Chrome gagal start, satu-satunya
-  // keterangan ada di sana. Dulu `ignore` membuat kegagalan di runner GitHub
-  // hanya berbunyi "Chrome tidak membuka port CDP" tanpa sebab apa pun.
-  { stdio: ['ignore', 'ignore', 'pipe'] },
-)
-let logChrome = ''
-chrome.stderr.on('data', (d) => {
-  if (logChrome.length < 8000) logChrome += d.toString()
-})
-let keluar = null
-chrome.on('exit', (kode, sinyal) => {
-  keluar = { kode, sinyal }
-})
+// Chrome di runner GitHub kadang jauh lebih lambat siap daripada di laptop,
+// dan varian flag-nya tidak selalu diterima versi Chrome yang terpasang di
+// sana. Dulu: satu percobaan, batas 20 detik, stderr dibuang — akibatnya
+// kegagalan 12 Nov 2026 hanya berbunyi "Chrome tidak membuka port CDP" tanpa
+// sebab apa pun. Sekarang setiap varian dicoba bergantian dengan batas lebih
+// panjang, dan stderr tiap percobaan dilaporkan kalau semuanya gagal.
+const VARIAN = [['--headless=new'], ['--headless']]
+const OPSI_UMUM = [
+  '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars',
+  '--no-first-run', '--no-default-browser-check', '--disable-extensions',
+  '--disable-background-networking', '--window-size=1366,700',
+  `--remote-debugging-port=${PORT_CDP}`,
+]
+const BATAS_TUNGGU_CDP = 40000
 
+let chrome = null
+let chromeSiap = false
 let cdp = null
+const profilDibuat = []
+const catatanVarian = []
+
+for (const varian of VARIAN) {
+  // Profil sementara DIBUAT dulu, tidak diserahkan ke Chrome: kalau induknya
+  // belum ada, Chrome bisa menyerah sebelum membuka port CDP.
+  const profil = mkdtempSync(join(tmpdir(), 'pahami-uji-landing-'))
+  profilDibuat.push(profil)
+  const proses = spawn(
+    bin,
+    [...varian, ...OPSI_UMUM, `--user-data-dir=${profil}`, 'about:blank'],
+    // stderr DITANGKAP, bukan dibuang: kalau Chrome gagal start, satu-satunya
+    // keterangan ada di sana.
+    { stdio: ['ignore', 'ignore', 'pipe'] },
+  )
+  let log = ''
+  proses.stderr.on('data', (d) => {
+    if (log.length < 8000) log += d.toString()
+  })
+  let keluar = null
+  proses.on('exit', (kode, sinyal) => {
+    keluar = { kode, sinyal }
+  })
+
+  const mulai = Date.now()
+  const siap = await tunggu(
+    async () => (await fetch(`http://127.0.0.1:${PORT_CDP}/json/version`).catch(() => ({ ok: false }))).ok,
+    BATAS_TUNGGU_CDP,
+  )
+  if (siap) {
+    chrome = proses
+    chromeSiap = true
+    console.log(`  (Chrome siap dalam ${((Date.now() - mulai) / 1000).toFixed(1)} s — ${varian.join(' ')})`)
+    break
+  }
+
+  const sebab = [`percobaan ${varian.join(' ')} gagal setelah ${BATAS_TUNGGU_CDP / 1000} s`]
+  if (keluar) sebab.push(`proses keluar (kode ${keluar.kode}, sinyal ${keluar.sinyal})`)
+  if (log.trim()) sebab.push(`stderr:\n${log.trim().split('\n').slice(-6).join('\n')}`)
+  catatanVarian.push(sebab.join('; '))
+  try {
+    proses.kill('SIGKILL')
+  } catch {
+    /* sudah mati */
+  }
+}
+
 try {
-  if (!(await tunggu(async () => (await fetch(`http://127.0.0.1:${PORT_CDP}/json/version`).catch(() => ({ ok: false }))).ok, 20000))) {
-    const sebab = []
-    if (keluar) sebab.push(`Chrome keluar (kode ${keluar.kode}, sinyal ${keluar.sinyal})`)
-    if (logChrome.trim()) sebab.push(`stderr Chrome:\n${logChrome.trim().split('\n').slice(-8).join('\n')}`)
-    throw new Error(`Chrome tidak membuka port CDP${sebab.length ? `\n${sebab.join('\n')}` : ''}`)
+  if (!chromeSiap) {
+    throw new Error(`Chrome tidak membuka port CDP.\n${catatanVarian.join('\n')}`)
   }
   const daftar = await (await fetch(`http://127.0.0.1:${PORT_CDP}/json/list`)).json()
   cdp = new Cdp(daftar.find((t) => t.type === 'page').webSocketDebuggerUrl)
@@ -247,14 +285,16 @@ try {
 } finally {
   cdp?.tutup()
   try {
-    chrome.kill('SIGKILL')
+    chrome?.kill('SIGKILL')
   } catch {
     /* sudah mati */
   }
-  try {
-    rmSync(PROFIL, { recursive: true, force: true })
-  } catch {
-    /* bukan masalah */
+  for (const profil of profilDibuat) {
+    try {
+      rmSync(profil, { recursive: true, force: true })
+    } catch {
+      /* bukan masalah */
+    }
   }
 }
 
