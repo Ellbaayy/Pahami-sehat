@@ -13,12 +13,16 @@
  */
 
 import { spawn } from 'node:child_process'
-import { existsSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8787'
 const PORT_CDP = 9334
-const PROFIL = join('/tmp', `pahami-uji-landing-${Date.now()}`)
+// Profil sementara DIBUAT dulu, bukan diserahkan ke Chrome: kalau induknya tidak
+// ada, Chrome bisa keluar sebelum membuka port CDP dan pesannya hilang karena
+// stderr-nya dulu dibuang.
+const PROFIL = mkdtempSync(join(tmpdir(), 'pahami-uji-landing-'))
 
 let gagal = 0
 const cek = (nama, lulus, bukti = '') => {
@@ -95,14 +99,29 @@ if (!bin) {
 const chrome = spawn(
   bin,
   ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars',
+    '--no-first-run', '--no-default-browser-check',
     `--remote-debugging-port=${PORT_CDP}`, `--user-data-dir=${PROFIL}`, 'about:blank'],
-  { stdio: 'ignore' },
+  // stderr DITANGKAP, bukan dibuang: kalau Chrome gagal start, satu-satunya
+  // keterangan ada di sana. Dulu `ignore` membuat kegagalan di runner GitHub
+  // hanya berbunyi "Chrome tidak membuka port CDP" tanpa sebab apa pun.
+  { stdio: ['ignore', 'ignore', 'pipe'] },
 )
+let logChrome = ''
+chrome.stderr.on('data', (d) => {
+  if (logChrome.length < 8000) logChrome += d.toString()
+})
+let keluar = null
+chrome.on('exit', (kode, sinyal) => {
+  keluar = { kode, sinyal }
+})
 
 let cdp = null
 try {
   if (!(await tunggu(async () => (await fetch(`http://127.0.0.1:${PORT_CDP}/json/version`).catch(() => ({ ok: false }))).ok, 20000))) {
-    throw new Error('Chrome tidak membuka port CDP')
+    const sebab = []
+    if (keluar) sebab.push(`Chrome keluar (kode ${keluar.kode}, sinyal ${keluar.sinyal})`)
+    if (logChrome.trim()) sebab.push(`stderr Chrome:\n${logChrome.trim().split('\n').slice(-8).join('\n')}`)
+    throw new Error(`Chrome tidak membuka port CDP${sebab.length ? `\n${sebab.join('\n')}` : ''}`)
   }
   const daftar = await (await fetch(`http://127.0.0.1:${PORT_CDP}/json/list`)).json()
   cdp = new Cdp(daftar.find((t) => t.type === 'page').webSocketDebuggerUrl)
