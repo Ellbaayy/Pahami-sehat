@@ -6,8 +6,8 @@
  * ------------------------------------------------
  * `rsSirs.js` hanya melayani rumah sakit SIRS (3.325 baris, tanpa koordinat).
  * Sejak 8 Nov 2026 fitur "Rumah Sakit Nasional" diperluas menjadi SELURUH
- * fasilitas yang kita punya: 3.325 rumah sakit resmi Kemenkes + 4.098 fasilitas
- * OpenStreetMap (klinik, puskesmas, apotek, laboratorium, dan seterusnya).
+ * fasilitas yang kita punya: 3.325 rumah sakit resmi Kemenkes + 18.152
+ * fasilitas OpenStreetMap (klinik, puskesmas, apotek, laboratorium, dst).
  *
  * YANG TETAP DIJAGA DARI VERSI LAMA
  * ---------------------------------

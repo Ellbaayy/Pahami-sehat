@@ -971,8 +971,8 @@ rute.get('/api/faskes', batasFaskes, bungkus(async (req, res) => {
  * SELURUH fasilitas kesehatan nasional — pengganti daftar "Rumah Sakit
  * Nasional" yang dulu hanya berisi rumah sakit SIRS.
  *
- * Isinya 7.423 baris dari dua sumber: 3.325 rumah sakit resmi Kemenkes (SIRS)
- * dan 4.098 fasilitas OpenStreetMap (klinik, puskesmas, apotek, laboratorium,
+ * Isinya 21.477 baris dari dua sumber: 3.325 rumah sakit resmi Kemenkes (SIRS)
+ * dan 18.152 fasilitas OpenStreetMap (klinik, puskesmas, apotek, laboratorium,
  * praktik mandiri, dan seterusnya). Keduanya TIDAK digabung menjadi satu baris
  * — satu fasilitas bisa muncul di kedua sumber, dan menggabungkannya berarti
  * mengarang keyakinan bahwa keduanya entitas yang sama.

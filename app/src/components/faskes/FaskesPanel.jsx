@@ -7,8 +7,8 @@
  * Sampai 8 Nov 2026 halaman ini punya dua tab: "Fasilitas Terdekat" (peta
  * radius memakai Overpass/OpenStreetMap) dan "Rumah Sakit Nasional" (3.325 RS
  * SIRS). Pemilik proyek memutuskan tab radius DIHAPUS dan tab nasional
- * DIPERLUAS menjadi seluruh fasilitas kesehatan yang kita punya (7.423 baris:
- * 3.325 rumah sakit Kemenkes + 4.098 fasilitas OpenStreetMap).
+ * DIPERLUAS menjadi seluruh fasilitas kesehatan yang kita punya (21.477 baris:
+ * 3.325 rumah sakit Kemenkes + 18.152 fasilitas OpenStreetMap).
  *
  * Kode peta radius — `useFaskes`, `PetaFaskes`, `PanelNavigasi`, `InputLokasi`,
  * `useCariLokasi` — masih ada di repo, tetapi TIDAK dipakai halaman ini lagi.

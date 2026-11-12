@@ -8,7 +8,7 @@
  * peta, hanya fasilitas berkoordinat) dan "Rumah Sakit Nasional" (3.325 RS
  * SIRS, tanpa koordinat). Tab radius DIHAPUS atas permintaan pemilik proyek;
  * yang tersisa satu daftar nasional yang mencakup SEMUA fasilitas yang kita
- * punya — 3.325 rumah sakit resmi Kemenkes + 4.098 fasilitas OpenStreetMap
+ * punya — 3.325 rumah sakit resmi Kemenkes + 18.152 fasilitas OpenStreetMap
  * (klinik, puskesmas, apotek, laboratorium, praktik mandiri, …).
  *
  * BATAS YANG DISEBUT TERBUKA

@@ -116,9 +116,15 @@ kode — kategori atau provinsi baru ikut muncul tanpa mengubah apa pun.
 Yang perlu diperhatikan: angka di kepala panel (**21.477 fasilitas · 18.152
 berkoordinat**) berasal dari database dan ikut berubah kalau datanya berubah;
 pencarian "siloam" menyaring dari 21.477 menjadi **79** hasil; memilih provinsi
-mengaktifkan dropdown kabupaten/kota; dan **sebagian besar rumah sakit SIRS
-tidak punya koordinat** — baris seperti itu tetap ditampilkan dengan penanda
+mengaktifkan dropdown kabupaten/kota; dan **seluruh 3.325 rumah sakit SIRS belum
+punya koordinat** — baris seperti itu tetap ditampilkan dengan penanda
 "Lokasi di peta belum tersedia", bukan diberi titik karangan.
+
+Angka 21.477 menghitung **baris**, bukan entitas unik. Diukur 12 Nov 2026: 589
+baris (2,7%) adalah fasilitas yang sama tercatat lebih dari sekali — rumah sakit
+yang masuk lewat SIRS sekaligus OSM, dan objek OSM yang terpetakan sebagai
+*way* dan *node* sekaligus. Dua sumber sengaja **tidak** digabung otomatis:
+menggabungkannya berarti mengarang keyakinan bahwa keduanya entitas yang sama.
 
 Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 `ambil-tangkapan.mjs` pada 1440×900 (dan 390×844 untuk tampilan ponsel).

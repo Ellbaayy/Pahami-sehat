@@ -13,7 +13,7 @@
  */
 
 import { spawn } from 'node:child_process'
-import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -195,7 +195,25 @@ try {
    */
   const teks = await evaluasi(cdp, 'document.body.innerText')
   cek('kartu Fasilitas Kesehatan Nasional ada', teks.includes('Pencarian Fasilitas Kesehatan Nasional'))
-  cek('menyebut jumlah faskes yang dicakup', /7\.423|7\.4\d\d/.test(teks))
+  // Angka di halaman WAJIB sama dengan angka di README, bukan angka yang
+  // ditulis di skrip ini. Dulu harapannya ditulis mati `/7\.423/`, sehingga
+  // halaman yang angkanya BASI justru LULUS: README dan tangkapan layar sudah
+  // menyebut 21.477 sejak 8 Nov 2026, sementara halaman penjelasan masih
+  // menulis 7.423 dan 4.098. Sekarang uji ini membaca README dan permintaan
+  // "pastikan jumlah faskes tidak halu" jadi punya penjaga.
+  const readme = readFileSync(new URL('./README.md', import.meta.url), 'utf8')
+  const angka = {
+    total: (readme.match(/([0-9]{2}\.[0-9]{3}) baris/) || [])[1],
+    sirs: (readme.match(/([0-9]\.[0-9]{3}) rumah sakit/) || [])[1],
+    osm: (readme.match(/([0-9]{2}\.[0-9]{3}) fasilitas OpenStreetMap/) || [])[1],
+  }
+  for (const [nama, nilai] of Object.entries(angka)) {
+    cek(
+      `angka faskes (${nama}) di halaman = angka di README`,
+      Boolean(nilai) && teks.includes(nilai),
+      nilai ? `${nilai}` : 'angka tidak ditemukan di README',
+    )
+  }
   cek('menyebut dua sumber data', /SIRS/.test(teks) && /OpenStreetMap/.test(teks))
   cek('menyebut saringan wilayah', /provinsi/i.test(teks) && /kabupaten/i.test(teks))
   cek(
