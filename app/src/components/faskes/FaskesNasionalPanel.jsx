@@ -8,12 +8,13 @@
  * peta, hanya fasilitas berkoordinat) dan "Rumah Sakit Nasional" (3.325 RS
  * SIRS, tanpa koordinat). Tab radius DIHAPUS atas permintaan pemilik proyek;
  * yang tersisa satu daftar nasional yang mencakup SEMUA fasilitas yang kita
- * punya — 3.325 rumah sakit resmi Kemenkes + 18.152 fasilitas OpenStreetMap
+ * punya — 3.325 rumah sakit resmi Kemenkes + 17.599 fasilitas OpenStreetMap
  * (klinik, puskesmas, apotek, laboratorium, praktik mandiri, …).
  *
  * BATAS YANG DISEBUT TERBUKA
  * --------------------------
- * Seluruh 3.325 data SIRS belum punya koordinat. Baris seperti itu tetap
+ * 3.197 dari 3.325 data SIRS belum punya koordinat (128 memakai koordinat
+ * objek OSM yang sama). Baris seperti itu tetap
  * ditampilkan (dengan penanda "lokasi di peta belum tersedia"), TIDAK
  * disembunyikan dan TIDAK diberi koordinat karangan. Tombol petunjuk arah
  * hanya muncul untuk baris yang benar-benar punya koordinat.

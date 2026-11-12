@@ -209,11 +209,27 @@ try {
        FROM fasilitas WHERE sumber = ?`,
     [SUMBER],
   )
-  // SIRS TIDAK menyediakan koordinat. Kalau tiba-tiba ada isinya, itu berarti
-  // ada yang mengarang — dan uji ini yang harus menangkapnya lebih dulu.
+  /*
+   * SIRS tidak menyediakan koordinat, jadi dulu pemeriksaannya `ada === 0`.
+   * Sejak pembersihan duplikat 12 Nov 2026 (lihat `app/server/dedupFaskes.js`)
+   * sebagian baris SIRS MEMANG berkoordinat — dipindahkan dari objek OSM yang
+   * sama, dengan `kode_osm` sebagai rujukan. Jadi yang dijaga sekarang BUKAN
+   * "nol", melainkan: setiap baris SIRS berkoordinat WAJIB punya `kode_osm`
+   * sebagai bukti asalnya. Tanpa itu, koordinatnya memang karangan.
+   */
+  const [[berRujukan]] = await pool.query(
+    `SELECT COUNT(*) AS n FROM fasilitas
+      WHERE sumber = ? AND lat IS NOT NULL AND (kode_osm IS NULL OR kode_osm = '')`,
+    [SUMBER],
+  )
   cek(
-    'tidak ada koordinat karangan untuk data SIRS',
-    Number(koord.ada) === 0,
+    'setiap koordinat pada baris SIRS punya rujukan kode_osm',
+    Number(berRujukan.n) === 0,
+    `${berRujukan.n} baris berkoordinat tanpa kode_osm`,
+  )
+  cek(
+    'sebagian besar baris SIRS tetap tanpa koordinat',
+    Number(koord.ada) < Number(koord.total) * 0.1,
     `${koord.ada} dari ${koord.total} berkoordinat`,
   )
 
@@ -301,7 +317,11 @@ try {
 
   const ringkas = await ringkasanSirs()
   cek('ringkasan melaporkan total yang sama', ringkas?.total === Number(jml.total), `${ringkas?.total}`)
-  cek('ringkasan menyebut nol berkoordinat', ringkas?.berkoordinat === 0, String(ringkas?.berkoordinat))
+  cek(
+    'ringkasan menyebut jumlah koordinat yang sama dengan tabel',
+    ringkas?.berkoordinat === Number(koord.ada),
+    `${ringkas?.berkoordinat} vs ${koord.ada}`,
+  )
 
   // Halaman tidak boleh tumpang tindih: baris di halaman 1 dan 2 harus berbeda.
   const h1 = await cariRsSirs({ halaman: 1, perHalaman: 10 })

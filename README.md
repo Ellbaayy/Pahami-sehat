@@ -18,7 +18,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Tanya AI + sumber | berjalan. Pencarian memakai kata kunci terpilih, bukan kalimat pengguna apa adanya |
 > | Sederhanakan teks | berjalan (4 tingkat baca), menjadi salah satu mode di komposer Tanya AI |
 > | Cek klaim | berjalan. Tiga putusan (`didukung`, `tidak_didukung`, `tidak_bisa_dipastikan`) dengan **lencana yang menyebut subjeknya** ("Klaim …"), satu kalimat penjelas per putusan, dan daftar sumber yang tidak pernah kosong tanpa keterangan. `tidak_didukung` hanya dipakai bila sumber resmi menyatakan sebaliknya |
-> | Fasilitas Kesehatan | berjalan. **Pencarian nasional seluruh faskes** (21.477 baris: 3.325 RS resmi SIRS Kemenkes + 18.152 fasilitas OpenStreetMap) dengan saringan jenis, provinsi, kabupaten/kota, sumber, dan kelas RS. Tab "Fasilitas Terdekat" dihapus 8 Nov 2026. Field yang tidak ada di sumbernya dibiarkan kosong, bukan dikarang |
+> | Fasilitas Kesehatan | berjalan. **Pencarian nasional seluruh faskes** (20.924 baris: 3.325 RS resmi SIRS Kemenkes + 17.599 fasilitas OpenStreetMap) dengan saringan jenis, provinsi, kabupaten/kota, sumber, dan kelas RS. Tab "Fasilitas Terdekat" dihapus 8 Nov 2026. Field yang tidak ada di sumbernya dibiarkan kosong, bukan dikarang |
 > | Suara dibacakan | **berjalan sebagai suara neural Microsoft — hanya di versi yang dijalankan di komputer sendiri.** Diukur ulang 20 Okt 2026: `POST /api/suara` menjawab `200 audio/mpeg`, berkas 24 kHz mono 48 kbps, 17.424 byte untuk satu kalimat, 0,80 detik. Di Vercel tetap **`502`** (diukur ulang 20 Okt 2026) karena fungsi serverless tidak bisa mempertahankan WebSocket — batas platform, bukan bug. Rincian: `app/server/suara.js` |
 > | Input suara (bicara) | berjalan lewat Web Speech API bawaan peramban. **Butuh Chrome atau Edge**: Brave memblokir layanan suara daring Google, dan Firefox belum menyediakannya. Butuh konteks aman (`https://` atau `localhost`) |
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
@@ -94,8 +94,8 @@ bedanya nyaris tak terlihat karena teksnya memang sudah gelap:
 Halaman ini **berubah 8 Nov 2026**. Sebelumnya ada dua tab — "Fasilitas
 Terdekat" (pencarian radius di atas peta) dan "Rumah Sakit Nasional" (3.325 RS
 SIRS). Tab radius dihapus, dan daftar nasional diperluas menjadi **seluruh
-fasilitas kesehatan** yang datanya kami miliki: **21.477 baris** — 3.325 rumah
-sakit resmi Kemenkes (SIRS) dan 18.152 fasilitas OpenStreetMap (klinik,
+fasilitas kesehatan** yang datanya kami miliki: **20.924 baris** — 3.325 rumah
+sakit resmi Kemenkes (SIRS) dan 17.599 fasilitas OpenStreetMap (klinik,
 puskesmas, apotek, laboratorium, praktik mandiri, dan lainnya).
 
 Saringan yang tersedia: nama/alamat, jenis fasilitas (10 kategori), provinsi,
@@ -113,18 +113,23 @@ kode — kategori atau provinsi baru ikut muncul tanpa mengubah apa pun.
 
 ![Tampilan ponsel](docs/tangkapan-layar/faskes-4-hp.png)
 
-Yang perlu diperhatikan: angka di kepala panel (**21.477 fasilitas · 18.152
+Yang perlu diperhatikan: angka di kepala panel (**20.924 fasilitas · 17.727
 berkoordinat**) berasal dari database dan ikut berubah kalau datanya berubah;
-pencarian "siloam" menyaring dari 21.477 menjadi **79** hasil; memilih provinsi
-mengaktifkan dropdown kabupaten/kota; dan **seluruh 3.325 rumah sakit SIRS belum
-punya koordinat** — baris seperti itu tetap ditampilkan dengan penanda
-"Lokasi di peta belum tersedia", bukan diberi titik karangan.
+pencarian "siloam" menyaring dari 20.924 menjadi **75** hasil; memilih provinsi
+mengaktifkan dropdown kabupaten/kota; dan **3.197 dari 3.325 rumah sakit SIRS
+belum punya koordinat** — baris seperti itu tetap ditampilkan dengan penanda
+"Lokasi di peta belum tersedia", bukan diberi titik karangan. 128 sisanya
+memakai koordinat objek OSM yang sama; `kode_osm` pada baris itu menyimpan
+rujukan asalnya.
 
-Angka 21.477 menghitung **baris**, bukan entitas unik. Diukur 12 Nov 2026: 589
-baris (2,7%) adalah fasilitas yang sama tercatat lebih dari sekali — rumah sakit
-yang masuk lewat SIRS sekaligus OSM, dan objek OSM yang terpetakan sebagai
-*way* dan *node* sekaligus. Dua sumber sengaja **tidak** digabung otomatis:
-menggabungkannya berarti mengarang keyakinan bahwa keduanya entitas yang sama.
+Dua sumber disatukan hanya bila **nama, provinsi, dan kabupaten/kotanya sama**
+(terukur 128 rumah sakit). Baris OSM-nya dihapus, koordinatnya dipindahkan ke
+baris SIRS resmi, dan `kode_osm` dicatat sebagai rujukan — bukan koordinat
+karangan. Di dalam OSM sendiri, objek yang terpetakan dua kali (*way* dan
+*node*, nama sama, ≤50 m) juga dibersihkan. Total yang dibersihkan 12 Nov 2026:
+**553 baris** (dari 21.477 menjadi 20.924). Rincian aturan dan alasannya:
+`app/server/dedupFaskes.js`, diuji `uji-dedup-faskes.mjs`; perintahnya
+`node bersihkan-duplikat-faskes.mjs` (dry run) atau `--terapkan`.
 
 Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 `ambil-tangkapan.mjs` pada 1440×900 (dan 390×844 untuk tampilan ponsel).
@@ -167,6 +172,7 @@ Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`impor-statistik-faskes.mjs`](impor-statistik-faskes.mjs) | **Pengisi statistik fasilitas nasional** — 6 kategori Kemenkes 2024 + pembanding BPJS, beserta 4 rujukan pengembangan. `--cari`/`--kering`, aman diulang. Lihat [Statistik fasilitas nasional](#statistik-fasilitas-nasional--angka-resmi-dan-artinya). |
+| [`bersihkan-duplikat-faskes.mjs`](bersihkan-duplikat-faskes.mjs) | **Pembersih duplikat faskes** — dry run secara bawaan, `--terapkan` untuk menghapus. Aturannya di `app/server/dedupFaskes.js` (fungsi murni, diuji `uji-dedup-faskes.mjs`): duplikat dalam satu sumber (nama sama, ≤50 m; nama generik ≤5 m) dan lintas sumber (nama + provinsi + kabupaten sama → koordinat OSM dipindahkan ke baris SIRS, `kode_osm` disimpan sebagai rujukan). 12 Nov 2026: 553 baris dibersihkan, 21.477 → 20.924. |
 | [`tarik-faskes-nasional.mjs`](tarik-faskes-nasional.mjs) | **Penarik faskes nasional dari OpenStreetMap** — 38 provinsi lewat kode ISO 3166-2 (nama provinsi didapat tanpa geocoding), kueri `nwr` karena apotek/klinik sering dipetakan sebagai bangunan. Idempoten lewat `kode_osm` unik. ±42 menit untuk seluruh Indonesia; `--provinsi ID-JB` untuk satu provinsi. |
 | [`petakan-kabupaten-faskes.mjs`](petakan-kabupaten-faskes.mjs) | **Pengisi kabupaten/kota dari batas wilayah resmi** — geoBoundaries ADM2 (519 kab/kota, sumber BPS, CC BY 3.0 IGO), titik-di-dalam-poligon. Terukur: 17.684 baris terisi, 20 tidak jatuh di poligon mana pun (dibiarkan NULL). |
 | [`panaskan-faskes.mjs`](panaskan-faskes.mjs) | **Pemanas simpanan faskes sebelum demo** — mengisi `fasilitas` + `cakupan_faskes` untuk lokasi yang akan ditunjukkan, supaya tombol Cari menjawab dari database. Lihat [Tombol "Cari"](#tombol-cari-tidak-lagi-membuat-juri-menunggu). |
@@ -175,7 +181,7 @@ Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 | [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | Mengambil 10 tangkapan dashboard: 7 halaman pada 1440×900, 2 tampilan ponsel, 1 mode kontras tinggi. Jawaban Tanya AI dan putusan Cek Klaim diambil dari permintaan sungguhan. |
 | [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | Mengambil 5 tangkapan Fasilitas Kesehatan lewat Chrome + CDP, termasuk mengetik sungguhan untuk membuktikan pencarian menyaring. |
 | [`ambil-tangkapan-prototipe.mjs`](ambil-tangkapan-prototipe.mjs) | Mengambil 10 bagian halaman penjelasan + 2 tampilan ponsel, menggulir per bagian dan menunggu posisi gulir benar-benar sampai. |
-| [`uji-*.mjs`](.) | **37 berkas uji** — 32 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
+| [`uji-*.mjs`](.) | **38 berkas uji** — 33 di antaranya berjalan lewat `npm test` tanpa jaringan dan tanpa API key; `uji-peramban.mjs` dan `uji-halaman-penjelasan.mjs` butuh server + Chrome; `uji-layanan-peta.mjs` memanggil layanan peta publik sungguhan; `uji-jawaban.mjs` butuh server lokal + API key; `uji-semua.mjs` adalah runner-nya (lihat [Menjalankan uji](#menjalankan-uji)). Angka ini diperiksa ulang 7 Nov 2026 dan diuji `uji-dokumentasi.mjs` — supaya tidak bisa lagi tertinggal diam-diam. |
 | [`ukur-*.mjs`](.) | Pengukuran untuk **memilih angka batas** (panjang, suara, tingkat baca, luas pengetahuan) — bukan uji rutin. |
 | [`verifikasi-judul.mjs`](verifikasi-judul.mjs) | Membuktikan setiap judul artikel Wikipedia yang dipetakan benar-benar ada. |
 | [`periksa-istilah.mjs`](periksa-istilah.mjs) | Memeriksa calon istilah baru ke API sebelum masuk peta pencarian. |
@@ -242,7 +248,7 @@ pahami-sehat/
 │   ├── .env.example
 │   ├── public/ocr/            ← mesin OCR: worker, core WASM, data bahasa (17 MB)
 │   ├── scripts/               ← salin-prototipe, mampatkan-dist, bebaskan-port
-│   ├── server/                ← backend Express (31 berkas)
+│   ├── server/                ← backend Express (32 berkas)
 │   ├── src/                   ← frontend React: App.jsx, lib/, data/, components/
 │   ├── api/index.js           ← pintu masuk serverless Vercel
 │   ├── index.html
@@ -1510,7 +1516,7 @@ cd app && npm test
 
 Perintah itu menjalankan `uji-semua.mjs` di akar repo, yang menelusuri seluruh
 berkas `uji-*.mjs` **dari isi folder** — jadi uji baru otomatis ikut tanpa perlu
-memperbarui daftar di mana pun. Diukur 8 Nov 2026: **32 berkas lulus, 0 gagal,
+memperbarui daftar di mana pun. Diukur 12 Nov 2026: **33 berkas lulus, 0 gagal,
 ±25 detik**, tanpa jaringan dan tanpa API key. Uji yang butuh peramban, server,
 atau API key sengaja dikeluarkan dan dijalankan terpisah (lihat bawah) — supaya
 gerbang ini tidak bergantung pada keadaan mesin.
@@ -1546,6 +1552,7 @@ node uji-wilayah.mjs      # wilayah bertingkat: validasi kode, cascade, titik re
 node uji-rs-sirs.mjs      # rumah sakit SIRS: jumlah, wilayah, koordinat, filter, sinkron ulang (50)
 node uji-statistik-faskes.mjs  # statistik nasional: total 49.548, cakupan, kaitan kategori (39)
 node uji-cn.mjs                  # penggabung kelas Tailwind: kelas terakhir menang (8)
+node uji-dedup-faskes.mjs        # aturan pembersihan duplikat faskes: jarak, nama generik, gabung lintas sumber (23)
 node uji-ukuran-bundel.mjs       # pagar ukuran bundel: index.js < 460 KB (1)
 node uji-peramban.mjs           # peramban sungguhan: 7 halaman × 2 bahasa (105)
 node uji-dokumentasi.mjs         # angka di README sama dengan isi repo (37)

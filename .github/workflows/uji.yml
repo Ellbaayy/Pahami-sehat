@@ -89,6 +89,14 @@ jobs:
         # tetapi belum pernah terdaftar di CI.
         run: node uji-cn.mjs
 
+      - name: Uji aturan pembersihan duplikat fasilitas
+        # Tanpa jaringan dan tanpa DB: aturannya fungsi murni. Yang dijaga:
+        # duplikat way/node OSM dihapus, dua fasilitas bernama sama tetapi
+        # berjauhan TIDAK dihapus, nama generik ("posyandu") hanya digabung bila
+        # praktis satu titik, dan baris SIRS tanpa koordinat tidak pernah
+        # dianggap duplikat sesamanya (jebakan `Number(null) === 0`).
+        run: node uji-dedup-faskes.mjs
+
       - name: Uji batas panjang & laju rute
         run: node uji-batas.mjs
 
