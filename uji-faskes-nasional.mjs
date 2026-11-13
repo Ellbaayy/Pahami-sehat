@@ -20,7 +20,7 @@
 
 process.env.DB_MATI = '0'
 
-const { dbSiap, tutupDb } = await import('./app/server/db.js')
+const { dbSiap, tutupDb, tanya } = await import('./app/server/db.js')
 const {
   cariFaskesNasional,
   faskesNasionalMenurutId,
@@ -146,6 +146,62 @@ cek(
   'jumlah provinsi + tanpa provinsi = total',
   jumlahProvinsi + jumlahKosong === (semua?.total ?? 0),
   `provinsi=${jumlahProvinsi} kosong=${jumlahKosong} total=${semua?.total}`,
+)
+
+/*
+ * Wilayah harus bisa DIPILIH, bukan sekadar tersimpan (12 Nov 2026).
+ *
+ * Dua cacat nyata yang pernah terjadi dan tidak tertangkap uji mana pun:
+ *   1. 61 baris punya kabupaten tetapi provinsi kosong. Pilihan provinsi tidak
+ *      memuatnya, dan dropdown kabupaten hanya berisi kabupaten milik provinsi
+ *      yang dipilih — jadi kabupatennya mustahil dipilih. Fasilitasnya ada,
+ *      tetapi tidak bisa ditemukan lewat saringan lokasi.
+ *   2. Satu kabupaten punya dua ejaan ("Karang Asem" dan "Karangasem"),
+ *      sehingga memilih salah satu melewatkan baris yang memakai ejaan lain.
+ *
+ * Yang dijaga di sini: setiap opsi kabupaten membawa provinsi yang benar-benar
+ * ada di daftar provinsi, dan jumlah kabupaten per provinsi tidak melebihi
+ * jumlah barisnya.
+ */
+const daftarProvinsi = new Set((f?.provinsi ?? []).map((x) => x.nilai))
+const kabTanpaProvinsi = (f?.kabupaten ?? []).filter((k) => !daftarProvinsi.has(k.provinsi))
+cek(
+  'setiap opsi kabupaten punya provinsi yang ada di daftar',
+  kabTanpaProvinsi.length === 0,
+  `${kabTanpaProvinsi.length} opsi tanpa provinsi`,
+)
+const jumlahKabupaten = (f?.kabupaten ?? []).reduce((s, x) => s + x.jumlah, 0)
+cek(
+  'jumlah kabupaten tidak melebihi total (sisa = baris tanpa kabupaten)',
+  jumlahKabupaten <= (semua?.total ?? 0),
+  `kabupaten=${jumlahKabupaten} total=${semua?.total}`,
+)
+const [kabKosong] = (await tanya(
+  "SELECT COUNT(*) AS n FROM fasilitas WHERE kabupaten IS NULL OR kabupaten = ''",
+)) ?? [{ n: 0 }]
+cek(
+  'jumlah kabupaten + baris tanpa kabupaten = total',
+  jumlahKabupaten + Number(kabKosong.n) === (semua?.total ?? 0),
+  `kabupaten=${jumlahKabupaten} kosong=${kabKosong.n} total=${semua?.total}`,
+)
+/*
+ * Ejaan kabupaten WAJIB kanonik terhadap tabel `wilayah` — satu ejaan per
+ * kabupaten. Diukur lewat pencocokan yang sama dengan `rapikan-kabupaten-faskes.mjs`.
+ */
+const kabLiar = (await tanya(
+  `SELECT f.provinsi, f.kabupaten, COUNT(*) AS n
+     FROM fasilitas f
+    WHERE f.kabupaten IS NOT NULL AND f.kabupaten <> ''
+      AND NOT EXISTS (
+        SELECT 1 FROM wilayah w JOIN wilayah p ON p.kode = w.kode_induk
+         WHERE w.tingkat = 'kabupaten' AND w.nama = f.kabupaten
+           AND p.tingkat = 'provinsi' AND p.nama = f.provinsi)
+    GROUP BY f.provinsi, f.kabupaten`,
+)) ?? []
+cek(
+  'setiap kabupaten cocok dengan nama resmi di tabel wilayah',
+  kabLiar.length === 0,
+  kabLiar.length ? kabLiar.slice(0, 5).map((x) => `${x.provinsi}/${x.kabupaten}(${x.n})`).join(', ') : 'semua cocok',
 )
 
 console.log('\n8. ringkasan dan rincian')

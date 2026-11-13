@@ -42,6 +42,7 @@
 
 import { readFileSync, existsSync, writeFileSync } from 'node:fs'
 import mysql from './app/node_modules/mysql2/promise.js'
+import { pisahJenis } from './app/server/geocoding.js'
 
 const arg = process.argv.slice(2)
 const kering = arg.includes('--kering')
@@ -157,6 +158,31 @@ async function utama() {
 
   const pool = mysql.createPool({ ...konfigurasiDb(), connectionLimit: 3, waitForConnections: true })
   try {
+    /*
+     * Peta kabupaten -> provinsi dari tabel `wilayah`.
+     *
+     * KENAPA (12 Nov 2026): skrip ini dulu HANYA mengisi `kabupaten`. Baris yang
+     * provinsinya kosong sejak tarikan OSM berakhir dengan kabupaten terisi +
+     * provinsi kosong — dan di antarmuka kabupaten seperti itu tidak bisa dipilih
+     * sama sekali (dropdown kabupaten disaring menurut provinsi). Terukur 61 baris
+     * yang mustahil ditemukan lewat saringan lokasi. Sekarang provinsinya ikut diisi
+     * dari kabupaten yang baru dipetakan, bukan ditebak dari poligon.
+     */
+    const petaProvinsi = new Map()
+    const [wilayahResmi] = await pool.query(
+      `SELECT w.nama AS kabupaten, p.nama AS provinsi
+         FROM wilayah w JOIN wilayah p ON p.kode = w.kode_induk
+        WHERE w.tingkat = 'kabupaten' AND p.tingkat = 'provinsi'`,
+    )
+    for (const w of wilayahResmi) {
+      const { jenis, nama } = pisahJenis(w.kabupaten)
+      petaProvinsi.set(`${jenis}|${nama}`, w.provinsi)
+    }
+    const provinsiDari = (kabupaten) => {
+      const { jenis, nama } = pisahJenis(kabupaten)
+      return petaProvinsi.get(`${jenis}|${nama}`) ?? null
+    }
+
     const [baris] = await pool.query(
       `SELECT id, nama, lat, lon, provinsi FROM fasilitas
         WHERE (kabupaten IS NULL OR kabupaten = '')
@@ -196,7 +222,11 @@ async function utama() {
       }
 
       if (namaKab) {
-        await pool.query('UPDATE fasilitas SET kabupaten = ? WHERE id = ?', [namaKab, f.id])
+        const prov = provinsiDari(namaKab)
+        await pool.query(
+          'UPDATE fasilitas SET kabupaten = ?, provinsi = COALESCE(NULLIF(provinsi, \'\'), ?) WHERE id = ?',
+          [namaKab, prov, f.id],
+        )
         perKabupaten.set(namaKab, (perKabupaten.get(namaKab) ?? 0) + 1)
         kena++
       } else {

@@ -122,6 +122,19 @@ belum punya koordinat** — baris seperti itu tetap ditampilkan dengan penanda
 memakai koordinat objek OSM yang sama; `kode_osm` pada baris itu menyimpan
 rujukan asalnya.
 
+Saringan lokasi juga dirapikan 12 Nov 2026. Ditemukan **61 baris yang punya
+kabupaten tetapi provinsi kosong** — pilihan provinsi tidak memuatnya, dan
+dropdown kabupaten hanya berisi kabupaten milik provinsi yang dipilih, jadi
+fasilitas itu mustahil ditemukan lewat saringan lokasi (namanya tetap bisa
+dicari). Provinsinya diturunkan dari kabupaten lewat tabel `wilayah`
+(`lengkapi-provinsi-faskes.mjs`), bukan ditebak. Selain itu ejaan kabupaten
+diseragamkan ke nama resmi (`rapikan-kabupaten-faskes.mjs`): 533 entri dropdown
+menyusut jadi **514 kabupaten/kota resmi**, sehingga memilih "Karangasem" tidak
+lagi melewatkan baris yang tercatat "Karang Asem". Sisa **20 baris** tetap tanpa
+kabupaten karena titiknya tidak jatuh di poligon wilayah mana pun (pulau kecil
+dan pesisir); baris itu tetap muncul lewat saringan provinsi, dan kabupatennya
+tidak dikarang.
+
 Dua sumber disatukan hanya bila **nama, provinsi, dan kabupaten/kotanya sama**
 (terukur 128 rumah sakit). Baris OSM-nya dihapus, koordinatnya dipindahkan ke
 baris SIRS resmi, dan `kode_osm` dicatat sebagai rujukan — bukan koordinat
@@ -170,6 +183,8 @@ Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 | [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 12 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`, `statistik_faskes`, `sumber_data_faskes`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
 | [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs-3325-rs-di-database). |
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
+| [`lengkapi-provinsi-faskes.mjs`](lengkapi-provinsi-faskes.mjs) | **Pengisi `provinsi` dari `kabupaten`** lewat tabel `wilayah` (dry run bawaan). Dipakai 12 Nov 2026 untuk 61 baris yang punya kabupaten tetapi provinsi kosong — baris seperti itu tidak bisa ditemukan lewat saringan lokasi sama sekali. |
+| [`rapikan-kabupaten-faskes.mjs`](rapikan-kabupaten-faskes.mjs) | **Penyeragam ejaan `kabupaten`** ke nama resmi `wilayah` (dry run bawaan). 12 Nov 2026: 12.761 baris dirapikan, 533 entri dropdown menyusut jadi 514 kabupaten resmi, dan 5 pasangan yang kabupatennya milik provinsi lain dipindahkan ke provinsi yang benar. |
 | [`petakan-wilayah.mjs`](petakan-wilayah.mjs) | Memetakan nama wilayah SIRS ke kode wilayah resmi; 513/513 berhasil, 6 alias eksplisit. |
 | [`impor-statistik-faskes.mjs`](impor-statistik-faskes.mjs) | **Pengisi statistik fasilitas nasional** — 6 kategori Kemenkes 2024 + pembanding BPJS, beserta 4 rujukan pengembangan. `--cari`/`--kering`, aman diulang. Lihat [Statistik fasilitas nasional](#statistik-fasilitas-nasional--angka-resmi-dan-artinya). |
 | [`bersihkan-duplikat-faskes.mjs`](bersihkan-duplikat-faskes.mjs) | **Pembersih duplikat faskes** — dry run secara bawaan, `--terapkan` untuk menghapus. Aturannya di `app/server/dedupFaskes.js` (fungsi murni, diuji `uji-dedup-faskes.mjs`): duplikat dalam satu sumber (nama sama, ≤50 m; nama generik ≤5 m) dan lintas sumber (nama + provinsi + kabupaten sama → koordinat OSM dipindahkan ke baris SIRS, `kode_osm` disimpan sebagai rujukan). 12 Nov 2026: 553 baris dibersihkan, 21.477 → 20.924. |
