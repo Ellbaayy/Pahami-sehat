@@ -7,7 +7,7 @@ Masalah yang disasar: informasi kesehatan di Indonesia bukan langka, tapi sering
 sampai dan tidak dipahami oleh yang paling membutuhkan.
 
 > Status: **MVP berjalan.** Fitur AI memanggil model sungguhan
-> (`deepseek-v4-flash` lewat Kenari.id) dari server Express sendiri, dan
+> (`deepseek-v4-1-flash` lewat Kenari.id) dari server Express sendiri, dan
 > setiap jawaban disertai sumber yang bisa dibuka pengguna.
 >
 > **Status tiap fitur — apa adanya (diperiksa ulang 7 Nov 2026):**
@@ -303,7 +303,7 @@ flowchart TB
   end
 
   subgraph Luar["Layanan luar"]
-    K["Kenari.id<br/>deepseek-v4-flash"]
+    K["Kenari.id<br/>deepseek-v4-1-flash"]
     W["Wikipedia bahasa Indonesia"]
     M["MedlinePlus<br/>wsearch.nlm.nih.gov"]
     N["RSS berita kesehatan<br/>Detik Health · WHO · Google News"]
@@ -737,30 +737,42 @@ untuk memilih pesan yang tepat (`db_mati`, `insufficient_balance`, dan
   costing Valhalla lewat daftar tertutup tiga entri, jadi moda asing ditolak
   alih-alih diam-diam jadi "mobil".
 
-### Model diganti 8 Nov 2026 — dan alasannya
+### Model: `deepseek-v4-1-flash` (dipakai lagi 12 Nov 2026) — dan alasannya
 
-Diuji ulang menjelang Grand Final, `deepseek-v4-1-flash` mulai **menulis
-kalimat penalarannya ke dalam `content`** meski `KENARI_REASONING_EFFORT=none`:
-"Let me write a JSON response in Indonesian…". Jatah 2.000 token habis untuk
-penalaran, `finish_reason` menjadi `length`, dan **Tanya AI menjawab kosong**
-(`code: unparsed`). Terukur pada tiga percobaan berturut-turut: satu gagal,
-dua berhasil, masing-masing 40–57 detik — terlalu lambat dan terlalu rapuh
-untuk dinilai juri.
+Riwayatnya penting supaya tidak diulang tanpa pengukuran:
 
-Sekarang aplikasi memakai **`deepseek-v4-flash`** dari penyedia yang sama.
-Diukur dengan prompt asli `promptTanyaDenganCari()`:
+- **Sampai 8 Nov 2026** aplikasi memakai `deepseek-v4-1-flash`. Menjelang Grand
+  Final ia mulai **menulis kalimat penalarannya ke dalam `content`** meski
+  `KENARI_REASONING_EFFORT=none`: "Let me write a JSON response in Indonesian…".
+  Jatah token habis untuk penalaran, `finish_reason` menjadi `length`, dan
+  **Tanya AI menjawab kosong** (`code: unparsed`). Terukur saat itu: satu gagal
+  dari tiga percobaan, masing-masing 40–57 detik.
+- **8–12 Nov 2026** aplikasi memakai `deepseek-v4-flash`: 7,0–8,1 detik, JSON
+  sah 3/3, tanpa kalimat penalaran.
+- **12 Nov 2026** `deepseek-v4-1-flash` diukur ulang atas permintaan pemilik
+  proyek dan **dipakai lagi**: 25 pertanyaan `node uji-jawaban.mjs` —
+  **0 gagal, 0 tanpa sumber, 0 menolak padahal ada, 0 mendiagnosis**, termasuk
+  tiga pertanyaan berita. Waktu jawaban 5,6–22,0 detik (median 10,1 s dari 38
+  permintaan) untuk jawaban 700–1.200 karakter; JSON selalu utuh (`finish_reason: stop`) dan
+  **tidak ada kalimat penalaran yang bocor ke `content`** pada pemeriksaan
+  contoh jawaban.
 
 | Model | Waktu | JSON sah | Catatan |
 |---|---:|---|---|
-| `deepseek-v4-1-flash` | 19,7 s | ya | sesekali menulis penalaran lalu terpotong |
-| **`deepseek-v4-flash`** | **7,0–8,1 s** | **3/3 ya** | dipakai sekarang |
+| `deepseek-v4-1-flash` | 5,6–22,0 s (median 10,1 s) | 25/25 ya | **dipakai sekarang** (diukur ulang 12 Nov 2026) |
+| `deepseek-v4-flash` | 7,0–8,1 s | 3/3 ya | dipakai 8–12 Nov 2026, lebih cepat & lebih konsisten |
 | `glm-5-3-flash` | 17,5 s | ya | lebih lambat |
 | `agnes-2-5-flash:free` | 4,0 s | ya | jalur gratis, kuota tidak dijamin |
 
-Selain itu `mintaJson()` sekarang **menaikkan jatah token** kalau percobaan
-pertama berakhir `finish_reason: length` (`anggaranBerikutnya()` di
-`batasInput.js`, diuji `uji-batas.mjs`) — mengulang dengan jatah yang sama
-hanya akan gagal dengan cara yang sama.
+Kalau gejala 8 Nov kembali (jawaban kosong, `code: unparsed`, atau `content`
+yang berisi kalimat berpikir), yang pertama diperiksa adalah **isi `content`**,
+lalu ganti balik ke `deepseek-v4-flash` lewat `KENARI_MODEL` di `app/.env` —
+tidak perlu mengubah kode.
+
+Selain itu `mintaJson()` **menaikkan jatah token** kalau percobaan pertama
+berakhir `finish_reason: length` (`anggaranBerikutnya()` di `batasInput.js`,
+diuji `uji-batas.mjs`) — mengulang dengan jatah yang sama hanya akan gagal
+dengan cara yang sama.
 
 ### Audit 8 Nov 2026 — empat cacat, semuanya diperbaiki
 

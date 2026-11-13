@@ -32,7 +32,7 @@ export const config = {
   port: Number(process.env.PORT || 8787),
   apiKey: required('KENARI_API_KEY'),
   baseUrl: (process.env.KENARI_BASE_URL || 'https://kenari.id/v1').replace(/\/+$/, ''),
-  model: process.env.KENARI_MODEL || 'deepseek-v4-flash',
+  model: process.env.KENARI_MODEL || 'deepseek-v4-1-flash',
   /** batas token output; Kenari tidak menolak hingga 4000 pada akun saldo 0 */
   maxTokens: Number(process.env.MAX_TOKENS || 1500),
   temperature: Number(process.env.TEMPERATURE || 0.3),
@@ -40,12 +40,10 @@ export const config = {
    * Seberapa banyak model boleh "berpikir" sebelum menjawab.
    *
    * BAWAAN 'none' — INI PENTING, JANGAN DIUBAH TANPA MENGUKUR.
-   * Model penalaran (`deepseek-v4-1-flash`, dipakai sampai 8 Nov 2026)
-   * menghasilkan token `reasoning_content` yang IKUT memakan jatah
-   * `max_tokens` — dan pada 8 Nov 2026 ia mulai menulis penalarannya ke dalam
-   * `content`, sehingga jawaban terpotong walau setelan ini 'none'. Sejak itu
-   * aplikasi memakai `deepseek-v4-flash` (bukan model penalaran). Diukur 15 Okt 2026
-   * dengan pertanyaan yang sama dan batas 120 token:
+   *
+   * `deepseek-v4-1-flash` adalah model PENALARAN: token `reasoning_content`
+   * yang ia hasilkan IKUT memakan jatah `max_tokens`. Diukur 15 Okt 2026 pada
+   * pertanyaan yang sama dengan batas 120 token:
    *
    *   dasar                    48 token (41 di antaranya penalaran)
    *   reasoning_effort: 'low'  21 token
@@ -55,6 +53,15 @@ export const config = {
    * menjawab KOSONG karena token habis dipakai berpikir sebelum jawabannya
    * ditulis (`finish_reason: length`, `usage.completion_tokens` tepat di batas).
    * Dengan penalaran dimatikan, anggaran token terpakai untuk JAWABAN.
+   *
+   * RIWAYAT (jangan diulang tanpa mengukur): 8 Nov 2026 model ini sempat
+   * menulis kalimat penalarannya ke dalam `content` ("Let me write a JSON
+   * response…") meski 'none' terpasang, sehingga jawaban terpotong; aplikasi
+   * lalu pindah ke `deepseek-v4-flash` sampai 12 Nov 2026. Pada 12 Nov 2026
+   * diukur ulang: 25/25 jawaban bersih, tanpa kalimat penalaran di `content`,
+   * `finish_reason: stop`, 5,6–22 detik (median 10,1) — jadi dipakai lagi. Kalau
+   * gejalanya kembali, yang pertama diperiksa adalah `content` yang memuat
+   * kalimat berpikir, bukan setelan di sini.
    *
    * Setel `KENARI_REASONING_EFFORT=low` kalau suatu saat mutu jawaban perlu
    * dinaikkan — tetapi batas token di batasInput.js harus diukur ulang dulu.
