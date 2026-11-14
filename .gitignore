@@ -34,6 +34,13 @@ npm-debug.log*
 !docs/migrasi-*.sql
 !docs/petakan-wilayah.sql
 
+# Dump database LENGKAP yang sengaja dibagikan: struktur 15 tabel + seluruh isi
+# tabel rujukan/faskes, tanpa baris `percakapan`. Dibuat oleh
+# `buat-dump-database.sh`, diperiksa `periksa-dump-database.sh`. Satu nama tetap
+# (bukan bertanggal) supaya memperbaruinya menimpa berkas, bukan menambah 8 MB
+# baru ke riwayat git setiap kali.
+!docs/database/*.sql
+
 # Berkas kerja sementara di akar repo (bukan bagian produk)
 /reference.png
 
