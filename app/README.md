@@ -3,7 +3,12 @@
 > **Ini produk utama** yang dijalankan saat Grand Final dan video demo.
 > Sumber halaman penjelasan ada di [`../docs/prototipe`](../docs/prototipe).
 > Dokumen ini menjelaskan isi folder `app/`; gambaran proyek ada di
-> [`../README.md`](../README.md).
+> [`../README.md`](../README.md). Bagian yang lebih lengkap di README akar:
+> [Pengenalan proyek](../README.md#pengenalan-proyek) ·
+> [Arsitektur](../README.md#arsitektur) ·
+> [Dokumentasi frontend](../README.md#dokumentasi-frontend) ·
+> [Dokumentasi backend](../README.md#dokumentasi-backend) ·
+> [Menjalankan di localhost](../README.md#menjalankan-di-localhost-laptop-finalis).
 
 Dashboard edukasi kesehatan **Pahami Sehat** — React di depan, Express di belakang,
 model AI **`deepseek-v4-1-flash`** lewat **Kenari.id**.

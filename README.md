@@ -34,6 +34,78 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 
 ---
 
+## Peta dokumen
+
+| Yang dicari | Bagian |
+|---|---|
+| Gambaran solusi, latar belakang, target pengguna | [Pengenalan proyek](#pengenalan-proyek) |
+| Arsitektur sistem & diagram alur program | [Arsitektur](#arsitektur) · [Alur satu pertanyaan](#alur-satu-pertanyaan) |
+| Framework, struktur komponen UI, aset | [Dokumentasi frontend](#dokumentasi-frontend) |
+| API endpoints, skema database, `.env.example` | [Dokumentasi backend](#dokumentasi-backend) · [Endpoint](#endpoint) |
+| Instalasi & menjalankan di localhost | [Menjalankan di localhost](#menjalankan-di-localhost-laptop-finalis) |
+
+---
+
+## Pengenalan proyek
+
+### Gambaran solusi
+
+**Pahami Sehat** adalah aplikasi web yang menerjemahkan informasi kesehatan resmi
+menjadi bahasa yang bisa dipahami siapa pun, lalu menunjukkan sumber aslinya.
+Pengguna mengetik pertanyaan seperti "apa itu hipertensi?", memilih tingkat
+pemahaman (anak 9–11, remaja, dewasa, lansia), dan menerima jawaban sepanjang
+tingkat itu — bukan jawaban seragam untuk semua orang.
+
+Tiga hal yang membedakannya dari chatbot kesehatan biasa:
+
+1. **Sumber bisa diperiksa.** Setiap jawaban membawa URL asli (Wikipedia ID,
+   MedlinePlus, RSS Kemenkes/WHO), dan panel sumber membedakan yang **dipakai**
+   dari yang cuma **ditemukan**. Model dilarang menambah fakta dari ingatannya.
+2. **Tingkat baca diukur, bukan diklaim.** Patokan kata dan panjang kalimat per
+   tingkat dikalibrasi dari pengukuran nyata (`app/src/lib/keterbacaan.js`),
+   dan hasilnya diuji `uji-keterbacaan.mjs`.
+3. **Bisa dipakai tanpa akun dan tanpa database.** Tidak ada login, tidak ada
+   data pribadi yang diminta, dan MariaDB bersifat opsional — aplikasi tetap
+   menjawab kalau database mati.
+
+### Latar belakang
+
+Masalah yang disasar bukan kelangkaan informasi, melainkan **pemahaman,
+jangkauan, dan kepercayaan**. Angka di bawah berasal dari dokumen yang bisa
+dibuka; rincian rujukannya ada di `docs/verifikasi-klaim-*.md` dan di bagian
+**Latar Belakang & Masalah** pada halaman penjelasan.
+
+| Temuan | Angka | Sumber |
+|---|---|---|
+| Pasien yang kesulitan memahami informasi kesehatannya sendiri | **33%** problematik + **16,2%** inadekuat (958 responden) | Malini dkk., 2025 — HLS-EU-SQ10-IDN |
+| Berat bacaan materi kesehatan di situs ternama | setara **kelas 12,8**, targetnya kelas 8 | Ayre dkk., 2024 — 26 teks, diukur SMOG |
+| Penduduk tanpa jaminan kesehatan | **27,8%** | SKI 2023 |
+| Hoaks kesehatan yang beredar | **2.622** (Agu 2018 – Sep 2026) | Komdigi |
+| Cakupan imunisasi dasar lengkap | **93,7%** (2019) → **84,5%** (2021) | WHO/Kemenkes |
+| Remaja 15–18 tahun berliterasi rendah | **72%** dari responden berliterasi rendah | studi lokal |
+
+Konsekuensinya nyata: satu dari tiga pasien tidak memahami informasi
+kesehatannya sendiri, dan materi yang seharusnya membantu justru ditulis jauh di
+atas kemampuan pembacanya. Aplikasi ini menyerang bagian itu — bukan menambah
+artikel baru, melainkan **menyesuaikan bahasa pada pembacanya** dan
+**menunjukkan dari mana jawabannya datang**.
+
+### Target pengguna
+
+| Kelompok | Kebutuhannya | Yang menjawab di aplikasi |
+|---|---|---|
+| **Orang awam dengan literasi kesehatan terbatas** — pasien, keluarga pasien | paham penjelasan dokter/leaflet obat tanpa kamus | 4 tingkat baca, Sederhanakan teks, Mode Suara |
+| **Lansia dan keluarga yang merawat** | teks lebih besar, bisa didengarkan, tidak perlu mengetik | tingkat Lansia, mode kontras tinggi, input suara |
+| **Remaja 15–18 tahun** | bahasa sehari-hari, tidak menggurui, bisa dari ponsel | tingkat Remaja, tata letak ponsel, kuesioner HLS-SF12 |
+| **Orang yang mencari fasilitas kesehatan** | tahu faskes apa yang ada di wilayahnya, jenis, dan kontaknya | pencarian 20.924 faskes nasional dengan 6 saringan |
+| **Pembaca yang meragukan klaim kesehatan** | cara memeriksa klaim tanpa harus jadi ahli | Cek Klaim + daftar sumber yang bisa dibuka |
+
+Tingkat baca dipatok ke **umur**, bukan kelas sekolah: anak 9–11, remaja 12–25,
+dewasa 26–59, lansia 60+. Alasannya, anak 9 tahun dan lansia 80 tahun sama-sama
+butuh kalimat pendek — tetapi isi yang mereka cari berbeda.
+
+---
+
 ## Tampilan
 
 Tangkapan layar di bawah diambil langsung dari aplikasi yang berjalan
@@ -182,7 +254,7 @@ Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 | [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **27 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
 | [`docs/database/pahami-sehat.sql`](docs/database/pahami-sehat.sql) | **Isi database sungguhan** — struktur 15 tabel + seluruh baris (20.924 fasilitas, 7.837 wilayah, 331 topik, 124 dokumen, 1.074 sitasi). Baris `percakapan` sengaja kosong. Dibuat `buat-dump-database.sh`, diperiksa `periksa-dump-database.sh`. Lihat [Dump isi database ikut repo](#dump-isi-database-ikut-repo). |
 | [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 12 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`, `statistik_faskes`, `sumber_data_faskes`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. Tiga tabel lagi (`cakupan_faskes`, `sinkron_fasilitas`, `catatan_sumber`) dibuat saat aplikasi berjalan, jadi database lengkap berisi **15 tabel**. |
-| [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs-3325-rs-di-database). |
+| [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs--3325-rs-di-database). |
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`lengkapi-provinsi-faskes.mjs`](lengkapi-provinsi-faskes.mjs) | **Pengisi `provinsi` dari `kabupaten`** lewat tabel `wilayah` (dry run bawaan). Dipakai 12 Nov 2026 untuk 61 baris yang punya kabupaten tetapi provinsi kosong — baris seperti itu tidak bisa ditemukan lewat saringan lokasi sama sekali. |
 | [`rapikan-kabupaten-faskes.mjs`](rapikan-kabupaten-faskes.mjs) | **Penyeragam ejaan `kabupaten`** ke nama resmi `wilayah` (dry run bawaan). 12 Nov 2026: 12.761 baris dirapikan, 533 entri dropdown menyusut jadi 514 kabupaten resmi, dan 5 pasangan yang kabupatennya milik provinsi lain dipindahkan ke provinsi yang benar. |
@@ -407,6 +479,46 @@ flowchart TB
    dari bahan itu. Prompt melarang menambah fakta dari ingatan.
 7. Jawaban kembali bersama **sumber yang benar-benar dikutip**, dan panel
    `SumberJawaban` membedakan sumber yang **dipakai** dari yang cuma **ditemukan**.
+
+Diagram urutan untuk satu pertanyaan — termasuk jalur gagal yang paling sering
+terjadi (database mati, layanan luar tidak menjawab):
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as Pengguna (peramban)
+  participant E as Express /api/tanya
+  participant B as Pembatas laju
+  participant K as kataKunci.js
+  participant W as Wikipedia / MedlinePlus
+  participant N as RSS berita
+  participant M as Kenari.id (model)
+  participant D as MariaDB (opsional)
+
+  U->>E: POST /api/tanya {pertanyaan, tingkat, bahasa}
+  E->>B: cek 20 permintaan/menit per IP
+  alt melewati batas
+    B-->>U: 429 {ok:false, code:"batas_laju"}
+  end
+  E->>K: menanyakanBerita() ?
+  alt pertanyaan berita
+    K->>N: ambil judul terbaru
+    N-->>K: judul + media + umur
+    K-->>E: bahan berita
+  else pertanyaan medis
+    E->>K: pilihIstilah() -> PETA_PENCARIAN / PETA_MEDLINEPLUS
+    K-->>E: satu istilah, dua bentuk
+    E->>W: cari judul kanonik + istilah Inggris
+    W-->>E: teks sumber (atau kosong)
+  end
+  E->>D: simpan/ambil konteks percakapan (7 hari)
+  D-->>E: konteks, atau null bila DB mati
+  E->>M: prompt + bahan + rubrik wajib
+  M-->>E: jawaban + sumber yang dikutip
+  E->>D: catat dokumen + sitasi (sesudah respons dikirim)
+  E-->>U: {jawaban, sumber[], poinKunci[]}
+  Note over E,U: DB mati = jawaban tetap keluar, tanpa konteks.<br/>Layanan luar gagal = sumber kosong + keterangan, bukan jawaban karangan.
+```
 
 ### Tanpa akun — tidak ada gerbang masuk
 
@@ -689,6 +801,154 @@ lebih berbahaya daripada tidak ada penyaring.
 
 ---
 
+## Dokumentasi frontend
+
+### Framework dan pustaka
+
+| Lapisan | Pustaka | Versi terpasang |
+|---|---|---|
+| Kerangka UI | **React** | 19.3.0 |
+| Build & dev server | **Vite** (+ `@vitejs/plugin-react`) | 8.3.2 |
+| Gaya | **Tailwind CSS** lewat `@tailwindcss/vite` | 4.3.3 |
+| Komponen aksesibel | **Radix UI** — `react-dialog`, `react-switch`, `react-tooltip` | 1.3.1 / 1.4.1 / 1.4.1 |
+| Ikon | **lucide-react** | 1.52.0 |
+| Peta | **Leaflet** + `leaflet.markercluster` | 1.9.4 / 1.5.3 |
+| OCR di peramban | **tesseract.js** (WebAssembly) | 7.0.0 |
+| Penggabung kelas | `tailwind-merge` (dibungkus `lib/cn.js`) | 3.7.0 |
+| Klien HTTP | `axios` | 1.21.0 |
+
+`shadcn init` **tidak** dipakai: komponen Radix dibungkus sendiri di
+`app/src/components/ui/primitives.jsx`, supaya tidak ada lapisan tema yang tidak
+kita kendalikan. Gaya global ada di satu berkas, `app/src/index.css` (token
+warna, tipografi `clamp()`, `prefers-reduced-motion`).
+
+### Struktur komponen
+
+```
+app/src/
+├── App.jsx                  state global + routing antar panel (7 menu)
+├── index.css                token warna, tipografi, mode kontras tinggi
+├── components/
+│   ├── layout/    (4)       Sidebar · TopBar · MobileDrawer · nav.js (daftar menu)
+│   ├── ui/        (7)       primitives.jsx (Radix) · Button · BatasGalat (error boundary)
+│   │                        IlustrasiAnimasi · PanelSalin · ToastBatal · TombolDengar
+│   ├── dashboard/ (12)      AskAI · Komposer · ThreadPanel · VerifikasiPanel · QuizPanel
+│   │                        SettingsPanel · ArticleGrid · TopicChips · Greeting
+│   │                        HealthTip · DaftarObrolan · PemindaiFoto
+│   └── faskes/    (2)       FaskesPanel (pembungkus) · FaskesNasionalPanel (daftar 20.924)
+├── lib/           (15)      api.js (klien + pembaca SSE) · sesi.js (MAKS_SESI = 20)
+│                            useBahasa · useServer · useBerita · useSuara · useRute
+│                            useWilayah · useAlamat · ocr.js · tts.js · skorHls.js
+│                            keterbacaan.js · cn.js · istilahLayanan.js
+└── data/          (3)       bahasa.js (kamus id + en, 380 kunci seimbang)
+                             tingkat.js (satu sumber kebenaran tingkat baca) · dummy.js
+```
+
+Panel dimuat **lazy** (`React.lazy` + `Suspense`): `QuizPanel`, `VerifikasiPanel`,
+dan `FaskesPanel` tidak ikut di bundel awal, jadi unduhan pertama tetap kecil.
+
+**Keadaan disimpan di peramban, bukan di server.** `localStorage` menyimpan sesi
+obrolan (maksimal 20), riwayat skor kuesioner (maksimal 10), dan setelan
+tampilan. Tidak ada cookie, tidak ada token, tidak ada akun.
+
+### Aset
+
+| Aset | Lokasi | Ukuran / jumlah |
+|---|---|---|
+| Mesin OCR (worker, core WASM, data bahasa) | `app/public/ocr/` | **17.048.779 byte** (6 berkas) — disajikan lokal, bukan CDN |
+| Font Plus Jakarta Sans | `app/src/assets/pjs-var.woff2` | satu berkas variabel |
+| Tangkapan layar aplikasi | `docs/tangkapan-layar/` | **27 PNG** (1440×900 dan 390×844 DPR 2) |
+| Aset halaman penjelasan | `docs/prototipe/assets/` | 1,5 MB — 9 ilustrasi, 5 tangkapan layar, 1 font, 3 logo/QR |
+
+Ketiga skrip tangkapan (`ambil-tangkapan-dashboard.mjs`, `ambil-tangkapan.mjs`,
+`ambil-tangkapan-prototipe.mjs`) menolak menyimpan berkas di bawah 20 KB, jadi
+tangkapan yang gagal tidak lolos diam-diam ke halaman publik.
+
+### Aksesibilitas dan responsif
+
+- Breakpoint: `<768px` header + drawer, `768–1023px` sidebar ikon saja, `≥1024px` sidebar penuh.
+- Target sentuh ≥44 px, kontras teks ≥4,5:1, `aria-current`/`aria-pressed`/`role=switch`, focus ring, `prefers-reduced-motion`.
+- Mode kontras tinggi menaikkan ukuran huruf dasar 112% dan mempertebal garis.
+- Dua bahasa penuh (id/en) dengan 380 kunci yang jumlahnya dijaga `uji-bahasa.mjs`.
+
+---
+
+## Dokumentasi backend
+
+### Kerangka dan berkas
+
+Backend adalah **Express 5.3.0** di `app/server/` — **32 berkas**, semuanya ES module.
+Yang perlu diketahui sebelum mengubah apa pun:
+
+| Berkas | Tanggung jawab |
+|---|---|
+| `index.js` | merakit app, menyajikan `dist/`, menangani `EADDRINUSE` |
+| `rute.js` | seluruh endpoint `/api/*` (27 rute) |
+| `ruteAlamat.js` | `/api/alamat/*` dan `/api/wilayah/lengkap` (3 rute) |
+| `config.js` | membaca env, memvalidasi API key, `safeInfo()` tanpa membocorkan key |
+| `db.js` | jembatan MariaDB — **tidak pernah melempar**; gagal = `null` + `alasanGagal` |
+| `kenari.js` | klien model (chat + streaming SSE) |
+| `prompts.js` | rubrik wajib + prompt per fitur |
+| `batas.js` / `batasInput.js` | pembatas laju 20 permintaan/menit + `MAKS_TOKEN` per jalur |
+| `saji.js` / `kepala.js` | gzip, `X-Waktu-Ms`, 404 JSON, kepala keamanan |
+| `faskes.js` / `faskesDb.js` / `faskesNasional.js` | Overpass, simpanan MySQL, daftar nasional |
+| `rsSirs.js` / `statistikFaskes.js` | rumah sakit SIRS + angka resmi Kemenkes/BPJS |
+| `wilayah.js` / `geocoding.js` / `photon.js` | wilayah bertingkat, deteksi wilayah, autocomplete |
+| `rute-perjalanan.js` / `layanan.js` | Valhalla/OSRM, antrean + simpanan semua layanan luar |
+
+### Variabel lingkungan — `app/.env.example`
+
+Salin `app/.env.example` menjadi `app/.env`, lalu isi `KENARI_API_KEY`. Berkas
+`.env` **tidak pernah** ikut ter-commit (`.gitignore`) dan harus bermode `600`.
+
+| Variabel | Bawaan | Wajib? | Arti |
+|---|---|---|---|
+| `KENARI_API_KEY` | — | **ya** | kunci Kenari.id; tanpa ini server menolak start dengan pesan jelas |
+| `KENARI_BASE_URL` | `https://kenari.id/v1` | tidak | alamat API model |
+| `KENARI_MODEL` | `deepseek-v4-1-flash` | tidak | model yang dipakai |
+| `KENARI_REASONING_EFFORT` | `none` | tidak | `none`/`low`; menaikkannya memakan jatah `MAX_TOKENS` |
+| `PORT` | `8787` | tidak | port server |
+| `MAX_TOKENS` | `1500` | tidak | jatah token jawaban |
+| `TEMPERATURE` | `0.3` | tidak | suhu sampling |
+| `DB_MATI` | — | tidak | `1` = matikan database sepenuhnya (dipakai uji) |
+| `DB_HOST` / `DB_PORT` | `127.0.0.1` / `3306` | tidak | alamat MariaDB |
+| `DB_USER` / `DB_PASSWORD` | `root` / kosong | tidak | kredensial XAMPP bawaan |
+| `DB_NAMA` | `pahami_sehat` | tidak | nama basis data |
+
+Variabel lain dibaca kode tetapi **tidak** ada di `.env.example` karena hanya
+dipakai saat mengukur atau menyiapkan demo: `CACHE_KONTEN`, `CACHE_BERITA`,
+`FASKES_BATAS_MS`, `PEMANASAN_TITIK`, `PEMANASAN_RADIUS`, `RUTE_PROVIDER`,
+`RUTE_CACHE_MS`, `RUTE_CACHE_MAKS`, `VALHALLA_URL`, `REQUEST_TIMEOUT_MS`
+(dipatok maksimum 50 detik), dan `RAHASIA_PAKSA` (hanya untuk uji rute).
+
+### Skema database
+
+Dua berkas, dua keperluan:
+
+| Berkas | Isi |
+|---|---|
+| `docs/skema-database.sql` | **DDL 12 tabel**, idempoten (`CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus `DROP` tabel akun versi lama |
+| `docs/database/pahami-sehat.sql` | **isi database sungguhan** — struktur 15 tabel + seluruh baris (20.924 fasilitas, 7.837 wilayah, 331 topik), tanpa baris `percakapan` |
+
+Tiga tabel dibuat saat aplikasi berjalan, bukan oleh skema: `cakupan_faskes`
+(`faskesDb.js`), `sinkron_fasilitas` dan `catatan_sumber` (`impor-sirs.mjs`).
+Karena itu database lengkap berisi **15 tabel**, sedangkan `skema-database.sql`
+berisi 12.
+
+| Tabel | Isi |
+|---|---|
+| `sumber` · `dokumen` · `sitasi` | jejak sumber: lembaga, URL yang diambil, dan sitasi per jawaban |
+| `konten` · `berita` · `pengetahuan` | bahan: artikel/tips harian, judul RSS, 331 topik medis berlabel tanggal |
+| `percakapan` | teks percakapan untuk konteks lanjutan — tanpa identitas, dihapus otomatis 7 hari |
+| `wilayah` · `kategori_fasilitas` · `fasilitas` | 7.837 wilayah (38 provinsi / 514 kabupaten / 7.285 kecamatan), 10 kategori, 20.924 faskes |
+| `statistik_faskes` · `sumber_data_faskes` | angka resmi Kemenkes 2024 + pembanding BPJS, beserta rujukannya |
+| `cakupan_faskes` · `sinkron_fasilitas` · `catatan_sumber` | pemanasan demo, log tarikan SIRS, catatan keadaan sumber |
+
+Aturan yang ditegakkan skema: setiap tabel bermuatan medis wajib punya kolom
+`kedaluwarsa` NOT NULL, supaya kode bisa menolak menyajikan panduan basi.
+
+---
+
 ## Endpoint
 
 | Metode | Path | Isi |
@@ -706,6 +966,7 @@ lebih berbahaya daripada tidak ada penyaring.
 | POST | `/api/suara` | teks → MP3 (suara neural) |
 | GET | `/api/faskes` | fasilitas kesehatan di sekitar satu titik (Overpass/OpenStreetMap) |
 | GET | `/api/faskes/kategori` | sepuluh kategori fasilitas yang dipakai antarmuka |
+| GET | `/api/faskes/:id` | rincian satu fasilitas simpanan menurut id |
 | GET | `/api/faskes/nasional` | **pencarian seluruh faskes nasional** — 20.924 baris (SIRS + OpenStreetMap); `?cari=&kategori=&provinsi=&kabupaten=&sumber=&kelas=&koordinat=1&halaman=&perHalaman=&urut=` |
 | GET | `/api/faskes/nasional/filter` | pilihan saringan nasional dari database: kategori, provinsi, kabupaten, sumber, kelas, jenis, kepemilikan |
 | GET | `/api/faskes/nasional/ringkasan` | jumlah total, berkoordinat, SIRS, OSM, tanpa provinsi, dan per kategori |
@@ -848,24 +1109,129 @@ exit code), dan `ukur-panjang.mjs` (batas kata per tingkat).
 
 ---
 
-## Menjalankan aplikasi (produk utama)
+## Menjalankan di localhost (laptop finalis)
 
 Aplikasi punya dua bagian: frontend React dan backend Express yang memanggil model AI.
+Bagian ini ditulis untuk **laptop finalis yang baru**, dari nol sampai aplikasi
+terbuka di peramban.
+
+### 1. Prasyarat
+
+| Kebutuhan | Versi | Cara memeriksa |
+|---|---|---|
+| **Node.js** | `^20.19.0` atau `>=22.12.0` (syarat Vite 8) | `node -v` |
+| **npm** | ikut Node (diuji pada 11.19.1) | `npm -v` |
+| **Git** | apa saja | `git --version` |
+| **MariaDB/MySQL** | opsional — XAMPP 10.4.32 diuji | `mysql --version` |
+| **Kunci Kenari.id** | wajib | `https://kenari.id` |
+
+Diuji pada Node **v26.9.0** dan npm **11.19.1**. Node 18 atau 20.18 ke bawah akan
+gagal saat `npm run build` karena Vite 8 menolak versi itu.
+
+### 2. Ambil kode dan pasang dependensi
 
 ```bash
-cd app
-npm install --include=dev    # --include=dev WAJIB bila NODE_ENV=production
+git clone https://github.com/Ellbaayy/Pahami-sehat.git
+cd Pahami-sehat/app
 
-# 1) siapkan API key sekali saja
-cp .env.example .env         # lalu isi KENARI_API_KEY=kn-...
+npm install --include=dev
+```
+
+> **`--include=dev` wajib** bila `NODE_ENV=production` di mesin itu. Tanpa flag
+> ini, `vite` dan `@vitejs/plugin-react` tidak terpasang, lalu `npm run build`
+> gagal dengan `vite: not found` — pesan yang tidak menyebut sebabnya.
+
+Keluaran yang diharapkan: `added N packages` tanpa `ERESOLVE`, dan folder
+`app/node_modules/` terbentuk.
+
+### 3. Siapkan `.env`
+
+```bash
+cp .env.example .env
 chmod 600 .env
+# lalu isi satu baris ini di .env:
+#   KENARI_API_KEY=kn-...
+```
 
-# 2) mode pengembangan (dua terminal)
-npm run server               # backend  di http://127.0.0.1:8787
-npm run dev                  # frontend Vite (otomatis meneruskan /api ke backend)
+Tanpa kunci, server **menolak start** dan menyebut `.env` sebagai sebabnya —
+bukan gagal diam-diam. Daftar lengkap variabelnya ada di
+[Variabel lingkungan](#variabel-lingkungan--appenvexample).
 
-# 3) mode Grand Final — satu perintah, satu port
-npm start                    # build + server di http://127.0.0.1:8787
+### 4. Jalankan
+
+```bash
+# Mode Grand Final — satu perintah, satu port (build + server)
+npm start
+```
+
+Keluaran yang diharapkan:
+
+```
+  api key : terpasang (kn-…)
+  dist    : disajikan dari /
+  database: tersambung (pahami_sehat@127.0.0.1:3306)
+  alamat  : http://127.0.0.1:8787/app/
+```
+
+Buka **<http://127.0.0.1:8787/app/>**. Halaman penjelasan ada di
+<http://127.0.0.1:8787/>.
+
+Untuk mengembangkan (hot reload), pakai dua terminal:
+
+```bash
+npm run server    # backend  : http://127.0.0.1:8787
+npm run dev       # frontend : Vite, /api diteruskan ke backend
+```
+
+### 5. Pasang database (opsional, tapi disarankan saat demo)
+
+Aplikasi tetap jalan tanpa database. Kalau ingin data lengkap — 20.924 fasilitas,
+331 topik, 7.837 wilayah — pakai dump yang sudah ada di repo:
+
+```bash
+# Arch/CachyOS: pasang ini DULU, kalau tidak XAMPP gagal dengan pesan
+# "only available as 32 bit application" yang MENYESATKAN (binernya 64-bit;
+# akar masalahnya php butuh libcrypt.so.1).
+sudo pacman -S libxcrypt-compat
+
+sudo /opt/lampp/lampp startmysql
+/opt/lampp/bin/mysql -u root -e "CREATE DATABASE IF NOT EXISTS pahami_sehat"
+/opt/lampp/bin/mysql -u root pahami_sehat < ../docs/database/pahami-sehat.sql
+```
+
+Keluaran yang diharapkan: perintah `mysql` selesai tanpa galat, dan
+`/api/health` melaporkan `db: { aktif: true, host: "127.0.0.1", port: 3306 }`.
+
+Kalau hanya butuh skema kosong: `/opt/lampp/bin/mysql -u root < ../docs/skema-database.sql`.
+
+### 6. Periksa bahwa semuanya benar-benar hidup
+
+```bash
+curl -s http://127.0.0.1:8787/api/health
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8787/app/
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8787/
+```
+
+Harapan: `/api/health` mengembalikan JSON dengan `"ok": true` dan nama model,
+lalu `200` dan `200`.
+
+### 7. Kalau ada yang gagal
+
+| Gejala | Sebab dan jalan keluarnya |
+|---|---|
+| `vite: not found` | `NODE_ENV=production` melewatkan devDependencies → `npm install --include=dev` |
+| `EADDRINUSE :8787` | port dipegang proses lain; `npm run server` sudah membebaskan port milik proyek ini sendiri, dan **menolak** membunuh proses asing sambil menyebut PID-nya |
+| Server berhenti dengan pesan soal `.env` | `KENARI_API_KEY` belum diisi |
+| `db: { aktif: false }` | MariaDB belum jalan → `sudo /opt/lampp/lampp startmysql`; aplikasi tetap bisa dipakai |
+| Halaman kosong saat membuka `dist/index.html` | hasil build memakai ES module; harus lewat HTTP (`npm start`), bukan `file://` |
+| Suara tidak berbunyi | `msedge-tts` butuh WebSocket — hanya jalan di server biasa, bukan di Vercel |
+| Mikrofon/papan klip mati | peramban hanya mengizinkannya di konteks aman: `localhost` atau `https://` |
+
+### 8. Menjalankan seluruh uji
+
+```bash
+cd app && npm test        # 33 berkas uji, tanpa jaringan dan tanpa API key
+cd app && npm run lint    # ESLint 10
 ```
 
 `npm run build` juga menjalankan `prebuild` → `scripts/salin-prototipe.mjs`,
@@ -1089,7 +1455,7 @@ Nominatim, OSRM, dan Valhalla semuanya layanan publik tanpa kunci.
   langsung.
 - **Kategori Tradisional dan Khusus kosong di sekitar Jakarta** — OpenStreetMap
   memang belum punya datanya di sana. Kekosongan itu ditampilkan, tidak diisi.
-- **Data Kemenkes ADA — 3.325 rumah sakit resmi SIRS** (lihat [bagian SIRS](#rumah-sakit-resmi-kemenkes-sirs-3325-rs-di-database)).
+- **Data Kemenkes ADA — 3.325 rumah sakit resmi SIRS** (lihat [bagian SIRS](#rumah-sakit-resmi-kemenkes-sirs--3325-rs-di-database)).
   Yang TIDAK tersedia dari sumber itu adalah **koordinat**, jadi rumah sakit
   SIRS tidak digambar di peta. Sebelumnya README ini menyatakan katalog
   Kemenkes tidak bisa dibaca mesin; itu keliru — `rekap_rs_all?id=0` mengembalikan

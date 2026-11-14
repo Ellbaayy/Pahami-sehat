@@ -3,7 +3,10 @@
 > **Bukan produk utama.** Produk yang dipakai/dinilai ada di folder [`../../app`](../../app).
 > Folder ini adalah **halaman penjelasan statis**: latar belakang, konsep 4 lapis
 > aksesibilitas, alur pemakaian, dan status tiap fitur — berguna untuk video demo
-> dan presentasi. Gambaran proyek ada di [`../../README.md`](../../README.md).
+> dan presentasi. Gambaran proyek ada di [`../../README.md`](../../README.md) —
+> termasuk [pengenalan proyek](../../README.md#pengenalan-proyek),
+> [arsitektur](../../README.md#arsitektur), dan
+> [petunjuk menjalankan di localhost](../../README.md#menjalankan-di-localhost-laptop-finalis).
 
 **"Informasi Kesehatan untuk Semua"**
 
