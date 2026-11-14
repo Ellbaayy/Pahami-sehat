@@ -46,8 +46,8 @@ docs/prototipe/
 │   ├── qr-pahami-sehat.png
 │   ├── fonts/pjs-var.woff2
 │   ├── ilustrasi/      # hero, masalah, konsep, alur, fitur, produk, kuesioner, klaim, tenang
-│   └── tangkapan-layar/ # 5 PNG ASLI dari aplikasi (RS nasional, autocomplete,
-│                        #   peta+daftar, detail, petunjuk arah)
+│   └── tangkapan-layar/ # 5 PNG ASLI dari aplikasi (daftar nasional, saringan
+│                        #   jenis, pencarian nama, saringan wilayah, ponsel)
 └── Pahami-Sehat.jpeg   # gambar referensi desain (source of truth)
 ```
 
@@ -80,8 +80,7 @@ karena keduanya dibaca sebagai daftar isi.
    butuh bantuan apa → proses AI → titik keputusan → SELESAI
 7. `#fitur` — **Enam Fitur Utama**: Penerjemah Bahasa Medis, Mode Suara &
    Bahasa Sehari-hari, Mode Kontras Tinggi, Mencari Internet & Mencantumkan
-   Sumber, Berita Kesehatan Harian, dan Fasilitas Kesehatan Terdekat &
-   Petunjuk Arah
+   Sumber, Berita Kesehatan Harian, dan Pencarian Fasilitas Kesehatan Nasional
 8. `#produk` — mockup laptop + mockup ponsel (**ilustrasi tata letak**) dan
    **lima tangkapan layar asli** dari aplikasi yang berjalan
 9. `#kuesioner` — **Cek Tingkat Literasi Kesehatan** (instrumen HLS-SF12)
@@ -96,14 +95,15 @@ karena keduanya dibaca sebagai daftar isi.
 > dari Tanya AI.
 
 > **Rangka mockup ≠ tangkapan layar.** Rangka laptop/ponsel adalah ilustrasi tata
-> letak dan diberi keterangan begitu. Tiga gambar di bawahnya adalah tangkapan
-> layar **asli** dari aplikasi yang berjalan — peta + daftar fasilitas, panel
-> detail fasilitas, dan panel petunjuk arah.
+> letak dan diberi keterangan begitu. Lima gambar di bawahnya adalah tangkapan
+> layar **asli** dari aplikasi yang berjalan.
 
-Kartu **Fasilitas Kesehatan** memuat **lima** tangkapan layar asli: tab Rumah
-Sakit Nasional (3.325 RS SIRS), autocomplete alamat, peta + daftar setelah
-alamat dipilih, detail fasilitas, dan petunjuk arah. (Pemilihan titik di peta
-dihapus 3 Nov 2026 — gambarnya ikut dibuang, bukan dibiarkan menyesatkan.)
+Kartu **Fasilitas Kesehatan** memuat **lima** tangkapan layar asli, seluruhnya
+diambil ulang 7 Nov 2026: daftar nasional tanpa saringan (20.924 baris),
+saringan jenis fasilitas, pencarian nama ("siloam" menyaring 20.924 menjadi
+75 hasil), saringan wilayah (provinsi lalu kabupaten/kota), dan tampilan ponsel
+390 piksel. Tab radius "Fasilitas Terdekat" dihapus 8 Nov 2026, jadi gambar
+peta radius lama ikut dibuang — bukan dibiarkan menyesatkan.
 Semuanya dihasilkan `ambil-tangkapan.mjs` di akar repo (butuh server hidup di
 `:8787`), yang **menolak menyimpan berkas di bawah 20 KB** supaya tangkapan
 gagal tidak lolos diam-diam ke halaman publik.
@@ -122,7 +122,7 @@ Halaman ini punya uji peramban sendiri di akar repo:
 
 ```bash
 npm run server                     # di app/, terminal lain
-node uji-halaman-penjelasan.mjs    # 18 pemeriksaan
+node uji-halaman-penjelasan.mjs    # 22 pemeriksaan
 ```
 
 Yang diperiksa: enam kartu fitur, penyebutan wilayah bertingkat dan tiga moda,

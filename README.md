@@ -10,7 +10,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > (`deepseek-v4-1-flash` lewat Kenari.id) dari server Express sendiri, dan
 > setiap jawaban disertai sumber yang bisa dibuka pengguna.
 >
-> **Status tiap fitur — apa adanya (diperiksa ulang 7 Nov 2026):**
+> **Status tiap fitur — apa adanya (diperiksa ulang 14 Nov 2026):**
 >
 > | Fitur | Keadaan |
 > |---|---|
@@ -24,7 +24,7 @@ sampai dan tidak dipahami oleh yang paling membutuhkan.
 > | Pindai foto / OCR | berjalan, **seluruhnya di peramban**. Foto tidak pernah dikirim ke server, dan fitur ini tetap jalan tanpa internet. Batasnya disebut apa adanya di aplikasi: alat bantu baca, bukan pengganti dokumen asli |
 > | Riwayat obrolan | berjalan. Tersimpan di peramban (bukan server), maksimal **20 obrolan** (`MAKS_SESI` di `app/src/lib/sesi.js`). Bisa **dihapus satu per satu atau sekaligus**, dan penghapusan **bisa dibatalkan**. **Tidak lagi ditampilkan di Beranda** — hanya lewat menu **Riwayat** |
 > | Berita kesehatan harian | berjalan. Pertanyaan seperti "berita terbaru hari ini" dijawab dari **RSS** (Detik Health, WHO, Google News) — bukan dari ensiklopedia, karena Wikipedia tidak punya berita harian. Setiap berita disebutkan **nama medianya** dan **umurnya**, dan lonceng pemberitahuan berbunyi kalau ada berita segar (diperiksa maksimal sekali sehari) |
-> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **496 kunci** kamus. Judul tab peramban ikut halaman ("Tanya AI — Pahami Sehat"), bukan satu judul untuk semuanya |
+> | Bahasa antarmuka | dua bahasa penuh: **Indonesia dan Inggris**, masing-masing **380 kunci** kamus. Judul tab peramban ikut halaman ("Tanya AI — Pahami Sehat"), bukan satu judul untuk semuanya |
 
 >
 > Catatan operasional: endpoint yang memanggil layanan berbayar dibatasi
@@ -180,7 +180,8 @@ Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 | [`app/`](app) | **Produk utama.** Aplikasi dashboard (React + Vite + Express). Ini yang dijalankan saat video demo dan Grand Final. |
 | [`docs/prototipe/`](docs/prototipe) | **Halaman penjelasan** (HTML/CSS/JS statis): latar belakang, konsep 4 Lapis Aksesibilitas, alur pemakaian, status tiap fitur. **Tampil sebagai halaman depan situs.** |
 | [`docs/tangkapan-layar/`](docs/tangkapan-layar) | **27 tangkapan layar** dashboard & prototype, diambil dari aplikasi yang berjalan (lihat bagian [Tampilan](#tampilan)). |
-| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 12 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`, `statistik_faskes`, `sumber_data_faskes`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. |
+| [`docs/database/pahami-sehat.sql`](docs/database/pahami-sehat.sql) | **Isi database sungguhan** — struktur 15 tabel + seluruh baris (20.924 fasilitas, 7.837 wilayah, 331 topik, 124 dokumen, 1.074 sitasi). Baris `percakapan` sengaja kosong. Dibuat `buat-dump-database.sh`, diperiksa `periksa-dump-database.sh`. Lihat [Dump isi database ikut repo](#dump-isi-database-ikut-repo). |
+| [`docs/skema-database.sql`](docs/skema-database.sql) | **Skema MariaDB** — 12 tabel (`sumber`, `dokumen`, `sitasi`, `konten`, `berita`, `pengetahuan`, `percakapan`, `wilayah`, `kategori_fasilitas`, `fasilitas`, `statistik_faskes`, `sumber_data_faskes`). Idempoten (semua `CREATE TABLE IF NOT EXISTS`), aman dijalankan ulang; sekaligus membersihkan tabel akun versi lama. Tiga tabel lagi (`cakupan_faskes`, `sinkron_fasilitas`, `catatan_sumber`) dibuat saat aplikasi berjalan, jadi database lengkap berisi **15 tabel**. |
 | [`impor-sirs.mjs`](impor-sirs.mjs) | **Pengimpor rumah sakit resmi Kemenkes**: SIRS JSON → MySQL, upsert batch, validasi terhadap rekap resmi, log sinkronisasi. Lihat [Rumah sakit resmi Kemenkes](#rumah-sakit-resmi-kemenkes-sirs-3325-rs-di-database). |
 | [`isi-wilayah.mjs`](isi-wilayah.mjs) | Pengisi tabel `wilayah` dari `wilayah.id` (38 provinsi + 514 kabupaten/kota + **7.285 kecamatan**). |
 | [`lengkapi-provinsi-faskes.mjs`](lengkapi-provinsi-faskes.mjs) | **Pengisi `provinsi` dari `kabupaten`** lewat tabel `wilayah` (dry run bawaan). Dipakai 12 Nov 2026 untuk 61 baris yang punya kabupaten tetapi provinsi kosong — baris seperti itu tidak bisa ditemukan lewat saringan lokasi sama sekali. |
@@ -193,6 +194,7 @@ Tangkapan di atas diambil dari aplikasi yang benar-benar berjalan lewat
 | [`panaskan-faskes.mjs`](panaskan-faskes.mjs) | **Pemanas simpanan faskes sebelum demo** — mengisi `fasilitas` + `cakupan_faskes` untuk lokasi yang akan ditunjukkan, supaya tombol Cari menjawab dari database. Lihat [Tombol "Cari"](#tombol-cari-tidak-lagi-membuat-juri-menunggu). |
 | [`panen-pengetahuan.mjs`](panen-pengetahuan.mjs) | **Pengisi database pengetahuan** — mengambil teks asli dari sumber resmi (bukan karangan AI). Lihat [Di mana datanya disimpan](#di-mana-datanya-disimpan). |
 | [`jalankan-online.sh`](jalankan-online.sh) | Build → server → Cloudflare Tunnel → cetak alamat publik. Lihat [Membuka aplikasi ke internet](#membuka-aplikasi-ke-internet-tapi-tetap-berjalan-di-laptop-sendiri). |
+| [`buat-dump-database.sh`](buat-dump-database.sh) + [`periksa-dump-database.sh`](periksa-dump-database.sh) | **Pembuat dan pemeriksa dump database** yang dibagikan di repo. Generator memakai dua lintasan `mysqldump` (struktur + data tanpa baris `percakapan`); pemeriksa menolak dump yang memuat tabel akun, baris percakapan, atau jumlah tabel selain 15. Dijalankan juga di CI. |
 | [`ambil-tangkapan-dashboard.mjs`](ambil-tangkapan-dashboard.mjs) | Mengambil 10 tangkapan dashboard: 7 halaman pada 1440×900, 2 tampilan ponsel, 1 mode kontras tinggi. Jawaban Tanya AI dan putusan Cek Klaim diambil dari permintaan sungguhan. |
 | [`ambil-tangkapan.mjs`](ambil-tangkapan.mjs) | Mengambil 5 tangkapan Fasilitas Kesehatan lewat Chrome + CDP, termasuk mengetik sungguhan untuk membuktikan pencarian menyaring. |
 | [`ambil-tangkapan-prototipe.mjs`](ambil-tangkapan-prototipe.mjs) | Mengambil 10 bagian halaman penjelasan + 2 tampilan ponsel, menggulir per bagian dan menunggu posisi gulir benar-benar sampai. |
@@ -249,7 +251,7 @@ pahami-sehat/
 ├── README.md
 ├── jalankan-online.sh         ← build + server + Cloudflare Tunnel
 ├── siapkan-domain.sh          ← INERT: hanya untuk named tunnel (lihat catatan)
-├── uji-*.mjs                  ← 37 berkas uji (32 tanpa jaringan)
+├── uji-*.mjs                  ← 38 berkas uji (33 tanpa jaringan)
 ├── ukur-*.mjs                 ← pengukuran untuk memilih angka batas
 ├── verifikasi-judul.mjs
 ├── periksa-istilah.mjs
@@ -257,6 +259,8 @@ pahami-sehat/
 ├── impor-statistik-faskes.mjs ← statistik nasional (Kemenkes/BPJS) ke MySQL
 ├── lengkapi-wilayah-faskes.mjs ← isi provinsi faskes OSM (geocoding balik)
 ├── panaskan-faskes.mjs       ← pemanas simpanan faskes sebelum demo
+├── buat-dump-database.sh     ← tulis ulang docs/database/pahami-sehat.sql
+├── periksa-dump-database.sh  ← tolak dump yang memuat data pribadi
 ├── mermaid-diagram.png
 ├── app/                       ← PRODUK UTAMA (React + Express + Tailwind)
 │   ├── .env                   ← API key Kenari (JANGAN di-commit, mode 600)
@@ -277,6 +281,8 @@ pahami-sehat/
     │   ├── js/
     │   └── assets/
     ├── tangkapan-layar/       ← 27 tangkapan layar
+    ├── database/              ← dump isi database (15 tabel, tanpa baris percakapan)
+    │   └── pahami-sehat.sql
     ├── skema-database.sql
     ├── sumber-hls-sf12.txt
     └── verifikasi-*.md
@@ -476,16 +482,22 @@ Dibuktikan ulang 20 Okt 2026 dengan `DB_MATI=1`:
 | `fasilitas` | fasilitas kesehatan hasil Overpass, **beserta `sumber`, `sumber_url`, `diperbarui_pada`, dan `kedaluwarsa_pada`** | `.cache-faskes.json` |
 | `statistik_faskes` | **angka resmi** fasilitas nasional (Kemenkes 2024: 6 kategori, total 49.548; pembanding BPJS September 2026), **beserta kalimat cakupannya** | (baru, 7 Nov 2026) |
 | `sumber_data_faskes` | **4 rujukan pengembangan** (Profil Kesehatan Indonesia 2025, Statistik Faskes BPS 2025, SATUSEHAT Data, Data Faskes Mitra JKN) + data yang tersedia di masing-masing | (baru, 7 Nov 2026) |
+| `cakupan_faskes` | **daftar lokasi yang sudah dipanaskan** supaya tombol Cari menjawab dari database sebelum demo | (baru, 8 Nov 2026) |
+| `sinkron_fasilitas` | **log setiap tarikan SIRS** — mulai, selesai, status, jumlah baru/berubah/tetap, pesan galat | (baru, 4 Nov 2026) |
+| `catatan_sumber` | catatan keadaan tiap sumber data (kapan terakhir diperiksa, apa yang berubah) | (baru, 4 Nov 2026) |
 
 Tidak ada tabel akun di skema mana pun. `skema-database.sql` malah
 menjalankan `DROP TABLE IF EXISTS riwayat, setelan, pengguna` untuk
 membersihkan sisa pemasangan lama — jadi tidak ada tabel identitas yang bisa
 terisi lagi tanpa sengaja.
 
-Isi database pada 20 Okt 2026 (hitungan langsung lewat `COUNT(*)`, bukan
-perkiraan `table_rows`): `pengetahuan` **331** baris (270 dari MedlinePlus,
-61 dari Wikipedia) · `sumber` **19** baris · `dokumen` **88** ·
-`sitasi` **351** · `berita` 3 · `konten` 7.
+Isi database pada 14 Nov 2026 (hitungan langsung lewat `COUNT(*)`, bukan
+perkiraan `table_rows`): `fasilitas` **20.924** · `wilayah` **7.837** ·
+`pengetahuan` **331** (270 dari MedlinePlus, 61 dari Wikipedia) · `sitasi` **1.074** ·
+`dokumen` **124** · `konten` **100** · `sumber` **23** · `berita` **21** ·
+`kategori_fasilitas` **10** · `statistik_faskes` **9** · `sumber_data_faskes` **4** ·
+`cakupan_faskes` **19** · `sinkron_fasilitas` **2** · `catatan_sumber` **1** ·
+`percakapan` **34**. Seluruhnya bisa dimuat dari dump di repo.
 
 #### Jejak sitasi — cara memeriksanya
 
@@ -694,7 +706,7 @@ lebih berbahaya daripada tidak ada penyaring.
 | POST | `/api/suara` | teks → MP3 (suara neural) |
 | GET | `/api/faskes` | fasilitas kesehatan di sekitar satu titik (Overpass/OpenStreetMap) |
 | GET | `/api/faskes/kategori` | sepuluh kategori fasilitas yang dipakai antarmuka |
-| GET | `/api/faskes/nasional` | **pencarian seluruh faskes nasional** — 21.477 baris (SIRS + OpenStreetMap); `?cari=&kategori=&provinsi=&kabupaten=&sumber=&kelas=&koordinat=1&halaman=&perHalaman=&urut=` |
+| GET | `/api/faskes/nasional` | **pencarian seluruh faskes nasional** — 20.924 baris (SIRS + OpenStreetMap); `?cari=&kategori=&provinsi=&kabupaten=&sumber=&kelas=&koordinat=1&halaman=&perHalaman=&urut=` |
 | GET | `/api/faskes/nasional/filter` | pilihan saringan nasional dari database: kategori, provinsi, kabupaten, sumber, kelas, jenis, kepemilikan |
 | GET | `/api/faskes/nasional/ringkasan` | jumlah total, berkoordinat, SIRS, OSM, tanpa provinsi, dan per kategori |
 | GET | `/api/faskes/nasional/:id` | rincian satu fasilitas nasional menurut id database |
@@ -892,9 +904,43 @@ tetap tersaji tanpa database.
 Endpoint untuk memeriksa: `GET /api/health` (status db) dan `GET /api/db`
 (hitungan + contoh baris, bukan seluruh isi tabel).
 
+#### Dump isi database ikut repo
+
+[`docs/database/pahami-sehat.sql`](docs/database/pahami-sehat.sql) memuat **isi database
+sungguhan**, bukan sekadar skema: struktur 15 tabel dan seluruh barisnya — 20.924
+fasilitas, 7.837 wilayah, 331 topik pengetahuan, 124 dokumen, 1.074 sitasi. Siapa pun
+yang mengkloning repo bisa memuatnya dan langsung punya data, tanpa menarik ulang dari
+Kemenkes atau OpenStreetMap.
+
+Tiga tabel di dump tidak ada di `docs/skema-database.sql` karena dibuat saat aplikasi
+berjalan: `cakupan_faskes` (`app/server/faskesDb.js`), `sinkron_fasilitas` dan
+`catatan_sumber` (`impor-sirs.mjs`). Jadi dump adalah gambar terlengkap keadaan database.
+
+Yang sengaja **tidak** ikut: baris tabel `percakapan` — kolom `teks` berisi kalimat yang
+diketik pengguna. Strukturnya tetap ada, barisnya kosong. Tidak ada tabel akun, sesi, atau
+riwayat di dump mana pun; skema sudah menghapusnya sejak halaman login dibuang.
+
+```bash
+# buat ulang dump dari MariaDB lokal (menimpa berkas yang ada)
+./buat-dump-database.sh && ./periksa-dump-database.sh
+
+# muat dump ke database kosong
+/opt/lampp/bin/mysql -u root pahami_sehat < docs/database/pahami-sehat.sql
+```
+
+`periksa-dump-database.sh` menolak dump yang memuat tabel akun/sesi, baris `percakapan`,
+atau jumlah tabel selain 15 — dan langkah yang sama dijalankan di CI. Dump lama di akar
+repo (`database-pahami-sehat-*.sql`) tetap diabaikan `.gitignore` dan **tidak boleh**
+ikut: isinya memuat hash kata sandi, nomor telepon, dan token sesi dari uji coba akun.
+
+Diperiksa 14 Nov 2026: dump dipulihkan ke basis data kosong, lalu jumlah baris ke-15
+tabel dibandingkan satu per satu — 14 tabel sama persis, dan `percakapan` memang 34 di
+sumber menjadi 0 di salinan.
+
 **Diverifikasi pada XAMPP sungguhan (4 Nov 2026):** MariaDB **10.4.32** dari
-`/opt/lampp`, port 3306, basis data `pahami_sehat`, seluruh 12 tabel terbentuk
-dari `docs/skema-database.sql`, dan `/api/health` melaporkan
+`/opt/lampp`, port 3306, basis data `pahami_sehat`, seluruh 12 tabel dari
+`docs/skema-database.sql` terbentuk — plus 3 tabel yang dibuat saat aplikasi
+berjalan, sehingga database lengkap berisi **15 tabel** — dan `/api/health` melaporkan
 `db: { aktif: true, host: "127.0.0.1", port: 3306 }`. `uji-faskes-db.mjs`
 **12/12 lulus** di server yang sama — bukan hanya di instance uji terpisah.
 
@@ -1257,7 +1303,7 @@ terpetakan, dengan 6 alias eksplisit yang bisa dibaca satu per satu.
 node isi-wilayah.mjs                                    # 38 provinsi + 514 kabupaten
 node impor-sirs.mjs                                     # impor / sinkron ulang
 node petakan-wilayah.mjs                                # nama SIRS -> kode wilayah
-node uji-rs-sirs.mjs                                    # 50 pemeriksaan
+node uji-rs-sirs.mjs                                    # 51 pemeriksaan
 ```
 
 Laporan lengkap: [`docs/laporan-impor-sirs.md`](docs/laporan-impor-sirs.md).
@@ -1748,7 +1794,9 @@ dipetakan benar-benar ada.
 `node --check` dan `npm run build` pada setiap push dan pull request ke `main`.
 Jumlah langkahnya naik setiap kali ada uji baru — **hitung ulang** dengan
 `gh run view <id> --json jobs --jq '.jobs[].steps[]'`, jangan dikutip dari sini.
-Diukur pada commit `251e1d9` (1 Nov 2026): **29 langkah**, semuanya `success`.
+Diukur pada commit `8e27b1a` (12 Nov 2026, run `43153087072`): **44 langkah**,
+semuanya `success`. Workflow punya 39 langkah yang ditulis sendiri; sisanya lima
+langkah bawaan runner (`Set up job`, dua `Post …`, `Complete job`).
 
 **Dua uji yang dulu tertinggal, sekarang sudah masuk CI** (2 Nov 2026):
 `uji-klaim.mjs` (43 pemeriksaan) dan `uji-konteks.mjs` (49). Keduanya sudah
@@ -2222,7 +2270,7 @@ Tiga hal diperbaiki hari itu, masing-masing dengan bukti yang bisa diulang:
 
 | Perbaikan | Bukti |
 |---|---|
-| **Tingkat baca bawaan** `anak` → `dewasa` di server *dan* klien | `POST /api/tanya {"pertanyaan":"apa saja gejala stroke?"}` (tanpa `tingkat`) dulu menjawab `kunci:"anak"`, 578 karakter bergaya 9–11 tahun; sekarang `kunci:"dewasa"`, 872 karakter. Dijaga **`uji-tingkat.mjs`** (18 pemeriksaan) dan masuk CI |
+| **Tingkat baca bawaan** `anak` → `dewasa` di server *dan* klien | `POST /api/tanya {"pertanyaan":"apa saja gejala stroke?"}` (tanpa `tingkat`) dulu menjawab `kunci:"anak"`, 578 karakter bergaya 9–11 tahun; sekarang `kunci:"dewasa"`, 872 karakter. Dijaga **`uji-tingkat.mjs`** (25 pemeriksaan) dan masuk CI |
 | **0 kerentanan dependensi** (dari 6: 5 high + 1 moderate) | `body-parser` ^2.4.0, `qs` ^6.17.1, `follow-redirects` ^1.16.2, `axios` ^1.21.0 dipasang sebagai dependensi langsung karena `express@5.3.0` (versi terbaru) dan `msedge-tts@2.1.1` masih menarik versi rentan. `npm audit` sekarang: **`found 0 vulnerabilities`**. Suara neural **diuji ulang sungguhan**: 33.264 byte audio dalam 1,2 detik |
 | **Pencatatan kegagalan model** | `/api/verifikasi` sekali menjawab `unparsed` tanpa meninggalkan jejak apa pun di log. Sekarang `mintaJson()` mencetak `jalur`, `finish_reason`, jumlah token, dan 160 karakter awal jawaban mentah — untuk **8 jalur** yang punya percobaan ulang. Tanpa pertanyaan pengguna |
 

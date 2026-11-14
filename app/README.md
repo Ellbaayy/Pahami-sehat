@@ -65,7 +65,12 @@ langsung dari OpenStreetMap seperti sebelumnya.
 
 ```bash
 sudo /opt/lampp/lampp startmysql
+
+# skema kosong (12 tabel; 3 tabel lain dibuat aplikasi saat berjalan)
 /opt/lampp/bin/mysql -u root < ../docs/skema-database.sql
+
+# atau langsung berisi data: 15 tabel, 20.924 fasilitas, tanpa baris percakapan
+/opt/lampp/bin/mysql -u root pahami_sehat < ../docs/database/pahami-sehat.sql
 ```
 
 Bawaan `server/db.js` sudah cocok untuk XAMPP (`127.0.0.1:3306`, `root` tanpa
@@ -74,7 +79,9 @@ sandi, basis data `pahami_sehat`). Ubah lewat `.env`: `DB_HOST`, `DB_PORT`,
 dipakai untuk membuktikan bahan tetap tersaji tanpa database.
 
 **Sudah diverifikasi pada XAMPP sungguhan (4 Nov 2026):** MariaDB 10.4.32 di
-`/opt/lampp`, 10 tabel terbentuk, `/api/health` melaporkan `db.aktif: true`, dan
+`/opt/lampp`, 12 tabel dari skema terbentuk (ditambah 3 tabel yang dibuat saat
+aplikasi berjalan: `cakupan_faskes`, `sinkron_fasilitas`, `catatan_sumber` — jadi
+database lengkap berisi 15 tabel), `/api/health` melaporkan `db.aktif: true`, dan
 `uji-faskes-db.mjs` **12/12 lulus**. Kalau MySQL mati, `keteranganDb()`
 menyebutkan sebabnya (`ECONNREFUSED — …`), bukan sekadar "tidak tersambung".
 
@@ -104,7 +111,7 @@ app/
 │   ├── salin-prototipe.mjs   menyalin docs/prototipe -> dist/ (prebuild)
 │   ├── mampatkan-dist.mjs    gzip hasil build
 │   └── bebaskan-port.mjs     pre-flight port 8787 (dipanggil `preserver`)
-├── server/                   backend Express — 24 berkas
+├── server/                   backend Express — 32 berkas
 │   ├── index.js              rute + penyajian hasil build + penanganan EADDRINUSE
 │   ├── config.js             baca env, validasi key
 │   ├── rute.js               endpoint /api/* (termasuk wilayah, faskes, rute)
@@ -119,9 +126,12 @@ app/
 │   ├── db.js                 jembatan MariaDB (gagal = null + alasanGagal)
 │   ├── faskes.js             Overpass multi-cermin: kategori, dedupe, simpanan
 │   ├── faskesDb.js           simpan/baca fasilitas di MySQL
+│   ├── faskesNasional.js     daftar & saringan 20.924 faskes nasional dari MySQL
+│   ├── rsSirs.js             rumah sakit resmi SIRS: cari, filter, ringkasan
+│   ├── dedupFaskes.js        aturan pembersihan duplikat (fungsi murni, diuji)
+│   ├── statistikFaskes.js    angka resmi Kemenkes/BPJS + cadangan saat DB mati
 │   ├── wilayah.js            kode wilayah bertingkat + titik referensi
 │   ├── rute-perjalanan.js    klien Valhalla: costing per moda, polyline6
-│   ├── rsSirs.js             rumah sakit resmi SIRS: cari, filter, ringkasan
 │   ├── geocoding.js          deteksi wilayah dari `address` Nominatim + peta ISO
 │   ├── layanan.js            SEMUA endpoint luar + antrean + simpanan (mudah diganti via env)
 │   ├── photon.js             klien Photon: autocomplete, saring negara, simpanan 10 menit
@@ -152,7 +162,7 @@ app/
     ├── lib/ocr.js            tesseract.js + angka mutu pembacaan
     ├── lib/keterbacaan.js    alat ukur keterbacaan + SASARAN
     ├── lib/skorHls.js        indeks HLS-SF12 (0–50)
-    ├── data/bahasa.js        kamus id + en (500 kunci masing-masing, seimbang)
+    ├── data/bahasa.js        kamus id + en (380 kunci masing-masing, seimbang)
     ├── data/tingkat.js       daftar tingkat baca (satu sumber kebenaran)
     ├── data/dummy.js         konten statis
     ├── components/layout/    Sidebar, TopBar, MobileDrawer, nav (7 menu)
@@ -181,11 +191,17 @@ Foto" tidak berdiri sendiri karena ketiganya bagian dari Tanya AI.
 | GET | `/api/wilayah/titik` | titik referensi satu wilayah + tingkat ketelitiannya |
 | GET | `/api/faskes` | fasilitas kesehatan di sekitar satu titik (`lat`, `lon`, `radius`) |
 | GET | `/api/faskes/kategori` | sepuluh kategori fasilitas yang dipakai antarmuka |
+| GET | `/api/faskes/:id` | rincian satu fasilitas simpanan menurut id |
+| GET | `/api/faskes/nasional` | pencarian 20.924 faskes nasional: `cari`, `kategori`, `provinsi`, `kabupaten`, `sumber`, `kelas`, `koordinat`, `halaman`, `perHalaman`, `urut` |
+| GET | `/api/faskes/nasional/filter` | pilihan saringan dari database: kategori, provinsi, kabupaten, sumber, kelas, jenis, kepemilikan |
+| GET | `/api/faskes/nasional/ringkasan` | total, berkoordinat, SIRS, OSM, tanpa provinsi, per kategori |
+| GET | `/api/faskes/nasional/:id` | rincian satu fasilitas nasional menurut id database |
 | GET | `/api/faskes/cari-lokasi` | cari tempat menurut nama (Nominatim) |
 | GET | `/api/rute` | rute perjalanan (`moda=jalan-kaki\|motor\|mobil`, `bahasa=id\|en`) |
 | GET | `/api/rs` | rumah sakit resmi SIRS: `cari`, `provinsi`, `kabupaten`, `jenis`, `kelas`, `kepemilikan`, `halaman`, `perHalaman` |
 | GET | `/api/rs/filter` | pilihan filter dari isi database |
 | GET | `/api/rs/ringkasan` | jumlah, berkoordinat, sinkron terakhir |
+| GET | `/api/statistik-faskes` | angka resmi Kemenkes/BPJS beserta cakupannya; jatuh ke angka bawaan kalau DB mati |
 | GET | `/api/rs/:kode` | rincian satu RS menurut kode SIRS |
 | GET | `/api/alamat/cari` | autocomplete alamat — Photon, cadangan Nominatim (`q`); `sumberCari` menyebut yang menjawab |
 | GET | `/api/alamat/titik` | geocoding balik (`lat`, `lon`) |
