@@ -1794,9 +1794,10 @@ dipetakan benar-benar ada.
 `node --check` dan `npm run build` pada setiap push dan pull request ke `main`.
 Jumlah langkahnya naik setiap kali ada uji baru — **hitung ulang** dengan
 `gh run view <id> --json jobs --jq '.jobs[].steps[]'`, jangan dikutip dari sini.
-Diukur pada commit `8e27b1a` (12 Nov 2026, run `43153087072`): **44 langkah**,
-semuanya `success`. Workflow punya 39 langkah yang ditulis sendiri; sisanya lima
-langkah bawaan runner (`Set up job`, dua `Post …`, `Complete job`).
+Diukur pada commit `b90f865` (14 Nov 2026, run `43539872861`): **45 langkah**,
+semuanya `success`. Workflow sendiri mendaftar 41 langkah (dua di antaranya `uses:`
+tanpa nama); empat sisanya langkah bawaan runner: `Set up job`, dua `Post …`, dan
+`Complete job`.
 
 **Dua uji yang dulu tertinggal, sekarang sudah masuk CI** (2 Nov 2026):
 `uji-klaim.mjs` (43 pemeriksaan) dan `uji-konteks.mjs` (49). Keduanya sudah
