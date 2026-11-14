@@ -1,5 +1,7 @@
 # Pahami Sehat
 
+![Pahami Sehat — informasi kesehatan dalam bahasa yang bisa dipahami semua orang, dibuat oleh NØCTURNE](docs/thumbnail/pahami-sehat-1280x640.png)
+
 **"Informasi Kesehatan untuk Semua"**
 
 Proyek untuk **LOGICODIX 2026 Hackathon** — subtema **Inclusive Health & Well-being**.
