@@ -307,6 +307,13 @@ jobs:
         # Express yang menyebut nama kerangkanya.
         run: node uji-server.mjs
 
+      - name: Periksa dump database yang dibagikan
+        # Menolak dump yang memuat tabel akun/sesi atau baris percakapan, dan
+        # menolak berkas yang jumlah tabelnya bukan 15. Tanpa ini, seseorang bisa
+        # mengganti docs/database/pahami-sehat.sql dengan dump mentah dan CI tetap
+        # hijau — padahal repo ini publik.
+        run: ./periksa-dump-database.sh
+
       - name: Build produksi
         working-directory: app
         run: npm run build
